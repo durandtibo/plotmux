@@ -1,0 +1,77 @@
+name: Nightly Package Tests
+on:
+  schedule:
+    - cron: '30 10 * * *' # run at 10:30 AM UTC
+  workflow_dispatch:  # to trigger manually
+
+permissions:
+  contents: read
+
+jobs:
+  get-versions:
+    uses: ./.github/workflows/get-versions.yaml
+
+  stable:
+    uses: ./.github/workflows/test-package.yaml
+    with:
+      install-cmd: 'uv pip install plotmux'
+
+  stable-all:
+    uses: ./.github/workflows/test-package.yaml
+    with:
+      install-cmd: 'uv pip install "plotmux[all]"'
+
+  stable-extras:
+    uses: ./.github/workflows/test-package-extras.yaml
+
+  latest:
+    uses: ./.github/workflows/test-package.yaml
+    with:
+      install-cmd: 'uv pip install --pre plotmux'
+
+  latest-all:
+    uses: ./.github/workflows/test-package.yaml
+    with:
+      install-cmd: 'uv pip install --pre "plotmux[all]"'
+
+  latest-extras:
+    uses: ./.github/workflows/test-package-extras.yaml
+    with:
+      install-args: '--pre'
+
+
+  ########################
+  #     Dependencies     #
+  ########################
+
+  coola:
+    needs: get-versions
+    uses: ./.github/workflows/test-package-dep.yaml
+    with:
+      package-name: coola
+      package-versions: ${{ toJson(fromJson(needs.get-versions.outputs.package_versions).coola) }}
+
+  numpy:
+    needs: get-versions
+    uses: ./.github/workflows/test-package-dep.yaml
+    with:
+      package-name: numpy
+      package-versions: ${{ toJson(fromJson(needs.get-versions.outputs.package_versions).numpy) }}
+
+  #################################
+  #     Optional dependencies     #
+  #################################
+
+  matplotlib:
+    needs: get-versions
+    uses: ./.github/workflows/test-package-dep.yaml
+    with:
+      package-name: matplotlib
+      package-versions: ${{ toJson(fromJson(needs.get-versions.outputs.package_versions).matplotlib) }}
+
+  xy:
+    needs: get-versions
+    uses: ./.github/workflows/test-package-dep.yaml
+    with:
+      package-name: xy
+      package-versions: ${{ toJson(fromJson(needs.get-versions.outputs.package_versions).xy) }}
