@@ -1,3 +1,5 @@
+r"""Contain core functionalities."""
+
 from __future__ import annotations
 
 __all__ = ["find_range"]
