@@ -5,9 +5,13 @@ from __future__ import annotations
 
 __all__ = [
     "check_matplotlib",
+    "check_xy",
     "is_matplotlib_available",
+    "is_xy_available",
     "matplotlib_available",
     "raise_matplotlib_missing_error",
+    "raise_xy_missing_error",
+    "xy_available",
 ]
 
 from plotmux.utils.imports.matplotlib import (
@@ -15,4 +19,10 @@ from plotmux.utils.imports.matplotlib import (
     is_matplotlib_available,
     matplotlib_available,
     raise_matplotlib_missing_error,
+)
+from plotmux.utils.imports.xy import (
+    check_xy,
+    is_xy_available,
+    raise_xy_missing_error,
+    xy_available,
 )
