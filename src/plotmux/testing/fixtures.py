@@ -5,18 +5,20 @@ r"""Define some pytest fixtures for testing.
 
 from __future__ import annotations
 
-__all__ = [
-    "matplotlib_available",
-    "matplotlib_not_available",
-]
+__all__ = ["matplotlib_available", "matplotlib_not_available", "xy_available", "xy_not_available"]
 
 import pytest
 
-from plotmux.utils.imports import is_matplotlib_available
+from plotmux.utils.imports import is_matplotlib_available, is_xy_available
 
 matplotlib_available: pytest.MarkDecorator = pytest.mark.skipif(
     not is_matplotlib_available(), reason="Requires matplotlib"
 )
 matplotlib_not_available: pytest.MarkDecorator = pytest.mark.skipif(
     is_matplotlib_available(), reason="Skip if matplotlib is available"
+)
+
+xy_available: pytest.MarkDecorator = pytest.mark.skipif(not is_xy_available(), reason="Requires xy")
+xy_not_available: pytest.MarkDecorator = pytest.mark.skipif(
+    is_xy_available(), reason="Skip if xy is available"
 )
