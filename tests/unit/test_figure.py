@@ -1,0 +1,66 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+from unittest.mock import Mock
+
+import pytest
+
+from plotmux.backends.base import Backend
+from plotmux.backends.registry import _REGISTRY, register_backend
+from plotmux.core.specs import HistogramSpec
+from plotmux.figure import Figure
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+
+class FakeBackend(Backend):
+    name = "fake"
+
+    def __init__(self) -> None:
+        self.saved: list[tuple[Any, Path, str]] = []
+
+    def render(self, spec: Any, **kwargs: Any) -> Any:
+        del kwargs
+        return spec
+
+    def save(self, native: Any, path: Path, fmt: str) -> None:
+        self.saved.append((native, path, fmt))
+
+
+@pytest.fixture(autouse=True)
+def _restore_registry() -> Any:
+    snapshot = dict(_REGISTRY)
+    yield
+    _REGISTRY.clear()
+    _REGISTRY.update(snapshot)
+
+
+def test_figure_to_native() -> None:
+    spec = HistogramSpec(values=[1, 2, 3])
+    fig = Figure(spec=spec, backend_name="fake", native="native-object")
+    assert fig.to_native() == "native-object"
+
+
+def test_figure_show_delegates_to_native() -> None:
+    native = Mock()
+    spec = HistogramSpec(values=[1, 2, 3])
+    fig = Figure(spec=spec, backend_name="fake", native=native)
+    fig.show()
+    native.show.assert_called_once_with()
+
+
+def test_figure_show_unsupported_native() -> None:
+    spec = HistogramSpec(values=[1, 2, 3])
+    fig = Figure(spec=spec, backend_name="fake", native=object())
+    with pytest.raises(NotImplementedError, match="does not support 'show'"):
+        fig.show()
+
+
+def test_figure_save(tmp_path: Path) -> None:
+    fake_backend = FakeBackend()
+    register_backend(fake_backend)
+    spec = HistogramSpec(values=[1, 2, 3])
+    fig = Figure(spec=spec, backend_name="fake", native="native-object")
+    fig.save(tmp_path / "out.png")
+    assert fake_backend.saved == [("native-object", tmp_path / "out.png", "png")]
