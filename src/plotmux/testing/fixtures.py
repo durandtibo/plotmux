@@ -16,7 +16,11 @@ __all__ = [
 
 import pytest
 
-from plotmux.utils.imports import is_bokeh_available, is_matplotlib_available, is_xy_available
+from plotmux.utils.imports import (
+    is_bokeh_available,
+    is_matplotlib_available,
+    is_xy_available,
+)
 
 bokeh_available: pytest.MarkDecorator = pytest.mark.skipif(
     not is_bokeh_available(), reason="Requires bokeh"
