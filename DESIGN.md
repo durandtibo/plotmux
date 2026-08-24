@@ -1,11 +1,11 @@
 # plotmux design
 
-Status: in progress — core abstraction, three chart specs (histogram,
-line, scatter), two backends (matplotlib, xy), per-mark color
-(`parse_color`), and common axis styling (title/labels/scale,
-`apply_common_style`) are implemented; layering multiple specs on one
-axes and a third backend are designed below but not yet built.
-Sections are marked ✅ implemented or 🚧 planned.
+Status: in progress — core abstraction, four chart specs (histogram,
+line, scatter, layer), two backends (matplotlib, xy), per-mark color
+(`parse_color`), common axis styling (title/labels/scale,
+`apply_common_style`), and layering multiple specs on one axes
+(`plotmux.layer()`) are implemented; a third backend is designed below
+but not yet built. Sections are marked ✅ implemented or 🚧 planned.
 Date: 2026-08-23
 
 ## 1. Goal
@@ -72,7 +72,8 @@ src/plotmux/
 │   ├── base.py                  # BaseSpec (title/xlabel/ylabel/xscale/yscale)
 │   ├── histogram.py             # HistogramSpec
 │   ├── line.py                  # LineSpec
-│   └── scatter.py               # ScatterSpec
+│   ├── scatter.py               # ScatterSpec
+│   └── layer.py                  # LayerSpec (rejects nesting + empty layers)
 ├── backends/
 │   ├── base.py                  # Backend ABC
 │   ├── registry.py              # register_backend() / get_backend()
@@ -83,37 +84,33 @@ src/plotmux/
 │   │   ├── histogram.py         # render_histogram(ax, spec) -> Axes
 │   │   │                         # (color: RGBA passthrough, no conversion needed)
 │   │   ├── line.py               # render_line(ax, spec) -> Axes
-│   │   └── scatter.py            # render_scatter(ax, spec) -> Axes
+│   │   ├── scatter.py            # render_scatter(ax, spec) -> Axes
+│   │   └── layer.py              # render_layer(ax, spec) -> shared Axes
 │   └── xy/
 │       ├── __init__.py          # registers XyBackend if available
 │       ├── backend.py           # XyBackend
 │       ├── style.py             # rgba_to_xy(); apply_common_style(chart, spec)
 │       ├── histogram.py         # render_histogram(spec) -> xy.Chart
 │       ├── line.py               # render_line(spec) -> xy.Chart
-│       └── scatter.py            # render_scatter(spec) -> xy.Chart
+│       ├── scatter.py            # render_scatter(spec) -> xy.Chart
+│       └── layer.py              # render_layer(spec) -> composed xy.Chart
 ├── figure.py                    # Figure wrapper
 ├── export.py                    # save(figure, path)
 ├── config.py                    # default backend + context manager
-├── api.py                       # public hist(), line(), scatter()
+├── api.py                       # public hist(), line(), scatter(), layer()
 ├── testing/fixtures.py          # shared test fixtures
 └── utils/imports/               # one module per optional backend dep
                                   # (matplotlib.py, xy.py)
 ```
 
-`specs/line.py`, `specs/scatter.py`, and the matching
-`backends/matplotlib/{line,scatter}.py` /
-`backends/xy/{line,scatter}.py` renderers are now implemented — see
-step 8 above. Remaining planned addition (🚧, see
-[Build order](#6-build-order)):
-
-```
-├── specs/
-│   └── layer.py                  # LayerSpec
-├── backends/matplotlib/
-│   └── layer.py                  # render_layer(spec) -> shared Axes
-└── backends/xy/
-    └── layer.py                  # render_layer(spec) -> composed xy.Chart
-```
+`specs/line.py`, `specs/scatter.py`, `specs/layer.py`, and the
+matching `backends/matplotlib/{line,scatter,layer}.py` /
+`backends/xy/{line,scatter,layer}.py` renderers are now implemented —
+see steps 8-9 above and
+[4.8](#48-layering-multiple-specs-on-one-axes). No further chart-type
+additions are planned in this package layout; a third backend (see
+[6.1](#61-candidate-future-backends)) would add a new
+`backends/<name>/` subpackage alongside `matplotlib/` and `xy/`.
 
 ### 3.3 Data flow ✅
 
@@ -380,12 +377,12 @@ it supports (see [4.2](#42-backend)), so requesting an unsupported
 format raises inside `backend.save`, and a path with no suffix raises
 in `export.save` before any backend is touched.
 
-### 4.8 Layering multiple specs on one axes — 🚧 planned
+### 4.8 Layering multiple specs on one axes — ✅ implemented
 
-Resolved: yes, plotmux must support combining multiple specs on one
-axes (e.g. a line overlaid with a scatter). This does not need a new
-mechanism in `Backend` or `figure.py` — it fits the existing
-spec/backend split as one more spec type.
+plotmux supports combining multiple specs on one axes (e.g. a line
+overlaid with a scatter). This needed no new mechanism in `Backend` or
+`figure.py` — it fits the existing spec/backend split as one more spec
+type:
 
 ```python
 @dataclass(frozen=True)
@@ -398,18 +395,45 @@ class LayerSpec(BaseSpec):
         if not self.layers:
             msg = "layers must contain at least one spec"
             raise ValueError(msg)
+        if any(isinstance(child, LayerSpec) for child in self.layers):
+            msg = "layers must not contain a LayerSpec (nesting is not supported)"
+            raise ValueError(msg)
 ```
+
+Nesting (a `LayerSpec` inside `layers`) is rejected rather than
+supported — this resolves the corresponding item in
+[Open questions](#7-open-questions): every `render_layer` does one
+flat pass over `layers`, dispatching each child by its concrete type,
+so allowing a nested `LayerSpec` would force every backend's
+`render_layer` to recurse for a case with no current caller need;
+callers must flatten nested layers themselves.
 
 Public API:
 
 ```python
 def layer(
-    *items: BaseSpec | Figure, backend: str | None = None, **kwargs: Any
+    *items: BaseSpec | Figure,
+    title=None,
+    xlabel=None,
+    ylabel=None,
+    xscale="linear",
+    yscale="linear",
+    backend: str | None = None,
+    **kwargs: Any,
 ) -> Figure:
     r"""Combine specs (or already-rendered Figures) onto one axes."""
-    specs = tuple(item.spec if isinstance(item, Figure) else item for item in items)
-    spec = LayerSpec(layers=specs)
-    ...  # same _render() path as hist()
+    layers = tuple(item.spec if isinstance(item, Figure) else item for item in items)
+    spec = LayerSpec(
+        layers=layers,
+        title=title,
+        xlabel=xlabel,
+        ylabel=ylabel,
+        xscale=xscale,
+        yscale=yscale,
+    )
+    backend_name = backend or get_default_backend()
+    native = get_backend(backend_name).render(spec, **kwargs)
+    return Figure(spec=spec, backend_name=backend_name, native=native)
 ```
 
 Accepting `Figure` as well as bare specs lets `plotmux.layer(fig1,
@@ -417,33 +441,45 @@ fig2)` read naturally when the user already called `plotmux.line(...)`
 / `plotmux.scatter(...)` separately; only their `.spec` is reused —
 the earlier native objects are discarded and everything is re-rendered
 together, since two independent native figures can't be merged after
-the fact in either backend.
+the fact in either backend. `title`/`xlabel`/`ylabel`/`xscale`/`yscale`
+are exposed the same way as on `hist()`/`line()`/`scatter()`, since
+they describe the combined axes, not any individual child.
 
 **Backend side: no interface change.** Each backend already dispatches
 on `type(spec)` via its `_RENDERERS` dict (see [4.2](#42-backend)), so
-supporting layering is one more entry, `LayerSpec ->
-render_layer`, per backend — same pattern as adding any chart type:
+supporting layering is one more entry, `LayerSpec -> render_layer`,
+per backend — same pattern as adding any chart type:
 
 - **matplotlib** (`backends/matplotlib/layer.py`): create one `Axes`,
   then call each child's existing `render_<type>(ax, child_spec)`
-  function against that same `Axes`, in `layers` order. This is why
-  `render_histogram(ax, spec)`/`render_line(ax, spec)`/
+  function against that same `Axes`, in `layers` order, via a small
+  `_AX_RENDERERS` dict local to `layer.py` (mirrors
+  `MatplotlibBackend._RENDERERS`, restricted to the non-layer types).
+  This is why `render_histogram(ax, spec)`/`render_line(ax, spec)`/
   `render_scatter(ax, spec)` already take an `Axes` rather than
   creating their own figure — layering was designed in from the
-  start. A single `ax.legend()` call at the end (not one per child)
-  avoids duplicate legends when multiple children set `label`.
-- **xy** (`backends/xy/layer.py`): render each child spec independently
-  into its own `xy.Chart` via the existing per-type functions, then
-  combine with xy's own chart-composition operator (`chart_a +
-  chart_b`, Altair-style) into one `xy.Chart`. Verify this operator's
-  exact semantics against the installed `xy` version before
-  implementing — if xy has no layering operator, `render_layer` falls
-  back to building the combined chart from xy's lower-level primitives
-  directly, but the public `LayerSpec` contract stays the same either
-  way.
+  start. No extra `ax.legend()` call is needed at the end: each child
+  renderer already calls `ax.legend()` when its own `label` is set,
+  and matplotlib's `Axes.legend()` collects every currently-plotted
+  labeled artist at call time (not just the artist just added), so
+  the last labeled child's own call ends up reflecting the full
+  combined legend for free.
+- **xy** (`backends/xy/layer.py`): xy has no chart-composition operator
+  (no `chart_a + chart_b`, unlike Altair — verified against the
+  installed `xy` version, resolving the corresponding item in
+  [Open questions](#7-open-questions)), so each child spec is rendered
+  independently via its own `render_<type>(child_spec)`, and only its
+  mark children are kept (each per-type renderer returns a
+  single-mark `Chart` with no axes yet — axes are added once, for the
+  combined chart, by `apply_common_style`). Those marks are combined
+  into one `Chart` via `xy.chart(*marks)`, xy's generic multi-mark
+  composer (the same primitive `xy.line_chart`/`xy.scatter_chart`/
+  `xy.histogram_chart` build on, just not fixed to one mark kind).
 
 `apply_common_style` (see [4.1.1](#411-axis-labels-title-and-linearlog-scale))
-will be applied once to the combined result, not once per child —
+is applied once to the combined result, not once per child — by
+`Backend.render`/`MatplotlibBackend.render`, exactly as for every
+other spec type, so `render_layer` itself never calls it.
 `title`/`xlabel`/`ylabel`/`xscale`/`yscale` on `LayerSpec` itself
 describe the combined axes, and per-child style fields (if any layer
 sets its own) only affect that child's marks.
@@ -582,11 +618,16 @@ this section, which only covers a user setting one explicit `color`.
    [4.6](#46-public-api-apipy--hist-line-scatter). Done before step 9
    — layering is only worth testing once there are at least two
    distinct chart types to overlay (e.g. line + scatter).
-9. 🚧 `LayerSpec` + `plotmux.layer()` + matplotlib and xy
+9. ✅ `LayerSpec` + `plotmux.layer()` + matplotlib and xy
    `render_layer` — see [4.8](#48-layering-multiple-specs-on-one-axes).
+   Nesting a `LayerSpec` inside `layers` is rejected in
+   `__post_init__` (see [4.8](#48-layering-multiple-specs-on-one-axes)),
+   resolving that open question.
 10. 🚧 `export.py` format coverage for the new chart types and for
-    `LayerSpec` (already generic, but worth an explicit test per chart
-    type x format, plus one for a layered figure).
+    `LayerSpec` (`export.py` itself needed no change — it was already
+    generic over any spec type via `Backend.save` — but per chart
+    type x format tests, plus one for a layered figure, are still
+    worth adding explicitly).
 11. 🚧 A third backend (see [6.1](#61-candidate-future-backends)) once
     two chart types, colors, and layering exist on both current
     backends, to confirm the abstraction still holds under more
@@ -646,31 +687,36 @@ should be driven by actual user requests, not by this list.
   matplotlib dependency even when matplotlib isn't installed?
 - **xy API verification checklist** — three assumptions about `xy`
   made in [4.8](#48-layering-multiple-specs-on-one-axes) and
-  [4.9](#49-specifying-colors-across-backends) are unverified guesses
-  and must be checked against the installed `xy` version before
-  writing `backends/xy/layer.py` / `backends/xy/style.py`:
-  1. does xy expose a chart-composition operator (`chart_a + chart_b`,
-     Altair-style) for layering, or does `render_layer` need to build
-     the combined chart from lower-level primitives instead?
+  [4.9](#49-specifying-colors-across-backends), checked against the
+  installed `xy` version:
+  1. ✅ resolved — `xy.Chart` has no chart-composition operator (no
+     `chart_a + chart_b`); `render_layer` builds the combined chart
+     from `xy.chart(*marks)`, xy's generic multi-mark composer, using
+     each child's already-rendered mark (see
+     [4.8](#48-layering-multiple-specs-on-one-axes)).
   2. ✅ resolved — xy's native color parameter accepts a CSS color
      string, confirmed against `xy`'s own `_parse_color(css: str,
      ...)`; `rgba_to_xy()` emits `"rgba(r, g, b, a)"` with `0`-`255`
      ints for `r`/`g`/`b`.
-  3. does layering two children via whatever xy provides give them
-     distinct colors automatically (like matplotlib's shared-`Axes`
-     default color cycle), or can two layered children render
-     indistinguishably unless the caller sets an explicit color per
-     child?
+  3. still open — does layering two children via `xy.chart(*marks)`
+     give them distinct colors automatically (like matplotlib's
+     shared-`Axes` default color cycle), or can two layered children
+     render indistinguishably unless the caller sets an explicit
+     color per child? Not blocking: `plotmux.layer()` works either
+     way, this only affects the *default* look when no child sets
+     `color`, which is the same unresolved default-style question as
+     the first bullet above.
 - `config.backend()`/`set_backend()` accept any string and only fail
   at render time via `get_backend`. Is that late failure acceptable,
   or should `set_backend`/`backend()` validate against the registry
   eagerly so a typo'd backend name fails at the call site instead of
   the next plot call?
-- Should `LayerSpec` allow nesting (a `LayerSpec` inside `layers`), or
-  should `__post_init__` reject that and require callers to flatten?
-  Nesting is natural to allow structurally but forces every backend's
-  `render_layer` to dispatch recursively instead of doing one flat
-  pass over `layers`.
+- ✅ resolved — `LayerSpec.__post_init__` rejects nesting (a
+  `LayerSpec` inside `layers` raises `ValueError`); callers must
+  flatten nested layers themselves. This keeps every backend's
+  `render_layer` a single flat pass over `layers` instead of forcing
+  recursive dispatch for a case with no current caller need (see
+  [4.8](#48-layering-multiple-specs-on-one-axes)).
 - `LayerSpec` does not validate that its children make sense together
   (see [4.8](#48-layering-multiple-specs-on-one-axes)). Should
   `plotmux.layer()` at least warn — not raise — on an obvious mismatch

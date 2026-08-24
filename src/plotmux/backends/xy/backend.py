@@ -12,10 +12,11 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from plotmux.backends.base import Backend
 from plotmux.backends.xy.histogram import render_histogram
+from plotmux.backends.xy.layer import render_layer
 from plotmux.backends.xy.line import render_line
 from plotmux.backends.xy.scatter import render_scatter
 from plotmux.backends.xy.style import apply_common_style
-from plotmux.specs import BaseSpec, HistogramSpec, LineSpec, ScatterSpec
+from plotmux.specs import BaseSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -40,6 +41,7 @@ class XyBackend(Backend):
         HistogramSpec: render_histogram,
         LineSpec: render_line,
         ScatterSpec: render_scatter,
+        LayerSpec: render_layer,
     }
 
     def render(self, spec: BaseSpec, **kwargs: Any) -> xy.Chart:
