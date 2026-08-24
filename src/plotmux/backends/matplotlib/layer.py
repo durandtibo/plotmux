@@ -6,6 +6,7 @@ __all__ = ["render_layer"]
 
 from typing import TYPE_CHECKING, Any
 
+from plotmux.backends.base import resolve_renderer
 from plotmux.backends.matplotlib.histogram import render_histogram
 from plotmux.backends.matplotlib.line import render_line
 from plotmux.backends.matplotlib.scatter import render_scatter
@@ -56,9 +57,6 @@ def render_layer(ax: Axes, spec: LayerSpec, **kwargs: Any) -> Axes:
             with no matplotlib renderer registered here.
     """
     for child in spec.layers:
-        renderer = _AX_RENDERERS.get(type(child))
-        if renderer is None:
-            msg = f"No matplotlib renderer registered for spec type {type(child)}"
-            raise NotImplementedError(msg)
+        renderer = resolve_renderer(_AX_RENDERERS, child, "matplotlib")
         renderer(ax, child, **kwargs)
     return ax

@@ -53,8 +53,9 @@ class HistogramSpec(BaseSpec):
             Inherited from ``BaseSpec``.
 
     Raises:
-        ValueError: if ``bins`` is not a positive integer or
-            ``color`` is not a valid color.
+        ValueError: if ``bins`` is not a positive integer,
+            ``color`` is not a valid color, or ``xmin`` and ``xmax``
+            are both explicit numeric values with ``xmin >= xmax``.
 
     Example:
         ```pycon
@@ -78,6 +79,19 @@ class HistogramSpec(BaseSpec):
     def __post_init__(self) -> None:
         if self.bins <= 0:
             msg = f"bins must be a positive integer, but received {self.bins}"
+            raise ValueError(msg)
+        # Only checked when both bounds are already explicit numbers: a
+        # quantile string (e.g. "q0.1") or ``None`` is resolved against the
+        # data later by ``find_range``, so it cannot be range-checked here.
+        if (
+            isinstance(self.xmin, (int, float))
+            and isinstance(self.xmax, (int, float))
+            and self.xmin >= self.xmax
+        ):
+            msg = (
+                f"xmin must be strictly less than xmax, but received "
+                f"xmin={self.xmin} and xmax={self.xmax}"
+            )
             raise ValueError(msg)
         if self.color is not None:
             # Normalize to the canonical RGBA representation once, here,

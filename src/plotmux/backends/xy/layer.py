@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 import xy
 
+from plotmux.backends.base import resolve_renderer
 from plotmux.backends.xy.histogram import render_histogram
 from plotmux.backends.xy.line import render_line
 from plotmux.backends.xy.scatter import render_scatter
@@ -57,9 +58,6 @@ def render_layer(spec: LayerSpec, **kwargs: Any) -> xy.Chart:
     """
     marks: list[Any] = []
     for child in spec.layers:
-        renderer = _MARK_RENDERERS.get(type(child))
-        if renderer is None:
-            msg = f"No xy renderer registered for spec type {type(child)}"
-            raise NotImplementedError(msg)
+        renderer = resolve_renderer(_MARK_RENDERERS, child, "xy")
         marks.extend(renderer(child, **kwargs).children)
     return xy.chart(*marks)

@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import matplotlib.pyplot as plt
 
-from plotmux.backends.base import Backend
+from plotmux.backends.base import Backend, check_export_format, resolve_renderer
 from plotmux.backends.matplotlib.histogram import render_histogram
 from plotmux.backends.matplotlib.layer import render_layer
 from plotmux.backends.matplotlib.line import render_line
@@ -91,10 +91,7 @@ class MatplotlibBackend(Backend):
             NotImplementedError: if there is no matplotlib renderer
                 registered for the type of ``spec``.
         """
-        renderer = self._RENDERERS.get(type(spec))
-        if renderer is None:
-            msg = f"No matplotlib renderer registered for spec type {type(spec)}"
-            raise NotImplementedError(msg)
+        renderer = resolve_renderer(self._RENDERERS, spec, self.name)
         return renderer(spec, **kwargs)
 
     def save(self, native: MplFigure, path: Path, fmt: str) -> None:
@@ -108,10 +105,5 @@ class MatplotlibBackend(Backend):
         Raises:
             ValueError: if ``fmt`` is not a supported export format.
         """
-        if fmt not in _SUPPORTED_FORMATS:
-            msg = (
-                f"Unsupported export format {fmt!r} for the matplotlib backend. "
-                f"Supported formats: {sorted(_SUPPORTED_FORMATS)}"
-            )
-            raise ValueError(msg)
+        check_export_format(fmt, _SUPPORTED_FORMATS, self.name)
         native.savefig(path, format=fmt)

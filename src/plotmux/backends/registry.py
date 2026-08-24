@@ -2,14 +2,22 @@ r"""Contain the registry of available rendering backends."""
 
 from __future__ import annotations
 
-__all__ = ["get_backend", "register_backend"]
+__all__ = ["ENTRY_POINT_GROUP", "get_backend", "load_entry_point_backends", "register_backend"]
 
+import contextlib
+from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from importlib.metadata import EntryPoint
+
     from plotmux.backends.base import Backend
 
 _REGISTRY: dict[str, Backend] = {}
+
+# The entry-point group third-party packages use to plug in a backend
+# without editing plotmux's source. See ``load_entry_point_backends``.
+ENTRY_POINT_GROUP = "plotmux.backends"
 
 
 def register_backend(backend: Backend) -> None:
@@ -60,3 +68,36 @@ def get_backend(name: str) -> Backend:
             f"Available backends: {available}"
         )
         raise RuntimeError(msg) from err
+
+
+def load_entry_point_backends() -> None:
+    r"""Import every backend advertised via the ``plotmux.backends``
+    entry-point group.
+
+    plotmux's own ``matplotlib`` and ``xy`` backends are wired in
+    directly (see ``plotmux.__init__``); this function is the plug-in
+    mechanism for *third-party* backends, so a separate package can
+    add a new backend without editing plotmux's source. To do so, a
+    package declares an entry point of the form::
+
+        [project.entry-points."plotmux.backends"]
+        my_backend = "my_package.plotmux_backend"
+
+    pointing at a module that calls ``register_backend(...)`` at
+    import time (the same pattern used by
+    ``plotmux.backends.matplotlib``/``plotmux.backends.xy``). Calling
+    this function imports every such module, which registers itself
+    as a side effect.
+
+    A module that fails to import (e.g. its own underlying plotting
+    library is not installed) is silently skipped, mirroring how the
+    built-in backends guard their own registration behind an
+    ``is_..._available()`` check.
+    """
+    for ep in entry_points(group=ENTRY_POINT_GROUP):
+        _load_entry_point(ep)
+
+
+def _load_entry_point(ep: EntryPoint) -> None:
+    with contextlib.suppress(ImportError):
+        ep.load()

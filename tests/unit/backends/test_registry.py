@@ -1,11 +1,18 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
+from unittest.mock import Mock, patch
 
 import pytest
 
 from plotmux.backends.base import Backend
-from plotmux.backends.registry import _REGISTRY, get_backend, register_backend
+from plotmux.backends.registry import (
+    _REGISTRY,
+    ENTRY_POINT_GROUP,
+    get_backend,
+    load_entry_point_backends,
+    register_backend,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -78,3 +85,39 @@ def test_get_backend_missing_lists_available() -> None:
     register_backend(FakeBackend())
     with pytest.raises(RuntimeError, match=r"Available backends: \['fake'\]"):
         get_backend("missing")
+
+
+##############################################
+#     Tests for load_entry_point_backends     #
+##############################################
+
+
+def test_load_entry_point_backends_queries_own_group() -> None:
+    with patch("plotmux.backends.registry.entry_points", return_value=[]) as mock_entry_points:
+        load_entry_point_backends()
+    mock_entry_points.assert_called_once_with(group=ENTRY_POINT_GROUP)
+
+
+def test_load_entry_point_backends_loads_each_entry_point() -> None:
+    ep1, ep2 = Mock(), Mock()
+    with patch("plotmux.backends.registry.entry_points", return_value=[ep1, ep2]):
+        load_entry_point_backends()
+    ep1.load.assert_called_once_with()
+    ep2.load.assert_called_once_with()
+
+
+def test_load_entry_point_backends_suppresses_import_error() -> None:
+    broken = Mock()
+    broken.load.side_effect = ImportError("underlying library not installed")
+    with patch("plotmux.backends.registry.entry_points", return_value=[broken]):
+        load_entry_point_backends()  # must not raise
+    broken.load.assert_called_once_with()
+
+
+def test_load_entry_point_backends_one_broken_does_not_block_others() -> None:
+    broken = Mock()
+    broken.load.side_effect = ImportError
+    ok = Mock()
+    with patch("plotmux.backends.registry.entry_points", return_value=[broken, ok]):
+        load_entry_point_backends()
+    ok.load.assert_called_once_with()
