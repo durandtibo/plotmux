@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from plotmux.backends.base import Backend
 from plotmux.backends.xy.histogram import render_histogram
+from plotmux.backends.xy.style import apply_common_style
 from plotmux.specs import BaseSpec, HistogramSpec
 
 if TYPE_CHECKING:
@@ -56,7 +57,7 @@ class XyBackend(Backend):
         if renderer is None:
             msg = f"No xy renderer registered for spec type {type(spec)}"
             raise NotImplementedError(msg)
-        return renderer(spec, **kwargs)
+        return apply_common_style(renderer(spec, **kwargs), spec)
 
     def save(self, native: xy.Chart, path: Path, fmt: str) -> None:
         r"""Export an xy ``Chart`` to a file.

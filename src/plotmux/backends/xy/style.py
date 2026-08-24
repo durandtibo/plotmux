@@ -6,7 +6,14 @@ This module is only imported when xy is installed (see
 
 from __future__ import annotations
 
-__all__ = ["rgba_to_xy"]
+__all__ = ["apply_common_style", "rgba_to_xy"]
+
+from typing import TYPE_CHECKING
+
+import xy
+
+if TYPE_CHECKING:
+    from plotmux.specs import BaseSpec
 
 
 def rgba_to_xy(color: tuple[float, float, float, float]) -> str:
@@ -37,3 +44,49 @@ def rgba_to_xy(color: tuple[float, float, float, float]) -> str:
     """
     r, g, b, a = color
     return f"rgba({round(r * 255)}, {round(g * 255)}, {round(b * 255)}, {a})"
+
+
+def apply_common_style(chart: xy.Chart, spec: BaseSpec) -> xy.Chart:
+    r"""Apply the common figure-level style fields onto an xy ``Chart``.
+
+    Applies ``title``/``xlabel``/``ylabel``/``xscale``/``yscale`` from
+    ``spec`` (defined on ``BaseSpec``, shared by every chart type).
+    Called once per backend, right after the chart-specific renderer
+    has built its ``Chart``, so a new chart type gets title/label/scale
+    support for free.
+
+    xy charts are structure-immutable (see ``xy.Chart.append``'s
+    docstring), so this builds a new ``Chart`` instead of mutating
+    ``chart`` in place: the existing children (the mark(s) already
+    drawn) are kept and an ``x_axis``/``y_axis`` pair carrying
+    ``xlabel``/``ylabel`` and ``xscale``/``yscale`` is appended.
+    Layout (``width``/``height``/``padding``/``data``) is copied over
+    unchanged from ``chart``; other constructor arguments (styling,
+    interaction, linking, ...) are intentionally not reflected off
+    ``chart`` here -- several (e.g. ``select``) are stored under a
+    private attribute name specifically because the public name
+    collides with a same-named ``Chart`` method, so generic
+    ``getattr`` introspection over ``xy.Chart``'s signature would
+    silently pick up the wrong (bound-method) value.
+
+    Args:
+        chart: The xy ``Chart`` to style.
+        spec: The spec whose common style fields to apply.
+
+    Returns:
+        A new ``Chart`` with the common style fields applied.
+    """
+    children = (
+        *chart.children,
+        xy.x_axis(label=spec.xlabel, type_=spec.xscale),
+        xy.y_axis(label=spec.ylabel, type_=spec.yscale),
+    )
+    return xy.Chart(
+        chart.kind,
+        children,
+        title=spec.title,
+        width=chart.width,
+        height=chart.height,
+        padding=chart.padding,
+        data=chart.data,
+    )

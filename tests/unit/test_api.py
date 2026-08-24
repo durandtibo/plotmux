@@ -30,3 +30,27 @@ def test_hist_explicit_xy_backend() -> None:
 def test_hist_unknown_backend_raises() -> None:
     with pytest.raises(RuntimeError, match="No backend registered"):
         plotmux.hist(np.arange(101), backend="does-not-exist")
+
+
+@matplotlib_available
+def test_hist_common_style() -> None:
+    fig = plotmux.hist(
+        np.arange(101),
+        bins=10,
+        title="t",
+        xlabel="x",
+        ylabel="y",
+        xscale="log",
+        yscale="log",
+    )
+    assert fig.spec.title == "t"
+    assert fig.spec.xlabel == "x"
+    assert fig.spec.ylabel == "y"
+    assert fig.spec.xscale == "log"
+    assert fig.spec.yscale == "log"
+    ax = fig.native.axes[0]
+    assert ax.get_title() == "t"
+    assert ax.get_xlabel() == "x"
+    assert ax.get_ylabel() == "y"
+    assert ax.get_xscale() == "log"
+    assert ax.get_yscale() == "log"

@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 
 from plotmux.backends.base import Backend
 from plotmux.backends.matplotlib.histogram import render_histogram
+from plotmux.backends.matplotlib.style import apply_common_style
 from plotmux.specs import BaseSpec, HistogramSpec
 
 if TYPE_CHECKING:
@@ -29,6 +30,7 @@ _SUPPORTED_FORMATS = frozenset({"png", "svg", "pdf", "jpg", "jpeg"})
 def _render_histogram(spec: HistogramSpec, **kwargs: Any) -> MplFigure:
     fig, ax = plt.subplots()
     render_histogram(ax, spec, **kwargs)
+    apply_common_style(ax, spec)
     return fig
 
 

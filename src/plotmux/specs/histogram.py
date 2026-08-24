@@ -42,6 +42,15 @@ class HistogramSpec(BaseSpec):
             backend's default color. See
             ``plotmux.colors.parse_color`` for the exact
             semantics.
+        title: An optional figure title. Inherited from ``BaseSpec``.
+        xlabel: An optional x-axis label. Inherited from
+            ``BaseSpec``.
+        ylabel: An optional y-axis label. Inherited from
+            ``BaseSpec``.
+        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
+            Inherited from ``BaseSpec``.
+        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+            Inherited from ``BaseSpec``.
 
     Raises:
         ValueError: if ``bins`` is not a positive integer or
