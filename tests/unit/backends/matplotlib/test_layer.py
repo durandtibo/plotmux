@@ -57,6 +57,38 @@ def test_render_layer_combined_legend() -> None:
 
 
 @matplotlib_available
+def test_render_layer_combined_legend_unlabeled_child_drawn_last() -> None:
+    # Regression test: the combined legend must reflect every labeled
+    # child regardless of draw order, not just rely on the last-drawn
+    # child happening to be the one that calls ``ax.legend()``.
+    fig, ax = plt.subplots()
+    spec = LayerSpec(
+        layers=(
+            LineSpec(x=np.arange(10), y=np.arange(10), label="line"),
+            ScatterSpec(x=np.arange(10), y=np.arange(10)),  # unlabeled, drawn last
+        )
+    )
+    render_layer(ax, spec)
+    labels = [text.get_text() for text in ax.get_legend().get_texts()]
+    assert labels == ["line"]
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_render_layer_no_labeled_child_has_no_legend() -> None:
+    fig, ax = plt.subplots()
+    spec = LayerSpec(
+        layers=(
+            LineSpec(x=np.arange(10), y=np.arange(10)),
+            ScatterSpec(x=np.arange(10), y=np.arange(10)),
+        )
+    )
+    render_layer(ax, spec)
+    assert ax.get_legend() is None
+    plt.close(fig)
+
+
+@matplotlib_available
 def test_render_layer_with_histogram() -> None:
     fig, ax = plt.subplots()
     spec = LayerSpec(

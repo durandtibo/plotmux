@@ -4,8 +4,18 @@ from __future__ import annotations
 
 __all__ = ["BaseSpec"]
 
+# ``_check_equal_length`` is a module-level helper, not a method on
+# ``BaseSpec``: unlike color, not every spec has an x/y pair (e.g.
+# ``HistogramSpec`` has neither), so it does not belong on the shared base
+# class the way ``_normalize_color`` does.
+
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
+
+from plotmux.colors import parse_color
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 @dataclass(frozen=True)
@@ -49,3 +59,51 @@ class BaseSpec:
     ylabel: str | None = field(default=None, kw_only=True)
     xscale: Literal["linear", "log"] = field(default="linear", kw_only=True)
     yscale: Literal["linear", "log"] = field(default="linear", kw_only=True)
+
+    def _normalize_color(self, name: str = "color") -> None:
+        r"""Normalize a ``str | tuple | None`` color field to its
+        canonical RGBA representation, in place.
+
+        Every color-carrying spec (``HistogramSpec``, ``LineSpec``,
+        ``ScatterSpec``, ...) repeats the same two lines in its own
+        ``__post_init__``: parse the field via ``parse_color`` and
+        write it back with ``object.__setattr__`` (required because
+        specs are frozen dataclasses). Factored here once so a new
+        color-carrying spec only has to call
+        ``self._normalize_color()`` from its own ``__post_init__``
+        rather than reimplementing this.
+
+        A field value of ``None`` is left untouched: it means "use
+        the backend's default color" and is meaningful on its own,
+        not something to normalize.
+
+        Args:
+            name: The name of the color field to normalize. Defaults
+                to ``"color"``, the name used by every current
+                color-carrying spec.
+
+        Raises:
+            ValueError: if the field's value is not a valid color.
+        """
+        value = getattr(self, name)
+        if value is not None:
+            object.__setattr__(self, name, parse_color(value))
+
+
+def _check_equal_length(x: np.ndarray, y: np.ndarray) -> None:
+    r"""Check that ``x`` and ``y`` have the same length.
+
+    Shared by every spec that pairs an ``x`` array with a ``y`` array
+    (``LineSpec``, ``ScatterSpec``, ...), so the check and its error
+    message are written once.
+
+    Args:
+        x: The array of x values.
+        y: The array of y values.
+
+    Raises:
+        ValueError: if ``x`` and ``y`` do not have the same length.
+    """
+    if x.shape[0] != y.shape[0]:
+        msg = f"x and y must have the same length, but received {x.shape[0]} and {y.shape[0]}"
+        raise ValueError(msg)

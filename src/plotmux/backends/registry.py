@@ -4,7 +4,7 @@ from __future__ import annotations
 
 __all__ = ["ENTRY_POINT_GROUP", "get_backend", "load_entry_point_backends", "register_backend"]
 
-import contextlib
+import warnings
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
 
@@ -89,15 +89,28 @@ def load_entry_point_backends() -> None:
     this function imports every such module, which registers itself
     as a side effect.
 
-    A module that fails to import (e.g. its own underlying plotting
-    library is not installed) is silently skipped, mirroring how the
-    built-in backends guard their own registration behind an
-    ``is_..._available()`` check.
+    A module that fails to import because its own underlying plotting
+    library is not installed (``ImportError``) is silently skipped,
+    mirroring how the built-in backends guard their own registration
+    behind an ``is_..._available()`` check. Any other exception raised
+    while loading a plugin (a bug in the plugin itself, e.g. a broken
+    ``register_backend(...)`` call) is caught and turned into a
+    warning instead of propagating: a broken third-party plugin must
+    never be able to crash ``import plotmux`` for every user, only
+    fail to register itself.
     """
     for ep in entry_points(group=ENTRY_POINT_GROUP):
         _load_entry_point(ep)
 
 
 def _load_entry_point(ep: EntryPoint) -> None:
-    with contextlib.suppress(ImportError):
+    try:
         ep.load()
+    except ImportError:
+        pass
+    except Exception as err:  # noqa: BLE001
+        msg = (
+            f"Skipping plotmux backend plugin {ep.name!r} ({ep.value}): "
+            f"it raised {err!r} while loading"
+        )
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)

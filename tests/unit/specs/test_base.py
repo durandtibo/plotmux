@@ -2,14 +2,23 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import numpy as np
 import pytest
 
-from plotmux.specs.base import BaseSpec
+from plotmux.specs.base import BaseSpec, _check_equal_length
 
 
 @dataclass(frozen=True)
 class FakeSpec(BaseSpec):
     value: int = 0
+
+
+@dataclass(frozen=True)
+class FakeColorSpec(BaseSpec):
+    color: str | tuple[float, ...] | None = None
+
+    def __post_init__(self) -> None:
+        self._normalize_color()
 
 
 ###############################
@@ -67,3 +76,47 @@ def test_base_spec_equality() -> None:
 
 def test_base_spec_inequality_on_style() -> None:
     assert FakeSpec(value=1, title="a") != FakeSpec(value=1, title="b")
+
+
+##########################################
+#     Tests for BaseSpec._normalize_color     #
+##########################################
+
+
+def test_normalize_color_leaves_none_untouched() -> None:
+    spec = FakeColorSpec(color=None)
+    assert spec.color is None
+
+
+def test_normalize_color_parses_hex_string() -> None:
+    spec = FakeColorSpec(color="#ff0000")
+    assert spec.color == (1.0, 0.0, 0.0, 1.0)
+
+
+def test_normalize_color_parses_named_color() -> None:
+    spec = FakeColorSpec(color="tab:blue")
+    assert spec.color == pytest.approx((31 / 255, 119 / 255, 180 / 255, 1.0))
+
+
+def test_normalize_color_parses_rgb_tuple() -> None:
+    spec = FakeColorSpec(color=(0.5, 0.5, 0.5))
+    assert spec.color == (0.5, 0.5, 0.5, 1.0)
+
+
+def test_normalize_color_invalid_color_raises() -> None:
+    with pytest.raises(ValueError, match="Invalid color"):
+        FakeColorSpec(color="not-a-color")
+
+
+##############################################
+#     Tests for _check_equal_length     #
+##############################################
+
+
+def test_check_equal_length_same_length_does_not_raise() -> None:
+    _check_equal_length(np.arange(5), np.arange(5))
+
+
+def test_check_equal_length_different_length_raises() -> None:
+    with pytest.raises(ValueError, match="x and y must have the same length"):
+        _check_equal_length(np.arange(5), np.arange(3))

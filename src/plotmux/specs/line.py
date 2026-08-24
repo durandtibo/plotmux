@@ -7,8 +7,7 @@ __all__ = ["LineSpec"]
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from plotmux.colors import parse_color
-from plotmux.specs.base import BaseSpec
+from plotmux.specs.base import BaseSpec, _check_equal_length
 
 if TYPE_CHECKING:
     import numpy as np
@@ -51,14 +50,5 @@ class LineSpec(BaseSpec):
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
 
     def __post_init__(self) -> None:
-        if self.x.shape[0] != self.y.shape[0]:
-            msg = (
-                f"x and y must have the same length, but received "
-                f"{self.x.shape[0]} and {self.y.shape[0]}"
-            )
-            raise ValueError(msg)
-        if self.color is not None:
-            # Normalize to the canonical RGBA representation once, here,
-            # so every backend receives an already-validated ``parse_color``
-            # output and never has to parse a raw color itself.
-            object.__setattr__(self, "color", parse_color(self.color))
+        _check_equal_length(self.x, self.y)
+        self._normalize_color()

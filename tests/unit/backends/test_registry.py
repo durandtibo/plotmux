@@ -121,3 +121,30 @@ def test_load_entry_point_backends_one_broken_does_not_block_others() -> None:
     with patch("plotmux.backends.registry.entry_points", return_value=[broken, ok]):
         load_entry_point_backends()
     ok.load.assert_called_once_with()
+
+
+def test_load_entry_point_backends_warns_on_non_import_error() -> None:
+    broken = Mock()
+    broken.name = "broken"
+    broken.value = "broken.module"
+    broken.load.side_effect = AttributeError("boom")
+    with (
+        patch("plotmux.backends.registry.entry_points", return_value=[broken]),
+        pytest.warns(RuntimeWarning, match="broken"),
+    ):
+        load_entry_point_backends()  # must not raise
+    broken.load.assert_called_once_with()
+
+
+def test_load_entry_point_backends_non_import_error_does_not_block_others() -> None:
+    broken = Mock()
+    broken.name = "broken"
+    broken.value = "broken.module"
+    broken.load.side_effect = RuntimeError("boom")
+    ok = Mock()
+    with (
+        patch("plotmux.backends.registry.entry_points", return_value=[broken, ok]),
+        pytest.warns(RuntimeWarning),
+    ):
+        load_entry_point_backends()
+    ok.load.assert_called_once_with()
