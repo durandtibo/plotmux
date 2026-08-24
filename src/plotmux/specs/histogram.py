@@ -7,8 +7,8 @@ __all__ = ["HistogramSpec"]
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from plotmux.core.color import parse_color
-from plotmux.core.specs.base import BaseSpec
+from plotmux.colors import parse_color
+from plotmux.specs.base import BaseSpec
 
 if TYPE_CHECKING:
     import numpy as np
@@ -40,7 +40,7 @@ class HistogramSpec(BaseSpec):
             CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
             RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
             backend's default color. See
-            ``plotmux.core.color.parse_color`` for the exact
+            ``plotmux.colors.parse_color`` for the exact
             semantics.
 
     Raises:
@@ -50,7 +50,7 @@ class HistogramSpec(BaseSpec):
     Example:
         ```pycon
         >>> import numpy as np
-        >>> from plotmux.core.specs import HistogramSpec
+        >>> from plotmux.specs import HistogramSpec
         >>> spec = HistogramSpec(values=np.arange(101), bins=10)
         >>> spec.bins
         10

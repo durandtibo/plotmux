@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from plotmux.core.specs import HistogramSpec
+from plotmux.specs import HistogramSpec
 
 
 def test_histogram_spec_defaults() -> None:

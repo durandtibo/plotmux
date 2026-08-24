@@ -12,7 +12,7 @@ from plotmux.backends.xy.style import rgba_to_xy
 from plotmux.core.range import find_range
 
 if TYPE_CHECKING:
-    from plotmux.core.specs import HistogramSpec
+    from plotmux.specs import HistogramSpec
 
 
 def render_histogram(spec: HistogramSpec, **kwargs: Any) -> xy.Chart:

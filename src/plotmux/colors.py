@@ -36,7 +36,7 @@ def parse_color(
 
     Example:
         ```pycon
-        >>> from plotmux.core.color import parse_color
+        >>> from plotmux.colors import parse_color
         >>> parse_color("#ff0000")
         (1.0, 0.0, 0.0, 1.0)
         >>> parse_color((0.5, 0.5, 0.5))

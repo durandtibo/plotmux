@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from plotmux.core.specs import BaseSpec
+    from plotmux.specs import BaseSpec
 
 
 class Backend(ABC):

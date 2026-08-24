@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from plotmux.core.color import parse_color
+from plotmux.colors import parse_color
 
 
 def test_parse_color_hex_rgb() -> None:

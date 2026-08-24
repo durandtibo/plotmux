@@ -7,8 +7,8 @@ import pytest
 
 from plotmux.backends.base import Backend
 from plotmux.backends.registry import _REGISTRY, register_backend
-from plotmux.core.specs import HistogramSpec
 from plotmux.figure import Figure
+from plotmux.specs import HistogramSpec
 
 if TYPE_CHECKING:
     from pathlib import Path
