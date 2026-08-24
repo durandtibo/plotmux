@@ -86,6 +86,8 @@ src/plotmux/
 │   └── imports/                 # one module per optional backend dep
 │                                 # (matplotlib.py, xy.py)
 ├── colors.py                    # parse_color()
+│                                 # -> becomes colors/ package, 🚧 planned,
+│                                 #    see 4.9.1 and Build order step 11
 ├── specs/
 │   ├── base.py                  # BaseSpec (title/xlabel/ylabel/xscale/yscale)
 │   ├── histogram.py             # HistogramSpec
@@ -593,6 +595,43 @@ from its own default cycle when children share an `Axes` (see
 agreed cross-backend cycle vocabulary yet, so it's out of scope for
 this section, which only covers a user setting one explicit `color`.
 
+#### 4.9.1 Predefined colors — 🚧 planned
+
+`colors.py` becomes a `colors/` package (see [Build order,
+step 11](#6-build-order)) so a shared, backend-agnostic set of
+predefined colors has a home next to `parse_color` instead of being
+invented independently by each backend or left for users to hardcode
+hex strings:
+
+```
+src/plotmux/colors/
+├── __init__.py   # re-exports parse_color, the predefined names/palette
+├── parser.py     # parse_color() (moved from colors.py as-is)
+└── palette.py    # predefined named colors + a default categorical palette
+```
+
+`palette.py` defines a small, fixed set of named colors (e.g.
+`PRIMARY`, `SECONDARY`, ...) and a default categorical palette (an
+ordered tuple of colors, e.g. `DEFAULT_PALETTE`), each already a
+`parse_color`-normalized RGBA tuple, so callers and backends never
+need to re-parse them. This is the same "canonical input, one parser,
+reused everywhere" pattern as [4.9](#49-specifying-colors-across-backends)
+— `parse_color` stays the only place that understands hex/named/tuple
+input, `palette.py` just supplies values that already went through it.
+
+This is the concrete mechanism for the *default*-color-cycle open
+question raised in [4.9](#49-specifying-colors-across-backends) and
+[Open questions](#7-open-questions): a `LayerSpec` (or a future
+multi-series spec) with children that set no explicit `color` can pull
+successive entries from `DEFAULT_PALETTE`, giving every backend the
+same default look instead of only matplotlib getting one for free from
+its own cycle. Whether that assignment happens in `specs/layer.py`
+(so it's backend-independent, consistent with
+[3.1](#31-principle-separate-spec-from-render)) or per backend is left
+to when this step is implemented; either way, `palette.py` itself
+stays backend-agnostic — it holds RGBA tuples, not matplotlib or xy
+objects.
+
 ## 5. Why this shape
 
 - **Works for any backend, not just today's two**: nothing outside a
@@ -669,10 +708,23 @@ this section, which only covers a user setting one explicit `color`.
     driving the full `plotmux.hist()`/... -> `Figure.save()` ->
     `export.save()` -> `Backend.save()` pipeline end to end and
     asserting the file exists and is non-empty.
-11. 🚧 A third backend (see [6.1](#61-candidate-future-backends)) once
-    two chart types, colors, and layering exist on both current
-    backends, to confirm the abstraction still holds under more
-    surface area.
+11. 🚧 Convert `colors.py` into a `colors/` package
+    (`colors/__init__.py` re-exporting `parse_color` so
+    `from plotmux.colors import parse_color` keeps working, plus a new
+    `colors/palette.py`) and add a small set of predefined colors
+    there (e.g. a default categorical palette / color cycle) that
+    every backend can draw on — see
+    [4.9.1](#491-predefined-colors--planned). Ships after layering
+    (step 9) since a shared default palette is what step 9's "distinct
+    colors per layer without an explicit `color`" open question (see
+    [Open questions](#7-open-questions)) actually needs, and before a
+    third backend (step 12) so that backend gets the palette for free
+    instead of needing a follow-up migration, same rationale as
+    ordering step 7 before step 8.
+12. 🚧 A third backend (see [6.1](#61-candidate-future-backends)) once
+    two chart types, colors, predefined colors, and layering exist on
+    both current backends, to confirm the abstraction still holds
+    under more surface area.
 
 ### 6.1 Candidate future backends
 
@@ -716,7 +768,10 @@ should be driven by actual user requests, not by this list.
   pattern, or live on `config.py` as a global theme instead? Per-spec
   fields are simple but don't let a user set
   one palette for a whole session the way `set_backend` sets one
-  backend for a whole session.
+  backend for a whole session. The predefined-colors package (see
+  [4.9.1](#491-predefined-colors--planned)) supplies the *values* for
+  a default palette either way; this question is only about where the
+  *assignment* of palette entries to series/layers is decided.
 - `colors.py::parse_color` resolves named colors via
   `matplotlib.colors.to_rgba`, gated by `check_matplotlib()`, so this
   works even when the matplotlib *backend* is unavailable — but it
