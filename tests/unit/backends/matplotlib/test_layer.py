@@ -12,6 +12,10 @@ if is_matplotlib_available():
 
     from plotmux.backends.matplotlib.layer import render_layer
 
+##################################
+#     Tests for render_layer     #
+##################################
+
 
 @matplotlib_available
 def test_render_layer_returns_axes() -> None:
@@ -64,6 +68,29 @@ def test_render_layer_with_histogram() -> None:
     render_layer(ax, spec)
     assert len(ax.patches) == 10
     assert len(ax.lines) == 1
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_render_layer_single_child() -> None:
+    fig, ax = plt.subplots()
+    spec = LayerSpec(layers=(ScatterSpec(x=np.arange(10), y=np.arange(10)),))
+    render_layer(ax, spec)
+    assert len(ax.collections) == 1
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_render_layer_forwards_kwargs_to_every_child() -> None:
+    fig, ax = plt.subplots()
+    spec = LayerSpec(
+        layers=(
+            LineSpec(x=np.arange(10), y=np.arange(10)),
+            LineSpec(x=np.arange(10), y=np.arange(10) + 1),
+        )
+    )
+    render_layer(ax, spec, linewidth=5)
+    assert all(line.get_linewidth() == 5 for line in ax.lines)
     plt.close(fig)
 
 

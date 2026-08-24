@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import logging
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -11,8 +10,6 @@ from plotmux.utils.imports import (
     matplotlib_available,
     raise_matplotlib_missing_error,
 )
-
-logger = logging.getLogger(__name__)
 
 MODULE = "plotmux.utils.imports.matplotlib"
 
@@ -26,9 +23,9 @@ def my_function(n: int = 0) -> int:
     return 42 + n
 
 
-######################
-#     matplotlib     #
-######################
+#####################################
+#     Tests for check_matplotlib     #
+#####################################
 
 
 def test_check_matplotlib_with_package() -> None:
@@ -44,8 +41,25 @@ def test_check_matplotlib_without_package() -> None:
         check_matplotlib()
 
 
-def test_is_matplotlib_available() -> None:
+##########################################
+#     Tests for is_matplotlib_available     #
+##########################################
+
+
+def test_is_matplotlib_available_returns_bool() -> None:
     assert isinstance(is_matplotlib_available(), bool)
+
+
+def test_is_matplotlib_available_is_cached() -> None:
+    with patch(f"{MODULE}.package_available", Mock(return_value=True)) as mock_package_available:
+        is_matplotlib_available()
+        is_matplotlib_available()
+        assert mock_package_available.call_count == 1
+
+
+#########################################
+#     Tests for matplotlib_available     #
+#########################################
 
 
 def test_matplotlib_available_with_package() -> None:
@@ -80,6 +94,16 @@ def test_matplotlib_available_decorator_without_package() -> None:
         assert fn(2) is None
 
 
+####################################################
+#     Tests for raise_matplotlib_missing_error     #
+####################################################
+
+
 def test_raise_matplotlib_missing_error() -> None:
     with pytest.raises(RuntimeError, match=r"'matplotlib' package is required but not installed."):
+        raise_matplotlib_missing_error()
+
+
+def test_raise_matplotlib_missing_error_mentions_pip_install() -> None:
+    with pytest.raises(RuntimeError, match=r"pip install matplotlib"):
         raise_matplotlib_missing_error()

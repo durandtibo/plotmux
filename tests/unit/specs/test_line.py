@@ -5,6 +5,10 @@ import pytest
 
 from plotmux.specs import LineSpec
 
+###############################
+#     Tests for LineSpec     #
+###############################
+
 
 def test_line_spec_defaults() -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10))
@@ -16,6 +20,20 @@ def test_line_spec_custom() -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10), label="my-line", color="#ff0000")
     assert spec.label == "my-line"
     assert spec.color == (1.0, 0.0, 0.0, 1.0)
+
+
+def test_line_spec_empty_arrays() -> None:
+    spec = LineSpec(x=np.array([]), y=np.array([]))
+    assert spec.x.shape == (0,)
+    assert spec.y.shape == (0,)
+
+
+def test_line_spec_single_point() -> None:
+    spec = LineSpec(x=np.array([1.0]), y=np.array([2.0]))
+    assert spec.x.shape == (1,)
+
+
+# --- color parsing ---
 
 
 def test_line_spec_color_named() -> None:
@@ -33,15 +51,7 @@ def test_line_spec_invalid_color() -> None:
         LineSpec(x=np.arange(10), y=np.arange(10), color="not-a-color")
 
 
-def test_line_spec_is_frozen() -> None:
-    spec = LineSpec(x=np.arange(10), y=np.arange(10))
-    with pytest.raises(AttributeError):
-        spec.label = "new-label"
-
-
-def test_line_spec_mismatched_length() -> None:
-    with pytest.raises(ValueError, match="x and y must have the same length"):
-        LineSpec(x=np.arange(10), y=np.arange(5))
+# --- common style ---
 
 
 def test_line_spec_common_style() -> None:
@@ -59,3 +69,25 @@ def test_line_spec_common_style() -> None:
     assert spec.ylabel == "y"
     assert spec.xscale == "log"
     assert spec.yscale == "log"
+
+
+# --- frozen / error cases ---
+
+
+def test_line_spec_is_frozen() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10))
+    with pytest.raises(AttributeError):
+        spec.label = "new-label"
+
+
+@pytest.mark.parametrize(
+    ("x", "y"),
+    [
+        pytest.param(np.arange(10), np.arange(5), id="y_shorter"),
+        pytest.param(np.arange(5), np.arange(10), id="x_shorter"),
+        pytest.param(np.arange(1), np.array([]), id="y_empty"),
+    ],
+)
+def test_line_spec_mismatched_length(x: np.ndarray, y: np.ndarray) -> None:
+    with pytest.raises(ValueError, match="x and y must have the same length"):
+        LineSpec(x=x, y=y)

@@ -7,6 +7,10 @@ import plotmux
 from plotmux.specs import HistogramSpec, LayerSpec, LineSpec, ScatterSpec
 from plotmux.testing.fixtures import matplotlib_available, xy_available
 
+##########################
+#     Tests for hist     #
+##########################
+
 
 @matplotlib_available
 def test_hist_returns_figure_with_matplotlib_backend() -> None:
@@ -34,6 +38,14 @@ def test_hist_unknown_backend_raises() -> None:
 
 
 @matplotlib_available
+def test_hist_default_kwargs() -> None:
+    fig = plotmux.hist(np.arange(101))
+    assert fig.spec.bins == 30
+    assert fig.spec.density is False
+    assert fig.spec.color is None
+
+
+@matplotlib_available
 def test_hist_common_style() -> None:
     fig = plotmux.hist(
         np.arange(101),
@@ -55,6 +67,11 @@ def test_hist_common_style() -> None:
     assert ax.get_ylabel() == "y"
     assert ax.get_xscale() == "log"
     assert ax.get_yscale() == "log"
+
+
+##########################
+#     Tests for line     #
+##########################
 
 
 @matplotlib_available
@@ -79,6 +96,11 @@ def test_line_unknown_backend_raises() -> None:
 def test_line_mismatched_length_raises() -> None:
     with pytest.raises(ValueError, match="x and y must have the same length"):
         plotmux.line(np.arange(10), np.arange(5))
+
+
+#############################
+#     Tests for scatter     #
+#############################
 
 
 @matplotlib_available
@@ -106,6 +128,17 @@ def test_scatter_mismatched_length_raises() -> None:
 
 
 @matplotlib_available
+def test_scatter_invalid_size_raises() -> None:
+    with pytest.raises(ValueError, match="size must be a positive number"):
+        plotmux.scatter(np.arange(10), np.arange(10), size=-1.0)
+
+
+###########################
+#     Tests for layer     #
+###########################
+
+
+@matplotlib_available
 def test_layer_returns_figure_with_matplotlib_backend() -> None:
     fig = plotmux.layer(
         HistogramSpec(values=np.arange(101), bins=10),
@@ -129,6 +162,12 @@ def test_layer_accepts_figure_items() -> None:
     assert len(ax.collections) == 1
 
 
+@matplotlib_available
+def test_layer_single_item() -> None:
+    fig = plotmux.layer(LineSpec(x=np.arange(10), y=np.arange(10)))
+    assert len(fig.spec.layers) == 1
+
+
 @xy_available
 def test_layer_explicit_xy_backend() -> None:
     fig = plotmux.layer(
@@ -150,6 +189,13 @@ def test_layer_unknown_backend_raises() -> None:
 def test_layer_empty_raises() -> None:
     with pytest.raises(ValueError, match="layers must contain at least one spec"):
         plotmux.layer()
+
+
+@matplotlib_available
+def test_layer_nested_layer_item_raises() -> None:
+    inner = plotmux.layer(LineSpec(x=np.arange(10), y=np.arange(10)))
+    with pytest.raises(ValueError, match="layers must not contain a LayerSpec"):
+        plotmux.layer(inner)
 
 
 @matplotlib_available

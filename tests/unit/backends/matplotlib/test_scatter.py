@@ -11,6 +11,10 @@ if is_matplotlib_available():
 
     from plotmux.backends.matplotlib.scatter import render_scatter
 
+####################################
+#     Tests for render_scatter     #
+####################################
+
 
 @matplotlib_available
 def test_render_scatter_returns_axes() -> None:
@@ -54,4 +58,31 @@ def test_render_scatter_size() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), size=42.0)
     render_scatter(ax, spec)
     assert (ax.collections[0].get_sizes() == 42.0).all()
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_render_scatter_no_size_uses_backend_default() -> None:
+    fig, ax = plt.subplots()
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
+    render_scatter(ax, spec)
+    assert len(ax.collections[0].get_sizes()) > 0
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_render_scatter_color() -> None:
+    fig, ax = plt.subplots()
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red")
+    render_scatter(ax, spec)
+    assert tuple(ax.collections[0].get_facecolor()[0]) == (1.0, 0.0, 0.0, 1.0)
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_render_scatter_forwards_kwargs() -> None:
+    fig, ax = plt.subplots()
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
+    render_scatter(ax, spec, alpha=0.3)
+    assert ax.collections[0].get_alpha() == 0.3
     plt.close(fig)

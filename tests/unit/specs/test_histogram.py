@@ -5,6 +5,10 @@ import pytest
 
 from plotmux.specs import HistogramSpec
 
+####################################
+#     Tests for HistogramSpec     #
+####################################
+
 
 def test_histogram_spec_defaults() -> None:
     spec = HistogramSpec(values=np.arange(101))
@@ -34,6 +38,18 @@ def test_histogram_spec_custom() -> None:
     assert spec.color == (1.0, 0.0, 0.0, 1.0)
 
 
+def test_histogram_spec_empty_values() -> None:
+    spec = HistogramSpec(values=np.array([]))
+    assert spec.values.size == 0
+
+
+def test_histogram_spec_bins_boundary_one() -> None:
+    assert HistogramSpec(values=np.arange(101), bins=1).bins == 1
+
+
+# --- color parsing ---
+
+
 def test_histogram_spec_color_named() -> None:
     spec = HistogramSpec(values=np.arange(101), color="red")
     assert spec.color == (1.0, 0.0, 0.0, 1.0)
@@ -47,6 +63,28 @@ def test_histogram_spec_color_rgba_tuple() -> None:
 def test_histogram_spec_invalid_color() -> None:
     with pytest.raises(ValueError, match="Invalid color"):
         HistogramSpec(values=np.arange(101), color="not-a-color")
+
+
+# --- common style ---
+
+
+def test_histogram_spec_common_style() -> None:
+    spec = HistogramSpec(
+        values=np.arange(101),
+        title="t",
+        xlabel="x",
+        ylabel="y",
+        xscale="log",
+        yscale="log",
+    )
+    assert spec.title == "t"
+    assert spec.xlabel == "x"
+    assert spec.ylabel == "y"
+    assert spec.xscale == "log"
+    assert spec.yscale == "log"
+
+
+# --- frozen / error cases ---
 
 
 def test_histogram_spec_is_frozen() -> None:

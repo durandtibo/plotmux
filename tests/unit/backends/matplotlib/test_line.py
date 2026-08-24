@@ -11,6 +11,10 @@ if is_matplotlib_available():
 
     from plotmux.backends.matplotlib.line import render_line
 
+#################################
+#     Tests for render_line     #
+#################################
+
 
 @matplotlib_available
 def test_render_line_returns_axes() -> None:
@@ -54,4 +58,22 @@ def test_render_line_color() -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10), color="red")
     render_line(ax, spec)
     assert ax.lines[0].get_color() == (1.0, 0.0, 0.0, 1.0)
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_render_line_no_color_uses_backend_default() -> None:
+    fig, ax = plt.subplots()
+    spec = LineSpec(x=np.arange(10), y=np.arange(10))
+    render_line(ax, spec)
+    assert ax.lines[0].get_color() is not None
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_render_line_forwards_kwargs() -> None:
+    fig, ax = plt.subplots()
+    spec = LineSpec(x=np.arange(10), y=np.arange(10))
+    render_line(ax, spec, linestyle="--")
+    assert ax.lines[0].get_linestyle() == "--"
     plt.close(fig)

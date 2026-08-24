@@ -3,6 +3,10 @@ from __future__ import annotations
 from plotmux.colors import DEFAULT_PALETTE, PRIMARY, SECONDARY, TERTIARY
 from plotmux.colors.parser import parse_color
 
+#####################################
+#     Tests for DEFAULT_PALETTE     #
+#####################################
+
 
 def test_default_palette_is_nonempty() -> None:
     assert len(DEFAULT_PALETTE) > 0
@@ -18,5 +22,26 @@ def test_default_palette_starts_with_primary_secondary_tertiary() -> None:
     assert DEFAULT_PALETTE[:3] == (PRIMARY, SECONDARY, TERTIARY)
 
 
+def test_default_palette_entries_are_unique() -> None:
+    assert len(set(DEFAULT_PALETTE)) == len(DEFAULT_PALETTE)
+
+
+def test_default_palette_is_tuple() -> None:
+    assert isinstance(DEFAULT_PALETTE, tuple)
+
+
+##########################################
+#     Tests for named color constants     #
+##########################################
+
+
 def test_primary_is_already_parsed() -> None:
     assert parse_color("tab:blue") == PRIMARY
+
+
+def test_secondary_is_already_parsed() -> None:
+    assert parse_color("tab:orange") == SECONDARY
+
+
+def test_tertiary_is_already_parsed() -> None:
+    assert parse_color("tab:green") == TERTIARY
