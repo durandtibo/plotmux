@@ -57,6 +57,14 @@ def test_figure_show_unsupported_native() -> None:
         fig.show()
 
 
+def test_figure_backend_returns_registered_backend() -> None:
+    fake_backend = FakeBackend()
+    register_backend(fake_backend)
+    spec = HistogramSpec(values=[1, 2, 3])
+    fig = Figure(spec=spec, backend_name="fake", native="native-object")
+    assert fig._backend() is fake_backend
+
+
 def test_figure_save(tmp_path: Path) -> None:
     fake_backend = FakeBackend()
     register_backend(fake_backend)
