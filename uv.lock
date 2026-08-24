@@ -2740,7 +2740,7 @@ docs = [
     { name = "mkdocstrings", extras = ["python"], specifier = ">=1.0,<2.0" },
 ]
 jupyter = [
-    { name = "ipykernel", specifier = ">=6.30,<8.0" },
+    { name = "ipykernel", specifier = ">=7.0,<8.0" },
     { name = "jupyterlab", specifier = ">=4.5,<5.0" },
     { name = "nbstripout", specifier = ">=0.9,<1.0" },
 ]
