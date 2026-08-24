@@ -12,7 +12,7 @@ from __future__ import annotations
 
 __all__ = ["parse_color"]
 
-from plotmux.utils.imports.matplotlib import check_matplotlib
+from plotmux.colors.named import NAMED_COLORS
 
 
 def parse_color(
@@ -56,19 +56,14 @@ def _parse_str(color: str) -> tuple[float, float, float, float]:
     if color.startswith("#"):
         return _parse_hex(color)
     # Named colors (CSS4 and matplotlib's own "tab:blue"-style names) are
-    # validated against matplotlib's static color tables. This only
-    # requires matplotlib to be *installed*, not the matplotlib backend
-    # to be registered, so it works regardless of which backend is
-    # active.
-    check_matplotlib()
-    from matplotlib.colors import to_rgba  # noqa: PLC0415
-
+    # validated against a static color table bundled with plotmux (see
+    # ``plotmux.colors.named``), mirroring matplotlib's own color tables.
+    # This works whether or not matplotlib is installed.
     try:
-        r, g, b, a = to_rgba(color)
-    except (ValueError, KeyError) as err:
+        return NAMED_COLORS[color.lower()]
+    except KeyError as err:
         msg = f"Invalid color {color!r}: unknown named color or malformed hex string"
         raise ValueError(msg) from err
-    return (r, g, b, a)
 
 
 def _parse_hex(value: str) -> tuple[float, float, float, float]:
