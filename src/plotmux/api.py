@@ -2,7 +2,7 @@ r"""Contain the public plotting API."""
 
 from __future__ import annotations
 
-__all__ = ["hist", "line", "scatter"]
+__all__ = ["hist", "layer", "line", "scatter"]
 
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -11,7 +11,7 @@ import numpy as np
 from plotmux.backends.registry import get_backend
 from plotmux.config import get_default_backend
 from plotmux.figure import Figure
-from plotmux.specs import HistogramSpec, LineSpec, ScatterSpec
+from plotmux.specs import BaseSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -215,6 +215,68 @@ def scatter(
         label=label,
         color=color,
         size=size,
+        title=title,
+        xlabel=xlabel,
+        ylabel=ylabel,
+        xscale=xscale,
+        yscale=yscale,
+    )
+    backend_name = backend or get_default_backend()
+    native = get_backend(backend_name).render(spec, **kwargs)
+    return Figure(spec=spec, backend_name=backend_name, native=native)
+
+
+def layer(
+    *items: BaseSpec | Figure,
+    title: str | None = None,
+    xlabel: str | None = None,
+    ylabel: str | None = None,
+    xscale: Literal["linear", "log"] = "linear",
+    yscale: Literal["linear", "log"] = "linear",
+    backend: str | None = None,
+    **kwargs: Any,
+) -> Figure:
+    r"""Combine specs (or already-rendered ``Figure``s) onto one
+    shared axes.
+
+    Args:
+        *items: The child specs to draw together, in draw order. A
+            ``Figure`` (e.g. one returned by ``plotmux.line(...)``)
+            is accepted as shorthand for its ``.spec``: only the spec
+            is reused, the earlier native figure is discarded and
+            everything is re-rendered together, since two independent
+            native figures can't be merged after the fact in either
+            backend.
+        title: An optional figure title, describing the combined
+            axes (not any individual child).
+        xlabel: An optional x-axis label.
+        ylabel: An optional y-axis label.
+        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
+        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+        backend: The name of the backend to use to render the
+            figure, or ``None`` to use the current default backend
+            (see ``plotmux.set_backend``).
+        **kwargs: Additional backend-specific keyword arguments,
+            forwarded to every child's renderer call.
+
+    Returns:
+        The rendered figure.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> import plotmux
+        >>> from plotmux.specs import HistogramSpec
+        >>> fig = plotmux.layer(
+        ...     HistogramSpec(values=np.arange(101), bins=10),
+        ...     plotmux.line([0, 100], [0, 5]),
+        ... )  # doctest: +SKIP
+
+        ```
+    """
+    layers = tuple(item.spec if isinstance(item, Figure) else item for item in items)
+    spec = LayerSpec(
+        layers=layers,
         title=title,
         xlabel=xlabel,
         ylabel=ylabel,

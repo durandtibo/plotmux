@@ -15,10 +15,11 @@ import matplotlib.pyplot as plt
 
 from plotmux.backends.base import Backend
 from plotmux.backends.matplotlib.histogram import render_histogram
+from plotmux.backends.matplotlib.layer import render_layer
 from plotmux.backends.matplotlib.line import render_line
 from plotmux.backends.matplotlib.scatter import render_scatter
 from plotmux.backends.matplotlib.style import apply_common_style
-from plotmux.specs import BaseSpec, HistogramSpec, LineSpec, ScatterSpec
+from plotmux.specs import BaseSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -50,6 +51,13 @@ def _render_scatter(spec: ScatterSpec, **kwargs: Any) -> MplFigure:
     return fig
 
 
+def _render_layer(spec: LayerSpec, **kwargs: Any) -> MplFigure:
+    fig, ax = plt.subplots()
+    render_layer(ax, spec, **kwargs)
+    apply_common_style(ax, spec)
+    return fig
+
+
 class MatplotlibBackend(Backend):
     r"""Implement the matplotlib rendering backend.
 
@@ -64,6 +72,7 @@ class MatplotlibBackend(Backend):
         HistogramSpec: _render_histogram,
         LineSpec: _render_line,
         ScatterSpec: _render_scatter,
+        LayerSpec: _render_layer,
     }
 
     def render(self, spec: BaseSpec, **kwargs: Any) -> MplFigure:

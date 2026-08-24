@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from plotmux.specs import HistogramSpec, LineSpec, ScatterSpec
+from plotmux.specs import HistogramSpec, LayerSpec, LineSpec, ScatterSpec
 from plotmux.testing.fixtures import xy_available
 from plotmux.utils.imports import is_xy_available
 
@@ -49,6 +49,19 @@ def test_xy_backend_render_scatter(backend) -> None:  # noqa: ANN001
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10) ** 2)
     native = backend.render(spec)
     assert isinstance(native, Chart)
+
+
+@xy_available
+def test_xy_backend_render_layer(backend) -> None:  # noqa: ANN001
+    spec = LayerSpec(
+        layers=(
+            LineSpec(x=np.arange(10), y=np.arange(10) ** 2),
+            ScatterSpec(x=np.arange(10), y=np.arange(10) ** 2),
+        )
+    )
+    native = backend.render(spec)
+    assert isinstance(native, Chart)
+    assert len(native.children) == 2 + 2  # 2 marks + x_axis + y_axis
 
 
 @xy_available
