@@ -4,11 +4,12 @@ Status: in progress — core abstraction, four chart specs (histogram,
 line, scatter, layer), two backends (matplotlib, xy), per-mark color
 (`parse_color`), common axis styling (title/labels/scale,
 `apply_common_style`), layering multiple specs on one axes
-(`plotmux.layer()`), and export (`Figure.save()` / `export.save()`,
-with format coverage tested across every chart type x every
-backend-supported format) are implemented; a third backend is designed
-below but not yet built. Sections are marked ✅ implemented or 🚧
-planned.
+(`plotmux.layer()`), export (`Figure.save()` / `export.save()`, with
+format coverage tested across every chart type x every
+backend-supported format), and a `colors/` package with predefined
+colors and a default categorical palette (`DEFAULT_PALETTE`) are
+implemented; a third backend is designed below but not yet built.
+Sections are marked ✅ implemented or 🚧 planned.
 Date: 2026-08-23
 
 ## 1. Goal
@@ -85,9 +86,11 @@ src/plotmux/
 │   ├── range.py                 # find_range()
 │   └── imports/                 # one module per optional backend dep
 │                                 # (matplotlib.py, xy.py)
-├── colors.py                    # parse_color()
-│                                 # -> becomes colors/ package, 🚧 planned,
-│                                 #    see 4.9.1 and Build order step 11
+├── colors/                      # ✅ package (was colors.py, see 4.9.1,
+│                                 #    Build order step 11)
+│   ├── __init__.py              # re-exports parse_color, palette names
+│   ├── parser.py                # parse_color()
+│   └── palette.py                # PRIMARY/SECONDARY/TERTIARY, DEFAULT_PALETTE
 ├── specs/
 │   ├── base.py                  # BaseSpec (title/xlabel/ylabel/xscale/yscale)
 │   ├── histogram.py             # HistogramSpec
@@ -595,9 +598,9 @@ from its own default cycle when children share an `Axes` (see
 agreed cross-backend cycle vocabulary yet, so it's out of scope for
 this section, which only covers a user setting one explicit `color`.
 
-#### 4.9.1 Predefined colors — 🚧 planned
+#### 4.9.1 Predefined colors — ✅ implemented
 
-`colors.py` becomes a `colors/` package (see [Build order,
+`colors.py` became a `colors/` package (see [Build order,
 step 11](#6-build-order)) so a shared, backend-agnostic set of
 predefined colors has a home next to `parse_color` instead of being
 invented independently by each backend or left for users to hardcode
@@ -610,14 +613,17 @@ src/plotmux/colors/
 └── palette.py    # predefined named colors + a default categorical palette
 ```
 
-`palette.py` defines a small, fixed set of named colors (e.g.
-`PRIMARY`, `SECONDARY`, ...) and a default categorical palette (an
-ordered tuple of colors, e.g. `DEFAULT_PALETTE`), each already a
-`parse_color`-normalized RGBA tuple, so callers and backends never
-need to re-parse them. This is the same "canonical input, one parser,
-reused everywhere" pattern as [4.9](#49-specifying-colors-across-backends)
-— `parse_color` stays the only place that understands hex/named/tuple
-input, `palette.py` just supplies values that already went through it.
+`palette.py` defines a small, fixed set of named colors (`PRIMARY`,
+`SECONDARY`, `TERTIARY`) and a default categorical palette
+(`DEFAULT_PALETTE`, an ordered tuple of 10 colors starting with those
+three), each already a `parse_color`-normalized RGBA tuple, so callers
+and backends never need to re-parse them. This is the same "canonical
+input, one parser, reused everywhere" pattern as
+[4.9](#49-specifying-colors-across-backends) — `parse_color` stays the
+only place that understands hex/named/tuple input, `palette.py` just
+supplies values that already went through it (each entry is itself a
+named CSS/matplotlib color, e.g. `"tab:blue"`, passed straight through
+`parse_color`).
 
 This is the concrete mechanism for the *default*-color-cycle open
 question raised in [4.9](#49-specifying-colors-across-backends) and
@@ -625,12 +631,11 @@ question raised in [4.9](#49-specifying-colors-across-backends) and
 multi-series spec) with children that set no explicit `color` can pull
 successive entries from `DEFAULT_PALETTE`, giving every backend the
 same default look instead of only matplotlib getting one for free from
-its own cycle. Whether that assignment happens in `specs/layer.py`
-(so it's backend-independent, consistent with
-[3.1](#31-principle-separate-spec-from-render)) or per backend is left
-to when this step is implemented; either way, `palette.py` itself
-stays backend-agnostic — it holds RGBA tuples, not matplotlib or xy
-objects.
+its own cycle. This step only ships the palette *values*; *assigning*
+palette entries to series/layers automatically is left open (see
+[Open questions](#7-open-questions)) — `palette.py` itself stays
+backend-agnostic, holding RGBA tuples, not matplotlib or xy objects,
+and nothing yet reads `DEFAULT_PALETTE` automatically.
 
 ## 5. Why this shape
 
@@ -708,7 +713,7 @@ objects.
     driving the full `plotmux.hist()`/... -> `Figure.save()` ->
     `export.save()` -> `Backend.save()` pipeline end to end and
     asserting the file exists and is non-empty.
-11. 🚧 Convert `colors.py` into a `colors/` package
+11. ✅ Convert `colors.py` into a `colors/` package
     (`colors/__init__.py` re-exporting `parse_color` so
     `from plotmux.colors import parse_color` keeps working, plus a new
     `colors/palette.py`) and add a small set of predefined colors
