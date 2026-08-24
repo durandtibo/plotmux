@@ -3,24 +3,40 @@
 Status: in progress — core abstraction, four chart specs (histogram,
 line, scatter, layer), two backends (matplotlib, xy), per-mark color
 (`parse_color`), common axis styling (title/labels/scale,
-`apply_common_style`), and layering multiple specs on one axes
-(`plotmux.layer()`) are implemented; a third backend is designed below
-but not yet built. Sections are marked ✅ implemented or 🚧 planned.
+`apply_common_style`), layering multiple specs on one axes
+(`plotmux.layer()`), and export (`Figure.save()` / `export.save()`,
+with format coverage tested across every chart type x every
+backend-supported format) are implemented; a third backend is designed
+below but not yet built. Sections are marked ✅ implemented or 🚧
+planned.
 Date: 2026-08-23
 
 ## 1. Goal
 
-plotmux is a lightweight abstraction layer over Python's plotting
+`plotmux` is a lightweight abstraction layer over Python's plotting
 libraries: users write plotting code once against plotmux's unified
-API and choose the rendering backend (matplotlib, xy, ...) at
+API and choose the rendering backend (`matplotlib`, `xy`, ...) at
 runtime. Swapping backends should be a one-line configuration change,
 and adding a new backend or chart type should not require changing
 existing code.
 
-Non-goals: plotmux does not try to expose every feature of every
-backend through the unified API. Backend-specific power features
-remain reachable via an escape hatch (see [4.3](#43-figure)), not by
-growing the common API to the union of all backends.
+Scope: the unified API targets a small set of generic, broadly-useful
+chart types and figure-level concerns — the ones almost every plotting
+task needs (histograms, line charts, scatter plots, layering them
+together, common axis styling, per-mark color, export) — not
+comprehensive coverage of every chart type a backend can draw. Four
+chart specs (histogram, line, scatter, layer, see
+[4](#4-key-components)) are the current surface; a new chart type is
+added when it is itself generic and broadly useful (e.g. a bar chart),
+not to chase parity with any one backend's full plot catalog. A niche
+or highly backend-specific plot is expected to stay behind the escape
+hatch (see [4.3](#43-figure)) rather than becoming a fifth spec.
+
+Non-goals: `plotmux` does not try to expose every feature of every
+backend through the unified API, nor to cover every possible plot
+type. Backend-specific power features and niche chart types remain
+reachable via an escape hatch (see [4.3](#43-figure)), not by growing
+the common API to the union of all backends.
 
 ## 2. Constraints from the existing codebase
 
@@ -65,9 +81,13 @@ library-specific state back into user code.
 
 ```
 src/plotmux/
-├── core/
-│   └── range.py                 # find_range()
+├── utils/
+│   ├── range.py                 # find_range()
+│   └── imports/                 # one module per optional backend dep
+│                                 # (matplotlib.py, xy.py)
 ├── colors.py                    # parse_color()
+│                                 # -> becomes colors/ package, 🚧 planned,
+│                                 #    see 4.9.1 and Build order step 11
 ├── specs/
 │   ├── base.py                  # BaseSpec (title/xlabel/ylabel/xscale/yscale)
 │   ├── histogram.py             # HistogramSpec
@@ -98,17 +118,19 @@ src/plotmux/
 ├── export.py                    # save(figure, path)
 ├── config.py                    # default backend + context manager
 ├── api.py                       # public hist(), line(), scatter(), layer()
-├── testing/fixtures.py          # shared test fixtures
-└── utils/imports/               # one module per optional backend dep
-                                  # (matplotlib.py, xy.py)
+└── testing/fixtures.py          # shared test fixtures
 ```
 
 `specs/line.py`, `specs/scatter.py`, `specs/layer.py`, and the
 matching `backends/matplotlib/{line,scatter,layer}.py` /
 `backends/xy/{line,scatter,layer}.py` renderers are now implemented —
 see steps 8-9 above and
-[4.8](#48-layering-multiple-specs-on-one-axes). No further chart-type
-additions are planned in this package layout; a third backend (see
+[4.8](#48-layering-multiple-specs-on-one-axes). Histogram, line,
+scatter, and layer already cover the generic, broadly-useful chart
+types this package targets (see [1. Goal](#1-goal)), so no further
+chart-type addition is currently planned; the layout leaves room for
+one (a new `specs/<type>.py` plus one `_RENDERERS` entry per backend)
+if a similarly generic type comes up. A third backend (see
 [6.1](#61-candidate-future-backends)) would add a new
 `backends/<name>/` subpackage alongside `matplotlib/` and `xy/`.
 
@@ -183,7 +205,7 @@ them by keyword (`plotmux.hist(..., title=...)`), so this changes no
 call site.
 
 `xmin`/`xmax` are resolved through the existing `find_range` so the
-quantile-string convention (`"q0.1"`) is defined once, in `core/`,
+quantile-string convention (`"q0.1"`) is defined once, in `utils/`,
 and reused by every spec and every backend. Validation (`bins > 0`)
 happens in `__post_init__`, so an invalid spec fails before any
 backend is touched.
@@ -216,15 +238,22 @@ def apply_common_style(ax: Axes, spec: BaseSpec) -> Axes:
     return ax
 ```
 
-`MatplotlibBackend.render()` calls `apply_common_style` right after
-dispatching to the per-type renderer, so a new chart type gets
-title/label/scale support for free — its renderer only needs to draw
-the mark, not handle axis styling.
-
-The xy backend implements the same helper against `xy`'s own
-layout/axis API (`backends/xy/style.py::apply_common_style(chart,
-spec)`), keeping the log/linear vocabulary (`"linear"`, `"log"`)
-identical across backends even though the underlying calls differ.
+Each `_RENDERERS` entry is called right after its per-type renderer
+draws the mark, so a new chart type gets title/label/scale support for
+free — its renderer only needs to draw the mark, not handle axis
+styling. The two backends wire this at slightly different points
+because of what their `_RENDERERS` values return: matplotlib's
+`_render_<type>` module-level functions in `backend.py` each create
+their own `Figure`/`Axes`, call the matching `render_<type>(ax, spec)`,
+then call `apply_common_style(ax, spec)` before returning — so the
+call is duplicated once per registered type rather than centralized in
+`MatplotlibBackend.render()`. xy's per-type `render_<type>(spec)`
+functions instead return a bare, axis-less `Chart`, which lets
+`XyBackend.render()` call `apply_common_style` exactly once, generically,
+after dispatch — `backends/xy/style.py::apply_common_style(chart,
+spec)`, keeping the log/linear vocabulary (`"linear"`, `"log"`)
+identical across backends even though the underlying calls, and where
+they're invoked, differ.
 One xy-specific wrinkle: `xy.Chart` is structure-immutable (see its
 own `append()` docstring), so `apply_common_style` builds a *new*
 `Chart` — same `kind` and existing `children` (the mark(s) already
@@ -315,7 +344,7 @@ behind "swapping backends is a one-line change." Note this only picks
 a *name*; it does not itself validate that a backend is registered —
 that check happens in `get_backend` at render time.
 
-### 4.6 Public API (`api.py`) — ✅ `hist()`, `line()`, `scatter()`
+### 4.6 Public API (`api.py`) — ✅ `hist()`, `line()`, `scatter()`, `layer()`
 
 ```python
 def hist(
@@ -483,9 +512,10 @@ per backend — same pattern as adding any chart type:
   `xy.histogram_chart` build on, just not fixed to one mark kind).
 
 `apply_common_style` (see [4.1.1](#411-axis-labels-title-and-linearlog-scale))
-is applied once to the combined result, not once per child — by
-`Backend.render`/`MatplotlibBackend.render`, exactly as for every
-other spec type, so `render_layer` itself never calls it.
+is applied once to the combined result, not once per child — by each
+backend's own `LayerSpec` render path (`backend.py::_render_layer` for
+matplotlib, `XyBackend.render()` for xy), exactly as for every other
+spec type, so `render_layer` itself never calls it.
 `title`/`xlabel`/`ylabel`/`xscale`/`yscale` on `LayerSpec` itself
 describe the combined axes, and per-child style fields (if any layer
 sets its own) only affect that child's marks.
@@ -514,17 +544,19 @@ class HistogramSpec(BaseSpec):
 ```
 
 **Canonical input, one parser, reused everywhere** — mirrors how
-`xmin`/`xmax` funnel through the single `find_range` in `core/`
+`xmin`/`xmax` funnel through the single `find_range` in `utils/`
 instead of every spec/backend reimplementing quantile parsing.
 `colors.py::parse_color` accepts the formats users already know
 and that both matplotlib and xy already understand as *input*:
 
 - a hex string, `"#rrggbb"` or `"#rrggbbaa"`
 - a CSS/matplotlib named color, `"tab:blue"`, `"crimson"`, ...
-  (validated against `matplotlib.colors.CSS4_COLORS` — a static table,
-  so this validation works even when the matplotlib *backend* isn't
-  registered, since it's a `matplotlib_available()`-gated import in
-  `colors.py`, not a call into a `Backend`)
+  (resolved via `matplotlib.colors.to_rgba`, so this validation works
+  even when the matplotlib *backend* isn't registered — `colors.py`
+  only calls `check_matplotlib()` and imports `to_rgba` directly, not
+  a call into a `Backend`. Hex strings and RGB(A) tuples, unlike named
+  colors, need no matplotlib import at all, so `parse_color` only
+  requires matplotlib to be *installed* for the named-color case)
 - an RGB(A) tuple of floats in `[0, 1]`, matplotlib's own convention
 
 `parse_color` normalizes any of these to one canonical representation,
@@ -546,11 +578,11 @@ expects, in its own `style.py` (see [4.1.1](#411-axis-labels-title-and-linearlog
   tuple[float, float, float, float]) -> str` converts the canonical
   RGBA tuple to `"rgba(r, g, b, a)"` with `r`/`g`/`b` as `0`-`255`
   ints, so the translation lives next to the backend it's for, not in
-  `core/`.
+  `colors.py`.
 
-This keeps `core/` matplotlib-*format*-shaped (RGBA `[0, 1]` is just a
+This keeps `utils/` matplotlib-*format*-shaped (RGBA `[0, 1]` is just a
 convenient universal wire format, not a matplotlib dependency) without
-making `core/` matplotlib-*library*-dependent for every input shape,
+making `utils/` matplotlib-*library*-dependent for every input shape,
 and it means adding a color format later (e.g. HSL) only touches
 `parse_color`, never a backend.
 
@@ -562,6 +594,43 @@ from its own default cycle when children share an `Axes` (see
 [4.8](#48-layering-multiple-specs-on-one-axes)), but there is no
 agreed cross-backend cycle vocabulary yet, so it's out of scope for
 this section, which only covers a user setting one explicit `color`.
+
+#### 4.9.1 Predefined colors — 🚧 planned
+
+`colors.py` becomes a `colors/` package (see [Build order,
+step 11](#6-build-order)) so a shared, backend-agnostic set of
+predefined colors has a home next to `parse_color` instead of being
+invented independently by each backend or left for users to hardcode
+hex strings:
+
+```
+src/plotmux/colors/
+├── __init__.py   # re-exports parse_color, the predefined names/palette
+├── parser.py     # parse_color() (moved from colors.py as-is)
+└── palette.py    # predefined named colors + a default categorical palette
+```
+
+`palette.py` defines a small, fixed set of named colors (e.g.
+`PRIMARY`, `SECONDARY`, ...) and a default categorical palette (an
+ordered tuple of colors, e.g. `DEFAULT_PALETTE`), each already a
+`parse_color`-normalized RGBA tuple, so callers and backends never
+need to re-parse them. This is the same "canonical input, one parser,
+reused everywhere" pattern as [4.9](#49-specifying-colors-across-backends)
+— `parse_color` stays the only place that understands hex/named/tuple
+input, `palette.py` just supplies values that already went through it.
+
+This is the concrete mechanism for the *default*-color-cycle open
+question raised in [4.9](#49-specifying-colors-across-backends) and
+[Open questions](#7-open-questions): a `LayerSpec` (or a future
+multi-series spec) with children that set no explicit `color` can pull
+successive entries from `DEFAULT_PALETTE`, giving every backend the
+same default look instead of only matplotlib getting one for free from
+its own cycle. Whether that assignment happens in `specs/layer.py`
+(so it's backend-independent, consistent with
+[3.1](#31-principle-separate-spec-from-render)) or per backend is left
+to when this step is implemented; either way, `palette.py` itself
+stays backend-agnostic — it holds RGBA tuples, not matplotlib or xy
+objects.
 
 ## 5. Why this shape
 
@@ -581,7 +650,7 @@ this section, which only covers a user setting one explicit `color`.
   common axis styling (title/labels/scale) is handled once per
   backend via `apply_common_style`, not once per chart type — see
   [4.1.1](#411-axis-labels-title-and-linearlog-scale).
-- **Optional dependencies stay optional**: `core/`, `figure.py`,
+- **Optional dependencies stay optional**: `utils/`, `figure.py`,
   `config.py`, `api.py`, `export.py` are always importable; every
   backend subpackage is gated behind its own `utils/imports/*` guard,
   consistent with the `matplotlib`/`xy` extras already declared in
@@ -590,7 +659,7 @@ this section, which only covers a user setting one explicit `color`.
   installed -> no registration" path.
 - **Testability**: specs are plain dataclasses, cheap to unit test
   without a real plotting library installed (same style as
-  `tests/unit/core/test_range.py`). Backend rendering gets a thinner,
+  `tests/unit/utils/test_range.py`). Backend rendering gets a thinner,
   separate test layer, mirroring the existing
   `tests/unit/utils/imports` vs `tests/integration/utils/imports`
   split.
@@ -639,10 +708,23 @@ this section, which only covers a user setting one explicit `color`.
     driving the full `plotmux.hist()`/... -> `Figure.save()` ->
     `export.save()` -> `Backend.save()` pipeline end to end and
     asserting the file exists and is non-empty.
-11. 🚧 A third backend (see [6.1](#61-candidate-future-backends)) once
-    two chart types, colors, and layering exist on both current
-    backends, to confirm the abstraction still holds under more
-    surface area.
+11. 🚧 Convert `colors.py` into a `colors/` package
+    (`colors/__init__.py` re-exporting `parse_color` so
+    `from plotmux.colors import parse_color` keeps working, plus a new
+    `colors/palette.py`) and add a small set of predefined colors
+    there (e.g. a default categorical palette / color cycle) that
+    every backend can draw on — see
+    [4.9.1](#491-predefined-colors--planned). Ships after layering
+    (step 9) since a shared default palette is what step 9's "distinct
+    colors per layer without an explicit `color`" open question (see
+    [Open questions](#7-open-questions)) actually needs, and before a
+    third backend (step 12) so that backend gets the palette for free
+    instead of needing a follow-up migration, same rationale as
+    ordering step 7 before step 8.
+12. 🚧 A third backend (see [6.1](#61-candidate-future-backends)) once
+    two chart types, colors, predefined colors, and layering exist on
+    both current backends, to confirm the abstraction still holds
+    under more surface area.
 
 ### 6.1 Candidate future backends
 
@@ -686,15 +768,20 @@ should be driven by actual user requests, not by this list.
   pattern, or live on `config.py` as a global theme instead? Per-spec
   fields are simple but don't let a user set
   one palette for a whole session the way `set_backend` sets one
-  backend for a whole session.
-- `colors.py::parse_color` validates named colors against
-  `matplotlib.colors.CSS4_COLORS`, a static table, so this works even
-  when the matplotlib *backend* is unavailable — but is depending on
-  `matplotlib` (even just for its color table, gated by
-  `matplotlib_available()`) from `core/` an acceptable exception to
-  "core never imports a plotting library" (see
-  [3.1](#31-principle-separate-spec-from-render)), or does the named-
-  color table need to be plotmux's own copy so `core/` has zero
+  backend for a whole session. The predefined-colors package (see
+  [4.9.1](#491-predefined-colors--planned)) supplies the *values* for
+  a default palette either way; this question is only about where the
+  *assignment* of palette entries to series/layers is decided.
+- `colors.py::parse_color` resolves named colors via
+  `matplotlib.colors.to_rgba`, gated by `check_matplotlib()`, so this
+  works even when the matplotlib *backend* is unavailable — but it
+  does require matplotlib to be *installed* for the named-color case
+  (hex strings and RGB(A) tuples need no matplotlib import at all).
+  Is depending on `matplotlib` from `colors.py`, a module outside any
+  `backends/<name>/` subpackage, an acceptable exception to "non-
+  backend code never imports a plotting library" (see
+  [3.1](#31-principle-separate-spec-from-render)), or does named-color
+  resolution need to be plotmux's own copy so `colors.py` has zero
   matplotlib dependency even when matplotlib isn't installed?
 - **xy API verification checklist** — three assumptions about `xy`
   made in [4.8](#48-layering-multiple-specs-on-one-axes) and
@@ -740,3 +827,10 @@ should be driven by actual user requests, not by this list.
   differentiated enough to earn its keep as backend #3, or would the
   first new backend be better spent proving something xy/matplotlib
   don't cover at all (e.g. bokeh's server/streaming model)?
+- Histogram/line/scatter/layer were picked as "generic and broadly
+  useful" (see [1. Goal](#1-goal)), but that bar isn't written down
+  precisely. A bar chart or a box plot both have a plausible claim to
+  it — should the next chart-type addition be decided case by case as
+  demand shows up, or does the project need an explicit checklist
+  (e.g. "used across most plotting libraries" + "no natural
+  encoding into an existing spec") before adding a fifth spec?
