@@ -17,6 +17,30 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
+def _render(spec: BaseSpec, backend: str | None, **kwargs: Any) -> Figure:
+    r"""Render a spec through a backend and wrap the result in a
+    ``Figure``.
+
+    Factors out the three steps shared by every public plotting
+    function (``hist``, ``line``, ``scatter``, ``layer``): resolve the
+    backend name, render the spec, wrap the native output.
+
+    Args:
+        spec: The backend-agnostic spec to render.
+        backend: The name of the backend to use, or ``None`` to use
+            the current default backend (see
+            ``plotmux.config.get_default_backend``).
+        **kwargs: Additional backend-specific keyword arguments,
+            forwarded to the backend's renderer.
+
+    Returns:
+        The rendered figure.
+    """
+    backend_name = backend or get_default_backend()
+    native = get_backend(backend_name).render(spec, **kwargs)
+    return Figure(spec=spec, backend_name=backend_name, native=native)
+
+
 def hist(
     values: Sequence[float] | np.ndarray,
     *,
@@ -91,9 +115,7 @@ def hist(
         xscale=xscale,
         yscale=yscale,
     )
-    backend_name = backend or get_default_backend()
-    native = get_backend(backend_name).render(spec, **kwargs)
-    return Figure(spec=spec, backend_name=backend_name, native=native)
+    return _render(spec, backend, **kwargs)
 
 
 def line(
@@ -154,9 +176,7 @@ def line(
         xscale=xscale,
         yscale=yscale,
     )
-    backend_name = backend or get_default_backend()
-    native = get_backend(backend_name).render(spec, **kwargs)
-    return Figure(spec=spec, backend_name=backend_name, native=native)
+    return _render(spec, backend, **kwargs)
 
 
 def scatter(
@@ -221,9 +241,7 @@ def scatter(
         xscale=xscale,
         yscale=yscale,
     )
-    backend_name = backend or get_default_backend()
-    native = get_backend(backend_name).render(spec, **kwargs)
-    return Figure(spec=spec, backend_name=backend_name, native=native)
+    return _render(spec, backend, **kwargs)
 
 
 def layer(
@@ -283,6 +301,4 @@ def layer(
         xscale=xscale,
         yscale=yscale,
     )
-    backend_name = backend or get_default_backend()
-    native = get_backend(backend_name).render(spec, **kwargs)
-    return Figure(spec=spec, backend_name=backend_name, native=native)
+    return _render(spec, backend, **kwargs)
