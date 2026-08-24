@@ -1,10 +1,10 @@
 # plotmux design
 
 Status: in progress — core abstraction, histogram spec, two backends
-(matplotlib, xy), and per-mark color (`parse_color`) are implemented;
-common axis styling (title/labels/scale) and additional chart types
-are designed below but not yet built. Sections are marked
-✅ implemented or 🚧 planned.
+(matplotlib, xy), per-mark color (`parse_color`), and common axis
+styling (title/labels/scale, `apply_common_style`) are implemented;
+additional chart types are designed below but not yet built. Sections
+are marked ✅ implemented or 🚧 planned.
 Date: 2026-08-23
 
 ## 1. Goal
@@ -104,16 +104,20 @@ tree above. Remaining planned additions (🚧, see
 │   ├── scatter.py                # ScatterSpec
 │   └── layer.py                  # LayerSpec
 ├── backends/matplotlib/
-│   ├── style.py                  # apply_common_style(ax, spec)
 │   ├── line.py
 │   ├── scatter.py
 │   └── layer.py                  # render_layer(spec) -> shared Axes
 └── backends/xy/
-    ├── style.py                  # + apply_common_style(chart, spec)
     ├── line.py
     ├── scatter.py
     └── layer.py                  # render_layer(spec) -> composed xy.Chart
 ```
+
+`backends/matplotlib/style.py::apply_common_style(ax, spec)` and
+`backends/xy/style.py::apply_common_style(chart, spec)` are now
+implemented — see step 7 above and
+[4.1.1](#411-axis-labels-title-and-linearlog-scale); they're no
+longer shown in the remaining-additions tree above.
 
 ### 3.3 Data flow ✅
 
@@ -149,17 +153,22 @@ only looks it up, it never triggers registration itself.
 
 ## 4. Key components
 
-### 4.1 `BaseSpec` — 🚧 common fields planned, ✅ mechanism in place
+### 4.1 `BaseSpec` — ✅ implemented
 
-`BaseSpec` today is an empty frozen dataclass — a marker base class
-that documents the contract ("plain data, no plotting-library import,
-validate in `__post_init__`") and gives `Backend.render` / the
-`_RENDERERS` dicts a common type to dispatch on:
+`BaseSpec` holds the common figure-level fields every chart type
+inherits — `title`, `xlabel`, `ylabel`, `xscale`, `yscale` — so they
+are defined once instead of being redeclared per chart type, and
+gives `Backend.render` / the `_RENDERERS` dicts a common type to
+dispatch on:
 
 ```python
 @dataclass(frozen=True)
 class BaseSpec:
-    """Base class for chart specs. No fields of its own yet."""
+    title: str | None = field(default=None, kw_only=True)
+    xlabel: str | None = field(default=None, kw_only=True)
+    ylabel: str | None = field(default=None, kw_only=True)
+    xscale: Literal["linear", "log"] = field(default="linear", kw_only=True)
+    yscale: Literal["linear", "log"] = field(default="linear", kw_only=True)
 
 
 @dataclass(frozen=True)
@@ -170,7 +179,15 @@ class HistogramSpec(BaseSpec):
     xmax: float | str | None = None
     label: str | None = None
     density: bool = False
+    color: ... = None
 ```
+
+These fields are `kw_only=True` so they (all defaulted) can precede a
+subclass's own required, non-default fields (e.g.
+`HistogramSpec.values`) without violating the dataclass rule that a
+non-default field cannot follow a default one — callers already pass
+them by keyword (`plotmux.hist(..., title=...)`), so this changes no
+call site.
 
 `xmin`/`xmax` are resolved through the existing `find_range` so the
 quantile-string convention (`"q0.1"`) is defined once, in `core/`,
@@ -178,38 +195,19 @@ and reused by every spec and every backend. Validation (`bins > 0`)
 happens in `__post_init__`, so an invalid spec fails before any
 backend is touched.
 
-Planned: move `title`, `xlabel`, `ylabel`, `xscale`, `yscale` onto
-`BaseSpec` as common figure-level fields every chart type inherits,
-so they are defined once instead of being redeclared per chart type:
+#### 4.1.1 Axis labels, title, and linear/log scale — ✅ implemented
 
-```python
-@dataclass(frozen=True)
-class BaseSpec:
-    title: str | None = None
-    xlabel: str | None = None
-    ylabel: str | None = None
-    xscale: Literal["linear", "log"] = "linear"
-    yscale: Literal["linear", "log"] = "linear"
-```
-
-#### 4.1.1 Axis labels, title, and linear/log scale — 🚧 planned
-
-Not implemented yet: today `HistogramSpec` has no `title`/`xlabel`/
-`ylabel`/`xscale`/`yscale` fields and `api.hist()` does not accept
-them. The design below is the target for when they land.
-
-These are figure-level concerns, not encoding channels, so they will
-live on `BaseSpec` and be applied the same way regardless of chart
-type:
+These are figure-level concerns, not encoding channels, so they live
+on `BaseSpec` and are applied the same way regardless of chart type:
 
 ```python
 plotmux.hist(values, title="Latency distribution", xlabel="ms", ylabel="count")
-plotmux.line(x, y, yscale="log")
+plotmux.line(x, y, yscale="log")  # once line() exists (step 8)
 ```
 
-Each backend's `render()` will draw the chart-specific mark first (via
-its per-type renderer, e.g. `render_histogram`), then apply these
-common fields in one shared, backend-owned helper — for matplotlib,
+Each backend's `render()` draws the chart-specific mark first (via its
+per-type renderer, e.g. `render_histogram`), then applies these common
+fields in one shared, backend-owned helper — for matplotlib,
 `backends/matplotlib/style.py::apply_common_style(ax, spec)`:
 
 ```python
@@ -225,18 +223,33 @@ def apply_common_style(ax: Axes, spec: BaseSpec) -> Axes:
     return ax
 ```
 
-`MatplotlibBackend.render()` will call `apply_common_style` right
-after dispatching to the per-type renderer, so a new chart type gets
+`MatplotlibBackend.render()` calls `apply_common_style` right after
+dispatching to the per-type renderer, so a new chart type gets
 title/label/scale support for free — its renderer only needs to draw
-the mark, not handle axis styling. The xy backend implements the same
-helper against `xy`'s own layout/axis API, keeping the log/linear
-vocabulary (`"linear"`, `"log"`) identical across backends even
-though the underlying calls differ.
+the mark, not handle axis styling.
 
-`xscale`/`yscale` will default to `"linear"` rather than `None`
-because, unlike title/labels, an axis always has *some* scale — there
-is no meaningful "unset" state to skip, so the field is non-optional
-and the backend always calls `set_xscale`/`set_yscale`.
+The xy backend implements the same helper against `xy`'s own
+layout/axis API (`backends/xy/style.py::apply_common_style(chart,
+spec)`), keeping the log/linear vocabulary (`"linear"`, `"log"`)
+identical across backends even though the underlying calls differ.
+One xy-specific wrinkle: `xy.Chart` is structure-immutable (see its
+own `append()` docstring), so `apply_common_style` builds a *new*
+`Chart` — same `kind` and existing `children` (the mark(s) already
+drawn) plus an appended `xy.x_axis(label=..., type_=...)` /
+`xy.y_axis(...)` pair — rather than mutating `chart` in place. Layout
+(`width`/`height`/`padding`/`data`) is copied over explicitly from the
+input chart; other `Chart` constructor arguments are deliberately
+*not* reflected generically via `getattr`/introspection, because
+several (e.g. `select`) are stored under a private attribute name
+specifically because the public name collides with a same-named
+`Chart` method (`Chart.select()`) — a generic copy would silently
+pick up the bound method instead of the stored value.
+
+`xscale`/`yscale` default to `"linear"` rather than `None` because,
+unlike title/labels, an axis always has *some* scale — there is no
+meaningful "unset" state to skip, so the field is non-optional and
+the backend always calls `set_xscale`/`set_yscale` (matplotlib) or
+always passes `type_` (xy).
 
 ### 4.2 `Backend` ✅
 
@@ -322,6 +335,12 @@ def hist(
     xmax=None,
     label=None,
     density=False,
+    color=None,
+    title=None,
+    xlabel=None,
+    ylabel=None,
+    xscale="linear",
+    yscale="linear",
     backend=None,
     **kwargs,
 ) -> Figure:
@@ -332,18 +351,23 @@ def hist(
         xmax=xmax,
         label=label,
         density=density,
+        color=color,
+        title=title,
+        xlabel=xlabel,
+        ylabel=ylabel,
+        xscale=xscale,
+        yscale=yscale,
     )
     backend_name = backend or get_default_backend()
     native = get_backend(backend_name).render(spec, **kwargs)
     return Figure(spec=spec, backend_name=backend_name, native=native)
 ```
 
-Once [4.1.1](#411-axis-labels-title-and-linearlog-scale) lands,
-`title`/`xlabel`/`ylabel`/`xscale`/`yscale` will be added to this
-signature and to `line()`/`scatter()` with identical names and
-defaults, since they map straight onto `BaseSpec` fields shared by
-all specs. Specs and backends remain directly importable for advanced
-use; `api.py` is only the convenience surface most users touch.
+`title`/`xlabel`/`ylabel`/`xscale`/`yscale` will be added to
+`line()`/`scatter()` with identical names and defaults once they land
+(step 8), since they map straight onto `BaseSpec` fields shared by all
+specs. Specs and backends remain directly importable for advanced use;
+`api.py` is only the convenience surface most users touch.
 
 ### 4.7 Export (`export.py`) ✅
 
@@ -417,8 +441,8 @@ render_layer`, per backend — same pattern as adding any chart type:
   directly, but the public `LayerSpec` contract stays the same either
   way.
 
-`apply_common_style` (once [4.1.1](#411-axis-labels-title-and-linearlog-scale)
-lands) is applied once to the combined result, not once per child —
+`apply_common_style` (see [4.1.1](#411-axis-labels-title-and-linearlog-scale))
+will be applied once to the combined result, not once per child —
 `title`/`xlabel`/`ylabel`/`xscale`/`yscale` on `LayerSpec` itself
 describe the combined axes, and per-child style fields (if any layer
 sets its own) only affect that child's marks.
@@ -510,10 +534,10 @@ this section, which only covers a user setting one explicit `color`.
 - **Extensibility without breaking existing code**: a new backend is
   a new subpackage plus one registry entry (proven twice already:
   matplotlib, then xy); a new chart type is a new spec plus one
-  `_RENDERERS` entry per backend. Neither touches the other, and once
-  [4.1.1](#411-axis-labels-title-and-linearlog-scale) lands, common
-  axis styling (title/labels/scale) will be handled once per backend
-  via `apply_common_style`, not once per chart type.
+  `_RENDERERS` entry per backend. Neither touches the other, and
+  common axis styling (title/labels/scale) is handled once per
+  backend via `apply_common_style`, not once per chart type — see
+  [4.1.1](#411-axis-labels-title-and-linearlog-scale).
 - **Optional dependencies stay optional**: `core/`, `figure.py`,
   `config.py`, `api.py`, `export.py` are always importable; every
   backend subpackage is gated behind its own `utils/imports/*` guard,
@@ -546,9 +570,9 @@ this section, which only covers a user setting one explicit `color`.
    [4.9](#49-specifying-colors-across-backends). Self-contained (only
    touches the existing histogram renderers), so it ships before the
    larger style step below rather than being bundled with it.
-7. 🚧 `style.py::apply_common_style` (title/labels/scale) for
+7. ✅ `style.py::apply_common_style` (title/labels/scale) for
    matplotlib and xy — see [4.1.1](#411-axis-labels-title-and-linearlog-scale).
-   Do this before step 8 so `LineSpec`/`ScatterSpec` inherit working
+   Done before step 8 so `LineSpec`/`ScatterSpec` inherit working
    styling *and* color from day one instead of needing a follow-up
    migration.
 8. 🚧 `LineSpec` / `ScatterSpec` + matplotlib and xy renderers,
@@ -598,14 +622,14 @@ should be driven by actual user requests, not by this list.
 
 ## 7. Open questions
 
-- Title/labels/linear-log scale are designed to live on `BaseSpec`
-  (see [4.1.1](#411-axis-labels-title-and-linearlog-scale)); explicit
-  per-mark `color` is designed to live on each chart-type spec (see
-  [4.9](#49-specifying-colors-across-backends)); neither is
-  implemented yet. Should *default* style — a color cycle for
-  multiple series/layers when no `color` is set, fonts — follow the
-  same per-spec-field pattern, or live on `config.py` as a global
-  theme instead? Per-spec fields are simple but don't let a user set
+- Title/labels/linear-log scale now live on `BaseSpec` (see
+  [4.1.1](#411-axis-labels-title-and-linearlog-scale)) and explicit
+  per-mark `color` lives on each chart-type spec (see
+  [4.9](#49-specifying-colors-across-backends)); both are implemented.
+  Should *default* style — a color cycle for multiple series/layers
+  when no `color` is set, fonts — follow the same per-spec-field
+  pattern, or live on `config.py` as a global theme instead? Per-spec
+  fields are simple but don't let a user set
   one palette for a whole session the way `set_backend` sets one
   backend for a whole session.
 - `colors.py::parse_color` validates named colors against

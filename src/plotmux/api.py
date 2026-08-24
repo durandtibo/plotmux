@@ -4,7 +4,7 @@ from __future__ import annotations
 
 __all__ = ["hist"]
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 
@@ -26,6 +26,11 @@ def hist(
     label: str | None = None,
     density: bool = False,
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
+    title: str | None = None,
+    xlabel: str | None = None,
+    ylabel: str | None = None,
+    xscale: Literal["linear", "log"] = "linear",
+    yscale: Literal["linear", "log"] = "linear",
     backend: str | None = None,
     **kwargs: Any,
 ) -> Figure:
@@ -51,6 +56,11 @@ def hist(
             CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
             RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
             backend's default color.
+        title: An optional figure title.
+        xlabel: An optional x-axis label.
+        ylabel: An optional y-axis label.
+        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
+        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
         backend: The name of the backend to use to render the
             figure, or ``None`` to use the current default backend
             (see ``plotmux.set_backend``).
@@ -75,6 +85,11 @@ def hist(
         label=label,
         density=density,
         color=color,
+        title=title,
+        xlabel=xlabel,
+        ylabel=ylabel,
+        xscale=xscale,
+        yscale=yscale,
     )
     backend_name = backend or get_default_backend()
     native = get_backend(backend_name).render(spec, **kwargs)
