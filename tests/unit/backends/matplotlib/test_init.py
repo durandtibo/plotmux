@@ -5,12 +5,14 @@ from unittest.mock import patch
 
 import plotmux.backends.matplotlib as matplotlib_init
 from plotmux.backends.registry import _REGISTRY
+from plotmux.testing.fixtures import matplotlib_available
 
 #####################################################
 #     Tests for the matplotlib backend __init__     #
 #####################################################
 
 
+@matplotlib_available
 def test_matplotlib_backend_registered_when_available() -> None:
     snapshot = dict(_REGISTRY)
     try:

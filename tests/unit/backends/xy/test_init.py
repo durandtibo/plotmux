@@ -5,12 +5,14 @@ from unittest.mock import patch
 
 import plotmux.backends.xy as xy_init
 from plotmux.backends.registry import _REGISTRY
+from plotmux.testing.fixtures import xy_available
 
 ###############################################
 #     Tests for the xy backend __init__     #
 ###############################################
 
 
+@xy_available
 def test_xy_backend_registered_when_available() -> None:
     snapshot = dict(_REGISTRY)
     try:
