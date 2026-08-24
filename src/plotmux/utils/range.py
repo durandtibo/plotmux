@@ -39,7 +39,7 @@ def find_range(
     Example:
         ```pycon
         >>> import numpy as np
-        >>> from plotmux.core import find_range
+        >>> from plotmux.utils import find_range
         >>> data = np.arange(101)
         >>> find_range(data)
         (0, 100)
@@ -92,7 +92,7 @@ def _parse_quantile(value: str) -> float:
 
     Example:
         ```pycon
-        >>> from plotmux.core.range import _parse_quantile
+        >>> from plotmux.utils.range import _parse_quantile
         >>> _parse_quantile("q0.1")
         0.1
 

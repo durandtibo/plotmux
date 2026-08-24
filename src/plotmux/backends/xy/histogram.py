@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, cast
 import xy
 
 from plotmux.backends.xy.style import rgba_to_xy
-from plotmux.core.range import find_range
+from plotmux.utils.range import find_range
 
 if TYPE_CHECKING:
     from plotmux.specs import HistogramSpec

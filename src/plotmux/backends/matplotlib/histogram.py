@@ -6,7 +6,7 @@ __all__ = ["render_histogram"]
 
 from typing import TYPE_CHECKING, Any
 
-from plotmux.core.range import find_range
+from plotmux.utils.range import find_range
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes

@@ -14,7 +14,7 @@ def check_imports() -> None:
     correctly."""
     logger.info("Checking imports...")
     objects_to_import = [
-        "plotmux.core.find_range",
+        "plotmux.utils.find_range",
     ]
     for a in objects_to_import:
         module_path, name = a.rsplit(".", maxsplit=1)

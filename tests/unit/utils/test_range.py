@@ -5,7 +5,7 @@ import math
 import numpy as np
 import pytest
 
-from plotmux.core.range import find_range
+from plotmux.utils.range import find_range
 
 
 def test_find_range_empty() -> None:
