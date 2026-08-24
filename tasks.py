@@ -156,7 +156,11 @@ def format_shell(c: Context) -> None:
 
 @task
 def install(
-    c: Context, optional_deps: bool = True, dev_deps: bool = True, docs_deps: bool = False
+    c: Context,
+    optional_deps: bool = True,
+    dev_deps: bool = True,
+    docs_deps: bool = False,
+    jupyter_deps: bool = False,
 ) -> None:
     r"""Install project dependencies and the package in editable mode.
 
@@ -171,6 +175,8 @@ def install(
             formatting tools). Default is True.
         docs_deps: If True, install documentation generation dependencies
             (mkdocs, themes, plugins). Default is False.
+        jupyter_deps: If True, install Jupyter-related dependencies.
+            Default is False.
 
     Example:
         # Install with all dependencies except docs
@@ -190,6 +196,8 @@ def install(
         cmd.append("--group dev")
     if docs_deps:
         cmd.append("--group docs")
+    if jupyter_deps:
+        cmd.append("--group jupyter")
     c.run(" ".join(cmd), pty=True)
     logger.info("🔧 Installing package in editable mode...")
     c.run("uv pip install -e .", pty=True)
@@ -221,7 +229,7 @@ def update(c: Context) -> None:
     logger.info("🪝 Updating pre-commit hooks...")
     c.run("pre-commit autoupdate", pty=True)
     logger.info("📦 Reinstalling with docs dependencies...")
-    install(c, docs_deps=True)
+    install(c, docs_deps=True, jupyter_deps=True)
     logger.info("✅ Update complete")
 
 
