@@ -20,7 +20,6 @@ SOURCE = f"src/{NAME}"
 TESTS = "tests"
 UNIT_TESTS = f"{TESTS}/unit"
 INTEGRATION_TESTS = f"{TESTS}/integration"
-NOTEBOOKS = "notebooks"
 PYTHON_VERSION = "3.14"
 
 
@@ -125,7 +124,7 @@ def check_notebooks(c: Context) -> None:
     """
     logger.info("📓 Executing notebooks...")
     c.run(
-        f"jupyter nbconvert --to notebook --execute --stdout {NOTEBOOKS}/*.ipynb",
+        "jupyter nbconvert --to notebook --execute --stdout notebooks/*.ipynb",
         pty=True,
     )
     logger.info("✅ Notebook execution complete")
