@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from plotmux.specs import HistogramSpec
+from plotmux.specs import HistogramSpec, LineSpec, ScatterSpec
 from plotmux.testing.fixtures import matplotlib_available
 from plotmux.utils.imports import is_matplotlib_available
 
@@ -48,6 +48,20 @@ def test_matplotlib_backend_render_histogram_label(backend) -> None:  # noqa: AN
     assert isinstance(native, Figure)
     ax = native.axes[0]
     assert ax.get_legend() is not None
+
+
+@matplotlib_available
+def test_matplotlib_backend_render_line(backend) -> None:  # noqa: ANN001
+    spec = LineSpec(x=np.arange(10), y=np.arange(10) ** 2)
+    native = backend.render(spec)
+    assert isinstance(native, Figure)
+
+
+@matplotlib_available
+def test_matplotlib_backend_render_scatter(backend) -> None:  # noqa: ANN001
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10) ** 2)
+    native = backend.render(spec)
+    assert isinstance(native, Figure)
 
 
 @matplotlib_available

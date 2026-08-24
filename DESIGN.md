@@ -1,10 +1,11 @@
 # plotmux design
 
-Status: in progress — core abstraction, histogram spec, two backends
-(matplotlib, xy), per-mark color (`parse_color`), and common axis
-styling (title/labels/scale, `apply_common_style`) are implemented;
-additional chart types are designed below but not yet built. Sections
-are marked ✅ implemented or 🚧 planned.
+Status: in progress — core abstraction, three chart specs (histogram,
+line, scatter), two backends (matplotlib, xy), per-mark color
+(`parse_color`), and common axis styling (title/labels/scale,
+`apply_common_style`) are implemented; layering multiple specs on one
+axes and a third backend are designed below but not yet built.
+Sections are marked ✅ implemented or 🚧 planned.
 Date: 2026-08-23
 
 ## 1. Goal
@@ -68,56 +69,51 @@ src/plotmux/
 │   └── range.py                 # find_range()
 ├── colors.py                    # parse_color()
 ├── specs/
-│   ├── base.py                  # BaseSpec (no fields yet)
-│   └── histogram.py             # HistogramSpec
+│   ├── base.py                  # BaseSpec (title/xlabel/ylabel/xscale/yscale)
+│   ├── histogram.py             # HistogramSpec
+│   ├── line.py                  # LineSpec
+│   └── scatter.py               # ScatterSpec
 ├── backends/
 │   ├── base.py                  # Backend ABC
 │   ├── registry.py              # register_backend() / get_backend()
 │   ├── matplotlib/
 │   │   ├── __init__.py          # registers MatplotlibBackend if available
 │   │   ├── backend.py           # MatplotlibBackend
-│   │   └── histogram.py         # render_histogram(ax, spec) -> Axes
-│   │                             # (color: RGBA passthrough, no conversion needed)
+│   │   ├── style.py             # apply_common_style(ax, spec)
+│   │   ├── histogram.py         # render_histogram(ax, spec) -> Axes
+│   │   │                         # (color: RGBA passthrough, no conversion needed)
+│   │   ├── line.py               # render_line(ax, spec) -> Axes
+│   │   └── scatter.py            # render_scatter(ax, spec) -> Axes
 │   └── xy/
 │       ├── __init__.py          # registers XyBackend if available
 │       ├── backend.py           # XyBackend
-│       ├── style.py             # rgba_to_xy(): RGBA tuple -> CSS string
-│       └── histogram.py         # render_histogram(spec) -> xy.Chart
+│       ├── style.py             # rgba_to_xy(); apply_common_style(chart, spec)
+│       ├── histogram.py         # render_histogram(spec) -> xy.Chart
+│       ├── line.py               # render_line(spec) -> xy.Chart
+│       └── scatter.py            # render_scatter(spec) -> xy.Chart
 ├── figure.py                    # Figure wrapper
 ├── export.py                    # save(figure, path)
 ├── config.py                    # default backend + context manager
-├── api.py                       # public hist()
+├── api.py                       # public hist(), line(), scatter()
 ├── testing/fixtures.py          # shared test fixtures
 └── utils/imports/               # one module per optional backend dep
                                   # (matplotlib.py, xy.py)
 ```
 
-`colors.py` (`parse_color`) and `backends/xy/style.py`
-(`rgba_to_xy`) are now implemented — see step 6 above and
-[4.9](#49-specifying-colors-across-backends); they're shown in the
-tree above. Remaining planned additions (🚧, see
+`specs/line.py`, `specs/scatter.py`, and the matching
+`backends/matplotlib/{line,scatter}.py` /
+`backends/xy/{line,scatter}.py` renderers are now implemented — see
+step 8 above. Remaining planned addition (🚧, see
 [Build order](#6-build-order)):
 
 ```
 ├── specs/
-│   ├── line.py                   # LineSpec
-│   ├── scatter.py                # ScatterSpec
 │   └── layer.py                  # LayerSpec
 ├── backends/matplotlib/
-│   ├── line.py
-│   ├── scatter.py
 │   └── layer.py                  # render_layer(spec) -> shared Axes
 └── backends/xy/
-    ├── line.py
-    ├── scatter.py
     └── layer.py                  # render_layer(spec) -> composed xy.Chart
 ```
-
-`backends/matplotlib/style.py::apply_common_style(ax, spec)` and
-`backends/xy/style.py::apply_common_style(chart, spec)` are now
-implemented — see step 7 above and
-[4.1.1](#411-axis-labels-title-and-linearlog-scale); they're no
-longer shown in the remaining-additions tree above.
 
 ### 3.3 Data flow ✅
 
@@ -202,7 +198,7 @@ on `BaseSpec` and are applied the same way regardless of chart type:
 
 ```python
 plotmux.hist(values, title="Latency distribution", xlabel="ms", ylabel="count")
-plotmux.line(x, y, yscale="log")  # once line() exists (step 8)
+plotmux.line(x, y, yscale="log")
 ```
 
 Each backend's `render()` draws the chart-specific mark first (via its
@@ -322,9 +318,7 @@ behind "swapping backends is a one-line change." Note this only picks
 a *name*; it does not itself validate that a backend is registered —
 that check happens in `get_backend` at render time.
 
-### 4.6 Public API (`api.py`) — ✅ `hist()`, 🚧 `line()`/`scatter()`
-
-Only `hist()` exists today:
+### 4.6 Public API (`api.py`) — ✅ `hist()`, `line()`, `scatter()`
 
 ```python
 def hist(
@@ -363,11 +357,18 @@ def hist(
     return Figure(spec=spec, backend_name=backend_name, native=native)
 ```
 
-`title`/`xlabel`/`ylabel`/`xscale`/`yscale` will be added to
-`line()`/`scatter()` with identical names and defaults once they land
-(step 8), since they map straight onto `BaseSpec` fields shared by all
-specs. Specs and backends remain directly importable for advanced use;
-`api.py` is only the convenience surface most users touch.
+`line(x, y, *, label=None, color=None, ...)` and `scatter(x, y, *,
+label=None, color=None, size=None, ...)` follow the same shape:
+build the matching spec (`LineSpec`/`ScatterSpec`), resolve the
+backend, render, wrap in a `Figure`. Both accept
+`title`/`xlabel`/`ylabel`/`xscale`/`yscale` with identical names and
+defaults as `hist()`, since they map straight onto `BaseSpec` fields
+shared by all specs — no per-function special-casing needed. `size`
+is `ScatterSpec`-only, following the precedent of `bins`/`density`
+being `HistogramSpec`-only: fields that don't apply to every chart
+type live on that chart type's own spec, not on `BaseSpec`. Specs and
+backends remain directly importable for advanced use; `api.py` is
+only the convenience surface most users touch.
 
 ### 4.7 Export (`export.py`) ✅
 
@@ -426,11 +427,11 @@ render_layer`, per backend — same pattern as adding any chart type:
 - **matplotlib** (`backends/matplotlib/layer.py`): create one `Axes`,
   then call each child's existing `render_<type>(ax, child_spec)`
   function against that same `Axes`, in `layers` order. This is why
-  `render_histogram(ax, spec)` already takes an `Axes` rather than
-  creating its own figure — layering was designed in from the start,
-  it just has no second chart type to layer with yet. A single
-  `ax.legend()` call at the end (not one per child) avoids duplicate
-  legends when multiple children set `label`.
+  `render_histogram(ax, spec)`/`render_line(ax, spec)`/
+  `render_scatter(ax, spec)` already take an `Axes` rather than
+  creating their own figure — layering was designed in from the
+  start. A single `ax.legend()` call at the end (not one per child)
+  avoids duplicate legends when multiple children set `label`.
 - **xy** (`backends/xy/layer.py`): render each child spec independently
   into its own `xy.Chart` via the existing per-type functions, then
   combine with xy's own chart-composition operator (`chart_a +
@@ -575,10 +576,12 @@ this section, which only covers a user setting one explicit `color`.
    Done before step 8 so `LineSpec`/`ScatterSpec` inherit working
    styling *and* color from day one instead of needing a follow-up
    migration.
-8. 🚧 `LineSpec` / `ScatterSpec` + matplotlib and xy renderers,
-   reusing `parse_color` and `apply_common_style` from steps 6-7. Do
-   this before step 9 — layering is only worth testing once there are
-   at least two distinct chart types to overlay (e.g. line + scatter).
+8. ✅ `LineSpec` / `ScatterSpec` + matplotlib and xy renderers,
+   reusing `parse_color` and `apply_common_style` from steps 6-7, plus
+   `plotmux.line()`/`plotmux.scatter()` in `api.py` — see
+   [4.6](#46-public-api-apipy--hist-line-scatter). Done before step 9
+   — layering is only worth testing once there are at least two
+   distinct chart types to overlay (e.g. line + scatter).
 9. 🚧 `LayerSpec` + `plotmux.layer()` + matplotlib and xy
    `render_layer` — see [4.8](#48-layering-multiple-specs-on-one-axes).
 10. 🚧 `export.py` format coverage for the new chart types and for

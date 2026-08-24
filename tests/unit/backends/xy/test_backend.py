@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from plotmux.specs import HistogramSpec
+from plotmux.specs import HistogramSpec, LineSpec, ScatterSpec
 from plotmux.testing.fixtures import xy_available
 from plotmux.utils.imports import is_xy_available
 
@@ -33,6 +33,20 @@ def test_xy_backend_render_histogram(backend) -> None:  # noqa: ANN001
 @xy_available
 def test_xy_backend_render_histogram_density(backend) -> None:  # noqa: ANN001
     spec = HistogramSpec(values=np.arange(101), bins=10, density=True)
+    native = backend.render(spec)
+    assert isinstance(native, Chart)
+
+
+@xy_available
+def test_xy_backend_render_line(backend) -> None:  # noqa: ANN001
+    spec = LineSpec(x=np.arange(10), y=np.arange(10) ** 2)
+    native = backend.render(spec)
+    assert isinstance(native, Chart)
+
+
+@xy_available
+def test_xy_backend_render_scatter(backend) -> None:  # noqa: ANN001
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10) ** 2)
     native = backend.render(spec)
     assert isinstance(native, Chart)
 
