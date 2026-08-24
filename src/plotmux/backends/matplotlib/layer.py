@@ -36,12 +36,20 @@ def render_layer(ax: Axes, spec: LayerSpec, **kwargs: Any) -> Axes:
     Draws each child spec onto the same ``Axes``, in ``spec.layers``
     order, via that child's own ``render_<type>(ax, child_spec)``
     function -- the same functions used to render a standalone
-    ``HistogramSpec``/``LineSpec``/``ScatterSpec``. No separate
-    ``ax.legend()`` call is needed here: each child renderer already
-    calls ``ax.legend()`` when its own ``label`` is set, and
-    matplotlib's ``Axes.legend()`` collects every currently-plotted
-    labeled artist at call time, so the last labeled child's call
-    ends up reflecting the full combined legend.
+    ``HistogramSpec``/``LineSpec``/``ScatterSpec``. Each child
+    renderer also calls ``ax.legend()`` itself when its own ``label``
+    is set, so the loop below does not strictly need to call it
+    again. It does anyway, once, unconditionally after every child is
+    drawn: relying on "the last labeled child's own call happens to
+    reflect the full combined legend" is order-fragile -- it silently
+    stops working the moment a future chart type's ``render_<type>``
+    changes when or whether it calls ``ax.legend()`` itself. Calling
+    ``ax.legend()`` once here, explicitly, after all children are
+    drawn, is what actually guarantees the combined legend reflects
+    every labeled child regardless of draw order or of what any
+    individual child renderer does. ``Axes.legend()`` is a no-op
+    (raises no error, adds no legend) when no artist is labeled, so
+    this is safe even when no child has a ``label``.
 
     Args:
         ax: The matplotlib ``Axes`` to draw onto.
@@ -59,4 +67,6 @@ def render_layer(ax: Axes, spec: LayerSpec, **kwargs: Any) -> Axes:
     for child in spec.layers:
         renderer = resolve_renderer(_AX_RENDERERS, child, "matplotlib")
         renderer(ax, child, **kwargs)
+    if any(child.label is not None for child in spec.layers):
+        ax.legend()
     return ax

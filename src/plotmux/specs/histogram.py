@@ -7,7 +7,6 @@ __all__ = ["HistogramSpec"]
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from plotmux.colors import parse_color
 from plotmux.specs.base import BaseSpec
 
 if TYPE_CHECKING:
@@ -93,8 +92,4 @@ class HistogramSpec(BaseSpec):
                 f"xmin={self.xmin} and xmax={self.xmax}"
             )
             raise ValueError(msg)
-        if self.color is not None:
-            # Normalize to the canonical RGBA representation once, here,
-            # so every backend receives an already-validated ``parse_color``
-            # output and never has to parse a raw color itself.
-            object.__setattr__(self, "color", parse_color(self.color))
+        self._normalize_color()

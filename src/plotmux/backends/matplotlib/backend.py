@@ -11,7 +11,7 @@ __all__ = ["MatplotlibBackend"]
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure as MplFigure
 
 from plotmux.backends.base import Backend, check_export_format, resolve_renderer
 from plotmux.backends.matplotlib.histogram import render_histogram
@@ -25,37 +25,53 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-    from matplotlib.figure import Figure as MplFigure
+    from matplotlib.axes import Axes
 
 _SUPPORTED_FORMATS = frozenset({"png", "svg", "pdf", "jpg", "jpeg"})
 
 
-def _render_histogram(spec: HistogramSpec, **kwargs: Any) -> MplFigure:
-    fig, ax = plt.subplots()
-    render_histogram(ax, spec, **kwargs)
-    apply_common_style(ax, spec)
-    return fig
+def _make_renderer(
+    ax_render: Callable[..., Axes],
+) -> Callable[..., MplFigure]:
+    r"""Build a ``render(spec, **kwargs) -> MplFigure`` function from an
+    ``ax_render(ax, spec, **kwargs) -> Axes`` function.
 
+    Every entry in ``_RENDERERS`` shares the same three steps: create
+    a figure/axes pair, draw the spec-specific mark onto it via
+    ``ax_render``, then apply the fields common to every chart type
+    (title, labels, scales) via ``apply_common_style``. Factoring
+    that out here means adding a new chart type to this backend is
+    exactly one ``_RENDERERS`` entry -- ``_make_renderer(render_x)``
+    -- rather than a new hand-written wrapper function that repeats
+    the same three lines.
 
-def _render_line(spec: LineSpec, **kwargs: Any) -> MplFigure:
-    fig, ax = plt.subplots()
-    render_line(ax, spec, **kwargs)
-    apply_common_style(ax, spec)
-    return fig
+    The figure is built via the ``matplotlib.figure.Figure``
+    constructor rather than ``pyplot.subplots()``: the latter
+    registers the figure with pyplot's global figure manager, so
+    figures created that way are never garbage-collected until
+    ``plt.close()`` is called on them explicitly -- a real memory
+    leak for any code that renders many figures (e.g. one histogram
+    per column, in a loop or notebook). Building the ``Figure``
+    directly keeps it a plain, independently garbage-collectable
+    object with no such global registration.
 
+    Args:
+        ax_render: The chart-specific ``(ax, spec, **kwargs) -> Axes``
+            renderer to wrap, e.g. ``render_histogram``.
 
-def _render_scatter(spec: ScatterSpec, **kwargs: Any) -> MplFigure:
-    fig, ax = plt.subplots()
-    render_scatter(ax, spec, **kwargs)
-    apply_common_style(ax, spec)
-    return fig
+    Returns:
+        A ``(spec, **kwargs) -> MplFigure`` renderer suitable for
+            ``_RENDERERS``.
+    """
 
+    def render(spec: BaseSpec, **kwargs: Any) -> MplFigure:
+        fig = MplFigure()
+        ax = fig.subplots()
+        ax_render(ax, spec, **kwargs)
+        apply_common_style(ax, spec)
+        return fig
 
-def _render_layer(spec: LayerSpec, **kwargs: Any) -> MplFigure:
-    fig, ax = plt.subplots()
-    render_layer(ax, spec, **kwargs)
-    apply_common_style(ax, spec)
-    return fig
+    return render
 
 
 class MatplotlibBackend(Backend):
@@ -69,10 +85,10 @@ class MatplotlibBackend(Backend):
     name: ClassVar[str] = "matplotlib"
 
     _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., MplFigure]]] = {
-        HistogramSpec: _render_histogram,
-        LineSpec: _render_line,
-        ScatterSpec: _render_scatter,
-        LayerSpec: _render_layer,
+        HistogramSpec: _make_renderer(render_histogram),
+        LineSpec: _make_renderer(render_line),
+        ScatterSpec: _make_renderer(render_scatter),
+        LayerSpec: _make_renderer(render_layer),
     }
 
     def render(self, spec: BaseSpec, **kwargs: Any) -> MplFigure:

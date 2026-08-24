@@ -105,6 +105,23 @@ def test_matplotlib_backend_render_unsupported_spec(backend: MatplotlibBackend) 
         backend.render(object())
 
 
+@matplotlib_available
+def test_matplotlib_backend_render_does_not_register_with_pyplot(
+    backend: MatplotlibBackend,
+) -> None:
+    # Regression test: rendering must not go through ``pyplot.subplots()``,
+    # which registers the figure with pyplot's global figure manager and
+    # keeps it alive (a leak) until ``plt.close()`` is called explicitly.
+    # Building the figure directly via the ``Figure`` constructor avoids
+    # that registration entirely, so ``pyplot`` should never see it.
+    import matplotlib.pyplot as plt
+
+    before = set(plt.get_fignums())
+    spec = LineSpec(x=np.arange(10), y=np.arange(10))
+    backend.render(spec)
+    assert set(plt.get_fignums()) == before
+
+
 # --- save ---
 
 
