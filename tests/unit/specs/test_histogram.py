@@ -97,3 +97,21 @@ def test_histogram_spec_is_frozen() -> None:
 def test_histogram_spec_invalid_bins(bins: int) -> None:
     with pytest.raises(ValueError, match="bins must be a positive integer"):
         HistogramSpec(values=np.arange(101), bins=bins)
+
+
+def test_histogram_spec_xmin_equal_xmax_raises() -> None:
+    with pytest.raises(ValueError, match="xmin must be strictly less than xmax"):
+        HistogramSpec(values=np.arange(101), xmin=5, xmax=5)
+
+
+def test_histogram_spec_xmin_greater_than_xmax_raises() -> None:
+    with pytest.raises(ValueError, match="xmin must be strictly less than xmax"):
+        HistogramSpec(values=np.arange(101), xmin=10, xmax=0)
+
+
+def test_histogram_spec_xmin_xmax_quantile_strings_not_checked() -> None:
+    # Quantile strings are resolved against the data later by
+    # find_range, so they cannot be range-checked at construction time.
+    spec = HistogramSpec(values=np.arange(101), xmin="q0.9", xmax="q0.1")
+    assert spec.xmin == "q0.9"
+    assert spec.xmax == "q0.1"

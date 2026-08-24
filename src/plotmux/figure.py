@@ -7,7 +7,6 @@ __all__ = ["Figure"]
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from plotmux.backends.registry import get_backend
 from plotmux.export import save
 
 if TYPE_CHECKING:
@@ -66,6 +65,3 @@ class Figure:
             The backend's native figure object.
         """
         return self.native
-
-    def _backend(self) -> Any:
-        return get_backend(self.backend_name)

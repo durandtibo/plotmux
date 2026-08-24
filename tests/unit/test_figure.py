@@ -75,26 +75,6 @@ def test_figure_show_none_native() -> None:
         fig.show()
 
 
-##################################
-#     Tests for Figure._backend     #
-##################################
-
-
-def test_figure_backend_returns_registered_backend() -> None:
-    fake_backend = FakeBackend()
-    register_backend(fake_backend)
-    spec = HistogramSpec(values=[1, 2, 3])
-    fig = Figure(spec=spec, backend_name="fake", native="native-object")
-    assert fig._backend() is fake_backend
-
-
-def test_figure_backend_unknown_raises() -> None:
-    spec = HistogramSpec(values=[1, 2, 3])
-    fig = Figure(spec=spec, backend_name="does-not-exist", native="native-object")
-    with pytest.raises(RuntimeError, match="No backend registered"):
-        fig._backend()
-
-
 ##############################
 #     Tests for Figure.save     #
 ##############################
