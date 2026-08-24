@@ -25,6 +25,7 @@ def hist(
     xmax: float | str | None = None,
     label: str | None = None,
     density: bool = False,
+    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
     backend: str | None = None,
     **kwargs: Any,
 ) -> Figure:
@@ -45,6 +46,11 @@ def hist(
             divided by the total number of counts and the bin
             width, so that the area under the histogram integrates
             to 1. Defaults to ``False``.
+        color: An optional color for the bars. It can be a hex
+            string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
+            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
+            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
+            backend's default color.
         backend: The name of the backend to use to render the
             figure, or ``None`` to use the current default backend
             (see ``plotmux.set_backend``).
@@ -68,6 +74,7 @@ def hist(
         xmax=xmax,
         label=label,
         density=density,
+        color=color,
     )
     backend_name = backend or get_default_backend()
     native = get_backend(backend_name).render(spec, **kwargs)

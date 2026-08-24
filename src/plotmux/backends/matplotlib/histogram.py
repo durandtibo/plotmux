@@ -33,6 +33,7 @@ def render_histogram(ax: Axes, spec: HistogramSpec, **kwargs: Any) -> Axes:
         range=(xmin, xmax),
         label=spec.label,
         density=spec.density,
+        color=spec.color,
         **kwargs,
     )
     if spec.label is not None:

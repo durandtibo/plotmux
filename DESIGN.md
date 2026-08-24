@@ -1,9 +1,10 @@
 # plotmux design
 
-Status: in progress — core abstraction, histogram spec, and two
-backends (matplotlib, xy) are implemented; common axis styling
-(title/labels/scale) and additional chart types are designed below
-but not yet built. Sections are marked ✅ implemented or 🚧 planned.
+Status: in progress — core abstraction, histogram spec, two backends
+(matplotlib, xy), and per-mark color (`parse_color`) are implemented;
+common axis styling (title/labels/scale) and additional chart types
+are designed below but not yet built. Sections are marked
+✅ implemented or 🚧 planned.
 Date: 2026-08-23
 
 ## 1. Goal
@@ -75,9 +76,11 @@ src/plotmux/
 │   │   ├── __init__.py          # registers MatplotlibBackend if available
 │   │   ├── backend.py           # MatplotlibBackend
 │   │   └── histogram.py         # render_histogram(ax, spec) -> Axes
+│   │                             # (color: RGBA passthrough, no conversion needed)
 │   └── xy/
 │       ├── __init__.py          # registers XyBackend if available
 │       ├── backend.py           # XyBackend
+│       ├── style.py             # rgba_to_xy(): RGBA tuple -> CSS string
 │       └── histogram.py         # render_histogram(spec) -> xy.Chart
 ├── figure.py                    # Figure wrapper
 ├── export.py                    # save(figure, path)
@@ -88,22 +91,24 @@ src/plotmux/
                                   # (matplotlib.py, xy.py)
 ```
 
-Planned additions (🚧, see [Build order](#6-build-order)):
+`core/color.py` (`parse_color`) and `backends/xy/style.py`
+(`rgba_to_xy`) are now implemented — see step 6 above and
+[4.9](#49-specifying-colors-across-backends); they're shown in the
+tree above. Remaining planned additions (🚧, see
+[Build order](#6-build-order)):
 
 ```
-├── core/
-│   ├── color.py                 # parse_color() -> RGBA[0,1] tuple
-│   └── specs/
-│       ├── line.py               # LineSpec
-│       ├── scatter.py            # ScatterSpec
-│       └── layer.py              # LayerSpec
+├── core/specs/
+│   ├── line.py                   # LineSpec
+│   ├── scatter.py                # ScatterSpec
+│   └── layer.py                  # LayerSpec
 ├── backends/matplotlib/
-│   ├── style.py                  # apply_common_style(ax, spec); RGBA passthrough
+│   ├── style.py                  # apply_common_style(ax, spec)
 │   ├── line.py
 │   ├── scatter.py
 │   └── layer.py                  # render_layer(spec) -> shared Axes
 └── backends/xy/
-    ├── style.py                  # apply_common_style(chart, spec); rgba_to_xy()
+    ├── style.py                  # + apply_common_style(chart, spec)
     ├── line.py
     ├── scatter.py
     └── layer.py                  # render_layer(spec) -> composed xy.Chart
@@ -423,7 +428,7 @@ mixing a `HistogramSpec` with incompatible axis semantics): validating
 not something `core/specs` can know without importing plotting-library
 context, consistent with [3.1](#31-principle-separate-spec-from-render).
 
-### 4.9 Specifying colors across backends — 🚧 planned
+### 4.9 Specifying colors across backends — ✅ implemented
 
 Same problem as [4.1.1](#411-axis-labels-title-and-linearlog-scale)
 (one vocabulary, N backend-native representations), but `color` is a
@@ -467,11 +472,13 @@ expects, in its own `style.py` (see [4.1.1](#411-axis-labels-title-and-linearlog
 - matplotlib accepts `(r, g, b, a)` floats in `[0, 1]` directly —
   `ax.hist(..., color=spec.color)` needs no conversion once
   `spec.color` is already a `parse_color` output.
-- xy needs checking against its actual color parameter (a CSS-style
-  `"rgba(r, g, b, a)"` string, `0`-`255` ints, is a plausible guess but
-  unverified) — `backends/xy/style.py` owns that one conversion,
-  `rgba_to_xy(color: tuple[float, float, float, float]) -> str`, so
-  the translation lives next to the backend it's for, not in `core/`.
+- xy's mark `color` parameter accepts a CSS color string (verified
+  against `xy`'s own `_parse_color`, which resolves a CSS string via
+  its native grammar) — `backends/xy/style.py::rgba_to_xy(color:
+  tuple[float, float, float, float]) -> str` converts the canonical
+  RGBA tuple to `"rgba(r, g, b, a)"` with `r`/`g`/`b` as `0`-`255`
+  ints, so the translation lives next to the backend it's for, not in
+  `core/`.
 
 This keeps `core/` matplotlib-*format*-shaped (RGBA `[0, 1]` is just a
 convenient universal wire format, not a matplotlib dependency) without
@@ -533,7 +540,7 @@ this section, which only covers a user setting one explicit `color`.
    end to end.
 5. ✅ A second backend (`xy`) to prove the abstraction holds before
    adding more chart types.
-6. 🚧 `core/color.py::parse_color` + `color` field on `HistogramSpec` +
+6. ✅ `core/color.py::parse_color` + `color` field on `HistogramSpec` +
    matplotlib/xy per-type renderer support — see
    [4.9](#49-specifying-colors-across-backends). Self-contained (only
    touches the existing histogram renderers), so it ships before the
@@ -617,9 +624,10 @@ should be driven by actual user requests, not by this list.
   1. does xy expose a chart-composition operator (`chart_a + chart_b`,
      Altair-style) for layering, or does `render_layer` need to build
      the combined chart from lower-level primitives instead?
-  2. what does xy's native color parameter actually accept — CSS
-     `"rgba(...)"` string, `0`-`255` int tuple, something else — so
-     `rgba_to_xy()` can be written correctly?
+  2. ✅ resolved — xy's native color parameter accepts a CSS color
+     string, confirmed against `xy`'s own `_parse_color(css: str,
+     ...)`; `rgba_to_xy()` emits `"rgba(r, g, b, a)"` with `0`-`255`
+     ints for `r`/`g`/`b`.
   3. does layering two children via whatever xy provides give them
      distinct colors automatically (like matplotlib's shared-`Axes`
      default color cycle), or can two layered children render
