@@ -91,17 +91,22 @@ src/plotmux/
 Planned additions (🚧, see [Build order](#6-build-order)):
 
 ```
-├── core/specs/
-│   ├── line.py                  # LineSpec
-│   └── scatter.py               # ScatterSpec
+├── core/
+│   ├── color.py                 # parse_color() -> RGBA[0,1] tuple
+│   └── specs/
+│       ├── line.py               # LineSpec
+│       ├── scatter.py            # ScatterSpec
+│       └── layer.py              # LayerSpec
 ├── backends/matplotlib/
-│   ├── style.py                 # apply_common_style(ax, spec)
+│   ├── style.py                  # apply_common_style(ax, spec); RGBA passthrough
 │   ├── line.py
-│   └── scatter.py
+│   ├── scatter.py
+│   └── layer.py                  # render_layer(spec) -> shared Axes
 └── backends/xy/
-    ├── style.py
+    ├── style.py                  # apply_common_style(chart, spec); rgba_to_xy()
     ├── line.py
-    └── scatter.py
+    ├── scatter.py
+    └── layer.py                  # render_layer(spec) -> composed xy.Chart
 ```
 
 ### 3.3 Data flow ✅
@@ -344,6 +349,145 @@ it supports (see [4.2](#42-backend)), so requesting an unsupported
 format raises inside `backend.save`, and a path with no suffix raises
 in `export.save` before any backend is touched.
 
+### 4.8 Layering multiple specs on one axes — 🚧 planned
+
+Resolved: yes, plotmux must support combining multiple specs on one
+axes (e.g. a line overlaid with a scatter). This does not need a new
+mechanism in `Backend` or `figure.py` — it fits the existing
+spec/backend split as one more spec type.
+
+```python
+@dataclass(frozen=True)
+class LayerSpec(BaseSpec):
+    r"""A spec that draws multiple child specs on one shared axes."""
+
+    layers: tuple[BaseSpec, ...]
+
+    def __post_init__(self) -> None:
+        if not self.layers:
+            msg = "layers must contain at least one spec"
+            raise ValueError(msg)
+```
+
+Public API:
+
+```python
+def layer(
+    *items: BaseSpec | Figure, backend: str | None = None, **kwargs: Any
+) -> Figure:
+    r"""Combine specs (or already-rendered Figures) onto one axes."""
+    specs = tuple(item.spec if isinstance(item, Figure) else item for item in items)
+    spec = LayerSpec(layers=specs)
+    ...  # same _render() path as hist()
+```
+
+Accepting `Figure` as well as bare specs lets `plotmux.layer(fig1,
+fig2)` read naturally when the user already called `plotmux.line(...)`
+/ `plotmux.scatter(...)` separately; only their `.spec` is reused —
+the earlier native objects are discarded and everything is re-rendered
+together, since two independent native figures can't be merged after
+the fact in either backend.
+
+**Backend side: no interface change.** Each backend already dispatches
+on `type(spec)` via its `_RENDERERS` dict (see [4.2](#42-backend)), so
+supporting layering is one more entry, `LayerSpec ->
+render_layer`, per backend — same pattern as adding any chart type:
+
+- **matplotlib** (`backends/matplotlib/layer.py`): create one `Axes`,
+  then call each child's existing `render_<type>(ax, child_spec)`
+  function against that same `Axes`, in `layers` order. This is why
+  `render_histogram(ax, spec)` already takes an `Axes` rather than
+  creating its own figure — layering was designed in from the start,
+  it just has no second chart type to layer with yet. A single
+  `ax.legend()` call at the end (not one per child) avoids duplicate
+  legends when multiple children set `label`.
+- **xy** (`backends/xy/layer.py`): render each child spec independently
+  into its own `xy.Chart` via the existing per-type functions, then
+  combine with xy's own chart-composition operator (`chart_a +
+  chart_b`, Altair-style) into one `xy.Chart`. Verify this operator's
+  exact semantics against the installed `xy` version before
+  implementing — if xy has no layering operator, `render_layer` falls
+  back to building the combined chart from xy's lower-level primitives
+  directly, but the public `LayerSpec` contract stays the same either
+  way.
+
+`apply_common_style` (once [4.1.1](#411-axis-labels-title-and-linearlog-scale)
+lands) is applied once to the combined result, not once per child —
+`title`/`xlabel`/`ylabel`/`xscale`/`yscale` on `LayerSpec` itself
+describe the combined axes, and per-child style fields (if any layer
+sets its own) only affect that child's marks.
+
+Constraints are deliberately not enforced by `LayerSpec` itself (e.g.
+mixing a `HistogramSpec` with incompatible axis semantics): validating
+"do these children make sense together" is a backend/domain concern,
+not something `core/specs` can know without importing plotting-library
+context, consistent with [3.1](#31-principle-separate-spec-from-render).
+
+### 4.9 Specifying colors across backends — 🚧 planned
+
+Same problem as [4.1.1](#411-axis-labels-title-and-linearlog-scale)
+(one vocabulary, N backend-native representations), but `color` is a
+per-mark encoding, not a figure-level concern, so it follows the
+precedent of `label` and lives on each chart-type spec, not on
+`BaseSpec`:
+
+```python
+@dataclass(frozen=True)
+class HistogramSpec(BaseSpec):
+    ...
+    color: (
+        str | tuple[float, float, float] | tuple[float, float, float, float] | None
+    ) = None
+```
+
+**Canonical input, one parser, reused everywhere** — mirrors how
+`xmin`/`xmax` funnel through the single `find_range` in `core/`
+instead of every spec/backend reimplementing quantile parsing.
+`core/color.py::parse_color` accepts the formats users already know
+and that both matplotlib and xy already understand as *input*:
+
+- a hex string, `"#rrggbb"` or `"#rrggbbaa"`
+- a CSS/matplotlib named color, `"tab:blue"`, `"crimson"`, ...
+  (validated against `matplotlib.colors.CSS4_COLORS` — a static table,
+  so this validation works even when the matplotlib *backend* isn't
+  registered, since it's a `matplotlib_available()`-gated import in
+  `core/color.py`, not a call into a `Backend`)
+- an RGB(A) tuple of floats in `[0, 1]`, matplotlib's own convention
+
+`parse_color` normalizes any of these to one canonical representation,
+an RGBA tuple of floats in `[0, 1]`, and raises `ValueError` on
+anything else (out-of-range floats, unknown names, malformed hex) —
+so a bad color fails in spec `__post_init__`, before any backend is
+touched, same as an invalid `bins`.
+
+**Canonical representation, N backend-native encoders.** Each backend
+converts the normalized RGBA tuple to whatever its native call
+expects, in its own `style.py` (see [4.1.1](#411-axis-labels-title-and-linearlog-scale)):
+
+- matplotlib accepts `(r, g, b, a)` floats in `[0, 1]` directly —
+  `ax.hist(..., color=spec.color)` needs no conversion once
+  `spec.color` is already a `parse_color` output.
+- xy needs checking against its actual color parameter (a CSS-style
+  `"rgba(r, g, b, a)"` string, `0`-`255` ints, is a plausible guess but
+  unverified) — `backends/xy/style.py` owns that one conversion,
+  `rgba_to_xy(color: tuple[float, float, float, float]) -> str`, so
+  the translation lives next to the backend it's for, not in `core/`.
+
+This keeps `core/` matplotlib-*format*-shaped (RGBA `[0, 1]` is just a
+convenient universal wire format, not a matplotlib dependency) without
+making `core/` matplotlib-*library*-dependent for every input shape,
+and it means adding a color format later (e.g. HSL) only touches
+`parse_color`, never a backend.
+
+Multiple series or multiple `LayerSpec` children defaulting to
+*distinct* colors when the user sets no `color` at all (a color
+*cycle*, not an explicit color) is a separate, harder problem — see
+[Open questions](#7-open-questions): matplotlib gets this for free
+from its own default cycle when children share an `Axes` (see
+[4.8](#48-layering-multiple-specs-on-one-axes)), but there is no
+agreed cross-backend cycle vocabulary yet, so it's out of scope for
+this section, which only covers a user setting one explicit `color`.
+
 ## 5. Why this shape
 
 - **Works for any backend, not just today's two**: nothing outside a
@@ -389,17 +533,29 @@ in `export.save` before any backend is touched.
    end to end.
 5. ✅ A second backend (`xy`) to prove the abstraction holds before
    adding more chart types.
-6. 🚧 `style.py::apply_common_style` (title/labels/scale) for
+6. 🚧 `core/color.py::parse_color` + `color` field on `HistogramSpec` +
+   matplotlib/xy per-type renderer support — see
+   [4.9](#49-specifying-colors-across-backends). Self-contained (only
+   touches the existing histogram renderers), so it ships before the
+   larger style step below rather than being bundled with it.
+7. 🚧 `style.py::apply_common_style` (title/labels/scale) for
    matplotlib and xy — see [4.1.1](#411-axis-labels-title-and-linearlog-scale).
-   Do this before step 7 so `LineSpec`/`ScatterSpec` inherit working
-   styling from day one instead of two chart types needing a follow-up
+   Do this before step 8 so `LineSpec`/`ScatterSpec` inherit working
+   styling *and* color from day one instead of needing a follow-up
    migration.
-7. 🚧 `LineSpec` / `ScatterSpec` + matplotlib and xy renderers.
-8. 🚧 `export.py` format coverage for the new chart types (already
-   generic, but worth an explicit test per chart type x format).
-9. 🚧 A third backend (see [6.1](#61-candidate-future-backends)) once
-   two chart types exist on both current backends, to confirm the
-   abstraction still holds under more surface area.
+8. 🚧 `LineSpec` / `ScatterSpec` + matplotlib and xy renderers,
+   reusing `parse_color` and `apply_common_style` from steps 6-7. Do
+   this before step 9 — layering is only worth testing once there are
+   at least two distinct chart types to overlay (e.g. line + scatter).
+9. 🚧 `LayerSpec` + `plotmux.layer()` + matplotlib and xy
+   `render_layer` — see [4.8](#48-layering-multiple-specs-on-one-axes).
+10. 🚧 `export.py` format coverage for the new chart types and for
+    `LayerSpec` (already generic, but worth an explicit test per chart
+    type x format, plus one for a layered figure).
+11. 🚧 A third backend (see [6.1](#61-candidate-future-backends)) once
+    two chart types, colors, and layering exist on both current
+    backends, to confirm the abstraction still holds under more
+    surface area.
 
 ### 6.1 Candidate future backends
 
@@ -434,27 +590,60 @@ should be driven by actual user requests, not by this list.
 
 ## 7. Open questions
 
-- Should `Figure` support combining multiple specs on one axes (e.g.
-  overlaying a line and a scatter), or is that deferred to a later
-  `Layer`/`Composite` spec?
-- Resolved: `xy` already produces interactive HTML output
-  (`_SUPPORTED_FORMATS` includes `"html"`), and this needed no
-  xy-specific handling in `Figure`/`export.save` — both are generic
-  over the backend's declared `_SUPPORTED_FORMATS` and `save`
-  signature already. Any backend that wants to support a new format
-  (HTML, PDF, ...) just adds it to its own `_SUPPORTED_FORMATS`; no
-  other layer changes. Keep it this way: `Figure`, `export.py`, and
-  `config.py` must stay backend-agnostic — no `if backend_name ==
-  "xy"` branches anywhere outside the `backends/xy/` subpackage.
 - Title/labels/linear-log scale are designed to live on `BaseSpec`
-  (see [4.1.1](#411-axis-labels-title-and-linearlog-scale)) but are
-  not implemented. Should other style defaults (color cycles, fonts)
-  follow the same per-spec-field pattern, or live on `config.py` as a
-  global theme instead? Per-spec fields are simple but don't let a
-  user set one color palette for a whole session the way
-  `set_backend` sets one backend for a whole session.
+  (see [4.1.1](#411-axis-labels-title-and-linearlog-scale)); explicit
+  per-mark `color` is designed to live on each chart-type spec (see
+  [4.9](#49-specifying-colors-across-backends)); neither is
+  implemented yet. Should *default* style — a color cycle for
+  multiple series/layers when no `color` is set, fonts — follow the
+  same per-spec-field pattern, or live on `config.py` as a global
+  theme instead? Per-spec fields are simple but don't let a user set
+  one palette for a whole session the way `set_backend` sets one
+  backend for a whole session.
+- `core/color.py::parse_color` validates named colors against
+  `matplotlib.colors.CSS4_COLORS`, a static table, so this works even
+  when the matplotlib *backend* is unavailable — but is depending on
+  `matplotlib` (even just for its color table, gated by
+  `matplotlib_available()`) from `core/` an acceptable exception to
+  "core never imports a plotting library" (see
+  [3.1](#31-principle-separate-spec-from-render)), or does the named-
+  color table need to be plotmux's own copy so `core/` has zero
+  matplotlib dependency even when matplotlib isn't installed?
+- **xy API verification checklist** — three assumptions about `xy`
+  made in [4.8](#48-layering-multiple-specs-on-one-axes) and
+  [4.9](#49-specifying-colors-across-backends) are unverified guesses
+  and must be checked against the installed `xy` version before
+  writing `backends/xy/layer.py` / `backends/xy/style.py`:
+  1. does xy expose a chart-composition operator (`chart_a + chart_b`,
+     Altair-style) for layering, or does `render_layer` need to build
+     the combined chart from lower-level primitives instead?
+  2. what does xy's native color parameter actually accept — CSS
+     `"rgba(...)"` string, `0`-`255` int tuple, something else — so
+     `rgba_to_xy()` can be written correctly?
+  3. does layering two children via whatever xy provides give them
+     distinct colors automatically (like matplotlib's shared-`Axes`
+     default color cycle), or can two layered children render
+     indistinguishably unless the caller sets an explicit color per
+     child?
 - `config.backend()`/`set_backend()` accept any string and only fail
   at render time via `get_backend`. Is that late failure acceptable,
   or should `set_backend`/`backend()` validate against the registry
   eagerly so a typo'd backend name fails at the call site instead of
   the next plot call?
+- Should `LayerSpec` allow nesting (a `LayerSpec` inside `layers`), or
+  should `__post_init__` reject that and require callers to flatten?
+  Nesting is natural to allow structurally but forces every backend's
+  `render_layer` to dispatch recursively instead of doing one flat
+  pass over `layers`.
+- `LayerSpec` does not validate that its children make sense together
+  (see [4.8](#48-layering-multiple-specs-on-one-axes)). Should
+  `plotmux.layer()` at least warn — not raise — on an obvious mismatch
+  such as mixing `xscale="log"` and `xscale="linear"` children once
+  [4.1.1](#411-axis-labels-title-and-linearlog-scale) lands, or is
+  silently taking the outer `LayerSpec`'s own scale fields (ignoring
+  children's) sufficient and simpler?
+- Given `xy` already covers the "interactive, HTML-exportable" niche
+  (see [6.1](#61-candidate-future-backends)), is a `plotly` backend
+  differentiated enough to earn its keep as backend #3, or would the
+  first new backend be better spent proving something xy/matplotlib
+  don't cover at all (e.g. bokeh's server/streaming model)?
