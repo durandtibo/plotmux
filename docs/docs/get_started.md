@@ -39,6 +39,7 @@ pip install plotmux
 ```shell
 pip install plotmux[matplotlib]
 pip install plotmux[xy]
+pip install plotmux[bokeh]
 ```
 
 ## Installing from source

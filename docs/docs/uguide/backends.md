@@ -6,13 +6,16 @@ default backend, and how to add a new one.
 ## Overview
 
 A backend turns a backend-agnostic spec into a plotting library's native figure object (e.g. a
-Matplotlib `Figure`), and knows how to export that native object to a file. `plotmux` ships with two
-built-in backends:
+Matplotlib `Figure`), and knows how to export that native object to a file. `plotmux` ships with
+three built-in backends:
 
 - `"matplotlib"`: renders with [Matplotlib](https://matplotlib.org/) (the default). Requires the
   `matplotlib` extra.
 - `"xy"`: renders with [`xy`](https://github.com/durandtibo/xy). Requires the `xy` extra
   (Python 3.11+).
+- `"bokeh"`: renders with [Bokeh](https://bokeh.org/). Requires the `bokeh` extra. Only the
+  `"html"` export format is supported — static image export (`png`/`svg`) would additionally
+  require a Selenium webdriver at runtime, which is outside the scope of a `pip install bokeh`.
 
 A backend is only registered if its underlying plotting library is installed, so importing
 `plotmux` never fails because a backend's dependency is missing; only calling a plotting function
