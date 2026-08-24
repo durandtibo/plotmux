@@ -375,7 +375,13 @@ creates the parent directory if needed, and delegates to
 `backend.save(native, path, fmt)`. Each backend declares the formats
 it supports (see [4.2](#42-backend)), so requesting an unsupported
 format raises inside `backend.save`, and a path with no suffix raises
-in `export.save` before any backend is touched.
+in `export.save` before any backend is touched. Because this path is
+generic over any spec type, no code here needed to change as chart
+types were added (histogram -> +line/scatter -> +layer, steps 6-9);
+step 10 added explicit test coverage — a chart-type x format matrix
+per backend, see [Build order](#6-build-order) — to confirm that
+genericity actually holds rather than only assuming it from the
+design.
 
 ### 4.8 Layering multiple specs on one axes — ✅ implemented
 
@@ -623,11 +629,16 @@ this section, which only covers a user setting one explicit `color`.
    Nesting a `LayerSpec` inside `layers` is rejected in
    `__post_init__` (see [4.8](#48-layering-multiple-specs-on-one-axes)),
    resolving that open question.
-10. 🚧 `export.py` format coverage for the new chart types and for
-    `LayerSpec` (`export.py` itself needed no change — it was already
-    generic over any spec type via `Backend.save` — but per chart
-    type x format tests, plus one for a layered figure, are still
-    worth adding explicitly).
+10. ✅ `export.py` format coverage for the new chart types and for
+    `LayerSpec` (`export.py` itself needed no code change — it was
+    already generic over any spec type via `Backend.save` — this step
+    is test-only). `tests/integration/backends/{matplotlib,xy}/test_export.py`
+    each parametrize over every chart type (histogram, line, scatter,
+    layer) x every format that backend's `_SUPPORTED_FORMATS` declares
+    (matplotlib: png/svg/pdf/jpg/jpeg; xy: those plus webp/html),
+    driving the full `plotmux.hist()`/... -> `Figure.save()` ->
+    `export.save()` -> `Backend.save()` pipeline end to end and
+    asserting the file exists and is non-empty.
 11. 🚧 A third backend (see [6.1](#61-candidate-future-backends)) once
     two chart types, colors, and layering exist on both current
     backends, to confirm the abstraction still holds under more
