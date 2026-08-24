@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import pytest
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 from plotmux.utils.imports import (
     check_xy,
@@ -15,7 +19,9 @@ MODULE = "plotmux.utils.imports.xy"
 
 
 @pytest.fixture(autouse=True)
-def _cache_clear() -> None:
+def _cache_clear() -> Iterator[None]:
+    is_xy_available.cache_clear()
+    yield
     is_xy_available.cache_clear()
 
 
