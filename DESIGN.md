@@ -1,16 +1,16 @@
 # plotmux design
 
 Status: in progress — core abstraction, four chart specs (histogram,
-line, scatter, layer), two backends (matplotlib, xy), per-mark color
-(`parse_color`), common axis styling (title/labels/scale,
-`apply_common_style`), layering multiple specs on one axes
-(`plotmux.layer()`), export (`Figure.save()` / `export.save()`, with
-format coverage tested across every chart type x every
-backend-supported format), and a `colors/` package with predefined
-colors and a default categorical palette (`DEFAULT_PALETTE`) are
-implemented; a third backend is designed below but not yet built.
+line, scatter, layer), three backends (matplotlib, xy, bokeh),
+per-mark color (`parse_color`), common axis styling
+(title/labels/scale, `apply_common_style`), layering multiple specs on
+one axes (`plotmux.layer()`), export (`Figure.save()` /
+`export.save()`, with format coverage tested across every chart type x
+every backend-supported format), and a `colors/` package with
+predefined colors and a default categorical palette
+(`DEFAULT_PALETTE`) are implemented.
 Sections are marked ✅ implemented or 🚧 planned.
-Date: 2026-08-23
+Date: 2026-08-24
 
 ## 1. Goal
 
@@ -109,14 +109,22 @@ src/plotmux/
 │   │   ├── line.py               # render_line(ax, spec) -> Axes
 │   │   ├── scatter.py            # render_scatter(ax, spec) -> Axes
 │   │   └── layer.py              # render_layer(ax, spec) -> shared Axes
-│   └── xy/
-│       ├── __init__.py          # registers XyBackend if available
-│       ├── backend.py           # XyBackend
-│       ├── style.py             # rgba_to_xy(); apply_common_style(chart, spec)
-│       ├── histogram.py         # render_histogram(spec) -> xy.Chart
-│       ├── line.py               # render_line(spec) -> xy.Chart
-│       ├── scatter.py            # render_scatter(spec) -> xy.Chart
-│       └── layer.py              # render_layer(spec) -> composed xy.Chart
+│   ├── xy/
+│   │   ├── __init__.py          # registers XyBackend if available
+│   │   ├── backend.py           # XyBackend
+│   │   ├── style.py             # rgba_to_xy(); apply_common_style(chart, spec)
+│   │   ├── histogram.py         # render_histogram(spec) -> xy.Chart
+│   │   ├── line.py               # render_line(spec) -> xy.Chart
+│   │   ├── scatter.py            # render_scatter(spec) -> xy.Chart
+│   │   └── layer.py              # render_layer(spec) -> composed xy.Chart
+│   └── bokeh/
+│       ├── __init__.py          # registers BokehBackend if available
+│       ├── backend.py           # BokehBackend
+│       ├── style.py             # rgba_to_bokeh(); apply_common_style(fig, spec)
+│       ├── histogram.py         # render_histogram(fig, spec) -> figure
+│       ├── line.py               # render_line(fig, spec) -> figure
+│       ├── scatter.py            # render_scatter(fig, spec) -> figure
+│       └── layer.py              # render_layer(fig, spec) -> shared figure
 ├── figure.py                    # Figure wrapper
 ├── export.py                    # save(figure, path)
 ├── config.py                    # default backend + context manager
@@ -726,10 +734,27 @@ and nothing yet reads `DEFAULT_PALETTE` automatically.
     third backend (step 12) so that backend gets the palette for free
     instead of needing a follow-up migration, same rationale as
     ordering step 7 before step 8.
-12. 🚧 A third backend (see [6.1](#61-candidate-future-backends)) once
-    two chart types, colors, predefined colors, and layering exist on
-    both current backends, to confirm the abstraction still holds
-    under more surface area.
+12. ✅ A third backend, bokeh (see [6.1](#61-candidate-future-backends)),
+    once two chart types, colors, predefined colors, and layering
+    existed on both existing backends, confirming the abstraction
+    still holds under more surface area. `backends/bokeh/` follows the
+    matplotlib shape (a mutable, shared `bokeh.plotting.figure` that
+    every chart-type renderer draws onto and that layering reuses
+    directly, unlike xy's immutable `Chart`), with one deliberate
+    deviation: bokeh's axis type (`x_axis_type`/`y_axis_type`) is a
+    `figure()` constructor argument, not a mutable property like
+    matplotlib's `Axes.set_xscale`, so `spec.xscale`/`spec.yscale` are
+    applied where the figure is created
+    (`backends/bokeh/backend.py::_make_renderer`) rather than in
+    `apply_common_style` alongside title/labels. Only the `"html"`
+    export format is supported: bokeh's `png`/`svg` export
+    (`export_png`/`export_svg`) additionally requires a Selenium
+    webdriver -- a browser binary, not a pip-installable package --
+    which is a heavier, environment-specific dependency than
+    `pip install bokeh`; `html` is bokeh's own native,
+    dependency-free export path (`bokeh.plotting.save`) and also the
+    format that motivated ranking bokeh a candidate backend in the
+    first place (see [6.1](#61-candidate-future-backends)).
 
 ### 6.1 Candidate future backends
 
