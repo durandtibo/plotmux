@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from plotmux.backends.base import Backend
 from plotmux.backends.xy.histogram import render_histogram
-from plotmux.core.specs import BaseSpec, HistogramSpec
+from plotmux.specs import BaseSpec, HistogramSpec
 
 if TYPE_CHECKING:
     from collections.abc import Callable

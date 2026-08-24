@@ -10,8 +10,8 @@ import numpy as np
 
 from plotmux.backends.registry import get_backend
 from plotmux.config import get_default_backend
-from plotmux.core.specs import HistogramSpec
 from plotmux.figure import Figure
+from plotmux.specs import HistogramSpec
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

@@ -65,10 +65,11 @@ library-specific state back into user code.
 ```
 src/plotmux/
 ├── core/
-│   ├── range.py                 # find_range()
-│   └── specs/
-│       ├── base.py              # BaseSpec (no fields yet)
-│       └── histogram.py         # HistogramSpec
+│   └── range.py                 # find_range()
+├── colors.py                    # parse_color()
+├── specs/
+│   ├── base.py                  # BaseSpec (no fields yet)
+│   └── histogram.py             # HistogramSpec
 ├── backends/
 │   ├── base.py                  # Backend ABC
 │   ├── registry.py              # register_backend() / get_backend()
@@ -91,14 +92,14 @@ src/plotmux/
                                   # (matplotlib.py, xy.py)
 ```
 
-`core/color.py` (`parse_color`) and `backends/xy/style.py`
+`colors.py` (`parse_color`) and `backends/xy/style.py`
 (`rgba_to_xy`) are now implemented — see step 6 above and
 [4.9](#49-specifying-colors-across-backends); they're shown in the
 tree above. Remaining planned additions (🚧, see
 [Build order](#6-build-order)):
 
 ```
-├── core/specs/
+├── specs/
 │   ├── line.py                   # LineSpec
 │   ├── scatter.py                # ScatterSpec
 │   └── layer.py                  # LayerSpec
@@ -123,7 +124,7 @@ user code
 api.py            builds a HistogramSpec, resolves the active backend
    │
    ▼
-core/specs        HistogramSpec (frozen dataclass, no plotting import)
+specs        HistogramSpec (frozen dataclass, no plotting import)
    │
    ▼
 backends/registry  get_backend("matplotlib") -> MatplotlibBackend
@@ -425,7 +426,7 @@ sets its own) only affect that child's marks.
 Constraints are deliberately not enforced by `LayerSpec` itself (e.g.
 mixing a `HistogramSpec` with incompatible axis semantics): validating
 "do these children make sense together" is a backend/domain concern,
-not something `core/specs` can know without importing plotting-library
+not something `specs` can know without importing plotting-library
 context, consistent with [3.1](#31-principle-separate-spec-from-render).
 
 ### 4.9 Specifying colors across backends — ✅ implemented
@@ -448,7 +449,7 @@ class HistogramSpec(BaseSpec):
 **Canonical input, one parser, reused everywhere** — mirrors how
 `xmin`/`xmax` funnel through the single `find_range` in `core/`
 instead of every spec/backend reimplementing quantile parsing.
-`core/color.py::parse_color` accepts the formats users already know
+`colors.py::parse_color` accepts the formats users already know
 and that both matplotlib and xy already understand as *input*:
 
 - a hex string, `"#rrggbb"` or `"#rrggbbaa"`
@@ -456,7 +457,7 @@ and that both matplotlib and xy already understand as *input*:
   (validated against `matplotlib.colors.CSS4_COLORS` — a static table,
   so this validation works even when the matplotlib *backend* isn't
   registered, since it's a `matplotlib_available()`-gated import in
-  `core/color.py`, not a call into a `Backend`)
+  `colors.py`, not a call into a `Backend`)
 - an RGB(A) tuple of floats in `[0, 1]`, matplotlib's own convention
 
 `parse_color` normalizes any of these to one canonical representation,
@@ -531,7 +532,7 @@ this section, which only covers a user setting one explicit `color`.
 
 ## 6. Build order
 
-1. ✅ `core/specs/` (`HistogramSpec` first, since `find_range` already
+1. ✅ `specs/` (`HistogramSpec` first, since `find_range` already
    existed for it) + unit tests.
 2. ✅ `backends/base.py` + `backends/registry.py`.
 3. ✅ `backends/matplotlib/` implementing histogram, reusing
@@ -540,7 +541,7 @@ this section, which only covers a user setting one explicit `color`.
    end to end.
 5. ✅ A second backend (`xy`) to prove the abstraction holds before
    adding more chart types.
-6. ✅ `core/color.py::parse_color` + `color` field on `HistogramSpec` +
+6. ✅ `colors.py::parse_color` + `color` field on `HistogramSpec` +
    matplotlib/xy per-type renderer support — see
    [4.9](#49-specifying-colors-across-backends). Self-contained (only
    touches the existing histogram renderers), so it ships before the
@@ -607,7 +608,7 @@ should be driven by actual user requests, not by this list.
   theme instead? Per-spec fields are simple but don't let a user set
   one palette for a whole session the way `set_backend` sets one
   backend for a whole session.
-- `core/color.py::parse_color` validates named colors against
+- `colors.py::parse_color` validates named colors against
   `matplotlib.colors.CSS4_COLORS`, a static table, so this works even
   when the matplotlib *backend* is unavailable — but is depending on
   `matplotlib` (even just for its color table, gated by

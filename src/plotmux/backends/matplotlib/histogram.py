@@ -11,7 +11,7 @@ from plotmux.core.range import find_range
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
-    from plotmux.core.specs import HistogramSpec
+    from plotmux.specs import HistogramSpec
 
 
 def render_histogram(ax: Axes, spec: HistogramSpec, **kwargs: Any) -> Axes:

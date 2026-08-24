@@ -4,5 +4,5 @@ from __future__ import annotations
 
 __all__ = ["BaseSpec", "HistogramSpec"]
 
-from plotmux.core.specs.base import BaseSpec
-from plotmux.core.specs.histogram import HistogramSpec
+from plotmux.specs.base import BaseSpec
+from plotmux.specs.histogram import HistogramSpec

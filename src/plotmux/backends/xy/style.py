@@ -14,7 +14,7 @@ def rgba_to_xy(color: tuple[float, float, float, float]) -> str:
 
     xy's mark color parameters accept a CSS color string (e.g.
     ``"rgba(255, 0, 0, 1)"``), so the canonical ``[0, 1]`` float RGBA
-    tuple produced by ``plotmux.core.color.parse_color`` is converted
+    tuple produced by ``plotmux.colors.parse_color`` is converted
     to that format here rather than in ``core/``, keeping ``core/``
     free of any single backend's native color representation.
 

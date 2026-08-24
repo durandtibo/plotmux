@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 
 from plotmux.backends.base import Backend
 from plotmux.backends.matplotlib.histogram import render_histogram
-from plotmux.core.specs import BaseSpec, HistogramSpec
+from plotmux.specs import BaseSpec, HistogramSpec
 
 if TYPE_CHECKING:
     from collections.abc import Callable
