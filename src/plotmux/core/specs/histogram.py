@@ -7,6 +7,7 @@ __all__ = ["HistogramSpec"]
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from plotmux.core.color import parse_color
 from plotmux.core.specs.base import BaseSpec
 
 if TYPE_CHECKING:
@@ -34,9 +35,17 @@ class HistogramSpec(BaseSpec):
             divided by the total number of counts and the bin
             width, so that the area under the histogram integrates
             to 1. Defaults to ``False``.
+        color: An optional color for the bars. It can be a hex
+            string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
+            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
+            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
+            backend's default color. See
+            ``plotmux.core.color.parse_color`` for the exact
+            semantics.
 
     Raises:
-        ValueError: if ``bins`` is not a positive integer.
+        ValueError: if ``bins`` is not a positive integer or
+            ``color`` is not a valid color.
 
     Example:
         ```pycon
@@ -55,8 +64,14 @@ class HistogramSpec(BaseSpec):
     xmax: float | str | None = None
     label: str | None = None
     density: bool = False
+    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
 
     def __post_init__(self) -> None:
         if self.bins <= 0:
             msg = f"bins must be a positive integer, but received {self.bins}"
             raise ValueError(msg)
+        if self.color is not None:
+            # Normalize to the canonical RGBA representation once, here,
+            # so every backend receives an already-validated ``parse_color``
+            # output and never has to parse a raw color itself.
+            object.__setattr__(self, "color", parse_color(self.color))
