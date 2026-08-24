@@ -5,16 +5,22 @@ from __future__ import annotations
 __all__ = ["backend", "get_default_backend", "set_backend"]
 
 from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-_DEFAULT_BACKEND = "matplotlib"
+# A ``ContextVar`` rather than a plain module global: it gives each thread
+# and each ``asyncio`` task its own value, so ``set_backend``/``backend(...)``
+# in one thread/task never leaks into or races with another one, while
+# still behaving like a single process-wide default in the common
+# single-threaded case.
+_DEFAULT_BACKEND: ContextVar[str] = ContextVar("plotmux_default_backend", default="matplotlib")
 
 
 def set_backend(name: str) -> None:
-    r"""Set the process-wide default backend.
+    r"""Set the default backend for the current thread/task.
 
     Args:
         name: The name of the backend to use by default, e.g.
@@ -27,8 +33,7 @@ def set_backend(name: str) -> None:
 
         ```
     """
-    global _DEFAULT_BACKEND  # noqa: PLW0603
-    _DEFAULT_BACKEND = name
+    _DEFAULT_BACKEND.set(name)
 
 
 def get_default_backend() -> str:
@@ -37,7 +42,7 @@ def get_default_backend() -> str:
     Returns:
         The name of the current default backend.
     """
-    return _DEFAULT_BACKEND
+    return _DEFAULT_BACKEND.get()
 
 
 @contextmanager
