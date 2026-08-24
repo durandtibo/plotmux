@@ -11,6 +11,7 @@ from plotmux.figure import Figure
 from plotmux.specs import HistogramSpec
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from pathlib import Path
 
 
@@ -29,33 +30,67 @@ class FakeBackend(Backend):
 
 
 @pytest.fixture(autouse=True)
-def _restore_registry() -> Any:
+def _restore_registry() -> Iterator[None]:
     snapshot = dict(_REGISTRY)
     yield
     _REGISTRY.clear()
     _REGISTRY.update(snapshot)
 
 
+def _make_figure() -> Figure:
+    return Figure(spec=HistogramSpec(values=[1, 2, 3]), backend_name="fake", native="native-object")
+
+
+##########################
+#     Tests for save     #
+##########################
+
+
 def test_save_infers_format_from_suffix(tmp_path: Path) -> None:
     fake_backend = FakeBackend()
     register_backend(fake_backend)
-    fig = Figure(spec=HistogramSpec(values=[1, 2, 3]), backend_name="fake", native="native-object")
-    save(fig, tmp_path / "out.svg")
+    save(_make_figure(), tmp_path / "out.svg")
     assert fake_backend.saved == [("native-object", tmp_path / "out.svg", "svg")]
 
 
+@pytest.mark.parametrize(
+    ("filename", "expected_fmt"),
+    [
+        pytest.param("out.png", "png", id="png"),
+        pytest.param("out.PNG", "png", id="uppercase_suffix_is_lowercased"),
+        pytest.param("out.tar.gz", "gz", id="last_suffix_of_multi_dot_name"),
+    ],
+)
+def test_save_infers_format_variants(tmp_path: Path, filename: str, expected_fmt: str) -> None:
+    fake_backend = FakeBackend()
+    register_backend(fake_backend)
+    save(_make_figure(), tmp_path / filename)
+    assert fake_backend.saved == [("native-object", tmp_path / filename, expected_fmt)]
+
+
 def test_save_no_suffix_raises(tmp_path: Path) -> None:
-    fig = Figure(spec=HistogramSpec(values=[1, 2, 3]), backend_name="fake", native="native-object")
     with pytest.raises(ValueError, match="Cannot infer the export format"):
-        save(fig, tmp_path / "out")
+        save(_make_figure(), tmp_path / "out")
+
+
+def test_save_unknown_backend_raises(tmp_path: Path) -> None:
+    fig = Figure(spec=HistogramSpec(values=[1, 2, 3]), backend_name="does-not-exist", native=None)
+    with pytest.raises(RuntimeError, match="No backend registered"):
+        save(fig, tmp_path / "out.png")
 
 
 def test_save_creates_missing_parent_directories(tmp_path: Path) -> None:
     fake_backend = FakeBackend()
     register_backend(fake_backend)
-    fig = Figure(spec=HistogramSpec(values=[1, 2, 3]), backend_name="fake", native="native-object")
     path = tmp_path / "a" / "b" / "out.png"
     assert not path.parent.exists()
-    save(fig, path)
+    save(_make_figure(), path)
     assert path.parent.is_dir()
     assert fake_backend.saved == [("native-object", path, "png")]
+
+
+def test_save_existing_parent_directory(tmp_path: Path) -> None:
+    fake_backend = FakeBackend()
+    register_backend(fake_backend)
+    save(_make_figure(), tmp_path / "out.png")
+    assert fake_backend.saved == [("native-object", tmp_path / "out.png", "png")]

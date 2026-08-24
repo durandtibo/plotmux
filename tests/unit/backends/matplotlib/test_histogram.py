@@ -12,6 +12,10 @@ if is_matplotlib_available():
 
     from plotmux.backends.matplotlib.histogram import render_histogram
 
+######################################
+#     Tests for render_histogram     #
+######################################
+
 
 @matplotlib_available
 def test_render_histogram_returns_axes() -> None:
@@ -28,6 +32,15 @@ def test_render_histogram_bins() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10)
     render_histogram(ax, spec)
     assert len(ax.patches) == 10
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_render_histogram_single_bin() -> None:
+    fig, ax = plt.subplots()
+    spec = HistogramSpec(values=np.arange(101), bins=1)
+    render_histogram(ax, spec)
+    assert len(ax.patches) == 1
     plt.close(fig)
 
 
@@ -65,4 +78,22 @@ def test_render_histogram_explicit_range() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, xmin=5, xmax=50)
     render_histogram(ax, spec)
     assert ax.get_xlim() == pytest.approx((5, 50), abs=5)
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_render_histogram_color() -> None:
+    fig, ax = plt.subplots()
+    spec = HistogramSpec(values=np.arange(101), bins=10, color="red")
+    render_histogram(ax, spec)
+    assert ax.patches[0].get_facecolor() == (1.0, 0.0, 0.0, 1.0)
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_render_histogram_forwards_kwargs() -> None:
+    fig, ax = plt.subplots()
+    spec = HistogramSpec(values=np.arange(101), bins=10)
+    render_histogram(ax, spec, alpha=0.3)
+    assert ax.patches[0].get_alpha() == 0.3
     plt.close(fig)

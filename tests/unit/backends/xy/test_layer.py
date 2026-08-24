@@ -12,12 +12,23 @@ if is_xy_available():
 
     from plotmux.backends.xy.layer import render_layer
 
+##################################
+#     Tests for render_layer     #
+##################################
+
 
 @xy_available
 def test_render_layer_returns_chart() -> None:
     spec = LayerSpec(layers=(LineSpec(x=np.arange(10), y=np.arange(10)),))
     chart = render_layer(spec)
     assert isinstance(chart, Chart)
+
+
+@xy_available
+def test_render_layer_single_child() -> None:
+    spec = LayerSpec(layers=(LineSpec(x=np.arange(10), y=np.arange(10)),))
+    chart = render_layer(spec)
+    assert len(chart.children) == 1
 
 
 @xy_available

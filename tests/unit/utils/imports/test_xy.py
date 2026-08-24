@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import logging
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -11,8 +10,6 @@ from plotmux.utils.imports import (
     raise_xy_missing_error,
     xy_available,
 )
-
-logger = logging.getLogger(__name__)
 
 MODULE = "plotmux.utils.imports.xy"
 
@@ -26,9 +23,9 @@ def my_function(n: int = 0) -> int:
     return 42 + n
 
 
-##############
-#     xy     #
-##############
+############################
+#     Tests for check_xy     #
+############################
 
 
 def test_check_xy_with_package() -> None:
@@ -44,8 +41,25 @@ def test_check_xy_without_package() -> None:
         check_xy()
 
 
-def test_is_xy_available() -> None:
+##################################
+#     Tests for is_xy_available     #
+##################################
+
+
+def test_is_xy_available_returns_bool() -> None:
     assert isinstance(is_xy_available(), bool)
+
+
+def test_is_xy_available_is_cached() -> None:
+    with patch(f"{MODULE}.package_available", Mock(return_value=True)) as mock_package_available:
+        is_xy_available()
+        is_xy_available()
+        assert mock_package_available.call_count == 1
+
+
+################################
+#     Tests for xy_available     #
+################################
 
 
 def test_xy_available_with_package() -> None:
@@ -80,6 +94,16 @@ def test_xy_available_decorator_without_package() -> None:
         assert fn(2) is None
 
 
+##############################################
+#     Tests for raise_xy_missing_error     #
+##############################################
+
+
 def test_raise_xy_missing_error() -> None:
     with pytest.raises(RuntimeError, match=r"'xy' package is required but not installed."):
+        raise_xy_missing_error()
+
+
+def test_raise_xy_missing_error_mentions_pip_install() -> None:
+    with pytest.raises(RuntimeError, match=r"pip install xy"):
         raise_xy_missing_error()

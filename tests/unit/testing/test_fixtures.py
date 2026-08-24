@@ -10,6 +10,10 @@ from plotmux.testing.fixtures import (
 )
 from plotmux.utils.imports import is_matplotlib_available, is_xy_available
 
+##################################################
+#     Tests for matplotlib_available markers     #
+##################################################
+
 
 def test_matplotlib_available_is_mark_decorator() -> None:
     assert isinstance(matplotlib_available, pytest.MarkDecorator)
@@ -17,14 +21,6 @@ def test_matplotlib_available_is_mark_decorator() -> None:
 
 def test_matplotlib_not_available_is_mark_decorator() -> None:
     assert isinstance(matplotlib_not_available, pytest.MarkDecorator)
-
-
-def test_xy_available_is_mark_decorator() -> None:
-    assert isinstance(xy_available, pytest.MarkDecorator)
-
-
-def test_xy_not_available_is_mark_decorator() -> None:
-    assert isinstance(xy_not_available, pytest.MarkDecorator)
 
 
 @matplotlib_available
@@ -35,6 +31,19 @@ def test_matplotlib_available_runs_when_matplotlib_installed() -> None:
 @matplotlib_not_available
 def test_matplotlib_not_available_runs_when_matplotlib_missing() -> None:
     assert not is_matplotlib_available()
+
+
+##########################################
+#     Tests for xy_available markers     #
+##########################################
+
+
+def test_xy_available_is_mark_decorator() -> None:
+    assert isinstance(xy_available, pytest.MarkDecorator)
+
+
+def test_xy_not_available_is_mark_decorator() -> None:
+    assert isinstance(xy_not_available, pytest.MarkDecorator)
 
 
 @xy_available

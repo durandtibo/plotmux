@@ -11,6 +11,10 @@ if is_xy_available():
 
     from plotmux.backends.xy.line import render_line
 
+#################################
+#     Tests for render_line     #
+#################################
+
 
 @xy_available
 def test_render_line_returns_chart() -> None:
@@ -27,7 +31,21 @@ def test_render_line_label() -> None:
 
 
 @xy_available
+def test_render_line_no_color_uses_backend_default() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10))
+    chart = render_line(spec)
+    assert isinstance(chart, Chart)
+
+
+@xy_available
 def test_render_line_color() -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10), color="red")
     chart = render_line(spec)
+    assert isinstance(chart, Chart)
+
+
+@xy_available
+def test_render_line_forwards_kwargs() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10))
+    chart = render_line(spec, width=5.0)
     assert isinstance(chart, Chart)

@@ -11,10 +11,21 @@ if is_xy_available():
 
     from plotmux.backends.xy.histogram import render_histogram
 
+######################################
+#     Tests for render_histogram     #
+######################################
+
 
 @xy_available
 def test_render_histogram_returns_chart() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10)
+    chart = render_histogram(spec)
+    assert isinstance(chart, Chart)
+
+
+@xy_available
+def test_render_histogram_single_bin() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=1)
     chart = render_histogram(spec)
     assert isinstance(chart, Chart)
 
@@ -34,6 +45,13 @@ def test_render_histogram_label() -> None:
 
 
 @xy_available
+def test_render_histogram_no_color_uses_backend_default() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10)
+    chart = render_histogram(spec)
+    assert isinstance(chart, Chart)
+
+
+@xy_available
 def test_render_histogram_color() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, color="red")
     chart = render_histogram(spec)
@@ -44,4 +62,11 @@ def test_render_histogram_color() -> None:
 def test_render_histogram_explicit_range() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, xmin=5, xmax=50)
     chart = render_histogram(spec)
+    assert isinstance(chart, Chart)
+
+
+@xy_available
+def test_render_histogram_forwards_kwargs() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10)
+    chart = render_histogram(spec, opacity=0.5)
     assert isinstance(chart, Chart)
