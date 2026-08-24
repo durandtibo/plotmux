@@ -1,0 +1,32 @@
+# Notebook execution workflow.
+# Verifies that the example notebooks can be executed end-to-end without errors.
+
+name: Notebooks
+on:
+  workflow_call:
+  workflow_dispatch:  # to trigger manually
+
+permissions:
+  contents: read
+
+jobs:
+  check-notebooks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # Install dependencies including Jupyter and all optional extras used
+      # by the notebooks (e.g. matplotlib, xy).
+      - name: Setup python environment
+        uses: durandtibo/setup-venv-uv-action@v0.1.0
+        with:
+          install-args: '--jupyter-deps'
+
+      # Execute every notebook in place; nbconvert fails the step if any
+      # cell raises an error.
+      - name: Run notebooks
+        run: |
+          inv check-notebooks

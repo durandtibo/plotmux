@@ -20,6 +20,7 @@ SOURCE = f"src/{NAME}"
 TESTS = "tests"
 UNIT_TESTS = f"{TESTS}/unit"
 INTEGRATION_TESTS = f"{TESTS}/integration"
+NOTEBOOKS = "notebooks"
 PYTHON_VERSION = "3.14"
 
 
@@ -109,6 +110,25 @@ def doctest_src(c: Context) -> None:
     logger.info("📝 Validating markdown code examples...")
     c.run("dev/check_markdown.sh", pty=True)
     logger.info("✅ Doctest validation complete")
+
+
+@task
+def check_notebooks(c: Context) -> None:
+    r"""Execute the notebooks and check that they run without errors.
+
+    This task uses ``jupyter nbconvert`` to execute every notebook in the
+    ``notebooks`` directory in place, which fails if any cell raises an
+    error.
+
+    Args:
+        c: The invoke context.
+    """
+    logger.info("📓 Executing notebooks...")
+    c.run(
+        f"jupyter nbconvert --to notebook --execute --stdout {NOTEBOOKS}/*.ipynb",
+        pty=True,
+    )
+    logger.info("✅ Notebook execution complete")
 
 
 @task
