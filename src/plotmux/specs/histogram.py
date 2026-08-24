@@ -25,7 +25,7 @@ class HistogramSpec(BaseSpec):
         xmin: Specifies the lower bound of the x-axis range. It can
             be an explicit value, a quantile string such as
             ``"q0.1"``, or ``None`` to use the minimum of ``values``.
-            See ``plotmux.core.range.find_range`` for the exact
+            See ``plotmux.utils.range.find_range`` for the exact
             semantics.
         xmax: Specifies the upper bound of the x-axis range. Same
             semantics as ``xmin`` but for the upper bound.

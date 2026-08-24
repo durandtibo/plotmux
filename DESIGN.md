@@ -33,7 +33,7 @@ growing the common API to the union of all backends.
   in its extra marker). Only `numpy` and `coola` are hard dependencies,
   so the core package (specs, registry, config, public API) must
   import cleanly with no plotting library installed.
-- `src/plotmux/core/range.py` (`find_range`) already implements
+- `src/plotmux/utils/range.py` (`find_range`) already implements
   quantile-or-explicit axis bounds (e.g. `xmin="q0.1"`). This is
   reused by specs rather than reimplemented.
 - Style conventions already in place: `from __future__ import
