@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from plotmux.testing.fixtures import matplotlib_available
+from plotmux.testing.fixtures import matplotlib_available, xy_available
 
 
 @matplotlib_available
@@ -21,6 +21,15 @@ def test_hist_explicit_backend() -> None:
 
     fig = plotmux.hist(np.arange(101), bins=10, backend="matplotlib")
     assert fig.backend_name == "matplotlib"
+
+
+@xy_available
+def test_hist_explicit_xy_backend() -> None:
+    import plotmux
+
+    fig = plotmux.hist(np.arange(101), bins=10, backend="xy")
+    assert fig.backend_name == "xy"
+    assert fig.spec.bins == 10
 
 
 def test_hist_unknown_backend_raises() -> None:

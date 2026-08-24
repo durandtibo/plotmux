@@ -12,6 +12,7 @@ from plotmux.api import hist
 # themselves in plotmux.backends.registry, if their underlying
 # plotting library is installed.
 from plotmux.backends import matplotlib as _matplotlib_backend  # noqa: F401
+from plotmux.backends import xy as _xy_backend  # noqa: F401
 from plotmux.config import backend, set_backend
 
 try:
