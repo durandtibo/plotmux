@@ -38,13 +38,17 @@ jobs:
   format:
     uses: ./.github/workflows/format.yaml
 
-  # Check type annotations with pyright
-  type-checking:
-    uses: ./.github/workflows/type-checking.yaml
+  # Verify the example notebooks execute without errors
+  notebooks:
+    uses: ./.github/workflows/notebooks.yaml
 
   # Run pre-commit hooks for code quality
   pre-commit:
     uses: ./.github/workflows/pre-commit.yaml
+
+  # Check type annotations with pyright
+  type-checking:
+    uses: ./.github/workflows/type-checking.yaml
 
   # Run unit and integration tests across multiple Python versions and OS
   test:

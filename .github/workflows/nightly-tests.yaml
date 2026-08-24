@@ -12,22 +12,39 @@ permissions:
   contents: read
 
 jobs:
-  benchmark:
-    uses: ./.github/workflows/benchmark.yaml
+  # Validate package can be built and installed correctly
   build:
     uses: ./.github/workflows/build.yaml
+
+  # Check for circular import dependencies
   cyclic-imports:
     uses: ./.github/workflows/cyclic-imports.yaml
+
+  # Run doctests on code examples
   doctest:
     uses: ./.github/workflows/doctest.yaml
     secrets: inherit
+
+  # Verify code formatting and linting
   format:
     uses: ./.github/workflows/format.yaml
-  type-checking:
-    uses: ./.github/workflows/type-checking.yaml
+
+  # Verify the example notebooks execute without errors
+  notebooks:
+    uses: ./.github/workflows/notebooks.yaml
+
+  # Run pre-commit hooks for code quality
   pre-commit:
     uses: ./.github/workflows/pre-commit.yaml
+
+  # Check type annotations with pyright
+  type-checking:
+    uses: ./.github/workflows/type-checking.yaml
+
+  # Run unit and integration tests across multiple Python versions and OS
   test:
     uses: ./.github/workflows/test.yaml
+
+  # Test compatibility with different dependency versions
   test-deps:
     uses: ./.github/workflows/test-deps.yaml
