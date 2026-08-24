@@ -5,12 +5,16 @@ import pytest
 
 from plotmux.core.specs import HistogramSpec
 from plotmux.testing.fixtures import matplotlib_available
+from plotmux.utils.imports import is_matplotlib_available
+
+if is_matplotlib_available():
+    from matplotlib.figure import Figure
+
+    from plotmux.backends.matplotlib.backend import MatplotlibBackend
 
 
 @pytest.fixture
 def backend() -> object:
-    from plotmux.backends.matplotlib.backend import MatplotlibBackend
-
     return MatplotlibBackend()
 
 
@@ -21,8 +25,6 @@ def test_matplotlib_backend_name(backend) -> None:  # noqa: ANN001
 
 @matplotlib_available
 def test_matplotlib_backend_render_histogram(backend) -> None:  # noqa: ANN001
-    from matplotlib.figure import Figure
-
     spec = HistogramSpec(values=np.arange(101), bins=10)
     native = backend.render(spec)
     assert isinstance(native, Figure)
@@ -30,8 +32,6 @@ def test_matplotlib_backend_render_histogram(backend) -> None:  # noqa: ANN001
 
 @matplotlib_available
 def test_matplotlib_backend_render_histogram_density(backend) -> None:  # noqa: ANN001
-    from matplotlib.figure import Figure
-
     spec = HistogramSpec(values=np.arange(101), bins=10, density=True)
     native = backend.render(spec)
     assert isinstance(native, Figure)
@@ -39,6 +39,15 @@ def test_matplotlib_backend_render_histogram_density(backend) -> None:  # noqa: 
     heights = [patch.get_height() for patch in ax.patches]
     # The area under the histogram integrates to 1 when density=True.
     assert sum(heights) * (100 / 10) == pytest.approx(1.0)
+
+
+@matplotlib_available
+def test_matplotlib_backend_render_histogram_label(backend) -> None:  # noqa: ANN001
+    spec = HistogramSpec(values=np.arange(101), bins=10, label="my-label")
+    native = backend.render(spec)
+    assert isinstance(native, Figure)
+    ax = native.axes[0]
+    assert ax.get_legend() is not None
 
 
 @matplotlib_available

@@ -5,12 +5,16 @@ import pytest
 
 from plotmux.core.specs import HistogramSpec
 from plotmux.testing.fixtures import xy_available
+from plotmux.utils.imports import is_xy_available
+
+if is_xy_available():
+    from xy import Chart
+
+    from plotmux.backends.xy.backend import XyBackend
 
 
 @pytest.fixture
 def backend() -> object:
-    from plotmux.backends.xy.backend import XyBackend
-
     return XyBackend()
 
 
@@ -21,8 +25,6 @@ def test_xy_backend_name(backend) -> None:  # noqa: ANN001
 
 @xy_available
 def test_xy_backend_render_histogram(backend) -> None:  # noqa: ANN001
-    from xy import Chart
-
     spec = HistogramSpec(values=np.arange(101), bins=10)
     native = backend.render(spec)
     assert isinstance(native, Chart)
@@ -30,8 +32,6 @@ def test_xy_backend_render_histogram(backend) -> None:  # noqa: ANN001
 
 @xy_available
 def test_xy_backend_render_histogram_density(backend) -> None:  # noqa: ANN001
-    from xy import Chart
-
     spec = HistogramSpec(values=np.arange(101), bins=10, density=True)
     native = backend.render(spec)
     assert isinstance(native, Chart)
