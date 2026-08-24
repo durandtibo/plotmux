@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 import plotmux
+from plotmux.specs import LineSpec, ScatterSpec
 from plotmux.testing.fixtures import matplotlib_available, xy_available
 
 
@@ -54,3 +55,51 @@ def test_hist_common_style() -> None:
     assert ax.get_ylabel() == "y"
     assert ax.get_xscale() == "log"
     assert ax.get_yscale() == "log"
+
+
+@matplotlib_available
+def test_line_returns_figure_with_matplotlib_backend() -> None:
+    fig = plotmux.line(np.arange(10), np.arange(10) ** 2)
+    assert fig.backend_name == "matplotlib"
+    assert isinstance(fig.spec, LineSpec)
+
+
+@xy_available
+def test_line_explicit_xy_backend() -> None:
+    fig = plotmux.line(np.arange(10), np.arange(10) ** 2, backend="xy")
+    assert fig.backend_name == "xy"
+
+
+def test_line_unknown_backend_raises() -> None:
+    with pytest.raises(RuntimeError, match="No backend registered"):
+        plotmux.line(np.arange(10), np.arange(10), backend="does-not-exist")
+
+
+@matplotlib_available
+def test_line_mismatched_length_raises() -> None:
+    with pytest.raises(ValueError, match="x and y must have the same length"):
+        plotmux.line(np.arange(10), np.arange(5))
+
+
+@matplotlib_available
+def test_scatter_returns_figure_with_matplotlib_backend() -> None:
+    fig = plotmux.scatter(np.arange(10), np.arange(10) ** 2)
+    assert fig.backend_name == "matplotlib"
+    assert isinstance(fig.spec, ScatterSpec)
+
+
+@xy_available
+def test_scatter_explicit_xy_backend() -> None:
+    fig = plotmux.scatter(np.arange(10), np.arange(10) ** 2, backend="xy")
+    assert fig.backend_name == "xy"
+
+
+def test_scatter_unknown_backend_raises() -> None:
+    with pytest.raises(RuntimeError, match="No backend registered"):
+        plotmux.scatter(np.arange(10), np.arange(10), backend="does-not-exist")
+
+
+@matplotlib_available
+def test_scatter_mismatched_length_raises() -> None:
+    with pytest.raises(ValueError, match="x and y must have the same length"):
+        plotmux.scatter(np.arange(10), np.arange(5))

@@ -2,7 +2,7 @@ r"""Contain the public plotting API."""
 
 from __future__ import annotations
 
-__all__ = ["hist"]
+__all__ = ["hist", "line", "scatter"]
 
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -11,7 +11,7 @@ import numpy as np
 from plotmux.backends.registry import get_backend
 from plotmux.config import get_default_backend
 from plotmux.figure import Figure
-from plotmux.specs import HistogramSpec
+from plotmux.specs import HistogramSpec, LineSpec, ScatterSpec
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -85,6 +85,136 @@ def hist(
         label=label,
         density=density,
         color=color,
+        title=title,
+        xlabel=xlabel,
+        ylabel=ylabel,
+        xscale=xscale,
+        yscale=yscale,
+    )
+    backend_name = backend or get_default_backend()
+    native = get_backend(backend_name).render(spec, **kwargs)
+    return Figure(spec=spec, backend_name=backend_name, native=native)
+
+
+def line(
+    x: Sequence[float] | np.ndarray,
+    y: Sequence[float] | np.ndarray,
+    *,
+    label: str | None = None,
+    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
+    title: str | None = None,
+    xlabel: str | None = None,
+    ylabel: str | None = None,
+    xscale: Literal["linear", "log"] = "linear",
+    yscale: Literal["linear", "log"] = "linear",
+    backend: str | None = None,
+    **kwargs: Any,
+) -> Figure:
+    r"""Plot a line chart.
+
+    Args:
+        x: The array of x values.
+        y: The array of y values. Must have the same length as
+            ``x``.
+        label: An optional label used e.g. in the legend.
+        color: An optional color for the line. It can be a hex
+            string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
+            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
+            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
+            backend's default color.
+        title: An optional figure title.
+        xlabel: An optional x-axis label.
+        ylabel: An optional y-axis label.
+        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
+        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+        backend: The name of the backend to use to render the
+            figure, or ``None`` to use the current default backend
+            (see ``plotmux.set_backend``).
+        **kwargs: Additional backend-specific keyword arguments,
+            forwarded to the backend's renderer.
+
+    Returns:
+        The rendered figure.
+
+    Example:
+        ```pycon
+        >>> import plotmux
+        >>> fig = plotmux.line([1, 2, 3], [1, 4, 9])  # doctest: +SKIP
+
+        ```
+    """
+    spec = LineSpec(
+        x=np.asarray(x),
+        y=np.asarray(y),
+        label=label,
+        color=color,
+        title=title,
+        xlabel=xlabel,
+        ylabel=ylabel,
+        xscale=xscale,
+        yscale=yscale,
+    )
+    backend_name = backend or get_default_backend()
+    native = get_backend(backend_name).render(spec, **kwargs)
+    return Figure(spec=spec, backend_name=backend_name, native=native)
+
+
+def scatter(
+    x: Sequence[float] | np.ndarray,
+    y: Sequence[float] | np.ndarray,
+    *,
+    label: str | None = None,
+    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
+    size: float | None = None,
+    title: str | None = None,
+    xlabel: str | None = None,
+    ylabel: str | None = None,
+    xscale: Literal["linear", "log"] = "linear",
+    yscale: Literal["linear", "log"] = "linear",
+    backend: str | None = None,
+    **kwargs: Any,
+) -> Figure:
+    r"""Plot a scatter chart.
+
+    Args:
+        x: The array of x values.
+        y: The array of y values. Must have the same length as
+            ``x``.
+        label: An optional label used e.g. in the legend.
+        color: An optional color for the markers. It can be a hex
+            string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
+            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
+            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
+            backend's default color.
+        size: An optional marker size. ``None`` uses the backend's
+            default size.
+        title: An optional figure title.
+        xlabel: An optional x-axis label.
+        ylabel: An optional y-axis label.
+        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
+        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+        backend: The name of the backend to use to render the
+            figure, or ``None`` to use the current default backend
+            (see ``plotmux.set_backend``).
+        **kwargs: Additional backend-specific keyword arguments,
+            forwarded to the backend's renderer.
+
+    Returns:
+        The rendered figure.
+
+    Example:
+        ```pycon
+        >>> import plotmux
+        >>> fig = plotmux.scatter([1, 2, 3], [1, 4, 9])  # doctest: +SKIP
+
+        ```
+    """
+    spec = ScatterSpec(
+        x=np.asarray(x),
+        y=np.asarray(y),
+        label=label,
+        color=color,
+        size=size,
         title=title,
         xlabel=xlabel,
         ylabel=ylabel,
