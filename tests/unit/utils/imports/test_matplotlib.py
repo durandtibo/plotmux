@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator
 
 from plotmux.utils.imports import (
     check_matplotlib,
@@ -19,7 +19,7 @@ MODULE = "plotmux.utils.imports.matplotlib"
 
 
 @pytest.fixture(autouse=True)
-def _cache_clear() -> Iterator[None]:
+def _cache_clear() -> Generator[None]:
     is_matplotlib_available.cache_clear()
     yield
     is_matplotlib_available.cache_clear()
