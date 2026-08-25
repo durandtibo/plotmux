@@ -6,6 +6,8 @@ r"""Define some pytest fixtures for testing.
 from __future__ import annotations
 
 __all__ = [
+    "altair_available",
+    "altair_not_available",
     "bokeh_available",
     "bokeh_not_available",
     "matplotlib_available",
@@ -17,9 +19,17 @@ __all__ = [
 import pytest
 
 from plotmux.utils.imports import (
+    is_altair_available,
     is_bokeh_available,
     is_matplotlib_available,
     is_xy_available,
+)
+
+altair_available: pytest.MarkDecorator = pytest.mark.skipif(
+    not is_altair_available(), reason="Requires altair"
+)
+altair_not_available: pytest.MarkDecorator = pytest.mark.skipif(
+    is_altair_available(), reason="Skip if altair is available"
 )
 
 bokeh_available: pytest.MarkDecorator = pytest.mark.skipif(
