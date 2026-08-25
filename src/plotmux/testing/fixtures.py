@@ -1,6 +1,22 @@
-r"""Define some pytest fixtures for testing.
+r"""Define ``pytest`` markers to skip tests based on the availability of
+``plotmux``'s optional backend dependencies (``altair``, ``bokeh``,
+``matplotlib``, ``xy``).
 
-`pytest` is required to use these fixtures.
+``pytest`` is required to use these fixtures. Each ``<package>_available``
+marker skips the test unless the package is installed, and each
+``<package>_not_available`` marker skips the test if the package is
+installed, which is useful to test the "missing dependency" error
+paths (see ``plotmux.utils.imports``).
+
+Example:
+    ```pycon
+    >>> from plotmux.testing.fixtures import matplotlib_available
+    >>> @matplotlib_available
+    ... def test_something() -> None:
+    ...     pass
+    ...
+
+    ```
 """
 
 from __future__ import annotations

@@ -1,5 +1,16 @@
-r"""Helpers to detect, lazily import, and validate optional
-dependencies."""
+r"""Helpers to detect and validate the optional plotting backend
+dependencies (``altair``, ``bokeh``, ``matplotlib``, ``xy``).
+
+For each backend, this package re-exports:
+
+- ``is_<backend>_available``: indicate if the package is installed.
+- ``check_<backend>``: raise a ``RuntimeError`` if the package is not
+  installed.
+- ``raise_<backend>_missing_error``: raise a ``RuntimeError`` with a
+  message about the missing package.
+- ``<backend>_available``: a decorator to conditionally execute a
+  function only if the package is installed.
+"""
 
 from __future__ import annotations
 

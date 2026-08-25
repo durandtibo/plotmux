@@ -41,7 +41,7 @@ def rgba_to_bokeh(color: tuple[float, float, float, float]) -> RGB:
         ```pycon
         >>> from plotmux.backends.bokeh.style import rgba_to_bokeh
         >>> rgba_to_bokeh((1.0, 0.0, 0.0, 1.0))
-        RGB(r=255, g=0, b=0, a=1.0)
+        rgb(255, 0, 0)
 
         ```
     """

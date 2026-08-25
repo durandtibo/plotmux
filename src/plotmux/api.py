@@ -94,6 +94,11 @@ def hist(
     Returns:
         The rendered figure.
 
+    Raises:
+        ValueError: if ``bins`` is not a positive integer,
+            ``color`` is not a valid color, or ``xmin`` and ``xmax``
+            are both explicit numeric values with ``xmin >= xmax``.
+
     Example:
         ```pycon
         >>> import plotmux
@@ -157,6 +162,10 @@ def line(
 
     Returns:
         The rendered figure.
+
+    Raises:
+        ValueError: if ``x`` and ``y`` do not have the same length,
+            or ``color`` is not a valid color.
 
     Example:
         ```pycon
@@ -222,6 +231,11 @@ def scatter(
     Returns:
         The rendered figure.
 
+    Raises:
+        ValueError: if ``x`` and ``y`` do not have the same length,
+            ``size`` is not a positive number, or ``color`` is not a
+            valid color.
+
     Example:
         ```pycon
         >>> import plotmux
@@ -279,6 +293,11 @@ def layer(
 
     Returns:
         The rendered figure.
+
+    Raises:
+        ValueError: if no ``items`` are given, or one of the given
+            specs is itself a ``LayerSpec`` (nesting is not
+            supported).
 
     Example:
         ```pycon

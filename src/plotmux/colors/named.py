@@ -193,6 +193,16 @@ _CSS4_COLORS: dict[str, str] = {
 
 
 def _build_named_colors() -> dict[str, tuple[float, float, float, float]]:
+    r"""Build the mapping of lowercase color name to its ``(r, g, b, a)``
+    tuple of floats in ``[0, 1]``.
+
+    Merges ``_BASE_COLORS``, ``_TABLEAU_COLORS``, and ``_CSS4_COLORS``,
+    converting hex strings to normalized float tuples with an alpha
+    of ``1.0``.
+
+    Returns:
+        The mapping of color name to its ``(r, g, b, a)`` tuple.
+    """
     colors: dict[str, tuple[float, float, float, float]] = {
         name: (r, g, b, 1.0) for name, (r, g, b) in _BASE_COLORS.items()
     }

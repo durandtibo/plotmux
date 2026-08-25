@@ -53,6 +53,21 @@ def parse_color(
 
 
 def _parse_str(color: str) -> tuple[float, float, float, float]:
+    r"""Parse a hex string or a named color into a canonical RGBA tuple.
+
+    Args:
+        color: The hex string (``"#rrggbb"`` or ``"#rrggbbaa"``) or
+            named color (e.g. ``"tab:blue"``, ``"crimson"``) to
+            parse.
+
+    Returns:
+        The color as an ``(r, g, b, a)`` tuple of floats in
+            ``[0, 1]``.
+
+    Raises:
+        ValueError: if ``color`` is not a valid hex string or a
+            known named color.
+    """
     if color.startswith("#"):
         return _parse_hex(color)
     # Named colors (CSS4 and matplotlib's own "tab:blue"-style names) are
@@ -67,6 +82,20 @@ def _parse_str(color: str) -> tuple[float, float, float, float]:
 
 
 def _parse_hex(value: str) -> tuple[float, float, float, float]:
+    r"""Parse a hex color string into a canonical RGBA tuple.
+
+    Args:
+        value: The hex string to parse, e.g. ``"#rrggbb"`` or
+            ``"#rrggbbaa"``.
+
+    Returns:
+        The color as an ``(r, g, b, a)`` tuple of floats in
+            ``[0, 1]``.
+
+    Raises:
+        ValueError: if ``value`` is not a valid ``"#rrggbb"`` or
+            ``"#rrggbbaa"`` hex string.
+    """
     hex_str = value.lstrip("#")
     if len(hex_str) not in (6, 8):
         msg = f"Invalid hex color {value!r}: expected '#rrggbb' or '#rrggbbaa'"
@@ -81,6 +110,21 @@ def _parse_hex(value: str) -> tuple[float, float, float, float]:
 
 
 def _parse_tuple(color: tuple[float, ...]) -> tuple[float, float, float, float]:
+    r"""Parse an RGB(A) tuple into a canonical RGBA tuple.
+
+    Args:
+        color: The tuple to parse. It must have 3 (RGB) or 4 (RGBA)
+            floats, each in ``[0, 1]``.
+
+    Returns:
+        The color as an ``(r, g, b, a)`` tuple of floats in
+            ``[0, 1]``. ``a`` defaults to ``1.0`` when ``color``
+            has only 3 components.
+
+    Raises:
+        ValueError: if ``color`` does not have 3 or 4 components,
+            or if a component is not in ``[0, 1]``.
+    """
     if len(color) == 3:
         r, g, b = color
         a = 1.0
