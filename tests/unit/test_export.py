@@ -29,6 +29,10 @@ class FakeBackend(Backend):
         self.saved.append((native, path, fmt))
 
 
+class FakeBackendWithFormats(FakeBackend):
+    supported_formats = frozenset({"svg"})
+
+
 @pytest.fixture(autouse=True)
 def _restore_registry() -> Iterator[None]:
     snapshot = dict(_REGISTRY)
@@ -71,6 +75,17 @@ def test_save_infers_format_variants(tmp_path: Path, filename: str, expected_fmt
 def test_save_no_suffix_raises(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="Cannot infer the export format"):
         save(_make_figure(), tmp_path / "out")
+
+
+def test_save_unsupported_format_raises_before_creating_parent_dir(tmp_path: Path) -> None:
+    register_backend(FakeBackendWithFormats())
+    fig = Figure(spec=HistogramSpec(values=[1, 2, 3]), backend_name="fake", native="native-object")
+    target = tmp_path / "missing" / "out.png"
+    with pytest.raises(ValueError, match="Unsupported export format"):
+        save(fig, target)
+    # The parent directory must not be created as a side effect of a
+    # failed, unsupported-format save.
+    assert not target.parent.exists()
 
 
 def test_save_unknown_backend_raises(tmp_path: Path) -> None:

@@ -40,6 +40,13 @@ def save(figure: Figure, path: str | Path) -> None:
     if not fmt:
         msg = f"Cannot infer the export format from path {path!r}: it has no suffix"
         raise ExportError(msg)
-    path.parent.mkdir(parents=True, exist_ok=True)
     backend = get_backend(figure.backend_name)
+    supported = getattr(backend, "supported_formats", None)
+    if supported is not None and fmt not in supported:
+        msg = (
+            f"Unsupported export format {fmt!r} for backend {figure.backend_name!r}: "
+            f"expected one of {sorted(supported)}"
+        )
+        raise ExportError(msg)
+    path.parent.mkdir(parents=True, exist_ok=True)
     backend.save(figure.native, path, fmt)
