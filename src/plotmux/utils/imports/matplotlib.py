@@ -32,7 +32,7 @@ def check_matplotlib() -> None:
 
     Example:
         ```pycon
-        >>> from coola.utils.imports import check_matplotlib
+        >>> from plotmux.utils.imports import check_matplotlib
         >>> check_matplotlib()
 
         ```
@@ -50,7 +50,7 @@ def is_matplotlib_available() -> bool:
 
     Example:
         ```pycon
-        >>> from coola.utils.imports import is_matplotlib_available
+        >>> from plotmux.utils.imports import is_matplotlib_available
         >>> is_matplotlib_available()
 
         ```
@@ -71,7 +71,7 @@ def matplotlib_available(fn: F) -> F:
 
     Example:
         ```pycon
-        >>> from coola.utils.imports import matplotlib_available
+        >>> from plotmux.utils.imports import matplotlib_available
         >>> @matplotlib_available
         ... def my_function(n: int = 0) -> int:
         ...     return 42 + n
@@ -93,7 +93,7 @@ def raise_matplotlib_missing_error() -> NoReturn:
 
     Example:
         ```pycon
-        >>> from coola.utils.imports import raise_matplotlib_missing_error
+        >>> from plotmux.utils.imports import raise_matplotlib_missing_error
         >>> raise_matplotlib_missing_error()  # doctest: +SKIP
 
         ```

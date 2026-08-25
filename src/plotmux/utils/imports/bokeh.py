@@ -32,7 +32,7 @@ def check_bokeh() -> None:
 
     Example:
         ```pycon
-        >>> from coola.utils.imports import check_bokeh
+        >>> from plotmux.utils.imports import check_bokeh
         >>> check_bokeh()
 
         ```
@@ -50,7 +50,7 @@ def is_bokeh_available() -> bool:
 
     Example:
         ```pycon
-        >>> from coola.utils.imports import is_bokeh_available
+        >>> from plotmux.utils.imports import is_bokeh_available
         >>> is_bokeh_available()
 
         ```
@@ -71,7 +71,7 @@ def bokeh_available(fn: F) -> F:
 
     Example:
         ```pycon
-        >>> from coola.utils.imports import bokeh_available
+        >>> from plotmux.utils.imports import bokeh_available
         >>> @bokeh_available
         ... def my_function(n: int = 0) -> int:
         ...     return 42 + n
@@ -93,7 +93,7 @@ def raise_bokeh_missing_error() -> NoReturn:
 
     Example:
         ```pycon
-        >>> from coola.utils.imports import raise_bokeh_missing_error
+        >>> from plotmux.utils.imports import raise_bokeh_missing_error
         >>> raise_bokeh_missing_error()  # doctest: +SKIP
 
         ```

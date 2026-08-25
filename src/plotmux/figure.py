@@ -38,7 +38,12 @@ class Figure:
     native: Any
 
     def show(self) -> None:
-        r"""Display the figure using the backend's default viewer."""
+        r"""Display the figure using the backend's default viewer.
+
+        Raises:
+            NotImplementedError: if the backend's native figure
+                object does not expose a ``show`` method.
+        """
         show = getattr(self.native, "show", None)
         if show is None:
             msg = f"The native object of type {type(self.native)} does not support 'show'"
@@ -69,6 +74,10 @@ class Figure:
 
         Args:
             path: The path where to save the figure.
+
+        Raises:
+            ValueError: if ``path`` has no suffix, so the export
+                format cannot be inferred.
         """
         save(self, path)
 
