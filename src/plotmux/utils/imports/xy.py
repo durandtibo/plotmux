@@ -32,7 +32,7 @@ def check_xy() -> None:
 
     Example:
         ```pycon
-        >>> from coola.utils.imports import check_xy
+        >>> from plotmux.utils.imports import check_xy
         >>> check_xy()
 
         ```
@@ -50,7 +50,7 @@ def is_xy_available() -> bool:
 
     Example:
         ```pycon
-        >>> from coola.utils.imports import is_xy_available
+        >>> from plotmux.utils.imports import is_xy_available
         >>> is_xy_available()
 
         ```
@@ -71,7 +71,7 @@ def xy_available(fn: F) -> F:
 
     Example:
         ```pycon
-        >>> from coola.utils.imports import xy_available
+        >>> from plotmux.utils.imports import xy_available
         >>> @xy_available
         ... def my_function(n: int = 0) -> int:
         ...     return 42 + n
@@ -93,7 +93,7 @@ def raise_xy_missing_error() -> NoReturn:
 
     Example:
         ```pycon
-        >>> from coola.utils.imports import raise_xy_missing_error
+        >>> from plotmux.utils.imports import raise_xy_missing_error
         >>> raise_xy_missing_error()  # doctest: +SKIP
 
         ```

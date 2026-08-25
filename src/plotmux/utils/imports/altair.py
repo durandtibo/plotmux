@@ -32,7 +32,7 @@ def check_altair() -> None:
 
     Example:
         ```pycon
-        >>> from coola.utils.imports import check_altair
+        >>> from plotmux.utils.imports import check_altair
         >>> check_altair()
 
         ```
@@ -50,7 +50,7 @@ def is_altair_available() -> bool:
 
     Example:
         ```pycon
-        >>> from coola.utils.imports import is_altair_available
+        >>> from plotmux.utils.imports import is_altair_available
         >>> is_altair_available()
 
         ```
@@ -71,7 +71,7 @@ def altair_available(fn: F) -> F:
 
     Example:
         ```pycon
-        >>> from coola.utils.imports import altair_available
+        >>> from plotmux.utils.imports import altair_available
         >>> @altair_available
         ... def my_function(n: int = 0) -> int:
         ...     return 42 + n
@@ -93,7 +93,7 @@ def raise_altair_missing_error() -> NoReturn:
 
     Example:
         ```pycon
-        >>> from coola.utils.imports import raise_altair_missing_error
+        >>> from plotmux.utils.imports import raise_altair_missing_error
         >>> raise_altair_missing_error()  # doctest: +SKIP
 
         ```
