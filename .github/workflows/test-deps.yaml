@@ -37,6 +37,20 @@ jobs:
   #     Optional dependencies     #
   #################################
 
+  altair:
+    needs: get-versions
+    uses: ./.github/workflows/test-code-dep.yaml
+    with:
+      package-name: matplaltairotlib
+      package-versions: ${{ toJson(fromJson(needs.get-versions.outputs.package_versions).altair) }}
+
+  bokeh:
+    needs: get-versions
+    uses: ./.github/workflows/test-code-dep.yaml
+    with:
+      package-name: bokeh
+      package-versions: ${{ toJson(fromJson(needs.get-versions.outputs.package_versions).bokeh) }}
+
   matplotlib:
     needs: get-versions
     uses: ./.github/workflows/test-code-dep.yaml
