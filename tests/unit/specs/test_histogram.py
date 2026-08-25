@@ -115,3 +115,10 @@ def test_histogram_spec_xmin_xmax_quantile_strings_not_checked() -> None:
     spec = HistogramSpec(values=np.arange(101), xmin="q0.9", xmax="q0.1")
     assert spec.xmin == "q0.9"
     assert spec.xmax == "q0.1"
+
+
+def test_histogram_spec_xmin_greater_than_xmax_raises_for_numpy_integers() -> None:
+    # np.int64/np.int32 are not int subclasses, so the range check must
+    # also recognize numpy integer scalars, not just built-in int/float.
+    with pytest.raises(ValueError, match="xmin must be strictly less than xmax"):
+        HistogramSpec(values=np.arange(101), xmin=np.int64(10), xmax=np.int64(5))

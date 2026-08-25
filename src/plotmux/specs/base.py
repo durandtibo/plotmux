@@ -107,6 +107,9 @@ def _check_equal_length(x: np.ndarray, y: np.ndarray) -> None:
             length. Also a ``ValueError``, so existing ``except
             ValueError`` code keeps working unchanged.
     """
+    if x.ndim != 1 or y.ndim != 1:
+        msg = f"x and y must be 1-dimensional, but received shapes {x.shape} and {y.shape}"
+        raise InvalidSpecError(msg)
     if x.shape[0] != y.shape[0]:
         msg = f"x and y must have the same length, but received {x.shape[0]} and {y.shape[0]}"
         raise InvalidSpecError(msg)

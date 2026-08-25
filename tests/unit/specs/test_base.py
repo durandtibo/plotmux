@@ -120,3 +120,12 @@ def test_check_equal_length_same_length_does_not_raise() -> None:
 def test_check_equal_length_different_length_raises() -> None:
     with pytest.raises(ValueError, match="x and y must have the same length"):
         _check_equal_length(np.arange(5), np.arange(3))
+
+
+def test_check_equal_length_non_1d_raises() -> None:
+    # A 2D x with a matching leading dimension must not slip past this
+    # check: it would otherwise fail deep inside a backend's plotting
+    # call with a confusing, backend-specific error instead of a clear
+    # InvalidSpecError here.
+    with pytest.raises(ValueError, match="x and y must be 1-dimensional"):
+        _check_equal_length(np.zeros((5, 3)), np.arange(5))
