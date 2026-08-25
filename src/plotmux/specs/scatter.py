@@ -7,6 +7,7 @@ __all__ = ["ScatterSpec"]
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import BaseSpec, _check_equal_length
 
 if TYPE_CHECKING:
@@ -57,5 +58,5 @@ class ScatterSpec(BaseSpec):
         _check_equal_length(self.x, self.y)
         if self.size is not None and self.size <= 0:
             msg = f"size must be a positive number, but received {self.size}"
-            raise ValueError(msg)
+            raise InvalidSpecError(msg)
         self._normalize_color()

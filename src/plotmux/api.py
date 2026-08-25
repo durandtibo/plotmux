@@ -2,7 +2,7 @@ r"""Contain the public plotting API."""
 
 from __future__ import annotations
 
-__all__ = ["hist", "layer", "line", "scatter"]
+__all__ = ["grid", "hist", "layer", "line", "scatter"]
 
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -11,7 +11,14 @@ import numpy as np
 from plotmux.backends.registry import get_backend
 from plotmux.config import get_default_backend
 from plotmux.figure import Figure
-from plotmux.specs import BaseSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import (
+    BaseSpec,
+    GridSpec,
+    HistogramSpec,
+    LayerSpec,
+    LineSpec,
+    ScatterSpec,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -320,4 +327,67 @@ def layer(
         xscale=xscale,
         yscale=yscale,
     )
+    return _render(spec, backend, **kwargs)
+
+
+def grid(
+    *items: BaseSpec | Figure,
+    ncols: int = 1,
+    title: str | None = None,
+    backend: str | None = None,
+    **kwargs: Any,
+) -> Figure:
+    r"""Lay out specs (or already-rendered ``Figure``s) as independent
+    panels in a grid.
+
+    Unlike ``layer`` (which draws every child onto one shared axes),
+    each item here gets its own, independent panel -- the
+    backend-agnostic equivalent of matplotlib's ``pyplot.subplots``.
+    An item may itself be built with ``layer(...)`` (several series
+    sharing one panel), since layering and gridding are independent,
+    composable concerns.
+
+    Args:
+        *items: The child specs to draw, one independent panel per
+            item, in row-major order (left to right, top to bottom).
+            A ``Figure`` (e.g. one returned by ``plotmux.line(...)``)
+            is accepted as shorthand for its ``.spec``, same as
+            ``layer``: only the spec is reused, the earlier native
+            figure is discarded and everything is re-rendered
+            together.
+        ncols: The number of columns in the grid. Rows are filled
+            left to right; the last row is left short when
+            ``len(items)`` is not a multiple of ``ncols``. Must be a
+            positive integer.
+        title: An optional figure-level title, shown once above the
+            whole grid (not any individual panel).
+        backend: The name of the backend to use to render the
+            figure, or ``None`` to use the current default backend
+            (see ``plotmux.set_backend``).
+        **kwargs: Additional backend-specific keyword arguments,
+            forwarded to every panel's renderer call.
+
+    Returns:
+        The rendered figure.
+
+    Raises:
+        ValueError: if no ``items`` are given, one of the given specs
+            is itself a ``GridSpec`` (nesting is not supported), or
+            ``ncols`` is not a positive integer.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> import plotmux
+        >>> from plotmux.specs import HistogramSpec
+        >>> fig = plotmux.grid(
+        ...     HistogramSpec(values=np.arange(101), bins=10),
+        ...     plotmux.line([0, 100], [0, 5]),
+        ...     ncols=2,
+        ... )  # doctest: +SKIP
+
+        ```
+    """
+    cells = tuple(item.spec if isinstance(item, Figure) else item for item in items)
+    spec = GridSpec(cells=cells, ncols=ncols, title=title)
     return _render(spec, backend, **kwargs)

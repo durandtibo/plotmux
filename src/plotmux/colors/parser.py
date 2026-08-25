@@ -13,6 +13,7 @@ from __future__ import annotations
 __all__ = ["parse_color"]
 
 from plotmux.colors.named import NAMED_COLORS
+from plotmux.exceptions import InvalidColorError
 
 
 def parse_color(
@@ -49,7 +50,7 @@ def parse_color(
     if isinstance(color, tuple):
         return _parse_tuple(color)
     msg = f"Invalid color {color!r}: expected a str or a tuple of floats"
-    raise ValueError(msg)
+    raise InvalidColorError(msg)
 
 
 def _parse_str(color: str) -> tuple[float, float, float, float]:
@@ -78,7 +79,7 @@ def _parse_str(color: str) -> tuple[float, float, float, float]:
         return NAMED_COLORS[color.lower()]
     except KeyError as err:
         msg = f"Invalid color {color!r}: unknown named color or malformed hex string"
-        raise ValueError(msg) from err
+        raise InvalidColorError(msg) from err
 
 
 def _parse_hex(value: str) -> tuple[float, float, float, float]:
@@ -99,13 +100,13 @@ def _parse_hex(value: str) -> tuple[float, float, float, float]:
     hex_str = value.lstrip("#")
     if len(hex_str) not in (6, 8):
         msg = f"Invalid hex color {value!r}: expected '#rrggbb' or '#rrggbbaa'"
-        raise ValueError(msg)
+        raise InvalidColorError(msg)
     try:
         r, g, b = (int(hex_str[i : i + 2], 16) / 255 for i in (0, 2, 4))
         a = int(hex_str[6:8], 16) / 255 if len(hex_str) == 8 else 1.0
     except ValueError as err:
         msg = f"Invalid hex color {value!r}: not a valid hexadecimal string"
-        raise ValueError(msg) from err
+        raise InvalidColorError(msg) from err
     return (r, g, b, a)
 
 
@@ -132,7 +133,7 @@ def _parse_tuple(color: tuple[float, ...]) -> tuple[float, float, float, float]:
         r, g, b, a = color
     else:
         msg = f"Invalid color tuple {color!r}: expected 3 or 4 floats"
-        raise ValueError(msg)
+        raise InvalidColorError(msg)
     names = ("r", "g", "b", "a")
     values = (r, g, b, a)
     for name, value in zip(names, values, strict=True):
@@ -141,5 +142,5 @@ def _parse_tuple(color: tuple[float, ...]) -> tuple[float, float, float, float]:
                 f"Invalid color tuple {color!r}: component {name!r}={value!r} "
                 "must be in the range [0, 1]"
             )
-            raise ValueError(msg)
+            raise InvalidColorError(msg)
     return (float(r), float(g), float(b), float(a))

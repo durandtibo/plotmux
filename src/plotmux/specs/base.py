@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Literal
 
 from plotmux.colors import parse_color
+from plotmux.exceptions import InvalidSpecError
 
 if TYPE_CHECKING:
     import numpy as np
@@ -102,8 +103,10 @@ def _check_equal_length(x: np.ndarray, y: np.ndarray) -> None:
         y: The array of y values.
 
     Raises:
-        ValueError: if ``x`` and ``y`` do not have the same length.
+        InvalidSpecError: if ``x`` and ``y`` do not have the same
+            length. Also a ``ValueError``, so existing ``except
+            ValueError`` code keeps working unchanged.
     """
     if x.shape[0] != y.shape[0]:
         msg = f"x and y must have the same length, but received {x.shape[0]} and {y.shape[0]}"
-        raise ValueError(msg)
+        raise InvalidSpecError(msg)

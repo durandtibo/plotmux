@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from plotmux.specs import HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import GridSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
 from plotmux.testing.fixtures import altair_available
 from plotmux.utils.imports import is_altair_available
 
@@ -83,6 +83,21 @@ def test_altair_backend_render_layer(backend: AltairBackend) -> None:
 
 
 @altair_available
+def test_altair_backend_render_grid(backend: AltairBackend) -> None:
+    spec = GridSpec(
+        cells=(
+            LineSpec(x=np.arange(10), y=np.arange(10) ** 2),
+            ScatterSpec(x=np.arange(10), y=np.arange(10) ** 2),
+        ),
+        ncols=2,
+    )
+    native = backend.render(spec)
+    assert isinstance(native, alt.ConcatChart)
+    assert len(native.concat) == 2
+    assert native.columns == 2
+
+
+@altair_available
 def test_altair_backend_render_applies_common_style(backend: AltairBackend) -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, title="my-title")
     native = backend.render(spec)
@@ -124,5 +139,15 @@ def test_altair_backend_save_supported_formats(
     native = backend.render(spec)
     path = tmp_path / f"fig.{fmt}"
     backend.save(native, path, fmt)
+    assert path.is_file()
+    assert path.stat().st_size > 0
+
+
+@altair_available
+def test_altair_backend_save_grid(backend: AltairBackend, tmp_path: Path) -> None:
+    spec = GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),))
+    native = backend.render(spec)
+    path = tmp_path / "grid.html"
+    backend.save(native, path, "html")
     assert path.is_file()
     assert path.stat().st_size > 0

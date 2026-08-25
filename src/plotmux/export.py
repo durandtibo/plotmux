@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from coola.utils.path import sanitize_path
 
 from plotmux.backends.registry import get_backend
+from plotmux.exceptions import ExportError
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -30,14 +31,15 @@ def save(figure: Figure, path: str | Path) -> None:
         path: The path where to save the figure.
 
     Raises:
-        ValueError: if ``path`` has no suffix, so the export format
-            cannot be inferred.
+        ExportError: if ``path`` has no suffix, so the export format
+            cannot be inferred. Also a ``ValueError``, so existing
+            ``except ValueError`` code keeps working unchanged.
     """
     path = sanitize_path(path)
     fmt = path.suffix.lstrip(".").lower()
     if not fmt:
         msg = f"Cannot infer the export format from path {path!r}: it has no suffix"
-        raise ValueError(msg)
+        raise ExportError(msg)
     path.parent.mkdir(parents=True, exist_ok=True)
     backend = get_backend(figure.backend_name)
     backend.save(figure.native, path, fmt)

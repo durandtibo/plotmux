@@ -17,17 +17,26 @@ from bokeh.plotting import save as bokeh_save
 from bokeh.resources import CDN
 
 from plotmux.backends.base import Backend, check_export_format, resolve_renderer
+from plotmux.backends.bokeh.grid import render_grid
 from plotmux.backends.bokeh.histogram import render_histogram
 from plotmux.backends.bokeh.layer import render_layer
 from plotmux.backends.bokeh.line import render_line
 from plotmux.backends.bokeh.scatter import render_scatter
 from plotmux.backends.bokeh.style import apply_common_style
-from plotmux.specs import BaseSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import (
+    BaseSpec,
+    GridSpec,
+    HistogramSpec,
+    LayerSpec,
+    LineSpec,
+    ScatterSpec,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
+    from bokeh.models import LayoutDOM
     from bokeh.plotting import figure as Figure  # noqa: N812
 
 
@@ -92,15 +101,21 @@ class BokehBackend(Backend):
     # DESIGN.md 6.1): interactive, standalone HTML output.
     supported_formats: ClassVar[frozenset[str]] = frozenset({"html"})
 
-    _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., Figure]]] = {
+    _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., Figure | LayoutDOM]]] = {
         HistogramSpec: _make_renderer(render_histogram),
         LineSpec: _make_renderer(render_line),
         ScatterSpec: _make_renderer(render_scatter),
         LayerSpec: _make_renderer(render_layer),
+        # ``render_grid`` builds and arranges its own independent
+        # per-cell ``figure``s into a layout rather than drawing onto one
+        # shared ``figure`` -- it does not fit ``_make_renderer``'s
+        # "one figure, one fig_render call" shape, so it is registered
+        # directly instead of wrapped.
+        GridSpec: render_grid,
     }
 
-    def render(self, spec: BaseSpec, **kwargs: Any) -> Figure:
-        r"""Render a spec into a bokeh ``figure``.
+    def render(self, spec: BaseSpec, **kwargs: Any) -> Figure | LayoutDOM:
+        r"""Render a spec into a bokeh ``figure`` or layout.
 
         Args:
             spec: The backend-agnostic spec to render.
@@ -108,7 +123,9 @@ class BokehBackend(Backend):
                 forwarded to the underlying glyph method.
 
         Returns:
-            The resulting bokeh ``figure``.
+            The resulting bokeh ``figure``, or -- for a ``GridSpec``
+                -- the resulting bokeh layout (see
+                ``plotmux.backends.bokeh.grid.render_grid``).
 
         Raises:
             NotImplementedError: if there is no bokeh renderer
@@ -117,7 +134,7 @@ class BokehBackend(Backend):
         renderer = resolve_renderer(self._RENDERERS, spec, self.name)
         return renderer(spec, **kwargs)
 
-    def save(self, native: Figure, path: Path, fmt: str) -> None:
+    def save(self, native: Figure | LayoutDOM, path: Path, fmt: str) -> None:
         r"""Export a bokeh ``figure`` to a file.
 
         Args:
@@ -130,12 +147,16 @@ class BokehBackend(Backend):
             ValueError: if ``fmt`` is not a supported export format.
         """
         check_export_format(fmt, self.supported_formats, self.name)
-        # ``figure.title`` is typed as ``Title | str | None`` (bokeh accepts
-        # a bare string as shorthand when *setting* it, but always returns a
-        # ``Title`` instance when *read back*, per ``apply_common_style``
-        # only ever assigning a ``str``) -- narrowed explicitly here since
-        # pyright cannot infer that from the property's declared type alone.
-        title_text = str(native.title.text) if isinstance(native.title, Title) else native.title
+        # ``native.title`` only exists on a plain ``figure`` (typed
+        # ``Title | str | None`` -- bokeh accepts a bare string as shorthand
+        # when *setting* it, but always returns a ``Title`` instance when
+        # *read back*, per ``apply_common_style`` only ever assigning a
+        # ``str``); a ``GridSpec``'s layout (``gridplot``/``column``, see
+        # ``plotmux.backends.bokeh.grid.render_grid``) has no such
+        # attribute at all, hence ``getattr(..., None)`` rather than
+        # ``native.title`` directly.
+        title = getattr(native, "title", None)
+        title_text = str(title.text) if isinstance(title, Title) else title
         # ``resources=CDN`` and an explicit ``title`` are passed so bokeh
         # doesn't emit "no resources/title supplied" warnings -- this is the
         # standalone-HTML-with-CDN-assets export path, not bokeh's server mode.

@@ -11,6 +11,7 @@ __all__ = ["AltairBackend"]
 
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
+from plotmux.backends.altair.grid import render_grid
 from plotmux.backends.altair.histogram import render_histogram
 from plotmux.backends.altair.layer import render_layer
 from plotmux.backends.altair.line import render_line
@@ -22,7 +23,14 @@ from plotmux.backends.base import (
     make_renderer,
     resolve_renderer,
 )
-from plotmux.specs import BaseSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import (
+    BaseSpec,
+    GridSpec,
+    HistogramSpec,
+    LayerSpec,
+    LineSpec,
+    ScatterSpec,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -61,6 +69,11 @@ class AltairBackend(Backend):
         LineSpec: make_renderer(render_line, apply_common_style),
         ScatterSpec: make_renderer(render_scatter, apply_common_style),
         LayerSpec: make_renderer(render_layer, apply_common_style),
+        # ``render_grid`` builds and styles each cell independently, then
+        # concatenates them -- it does not fit ``make_renderer``'s "one
+        # chart-level render call, one shared style call" shape, so it is
+        # registered directly instead of wrapped.
+        GridSpec: render_grid,
     }
 
     def render(self, spec: BaseSpec, **kwargs: Any) -> alt.typing.ChartType:
