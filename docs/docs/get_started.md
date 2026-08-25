@@ -18,12 +18,14 @@ uv pip install plotmux
 ```shell
 uv pip install plotmux[matplotlib]
 uv pip install plotmux[xy]
+uv pip install plotmux[bokeh]
+uv pip install plotmux[altair]
 ```
 
 **Install with all optional dependencies:**
 
 ```shell
-uv pip install plotmux[matplotlib,xy]
+uv pip install plotmux[matplotlib,xy,bokeh,altair]
 ```
 
 ## Using pip
@@ -40,6 +42,7 @@ pip install plotmux
 pip install plotmux[matplotlib]
 pip install plotmux[xy]
 pip install plotmux[bokeh]
+pip install plotmux[altair]
 ```
 
 ## Installing from source

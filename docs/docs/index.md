@@ -121,6 +121,8 @@ Choose the rendering backend at runtime, and swap it with a one-line change:
 - Built-in [Matplotlib](https://matplotlib.org/) backend
 - Built-in [`xy`](https://github.com/durandtibo/xy) backend for interactive charts
 - Built-in [Bokeh](https://bokeh.org/) backend for interactive, standalone HTML charts
+- Built-in [Altair](https://altair-viz.github.io/) (Vega-Lite) backend for declarative,
+  standalone HTML charts
 - Third-party backends can plug in via a Python entry point, no changes to `plotmux` required
 
 [Learn more →](uguide/backends.md)
