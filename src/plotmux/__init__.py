@@ -11,6 +11,7 @@ from plotmux.api import hist, layer, line, scatter
 # Import backend subpackages for their side effect of registering
 # themselves in plotmux.backends.registry, if their underlying
 # plotting library is installed.
+from plotmux.backends import altair as _altair_backend  # noqa: F401
 from plotmux.backends import bokeh as _bokeh_backend  # noqa: F401
 from plotmux.backends import matplotlib as _matplotlib_backend  # noqa: F401
 from plotmux.backends import xy as _xy_backend  # noqa: F401
