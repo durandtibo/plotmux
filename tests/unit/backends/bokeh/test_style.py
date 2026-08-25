@@ -19,6 +19,8 @@ if is_bokeh_available():
 
 
 def _rgba_to_bokeh_cases() -> list:
+    if not is_bokeh_available():
+        return []
     return [
         pytest.param((1.0, 0.0, 0.0, 1.0), RGB(255, 0, 0, 1.0), id="opaque"),
         pytest.param((0.0, 0.0, 0.0, 0.0), RGB(0, 0, 0, 0.0), id="transparent"),
