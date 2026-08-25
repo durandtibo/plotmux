@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from plotmux.specs import HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import GridSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
 from plotmux.testing.fixtures import matplotlib_available
 from plotmux.utils.imports import is_matplotlib_available
 
@@ -98,6 +98,21 @@ def test_matplotlib_backend_render_layer(backend: MatplotlibBackend) -> None:
 
 
 @matplotlib_available
+def test_matplotlib_backend_render_grid(backend: MatplotlibBackend) -> None:
+    spec = GridSpec(
+        cells=(
+            LineSpec(x=np.arange(10), y=np.arange(10) ** 2),
+            ScatterSpec(x=np.arange(10), y=np.arange(10) ** 2),
+        )
+    )
+    native = backend.render(spec)
+    assert isinstance(native, Figure)
+    assert len(native.axes) == 2
+    assert len(native.axes[0].lines) == 1
+    assert len(native.axes[1].collections) == 1
+
+
+@matplotlib_available
 def test_matplotlib_backend_render_forwards_kwargs(backend: MatplotlibBackend) -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10))
     native = backend.render(spec, linewidth=5)
@@ -149,4 +164,18 @@ def test_matplotlib_backend_save_supported_formats(
     native = backend.render(spec)
     path = tmp_path / f"fig.{fmt}"
     backend.save(native, path, fmt)
+    assert path.is_file()
+
+
+@matplotlib_available
+def test_matplotlib_backend_save_grid(backend: MatplotlibBackend, tmp_path: Path) -> None:
+    spec = GridSpec(
+        cells=(
+            LineSpec(x=np.arange(10), y=np.arange(10)),
+            ScatterSpec(x=np.arange(10), y=np.arange(10)),
+        )
+    )
+    native = backend.render(spec)
+    path = tmp_path / "grid.png"
+    backend.save(native, path, "png")
     assert path.is_file()

@@ -14,12 +14,20 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from matplotlib.figure import Figure as MplFigure
 
 from plotmux.backends.base import Backend, check_export_format, resolve_renderer
+from plotmux.backends.matplotlib.grid import render_grid
 from plotmux.backends.matplotlib.histogram import render_histogram
 from plotmux.backends.matplotlib.layer import render_layer
 from plotmux.backends.matplotlib.line import render_line
 from plotmux.backends.matplotlib.scatter import render_scatter
-from plotmux.backends.matplotlib.style import apply_common_style
-from plotmux.specs import BaseSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.backends.matplotlib.style import apply_common_style, attach_repr_png
+from plotmux.specs import (
+    BaseSpec,
+    GridSpec,
+    HistogramSpec,
+    LayerSpec,
+    LineSpec,
+    ScatterSpec,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -67,6 +75,7 @@ def _make_renderer(
         ax = fig.subplots()
         ax_render(ax, spec, **kwargs)
         apply_common_style(ax, spec)
+        attach_repr_png(fig)
         return fig
 
     return render
@@ -88,6 +97,12 @@ class MatplotlibBackend(Backend):
         LineSpec: _make_renderer(render_line),
         ScatterSpec: _make_renderer(render_scatter),
         LayerSpec: _make_renderer(render_layer),
+        # ``render_grid`` builds and styles its own ``Figure`` (one subplot
+        # per cell, each individually styled) rather than a single shared
+        # ``Axes`` -- it does not fit ``_make_renderer``'s
+        # "one figure, one ax_render call" shape, so it is registered
+        # directly instead of wrapped.
+        GridSpec: render_grid,
     }
 
     def render(self, spec: BaseSpec, **kwargs: Any) -> MplFigure:

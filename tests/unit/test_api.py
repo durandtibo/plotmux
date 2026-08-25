@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 import plotmux
-from plotmux.specs import HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import GridSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
 from plotmux.testing.fixtures import matplotlib_available, xy_available
 
 ##########################
@@ -214,3 +214,84 @@ def test_layer_common_style() -> None:
     assert ax.get_ylabel() == "y"
     assert ax.get_xscale() == "log"
     assert ax.get_yscale() == "log"
+
+
+##########################
+#     Tests for grid     #
+##########################
+
+
+@matplotlib_available
+def test_grid_returns_figure_with_matplotlib_backend() -> None:
+    fig = plotmux.grid(
+        HistogramSpec(values=np.arange(101), bins=10),
+        LineSpec(x=np.arange(0, 100, 10), y=np.arange(10)),
+        ncols=2,
+    )
+    assert fig.backend_name == "matplotlib"
+    assert isinstance(fig.spec, GridSpec)
+    assert len(fig.native.axes) == 2
+
+
+@matplotlib_available
+def test_grid_accepts_figure_items() -> None:
+    line_fig = plotmux.line(np.arange(10), np.arange(10))
+    fig = plotmux.grid(line_fig, ScatterSpec(x=np.arange(10), y=np.arange(10)))
+    assert isinstance(fig.spec, GridSpec)
+    assert fig.spec.cells[0] is line_fig.spec
+
+
+@matplotlib_available
+def test_grid_single_item() -> None:
+    fig = plotmux.grid(LineSpec(x=np.arange(10), y=np.arange(10)))
+    assert len(fig.spec.cells) == 1
+
+
+@matplotlib_available
+def test_grid_default_ncols_is_one() -> None:
+    fig = plotmux.grid(
+        LineSpec(x=np.arange(10), y=np.arange(10)),
+        ScatterSpec(x=np.arange(10), y=np.arange(10)),
+    )
+    assert fig.spec.ncols == 1
+    assert len(fig.native.axes) == 2
+
+
+@matplotlib_available
+def test_grid_hides_trailing_empty_cells() -> None:
+    fig = plotmux.grid(
+        LineSpec(x=np.arange(10), y=np.arange(10)),
+        ScatterSpec(x=np.arange(10), y=np.arange(10)),
+        HistogramSpec(values=np.arange(101), bins=10),
+        ncols=2,
+    )
+    visible = [ax for ax in fig.native.axes if ax.get_visible()]
+    hidden = [ax for ax in fig.native.axes if not ax.get_visible()]
+    assert len(visible) == 3
+    assert len(hidden) == 1
+
+
+def test_grid_unknown_backend_raises() -> None:
+    with pytest.raises(RuntimeError, match="No backend registered"):
+        plotmux.grid(
+            LineSpec(x=np.arange(10), y=np.arange(10)),
+            backend="does-not-exist",
+        )
+
+
+def test_grid_empty_raises() -> None:
+    with pytest.raises(ValueError, match="cells must contain at least one spec"):
+        plotmux.grid()
+
+
+@matplotlib_available
+def test_grid_nested_grid_item_raises() -> None:
+    inner = plotmux.grid(LineSpec(x=np.arange(10), y=np.arange(10)))
+    with pytest.raises(ValueError, match="cells must not contain a GridSpec"):
+        plotmux.grid(inner)
+
+
+@matplotlib_available
+def test_grid_title_becomes_suptitle() -> None:
+    fig = plotmux.grid(LineSpec(x=np.arange(10), y=np.arange(10)), title="t")
+    assert fig.native._suptitle.get_text() == "t"

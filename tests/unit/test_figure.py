@@ -109,3 +109,73 @@ def test_figure_supported_formats() -> None:
     spec = HistogramSpec(values=[1, 2, 3])
     fig = Figure(spec=spec, backend_name="fake", native="native-object")
     assert fig.supported_formats == frozenset({"png", "svg"})
+
+
+##########################################
+#     Tests for Figure rich display     #
+##########################################
+
+
+def test_figure_repr_html_forwards_to_native() -> None:
+    native = Mock()
+    native._repr_html_.return_value = "<div>native</div>"
+    spec = HistogramSpec(values=[1, 2, 3])
+    fig = Figure(spec=spec, backend_name="fake", native=native)
+    assert fig._repr_html_() == "<div>native</div>"
+
+
+def test_figure_repr_mimebundle_forwards_to_native() -> None:
+    native = Mock()
+    native._repr_mimebundle_.return_value = ({"text/plain": "x"}, {})
+    spec = HistogramSpec(values=[1, 2, 3])
+    fig = Figure(spec=spec, backend_name="fake", native=native)
+    assert fig._repr_mimebundle_() == ({"text/plain": "x"}, {})
+
+
+def test_figure_repr_svg_forwards_to_native() -> None:
+    native = Mock()
+    native._repr_svg_.return_value = "<svg></svg>"
+    spec = HistogramSpec(values=[1, 2, 3])
+    fig = Figure(spec=spec, backend_name="fake", native=native)
+    assert fig._repr_svg_() == "<svg></svg>"
+
+
+def test_figure_repr_html_missing_on_native_raises() -> None:
+    spec = HistogramSpec(values=[1, 2, 3])
+    fig = Figure(spec=spec, backend_name="fake", native=object())
+    with pytest.raises(AttributeError):
+        fig._repr_html_()
+
+
+def test_figure_repr_png_forwards_to_native_repr_png() -> None:
+    native = Mock()
+    native._repr_png_.return_value = b"native-png-bytes"
+    spec = HistogramSpec(values=[1, 2, 3])
+    fig = Figure(spec=spec, backend_name="fake", native=native)
+    assert fig._repr_png_() == b"native-png-bytes"
+
+
+def test_figure_repr_png_falls_back_to_canvas_print_png() -> None:
+    class FakeCanvas:
+        def print_png(self, buffer: Any) -> None:
+            buffer.write(b"canvas-png-bytes")
+
+    class FakeNative:
+        canvas = FakeCanvas()
+
+    spec = HistogramSpec(values=[1, 2, 3])
+    fig = Figure(spec=spec, backend_name="fake", native=FakeNative())
+    assert fig._repr_png_() == b"canvas-png-bytes"
+
+
+def test_figure_repr_png_none_when_unsupported() -> None:
+    spec = HistogramSpec(values=[1, 2, 3])
+    fig = Figure(spec=spec, backend_name="fake", native=object())
+    assert fig._repr_png_() is None
+
+
+def test_figure_getattr_unknown_attribute_raises() -> None:
+    spec = HistogramSpec(values=[1, 2, 3])
+    fig = Figure(spec=spec, backend_name="fake", native=object())
+    with pytest.raises(AttributeError, match="no attribute 'not_a_real_method'"):
+        fig.not_a_real_method()

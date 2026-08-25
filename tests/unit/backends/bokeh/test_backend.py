@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from plotmux.specs import HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import GridSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
 from plotmux.testing.fixtures import bokeh_available
 from plotmux.utils.imports import is_bokeh_available
 
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 if is_bokeh_available():
-    from bokeh.models import LogScale
+    from bokeh.models import Column, GridPlot, LogScale
     from bokeh.plotting import figure
 
     from plotmux.backends.bokeh.backend import BokehBackend
@@ -84,6 +84,25 @@ def test_bokeh_backend_render_layer(backend: BokehBackend) -> None:
 
 
 @bokeh_available
+def test_bokeh_backend_render_grid_without_title(backend: BokehBackend) -> None:
+    spec = GridSpec(
+        cells=(
+            LineSpec(x=np.arange(10), y=np.arange(10) ** 2),
+            ScatterSpec(x=np.arange(10), y=np.arange(10) ** 2),
+        )
+    )
+    native = backend.render(spec)
+    assert isinstance(native, GridPlot)
+
+
+@bokeh_available
+def test_bokeh_backend_render_grid_with_title(backend: BokehBackend) -> None:
+    spec = GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), title="overall")
+    native = backend.render(spec)
+    assert isinstance(native, Column)
+
+
+@bokeh_available
 def test_bokeh_backend_render_applies_common_style(backend: BokehBackend) -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, title="my-title")
     native = backend.render(spec)
@@ -120,6 +139,19 @@ def test_bokeh_backend_save_html(backend: BokehBackend, tmp_path: Path) -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10)
     native = backend.render(spec)
     path = tmp_path / "fig.html"
+    backend.save(native, path, "html")
+    assert path.is_file()
+    assert path.stat().st_size > 0
+
+
+@bokeh_available
+def test_bokeh_backend_save_grid_with_title(backend: BokehBackend, tmp_path: Path) -> None:
+    # Regression test: a ``GridSpec``'s ``column`` layout has no ``.title``
+    # attribute at all (unlike a plain ``figure``), so ``save`` must not
+    # assume one is always present.
+    spec = GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), title="overall")
+    native = backend.render(spec)
+    path = tmp_path / "grid.html"
     backend.save(native, path, "html")
     assert path.is_file()
     assert path.stat().st_size > 0

@@ -6,6 +6,7 @@ __all__ = ["LayerSpec"]
 
 from dataclasses import dataclass
 
+from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import BaseSpec
 
 
@@ -49,7 +50,7 @@ class LayerSpec(BaseSpec):
     def __post_init__(self) -> None:
         if not self.layers:
             msg = "layers must contain at least one spec"
-            raise ValueError(msg)
+            raise InvalidSpecError(msg)
         if any(isinstance(child, LayerSpec) for child in self.layers):
             msg = "layers must not contain a LayerSpec (nesting is not supported)"
-            raise ValueError(msg)
+            raise InvalidSpecError(msg)

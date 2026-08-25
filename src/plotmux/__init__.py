@@ -2,11 +2,11 @@ r"""Top-level package for ``plotmux``."""
 
 from __future__ import annotations
 
-__all__ = ["__version__", "backend", "hist", "layer", "line", "scatter", "set_backend"]
+__all__ = ["__version__", "backend", "grid", "hist", "layer", "line", "scatter", "set_backend"]
 
 from importlib.metadata import PackageNotFoundError, version
 
-from plotmux.api import hist, layer, line, scatter
+from plotmux.api import grid, hist, layer, line, scatter
 
 # Import backend subpackages for their side effect of registering
 # themselves in plotmux.backends.registry, if their underlying

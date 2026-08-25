@@ -8,6 +8,8 @@ import warnings
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
 
+from plotmux.exceptions import BackendNotFoundError
+
 if TYPE_CHECKING:
     from importlib.metadata import EntryPoint
 
@@ -54,9 +56,11 @@ def get_backend(name: str) -> Backend:
         The registered backend instance.
 
     Raises:
-        RuntimeError: if no backend is registered under ``name``.
-            This typically means the backend's underlying plotting
-            library is not installed.
+        BackendNotFoundError: if no backend is registered under
+            ``name``. This typically means the backend's underlying
+            plotting library is not installed. Also a
+            ``RuntimeError``, so existing ``except RuntimeError``
+            code keeps working unchanged.
     """
     try:
         return _REGISTRY[name]
@@ -67,7 +71,7 @@ def get_backend(name: str) -> Backend:
             f"underlying plotting library may not be installed. "
             f"Available backends: {available}"
         )
-        raise RuntimeError(msg) from err
+        raise BackendNotFoundError(msg) from err
 
 
 def load_entry_point_backends() -> None:

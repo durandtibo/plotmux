@@ -7,6 +7,7 @@ __all__ = ["HistogramSpec"]
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import BaseSpec
 
 if TYPE_CHECKING:
@@ -78,7 +79,7 @@ class HistogramSpec(BaseSpec):
     def __post_init__(self) -> None:
         if self.bins <= 0:
             msg = f"bins must be a positive integer, but received {self.bins}"
-            raise ValueError(msg)
+            raise InvalidSpecError(msg)
         # Only checked when both bounds are already explicit numbers: a
         # quantile string (e.g. "q0.1") or ``None`` is resolved against the
         # data later by ``find_range``, so it cannot be range-checked here.
@@ -91,5 +92,5 @@ class HistogramSpec(BaseSpec):
                 f"xmin must be strictly less than xmax, but received "
                 f"xmin={self.xmin} and xmax={self.xmax}"
             )
-            raise ValueError(msg)
+            raise InvalidSpecError(msg)
         self._normalize_color()

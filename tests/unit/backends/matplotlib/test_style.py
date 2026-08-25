@@ -9,8 +9,9 @@ from plotmux.utils.imports import is_matplotlib_available
 
 if is_matplotlib_available():
     import matplotlib.pyplot as plt
+    from matplotlib.figure import Figure as MplFigure
 
-    from plotmux.backends.matplotlib.style import apply_common_style
+    from plotmux.backends.matplotlib.style import apply_common_style, attach_repr_png
 
 #########################################
 #     Tests for apply_common_style     #
@@ -101,3 +102,29 @@ def test_apply_common_style_yscale(scale: str) -> None:
     apply_common_style(ax, spec)
     assert ax.get_yscale() == scale
     plt.close(fig)
+
+
+#######################################
+#     Tests for attach_repr_png     #
+#######################################
+
+
+@matplotlib_available
+def test_attach_repr_png_adds_working_method() -> None:
+    fig = MplFigure()
+    fig.subplots().plot([1, 2, 3], [1, 4, 9])
+    assert not hasattr(fig, "_repr_png_")
+    attach_repr_png(fig)
+    png = fig._repr_png_()
+    assert isinstance(png, bytes)
+    assert png.startswith(b"\x89PNG\r\n\x1a\n")
+
+
+@matplotlib_available
+def test_attach_repr_png_bare_figure_canvas_has_no_print_png() -> None:
+    # Regression test: a ``Figure`` built via the constructor (rather than
+    # ``pyplot.subplots()``) gets a plain ``FigureCanvasBase`` with no
+    # ``print_png`` of its own -- this is exactly the gap ``attach_repr_png``
+    # fixes (see its own docstring).
+    fig = MplFigure()
+    assert not hasattr(fig.canvas, "print_png")

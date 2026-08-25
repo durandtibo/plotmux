@@ -15,6 +15,8 @@ __all__ = ["Backend", "check_export_format", "make_renderer", "resolve_renderer"
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
+from plotmux.exceptions import UnsupportedFormatError, UnsupportedSpecError
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Collection
     from pathlib import Path
@@ -41,13 +43,15 @@ def resolve_renderer(
         The renderer registered for ``type(spec)``.
 
     Raises:
-        NotImplementedError: if no renderer is registered for
-            ``type(spec)``.
+        UnsupportedSpecError: if no renderer is registered for
+            ``type(spec)``. Also a ``NotImplementedError``, so
+            existing ``except NotImplementedError`` code keeps
+            working unchanged.
     """
     renderer = registry.get(type(spec))
     if renderer is None:
         msg = f"No {backend_name} renderer registered for spec type {type(spec)}"
-        raise NotImplementedError(msg)
+        raise UnsupportedSpecError(msg)
     return renderer
 
 
@@ -61,14 +65,16 @@ def check_export_format(fmt: str, supported: Collection[str], backend_name: str)
             message (e.g. ``"matplotlib"``, ``"xy"``).
 
     Raises:
-        ValueError: if ``fmt`` is not in ``supported``.
+        UnsupportedFormatError: if ``fmt`` is not in ``supported``.
+            Also a ``ValueError``, so existing ``except ValueError``
+            code keeps working unchanged.
     """
     if fmt not in supported:
         msg = (
             f"Unsupported export format {fmt!r} for the {backend_name} backend. "
             f"Supported formats: {sorted(supported)}"
         )
-        raise ValueError(msg)
+        raise UnsupportedFormatError(msg)
 
 
 def make_renderer(
