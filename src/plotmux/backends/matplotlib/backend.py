@@ -27,8 +27,6 @@ if TYPE_CHECKING:
 
     from matplotlib.axes import Axes
 
-_SUPPORTED_FORMATS = frozenset({"png", "svg", "pdf", "jpg", "jpeg"})
-
 
 def _make_renderer(
     ax_render: Callable[..., Axes],
@@ -83,6 +81,7 @@ class MatplotlibBackend(Backend):
     """
 
     name: ClassVar[str] = "matplotlib"
+    supported_formats: ClassVar[frozenset[str]] = frozenset({"png", "svg", "pdf", "jpg", "jpeg"})
 
     _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., MplFigure]]] = {
         HistogramSpec: _make_renderer(render_histogram),
@@ -121,5 +120,5 @@ class MatplotlibBackend(Backend):
         Raises:
             ValueError: if ``fmt`` is not a supported export format.
         """
-        check_export_format(fmt, _SUPPORTED_FORMATS, self.name)
+        check_export_format(fmt, self.supported_formats, self.name)
         native.savefig(path, format=fmt)

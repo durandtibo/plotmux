@@ -33,6 +33,13 @@ def test_xy_backend_name(backend: XyBackend) -> None:
     assert backend.name == "xy"
 
 
+@xy_available
+def test_xy_backend_supported_formats(backend: XyBackend) -> None:
+    assert backend.supported_formats == frozenset(
+        {"png", "jpg", "jpeg", "webp", "svg", "pdf", "html"}
+    )
+
+
 # --- render ---
 
 

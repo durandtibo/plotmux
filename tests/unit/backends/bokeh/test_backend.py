@@ -34,6 +34,11 @@ def test_bokeh_backend_name(backend: BokehBackend) -> None:
     assert backend.name == "bokeh"
 
 
+@bokeh_available
+def test_bokeh_backend_supported_formats(backend: BokehBackend) -> None:
+    assert backend.supported_formats == frozenset({"html"})
+
+
 # --- render ---
 
 

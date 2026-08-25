@@ -10,7 +10,12 @@ __all__ = ["XyBackend"]
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from plotmux.backends.base import Backend, check_export_format, resolve_renderer
+from plotmux.backends.base import (
+    Backend,
+    check_export_format,
+    make_renderer,
+    resolve_renderer,
+)
 from plotmux.backends.xy.histogram import render_histogram
 from plotmux.backends.xy.layer import render_layer
 from plotmux.backends.xy.line import render_line
@@ -24,8 +29,6 @@ if TYPE_CHECKING:
 
     import xy
 
-_SUPPORTED_FORMATS = frozenset({"png", "jpg", "jpeg", "webp", "svg", "pdf", "html"})
-
 
 class XyBackend(Backend):
     r"""Implement the xy rendering backend.
@@ -36,12 +39,20 @@ class XyBackend(Backend):
     """
 
     name: ClassVar[str] = "xy"
+    supported_formats: ClassVar[frozenset[str]] = frozenset(
+        {"png", "jpg", "jpeg", "webp", "svg", "pdf", "html"}
+    )
 
+    # ``make_renderer`` (``plotmux.backends.base``) wraps a chart-specific
+    # ``(spec, **kwargs) -> Chart`` renderer with ``apply_common_style``. xy
+    # has no separate figure/axes object to construct first (unlike
+    # matplotlib's/bokeh's own local ``_make_renderer``), so it shares this
+    # helper with the ``altair`` backend rather than defining its own.
     _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., xy.Chart]]] = {
-        HistogramSpec: render_histogram,
-        LineSpec: render_line,
-        ScatterSpec: render_scatter,
-        LayerSpec: render_layer,
+        HistogramSpec: make_renderer(render_histogram, apply_common_style),
+        LineSpec: make_renderer(render_line, apply_common_style),
+        ScatterSpec: make_renderer(render_scatter, apply_common_style),
+        LayerSpec: make_renderer(render_layer, apply_common_style),
     }
 
     def render(self, spec: BaseSpec, **kwargs: Any) -> xy.Chart:
@@ -60,7 +71,7 @@ class XyBackend(Backend):
                 registered for the type of ``spec``.
         """
         renderer = resolve_renderer(self._RENDERERS, spec, self.name)
-        return apply_common_style(renderer(spec, **kwargs), spec)
+        return renderer(spec, **kwargs)
 
     def save(self, native: xy.Chart, path: Path, fmt: str) -> None:
         r"""Export an xy ``Chart`` to a file.
@@ -74,5 +85,5 @@ class XyBackend(Backend):
         Raises:
             ValueError: if ``fmt`` is not a supported export format.
         """
-        check_export_format(fmt, _SUPPORTED_FORMATS, self.name)
+        check_export_format(fmt, self.supported_formats, self.name)
         native.write_image(path, format=fmt)
