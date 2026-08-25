@@ -87,4 +87,10 @@ def attach_repr_png(fig: MplFigure) -> None:
         canvas.print_png(buffer)
         return buffer.getvalue()
 
-    fig._repr_png_ = _repr_png_  # type: ignore[attr-defined]
+    # ``setattr`` rather than ``fig._repr_png_ = ...``: matplotlib's
+    # ``Figure`` declares no ``_repr_png_`` attribute, so a direct
+    # assignment is a static type error even though it is perfectly legal
+    # at runtime (``Figure`` has no ``__slots__``); going through
+    # ``setattr`` sets the exact same instance attribute without a type
+    # checker treating it as an assignment to a known, incompatible slot.
+    setattr(fig, "_repr_png_", _repr_png_)  # noqa: B010
