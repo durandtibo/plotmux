@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from plotmux.backends.base import Backend
+from plotmux.backends.base import Backend, make_renderer
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 class FakeBackend(Backend):
     name = "fake"
+    supported_formats = frozenset({"png"})
 
     def render(self, spec: Any, **kwargs: Any) -> Any:
         del kwargs
@@ -63,3 +64,31 @@ def test_backend_is_abstract() -> None:
 
     with pytest.raises(TypeError, match="abstract"):
         IncompleteBackend()  # type: ignore[abstract]
+
+
+def test_backend_supported_formats() -> None:
+    backend = FakeBackend()
+    assert backend.supported_formats == frozenset({"png"})
+
+
+####################################
+#     Tests for make_renderer     #
+####################################
+
+
+def test_make_renderer_draws_then_styles() -> None:
+    calls = []
+
+    def chart_render(spec: Any, **kwargs: Any) -> str:
+        calls.append(("draw", spec, kwargs))
+        return "native"
+
+    def style(native: str, spec: Any) -> str:
+        calls.append(("style", native, spec))
+        return f"{native}-styled"
+
+    render = make_renderer(chart_render, style)
+    result = render("spec", alpha=0.5)
+
+    assert result == "native-styled"
+    assert calls == [("draw", "spec", {"alpha": 0.5}), ("style", "native", "spec")]

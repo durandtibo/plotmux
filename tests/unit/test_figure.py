@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 class FakeBackend(Backend):
     name = "fake"
+    supported_formats = frozenset({"png", "svg"})
 
     def __init__(self) -> None:
         self.saved: list[tuple[Any, Path, str]] = []
@@ -96,3 +97,15 @@ def test_figure_save_accepts_str_path(tmp_path: Path) -> None:
     fig = Figure(spec=spec, backend_name="fake", native="native-object")
     fig.save(str(tmp_path / "out.svg"))
     assert fake_backend.saved == [("native-object", tmp_path / "out.svg", "svg")]
+
+
+##########################################
+#     Tests for Figure.supported_formats     #
+##########################################
+
+
+def test_figure_supported_formats() -> None:
+    register_backend(FakeBackend())
+    spec = HistogramSpec(values=[1, 2, 3])
+    fig = Figure(spec=spec, backend_name="fake", native="native-object")
+    assert fig.supported_formats == frozenset({"png", "svg"})

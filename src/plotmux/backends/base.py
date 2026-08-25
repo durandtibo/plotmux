@@ -10,7 +10,7 @@ mechanics around it.
 
 from __future__ import annotations
 
-__all__ = ["Backend", "check_export_format", "resolve_renderer"]
+__all__ = ["Backend", "check_export_format", "make_renderer", "resolve_renderer"]
 
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
@@ -71,6 +71,44 @@ def check_export_format(fmt: str, supported: Collection[str], backend_name: str)
         raise ValueError(msg)
 
 
+def make_renderer(
+    chart_render: Callable[..., T], style: Callable[[T, BaseSpec], T]
+) -> Callable[..., T]:
+    r"""Build a ``render(spec, **kwargs) -> native`` function that draws
+    then styles in a single step.
+
+    This suits backends with no separate figure/axes object to
+    construct up front -- the chart-specific renderer already returns
+    the finished native object, and styling (title, labels, scale) is
+    applied to that same object afterwards. Both ``altair`` and ``xy``
+    follow this shape, so they share this helper instead of each
+    defining their own near-identical wrapper.
+
+    Backends that *do* need a construction step first (e.g.
+    matplotlib building a ``Figure``/``Axes`` pair, or bokeh passing
+    axis type at ``figure()`` construction time) define their own
+    local ``_make_renderer`` instead, since that construction step is
+    backend-specific and would otherwise leak into this shared helper.
+
+    Args:
+        chart_render: The chart-specific ``(spec, **kwargs) -> native``
+            renderer to wrap, e.g. ``render_histogram``.
+        style: The backend's ``apply_common_style``-shaped function,
+            called as ``style(native, spec)`` and returning the
+            (possibly new, for immutable native objects) styled
+            native object.
+
+    Returns:
+        A ``(spec, **kwargs) -> native`` renderer suitable for a
+            backend's ``_RENDERERS`` dict.
+    """
+
+    def render(spec: BaseSpec, **kwargs: Any) -> T:
+        return style(chart_render(spec, **kwargs), spec)
+
+    return render
+
+
 class Backend(ABC):
     r"""Define the interface implemented by a rendering backend.
 
@@ -80,6 +118,12 @@ class Backend(ABC):
     """
 
     name: ClassVar[str]
+
+    #: The export formats this backend's ``save`` accepts (e.g.
+    #: ``frozenset({"png", "svg"})``). Exposed so callers can introspect
+    #: a backend's capabilities (``get_backend("bokeh").supported_formats``)
+    #: instead of discovering them only via a ``ValueError`` from ``save``.
+    supported_formats: ClassVar[frozenset[str]]
 
     @abstractmethod
     def render(self, spec: BaseSpec, **kwargs: Any) -> Any:

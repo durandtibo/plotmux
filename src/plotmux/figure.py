@@ -7,6 +7,7 @@ __all__ = ["Figure"]
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+from plotmux.backends.registry import get_backend
 from plotmux.export import save
 
 if TYPE_CHECKING:
@@ -43,6 +44,22 @@ class Figure:
             msg = f"The native object of type {type(self.native)} does not support 'show'"
             raise NotImplementedError(msg)
         show()
+
+    @property
+    def supported_formats(self) -> frozenset[str]:
+        r"""The export formats accepted by ``save`` for this figure's
+        backend.
+
+        Different backends support different export formats (e.g. the
+        ``bokeh`` backend only supports ``"html"``, since static image
+        export requires an extra, environment-specific dependency).
+        This lets callers check what is supported ahead of time
+        instead of discovering it via a ``ValueError`` from ``save``.
+
+        Returns:
+            The set of export formats accepted by ``save``.
+        """
+        return get_backend(self.backend_name).supported_formats
 
     def save(self, path: str | Path) -> None:
         r"""Save the figure to a file.

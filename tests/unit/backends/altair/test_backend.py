@@ -33,6 +33,11 @@ def test_altair_backend_name(backend: AltairBackend) -> None:
     assert backend.name == "altair"
 
 
+@altair_available
+def test_altair_backend_supported_formats(backend: AltairBackend) -> None:
+    assert backend.supported_formats == frozenset({"html", "json"})
+
+
 # --- render ---
 
 

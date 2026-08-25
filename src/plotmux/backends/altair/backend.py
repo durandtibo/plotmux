@@ -16,7 +16,12 @@ from plotmux.backends.altair.layer import render_layer
 from plotmux.backends.altair.line import render_line
 from plotmux.backends.altair.scatter import render_scatter
 from plotmux.backends.altair.style import apply_common_style
-from plotmux.backends.base import Backend, check_export_format, resolve_renderer
+from plotmux.backends.base import (
+    Backend,
+    check_export_format,
+    make_renderer,
+    resolve_renderer,
+)
 from plotmux.specs import BaseSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
 
 if TYPE_CHECKING:
@@ -25,50 +30,6 @@ if TYPE_CHECKING:
     from typing import Literal
 
     import altair as alt
-
-# Only ``html``/``json`` are supported natively: static image export
-# (``png``/``svg``/``pdf``) goes through altair's ``vl-convert-python``
-# integration, an additional package (bundling its own Rust-based Vega-Lite
-# renderer) beyond "pip install altair" -- the same rationale as bokeh's
-# `png`/`svg` requiring a Selenium webdriver (see
-# ``plotmux.backends.bokeh.backend``). ``html`` is altair's standalone,
-# openable-in-a-browser export; ``json`` is the raw Vega-Lite spec, useful
-# for embedding in another Vega-Lite-aware tool.
-_SUPPORTED_FORMATS = frozenset({"html", "json"})
-
-
-def _make_renderer(
-    chart_render: Callable[..., alt.typing.ChartType],
-) -> Callable[..., alt.typing.ChartType]:
-    r"""Build a ``render(spec, **kwargs) -> Chart`` function from a
-    ``chart_render(spec, **kwargs) -> Chart`` function.
-
-    Every entry in ``_RENDERERS`` shares the same two steps: build the
-    spec-specific mark via ``chart_render``, then apply the fields
-    common to every chart type (title, labels, scale) via
-    ``apply_common_style``. Factoring that out here means adding a new
-    chart type to this backend is exactly one ``_RENDERERS`` entry --
-    ``_make_renderer(render_x)`` -- rather than a new hand-written
-    wrapper function that repeats the same two lines. Mirrors
-    ``plotmux.backends.xy.backend``, where ``XyBackend.render`` does
-    the equivalent two-step call generically since every xy
-    ``render_<type>`` already takes only ``(spec, **kwargs)`` (no
-    figure/axes object to create first, unlike matplotlib's/bokeh's
-    ``_make_renderer``).
-
-    Args:
-        chart_render: The chart-specific ``(spec, **kwargs) -> Chart``
-            renderer to wrap, e.g. ``render_histogram``.
-
-    Returns:
-        A ``(spec, **kwargs) -> Chart`` renderer suitable for
-            ``_RENDERERS``.
-    """
-
-    def render(spec: BaseSpec, **kwargs: Any) -> alt.typing.ChartType:
-        return apply_common_style(chart_render(spec, **kwargs), spec)
-
-    return render
 
 
 class AltairBackend(Backend):
@@ -80,12 +41,26 @@ class AltairBackend(Backend):
     """
 
     name: ClassVar[str] = "altair"
+    # Only ``html``/``json`` are supported natively: static image export
+    # (``png``/``svg``/``pdf``) goes through altair's ``vl-convert-python``
+    # integration, an additional package (bundling its own Rust-based
+    # Vega-Lite renderer) beyond "pip install altair" -- the same rationale
+    # as bokeh's `png`/`svg` requiring a Selenium webdriver (see
+    # ``plotmux.backends.bokeh.backend``). ``html`` is altair's standalone,
+    # openable-in-a-browser export; ``json`` is the raw Vega-Lite spec,
+    # useful for embedding in another Vega-Lite-aware tool.
+    supported_formats: ClassVar[frozenset[str]] = frozenset({"html", "json"})
 
+    # ``make_renderer`` (``plotmux.backends.base``) wraps a chart-specific
+    # ``(spec, **kwargs) -> Chart`` renderer with ``apply_common_style``.
+    # Altair has no separate figure/axes object to construct first (unlike
+    # matplotlib's/bokeh's own local ``_make_renderer``), so it shares this
+    # helper with the ``xy`` backend rather than defining its own.
     _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., alt.typing.ChartType]]] = {
-        HistogramSpec: _make_renderer(render_histogram),
-        LineSpec: _make_renderer(render_line),
-        ScatterSpec: _make_renderer(render_scatter),
-        LayerSpec: _make_renderer(render_layer),
+        HistogramSpec: make_renderer(render_histogram, apply_common_style),
+        LineSpec: make_renderer(render_line, apply_common_style),
+        ScatterSpec: make_renderer(render_scatter, apply_common_style),
+        LayerSpec: make_renderer(render_layer, apply_common_style),
     }
 
     def render(self, spec: BaseSpec, **kwargs: Any) -> alt.typing.ChartType:
@@ -113,13 +88,13 @@ class AltairBackend(Backend):
             native: The altair ``Chart`` to export.
             path: The path where to save the figure.
             fmt: The export format. Only ``"html"``/``"json"`` are
-                supported (see ``_SUPPORTED_FORMATS``).
+                supported (see ``supported_formats``).
 
         Raises:
             ValueError: if ``fmt`` is not a supported export format.
         """
-        check_export_format(fmt, _SUPPORTED_FORMATS, self.name)
-        # ``fmt`` is checked against ``_SUPPORTED_FORMATS`` (``{"html", "json"}``)
+        check_export_format(fmt, self.supported_formats, self.name)
+        # ``fmt`` is checked against ``supported_formats`` (``{"html", "json"}``)
         # above, so it is safe to narrow it to ``Chart.save``'s ``Literal``
         # format type -- pyright cannot infer that narrowing from the runtime
         # ``check_export_format`` call alone.

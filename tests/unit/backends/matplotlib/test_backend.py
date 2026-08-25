@@ -33,6 +33,11 @@ def test_matplotlib_backend_name(backend: MatplotlibBackend) -> None:
     assert backend.name == "matplotlib"
 
 
+@matplotlib_available
+def test_matplotlib_backend_supported_formats(backend: MatplotlibBackend) -> None:
+    assert backend.supported_formats == frozenset({"png", "svg", "pdf", "jpg", "jpeg"})
+
+
 # --- render ---
 
 

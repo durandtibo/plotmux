@@ -30,16 +30,6 @@ if TYPE_CHECKING:
 
     from bokeh.plotting import figure as Figure  # noqa: N812
 
-# Only ``html`` is supported: static image export (``png``/``svg``) goes
-# through bokeh's ``export_png``/``export_svg``, which additionally require
-# a Selenium webdriver (a browser binary, not a pip-installable Python
-# package) at runtime -- a heavier, environment-specific dependency than
-# "pip install bokeh". ``html`` is bokeh's own native, dependency-free
-# export path (``bokeh.plotting.save``) and is also the format that best
-# matches why a bokeh backend is worth having (see DESIGN.md 6.1):
-# interactive, standalone HTML output.
-_SUPPORTED_FORMATS = frozenset({"html"})
-
 
 def _make_renderer(
     fig_render: Callable[..., Figure],
@@ -92,6 +82,15 @@ class BokehBackend(Backend):
     """
 
     name: ClassVar[str] = "bokeh"
+    # Only ``html`` is supported: static image export (``png``/``svg``) goes
+    # through bokeh's ``export_png``/``export_svg``, which additionally
+    # require a Selenium webdriver (a browser binary, not a pip-installable
+    # Python package) at runtime -- a heavier, environment-specific
+    # dependency than "pip install bokeh". ``html`` is bokeh's own native,
+    # dependency-free export path (``bokeh.plotting.save``) and is also the
+    # format that best matches why a bokeh backend is worth having (see
+    # DESIGN.md 6.1): interactive, standalone HTML output.
+    supported_formats: ClassVar[frozenset[str]] = frozenset({"html"})
 
     _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., Figure]]] = {
         HistogramSpec: _make_renderer(render_histogram),
@@ -125,12 +124,12 @@ class BokehBackend(Backend):
             native: The bokeh ``figure`` to export.
             path: The path where to save the figure.
             fmt: The export format. Only ``"html"`` is supported (see
-                ``_SUPPORTED_FORMATS``).
+                ``supported_formats``).
 
         Raises:
             ValueError: if ``fmt`` is not a supported export format.
         """
-        check_export_format(fmt, _SUPPORTED_FORMATS, self.name)
+        check_export_format(fmt, self.supported_formats, self.name)
         # ``figure.title`` is typed as ``Title | str | None`` (bokeh accepts
         # a bare string as shorthand when *setting* it, but always returns a
         # ``Title`` instance when *read back*, per ``apply_common_style``
