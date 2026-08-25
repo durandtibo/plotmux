@@ -51,6 +51,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+altair = ["altair>=6.0,<7.0"]
 bokeh = ["bokeh>=3.6,<4.0"]
 matplotlib = ["matplotlib>=3.10,<4.0"]
 xy = ["xy>=0.0.6,<1.0 ; python_version >= '3.11'"]
