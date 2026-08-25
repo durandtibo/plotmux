@@ -1,7 +1,7 @@
 # plotmux design
 
 Status: in progress — core abstraction, four chart specs (histogram,
-line, scatter, layer), three backends (matplotlib, xy, bokeh),
+line, scatter, layer), four backends (matplotlib, xy, bokeh, altair),
 per-mark color (`parse_color`), common axis styling
 (title/labels/scale, `apply_common_style`), layering multiple specs on
 one axes (`plotmux.layer()`), export (`Figure.save()` /
@@ -117,14 +117,22 @@ src/plotmux/
 │   │   ├── line.py               # render_line(spec) -> xy.Chart
 │   │   ├── scatter.py            # render_scatter(spec) -> xy.Chart
 │   │   └── layer.py              # render_layer(spec) -> composed xy.Chart
-│   └── bokeh/
-│       ├── __init__.py          # registers BokehBackend if available
-│       ├── backend.py           # BokehBackend
-│       ├── style.py             # rgba_to_bokeh(); apply_common_style(fig, spec)
-│       ├── histogram.py         # render_histogram(fig, spec) -> figure
-│       ├── line.py               # render_line(fig, spec) -> figure
-│       ├── scatter.py            # render_scatter(fig, spec) -> figure
-│       └── layer.py              # render_layer(fig, spec) -> shared figure
+│   ├── bokeh/
+│   │   ├── __init__.py          # registers BokehBackend if available
+│   │   ├── backend.py           # BokehBackend
+│   │   ├── style.py             # rgba_to_bokeh(); apply_common_style(fig, spec)
+│   │   ├── histogram.py         # render_histogram(fig, spec) -> figure
+│   │   ├── line.py               # render_line(fig, spec) -> figure
+│   │   ├── scatter.py            # render_scatter(fig, spec) -> figure
+│   │   └── layer.py              # render_layer(fig, spec) -> shared figure
+│   └── altair/
+│       ├── __init__.py          # registers AltairBackend if available
+│       ├── backend.py           # AltairBackend
+│       ├── style.py             # rgba_to_altair(); prepare_color(); apply_common_style(chart, spec)
+│       ├── histogram.py         # render_histogram(spec) -> alt.Chart
+│       ├── line.py               # render_line(spec) -> alt.Chart
+│       ├── scatter.py            # render_scatter(spec) -> alt.Chart
+│       └── layer.py              # render_layer(spec) -> alt.LayerChart, via alt.layer(*charts)
 ├── figure.py                    # Figure wrapper
 ├── export.py                    # save(figure, path)
 ├── config.py                    # default backend + context manager
@@ -653,12 +661,12 @@ and nothing yet reads `DEFAULT_PALETTE` automatically.
   through `Backend`'s interface (`render`, `save`,
   `_SUPPORTED_FORMATS`) and the registry (`get_backend`,
   `register_backend`) — never `if backend_name == "matplotlib"`. This
-  is why adding `xy` required zero changes to any of those four
-  modules, and it is the bar any future backend (plotly, bokeh, ...)
-  must also clear.
+  is why adding `xy`, `bokeh`, and `altair` each required zero changes
+  to any of those four modules, and it is the bar any future backend
+  (plotly, ...) must also clear.
 - **Extensibility without breaking existing code**: a new backend is
-  a new subpackage plus one registry entry (proven twice already:
-  matplotlib, then xy); a new chart type is a new spec plus one
+  a new subpackage plus one registry entry (proven four times already:
+  matplotlib, xy, bokeh, altair); a new chart type is a new spec plus one
   `_RENDERERS` entry per backend. Neither touches the other, and
   common axis styling (title/labels/scale) is handled once per
   backend via `apply_common_style`, not once per chart type — see
@@ -755,35 +763,86 @@ and nothing yet reads `DEFAULT_PALETTE` automatically.
     dependency-free export path (`bokeh.plotting.save`) and also the
     format that motivated ranking bokeh a candidate backend in the
     first place (see [6.1](#61-candidate-future-backends)).
+13. ✅ A fourth backend, altair (see [6.1](#61-candidate-future-backends)),
+    the declarative Vega-Lite grammar-of-graphics library `BaseSpec`
+    already took design inspiration from (see
+    [3.1](#31-principle-separate-spec-from-render)). `backends/altair/`
+    follows the xy shape (each `render_<type>(spec) -> alt.Chart` is
+    axes-less/figure-less, and `AltairBackend.render` applies
+    `apply_common_style` once, generically, after dispatch — see
+    [4.1.1](#411-axis-labels-title-and-linearlog-scale)) rather than
+    matplotlib's/bokeh's shared-mutable-object shape, since altair
+    `Chart`s are immutable like `xy.Chart`. Two differences from xy
+    worth calling out:
+    - **Layering.** Unlike xy (no chart-composition operator — see
+      [4.8](#48-layering-multiple-specs-on-one-axes)), altair *does*
+      have one: `chart_a + chart_b` (sugar for `alt.layer(chart_a,
+      chart_b)`) builds a Vega-Lite `LayerChart` natively. This is the
+      "unlike Altair" exception xy's own `render_layer` docstring
+      already called out. `backends/altair/layer.py::render_layer`
+      renders each child independently, same as xy, but combines them
+      with `alt.layer(*charts)` (not `chart_a + chart_b` via
+      `functools.reduce`, so a single-child `LayerSpec` still returns
+      a `LayerChart` rather than reduce's bare single-element passthrough)
+      instead of xy's manual mark-splicing through `xy.chart(*marks)`.
+    - **Restyling a whole layer generically.** xy's `apply_common_style`
+      restyles a combined chart by *appending* a shared `x_axis`/`y_axis`
+      pair (axes are separate nodes in an xy chart tree). altair's
+      quantitative channels instead live *inside* each mark's own
+      `encode()` call, so every per-type renderer in this backend
+      encodes them under one fixed pair of field names, `"x"`/`"y"`
+      (histogram's bin-right-edge is a third field, `"x2"`, that
+      `apply_common_style` never touches) — this is what lets
+      `apply_common_style` restyle title/labels/scale with one generic
+      `chart.encode(x=alt.X("x:Q", ...), y=alt.Y("y:Q", ...))` call
+      that works identically on a plain `Chart` or on the `LayerChart`
+      `render_layer` returns (Vega-Lite's shared top-level encoding on
+      a layered spec applies to every child), without `apply_common_style`
+      needing to know which chart type or how many children built it.
+    - **Legend for an explicit, non-field-based color.** altair has no
+      mark-level `label=`/`legend_label=` argument like
+      matplotlib/bokeh/xy — a legend entry only appears for a
+      field-based encoding channel. So a spec's `label`, when set, is
+      carried as a constant `"label"` data field
+      (`style.py::with_label_field`) and bound via a `color` encoding
+      fixed to one value via an explicit `Scale.range`
+      (`style.py::color_encoding`); `style.py::prepare_color` picks
+      between that and passing `color` straight to the mark
+      constructor (no label → no legend, matching every other
+      backend), so each per-type renderer only calls one function
+      instead of repeating the branch.
+    Only `"html"`/`"json"` export formats are supported natively:
+    `png`/`svg`/`pdf` need altair's `vl-convert-python` integration (a
+    Rust-based Vega-Lite renderer bundled as an extra package), the
+    same "static image export needs something beyond `pip install
+    <backend>`" situation as bokeh's `png`/`svg` needing a Selenium
+    webdriver (see step 12 above). `html` is altair's standalone,
+    openable-in-a-browser export (via `Chart.save`, no extra
+    dependency); `json` is the raw Vega-Lite spec, useful for
+    embedding in another Vega-Lite-aware tool and requiring no
+    rendering step at all.
 
 ### 6.1 Candidate future backends
 
-matplotlib (static, the ecosystem default) and xy (interactive HTML)
-already anchor opposite ends of the space plotmux needs to cover.
-Ranked by likely value as backend #3+:
+matplotlib (static), xy (interactive HTML), bokeh (interactive,
+server-callback-oriented), and altair (declarative Vega-Lite) are
+implemented and already anchor several different points in the space
+plotmux needs to cover. Remaining candidates:
 
 - **plotly** (`plotly.graph_objects`) — the other major interactive
   option; large existing user base, native Jupyter/dash support,
-  export to standalone HTML like xy. Most likely next backend: it
-  would be the first real test of whether "one interactive backend
-  already covered by xy" makes a `Backend` implementation genuinely
-  redundant, or whether xy and plotly diverge enough (API shape,
-  export formats, hover/zoom semantics) to justify both.
-- **bokeh** — interactive, server-callback-oriented; useful if plotmux
-  ever needs live/streaming figures, which neither matplotlib nor xy
-  nor plotly target well. Lower priority until there's a concrete
-  streaming use case.
-- **altair** (Vega-Lite) — declarative grammar-of-graphics API,
-  closest in spirit to plotmux's own spec/backend split. Attractive
-  as a design reference even before/instead of being implemented,
-  since `BaseSpec` already mirrors its philosophy.
+  export to standalone HTML like xy/altair. Would be the first real
+  test of whether "several interactive backends already covered by
+  xy/bokeh/altair" makes a `Backend` implementation genuinely
+  redundant, or whether plotly diverges enough (API shape, export
+  formats, hover/zoom semantics) to justify one more.
 - **plotnine** (ggplot2-style) — matches users coming from R; mostly
-  static like matplotlib, so lower priority than plotly/bokeh unless
-  there is specific user demand.
+  static like matplotlib, so lower priority unless there is specific
+  user demand.
 
-None of these are scheduled; each is a `backends/<name>/` subpackage
-plus a `utils/imports/<name>.py` guard plus one `pyproject.toml`
-extra, following the matplotlib/xy precedent exactly — see the
+Neither is scheduled; each is a `backends/<name>/` subpackage plus a
+`utils/imports/<name>.py` guard plus one `pyproject.toml` extra,
+following the matplotlib/xy/bokeh/altair precedent exactly — see the
 backend-agnostic rule in [Section 5](#5-why-this-shape). Picking one
 should be driven by actual user requests, not by this list.
 
@@ -852,11 +911,17 @@ should be driven by actual user requests, not by this list.
   [4.1.1](#411-axis-labels-title-and-linearlog-scale) lands, or is
   silently taking the outer `LayerSpec`'s own scale fields (ignoring
   children's) sufficient and simpler?
-- Given `xy` already covers the "interactive, HTML-exportable" niche
-  (see [6.1](#61-candidate-future-backends)), is a `plotly` backend
-  differentiated enough to earn its keep as backend #3, or would the
-  first new backend be better spent proving something xy/matplotlib
-  don't cover at all (e.g. bokeh's server/streaming model)?
+- ✅ resolved (superseded) — this question originally asked whether a
+  `plotly` backend was differentiated enough to earn its keep as
+  backend #3 given xy already covered "interactive, HTML-exportable",
+  or whether the first new backend should instead prove something
+  xy/matplotlib didn't cover at all. Backends #3 and #4 went with the
+  latter: bokeh (server/streaming-oriented API shape) and altair
+  (declarative grammar-of-graphics, closest in spirit to plotmux's own
+  spec/backend split) — see [6.1](#61-candidate-future-backends) and
+  step 12/13 in [Build order](#6-build-order). Whether `plotly` is
+  differentiated enough to earn its keep as backend #5 remains open,
+  now against four existing backends instead of two.
 - Histogram/line/scatter/layer were picked as "generic and broadly
   useful" (see [1. Goal](#1-goal)), but that bar isn't written down
   precisely. A bar chart or a box plot both have a plausible claim to

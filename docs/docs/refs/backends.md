@@ -7,3 +7,5 @@
 ::: plotmux.backends.xy.backend
 
 ::: plotmux.backends.bokeh.backend
+
+::: plotmux.backends.altair.backend
