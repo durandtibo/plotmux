@@ -1,8 +1,8 @@
 # Plotting API
 
 :book: This page describes `plotmux`'s public plotting functions: `plotmux.hist`, `plotmux.line`,
-`plotmux.scatter`, and `plotmux.layer`. It explains the concepts shared by all of them: specs,
-backends, common style arguments, and the `Figure` object they all return.
+`plotmux.scatter`, `plotmux.layer`, and `plotmux.grid`. It explains the concepts shared by all of
+them: specs, backends, common style arguments, and the `Figure` object they all return.
 
 **Prerequisites:** You'll need to know a bit of Python.
 For a refresher, see the [Python tutorial](https://docs.python.org/tutorial/).
@@ -10,12 +10,13 @@ It is helpful to know a bit of [NumPy](https://numpy.org/doc/stable/user/quickst
 
 ## Overview
 
-`plotmux` exposes four top-level plotting functions:
+`plotmux` exposes five top-level plotting functions:
 
 - `plotmux.hist()`: plot a histogram
 - `plotmux.line()`: plot a line chart
 - `plotmux.scatter()`: plot a scatter chart
 - `plotmux.layer()`: combine several charts onto one shared set of axes
+- `plotmux.grid()`: lay out several charts as independent panels in a grid
 
 Each of these functions:
 
@@ -107,5 +108,6 @@ renderer, letting you reach backend-specific options without leaving the unified
 
 - [Choosing a Backend](backends.md): pick a rendering backend, or switch between them
 - [Layering Charts](layer.md): combine several charts on one set of axes
+- [Grid Layouts](grid.md): lay out several charts as independent panels in a grid
 - [Colors](colors.md): the color formats accepted by `color` arguments
 - [The Figure Object](figure.md): showing and exporting the rendered figure

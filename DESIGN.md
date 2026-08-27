@@ -1,16 +1,19 @@
 # plotmux design
 
-Status: in progress — core abstraction, four chart specs (histogram,
-line, scatter, layer), four backends (matplotlib, xy, bokeh, altair),
+Status: in progress — core abstraction, five chart specs (histogram,
+line, scatter, layer, grid), four backends (matplotlib, xy, bokeh, altair),
 per-mark color (`parse_color`), common axis styling
 (title/labels/scale, `apply_common_style`), layering multiple specs on
-one axes (`plotmux.layer()`), export (`Figure.save()` /
+one axes (`plotmux.layer()`), laying out multiple specs as independent
+grid panels (`plotmux.grid()`), a `plotmux.exceptions` hierarchy that
+multiply-inherits from both a `PlotmuxError` base and the matching
+builtin exception type, export (`Figure.save()` /
 `export.save()`, with format coverage tested across every chart type x
 every backend-supported format), and a `colors/` package with
 predefined colors and a default categorical palette
 (`DEFAULT_PALETTE`) are implemented.
 Sections are marked ✅ implemented or 🚧 planned.
-Date: 2026-08-24
+Date: 2026-08-25
 
 ## 1. Goal
 
@@ -24,14 +27,14 @@ existing code.
 Scope: the unified API targets a small set of generic, broadly-useful
 chart types and figure-level concerns — the ones almost every plotting
 task needs (histograms, line charts, scatter plots, layering them
-together, common axis styling, per-mark color, export) — not
-comprehensive coverage of every chart type a backend can draw. Four
-chart specs (histogram, line, scatter, layer, see
-[4](#4-key-components)) are the current surface; a new chart type is
-added when it is itself generic and broadly useful (e.g. a bar chart),
-not to chase parity with any one backend's full plot catalog. A niche
-or highly backend-specific plot is expected to stay behind the escape
-hatch (see [4.3](#43-figure)) rather than becoming a fifth spec.
+together, laying them out in a grid, common axis styling, per-mark
+color, export) — not comprehensive coverage of every chart type a
+backend can draw. Five chart specs (histogram, line, scatter, layer,
+grid, see [4](#4-key-components)) are the current surface; a new chart
+type is added when it is itself generic and broadly useful (e.g. a bar
+chart), not to chase parity with any one backend's full plot catalog.
+A niche or highly backend-specific plot is expected to stay behind the
+escape hatch (see [4.3](#43-figure)) rather than becoming a new spec.
 
 Non-goals: `plotmux` does not try to expose every feature of every
 backend through the unified API, nor to cover every possible plot
@@ -85,21 +88,23 @@ src/plotmux/
 ├── utils/
 │   ├── range.py                 # find_range()
 │   └── imports/                 # one module per optional backend dep
-│                                 # (matplotlib.py, xy.py)
+│                                 # (matplotlib.py, xy.py, bokeh.py, altair.py)
 ├── colors/                      # ✅ package (was colors.py, see 4.9.1,
 │                                 #    Build order step 11)
 │   ├── __init__.py              # re-exports parse_color, palette names
 │   ├── parser.py                # parse_color()
-│   └── palette.py                # PRIMARY/SECONDARY/TERTIARY, DEFAULT_PALETTE
+│   ├── palette.py                # PRIMARY/SECONDARY/TERTIARY, DEFAULT_PALETTE
+│   └── named.py                  # static CSS/matplotlib named-color table
 ├── specs/
 │   ├── base.py                  # BaseSpec (title/xlabel/ylabel/xscale/yscale)
 │   ├── histogram.py             # HistogramSpec
 │   ├── line.py                  # LineSpec
 │   ├── scatter.py               # ScatterSpec
-│   └── layer.py                  # LayerSpec (rejects nesting + empty layers)
+│   ├── layer.py                  # LayerSpec (rejects nesting + empty layers)
+│   └── grid.py                   # GridSpec (rejects nesting + empty cells)
 ├── backends/
-│   ├── base.py                  # Backend ABC
-│   ├── registry.py              # register_backend() / get_backend()
+│   ├── base.py                  # Backend ABC + resolve_renderer()/check_export_format()
+│   ├── registry.py              # register_backend() / get_backend() / entry-point loading
 │   ├── matplotlib/
 │   │   ├── __init__.py          # registers MatplotlibBackend if available
 │   │   ├── backend.py           # MatplotlibBackend
@@ -108,7 +113,8 @@ src/plotmux/
 │   │   │                         # (color: RGBA passthrough, no conversion needed)
 │   │   ├── line.py               # render_line(ax, spec) -> Axes
 │   │   ├── scatter.py            # render_scatter(ax, spec) -> Axes
-│   │   └── layer.py              # render_layer(ax, spec) -> shared Axes
+│   │   ├── layer.py              # render_layer(ax, spec) -> shared Axes
+│   │   └── grid.py               # render_grid(fig, spec) -> Figure with subplots
 │   ├── xy/
 │   │   ├── __init__.py          # registers XyBackend if available
 │   │   ├── backend.py           # XyBackend
@@ -117,6 +123,7 @@ src/plotmux/
 │   │   ├── line.py               # render_line(spec) -> xy.Chart
 │   │   ├── scatter.py            # render_scatter(spec) -> xy.Chart
 │   │   └── layer.py              # render_layer(spec) -> composed xy.Chart
+│   │                             # (grid not yet implemented for xy, see 6.1)
 │   ├── bokeh/
 │   │   ├── __init__.py          # registers BokehBackend if available
 │   │   ├── backend.py           # BokehBackend
@@ -124,7 +131,8 @@ src/plotmux/
 │   │   ├── histogram.py         # render_histogram(fig, spec) -> figure
 │   │   ├── line.py               # render_line(fig, spec) -> figure
 │   │   ├── scatter.py            # render_scatter(fig, spec) -> figure
-│   │   └── layer.py              # render_layer(fig, spec) -> shared figure
+│   │   ├── layer.py              # render_layer(fig, spec) -> shared figure
+│   │   └── grid.py               # render_grid(spec) -> bokeh gridplot layout
 │   └── altair/
 │       ├── __init__.py          # registers AltairBackend if available
 │       ├── backend.py           # AltairBackend
@@ -132,26 +140,30 @@ src/plotmux/
 │       ├── histogram.py         # render_histogram(spec) -> alt.Chart
 │       ├── line.py               # render_line(spec) -> alt.Chart
 │       ├── scatter.py            # render_scatter(spec) -> alt.Chart
-│       └── layer.py              # render_layer(spec) -> alt.LayerChart, via alt.layer(*charts)
+│       ├── layer.py              # render_layer(spec) -> alt.LayerChart, via alt.layer(*charts)
+│       └── grid.py               # render_grid(spec) -> alt.ConcatChart, via alt.concat(*charts)
 ├── figure.py                    # Figure wrapper
 ├── export.py                    # save(figure, path)
 ├── config.py                    # default backend + context manager
-├── api.py                       # public hist(), line(), scatter(), layer()
+├── exceptions.py                # PlotmuxError hierarchy, multiply-inheriting
+│                                 # from the builtin type each raise site already used
+├── api.py                       # public hist(), line(), scatter(), layer(), grid()
 └── testing/fixtures.py          # shared test fixtures
 ```
 
-`specs/line.py`, `specs/scatter.py`, `specs/layer.py`, and the
-matching `backends/matplotlib/{line,scatter,layer}.py` /
-`backends/xy/{line,scatter,layer}.py` renderers are now implemented —
+`specs/line.py`, `specs/scatter.py`, `specs/layer.py`, `specs/grid.py`,
+and the matching per-backend `{line,scatter,layer,grid}.py` renderers
+are now implemented across all four backends except `xy`, which does
+not yet have a `grid.py` (see [6.1](#61-candidate-future-backends)) —
 see steps 8-9 above and
 [4.8](#48-layering-multiple-specs-on-one-axes). Histogram, line,
-scatter, and layer already cover the generic, broadly-useful chart
-types this package targets (see [1. Goal](#1-goal)), so no further
-chart-type addition is currently planned; the layout leaves room for
-one (a new `specs/<type>.py` plus one `_RENDERERS` entry per backend)
-if a similarly generic type comes up. A third backend (see
+scatter, layer, and grid already cover the generic, broadly-useful
+chart types this package targets (see [1. Goal](#1-goal)), so no
+further chart-type addition is currently planned; the layout leaves
+room for one (a new `specs/<type>.py` plus one `_RENDERERS` entry per
+backend) if a similarly generic type comes up. A new backend (see
 [6.1](#61-candidate-future-backends)) would add a new
-`backends/<name>/` subpackage alongside `matplotlib/` and `xy/`.
+`backends/<name>/` subpackage alongside the existing four.
 
 ### 3.3 Data flow ✅
 
@@ -309,15 +321,52 @@ uniformly describe subclasses that dispatch `render` differently
 per spec type without upsetting static type checkers. Each concrete
 backend implements `render` via a `dict[type[BaseSpec], Callable]`
 lookup keyed on the spec's concrete type (`MatplotlibBackend._RENDERERS`,
-`XyBackend._RENDERERS` — both currently map only `HistogramSpec`).
-Adding a new chart type to a backend means adding one entry to that
-dict; it never grows an if/elif chain and never requires touching
-other backends.
+`XyBackend._RENDERERS`, `BokehBackend._RENDERERS`,
+`AltairBackend._RENDERERS`), resolved through the shared
+`resolve_renderer()` helper in `backends/base.py` rather than each
+backend reimplementing the lookup-or-raise logic. Adding a new chart
+type to a backend means adding one entry to that dict; it never grows
+an if/elif chain and never requires touching other backends.
 
-Each backend also owns its own `_SUPPORTED_FORMATS` frozenset and
-checks it in `save()` before delegating to the native library
-(matplotlib: `png`/`svg`/`pdf`/`jpg`/`jpeg`; xy: those plus `webp`/
-`html`), so an unsupported format raises early with a clear message.
+Each backend also declares its own `supported_formats: ClassVar[frozenset[str]]`
+and checks it in `save()` (via the shared `check_export_format()`
+helper) before delegating to the native library:
+
+| Backend      | `supported_formats`                                |
+|--------------|------------------------------------------------------|
+| `matplotlib` | `png`, `svg`, `pdf`, `jpg`, `jpeg`                    |
+| `xy`         | `png`, `jpg`, `jpeg`, `webp`, `svg`, `pdf`, `html`    |
+| `bokeh`      | `html` only — static `png`/`svg` export would additionally require a Selenium webdriver at runtime |
+| `altair`     | `html`, `json` — static `png`/`svg`/`pdf` export would additionally require `vl-convert-python` |
+
+so an unsupported format raises early with a clear message.
+
+#### 4.2.1 `plotmux.exceptions` — ✅ implemented
+
+Every exception `plotmux` raises is a `PlotmuxError`, in addition to
+whichever standard-library exception type the raise site already used
+(`ValueError`, `RuntimeError`, `NotImplementedError`):
+
+```python
+class PlotmuxError(Exception): ...
+class InvalidSpecError(PlotmuxError, ValueError): ...
+class InvalidColorError(PlotmuxError, ValueError): ...
+class UnsupportedSpecError(PlotmuxError, NotImplementedError): ...
+class UnsupportedFormatError(PlotmuxError, ValueError): ...
+class ExportError(PlotmuxError, ValueError): ...
+class BackendNotFoundError(PlotmuxError, RuntimeError): ...
+```
+
+Each concrete exception multiply-inherits from both `PlotmuxError` and
+the matching builtin, so `except ValueError` (or `RuntimeError`/
+`NotImplementedError`) at an existing call site keeps working exactly
+as before, while new code can catch anything plotmux-specific in one
+place with `except PlotmuxError`, without having to know or enumerate
+which builtin type backs each individual error. Only the exception
+*type* changes, never the raised message or the condition that
+triggers it — purely an additive refinement of what was already being
+raised by specs (`__post_init__` validation), color parsing, backend
+dispatch, and export.
 
 ### 4.3 `Figure` ✅
 
@@ -363,7 +412,7 @@ behind "swapping backends is a one-line change." Note this only picks
 a *name*; it does not itself validate that a backend is registered —
 that check happens in `get_backend` at render time.
 
-### 4.6 Public API (`api.py`) — ✅ `hist()`, `line()`, `scatter()`, `layer()`
+### 4.6 Public API (`api.py`) — ✅ `hist()`, `line()`, `scatter()`, `layer()`, `grid()`
 
 ```python
 def hist(
@@ -415,21 +464,34 @@ type live on that chart type's own spec, not on `BaseSpec`. Specs and
 backends remain directly importable for advanced use; `api.py` is
 only the convenience surface most users touch.
 
+`layer(*items, title=None, xlabel=None, ylabel=None, xscale="linear",
+yscale="linear", backend=None, **kwargs)` and `grid(*items, ncols=1,
+title=None, backend=None, **kwargs)` are the two composition
+functions (see [4.8](#48-layering-multiple-specs-on-one-axes) and
+[4.8a](#48a-grid-layouts---implemented)); both accept a `Figure` in
+`*items` as shorthand for its `.spec`, discarding the earlier native
+figure since two independent native figures can't be merged after the
+fact. `grid` deliberately does *not* accept
+`xlabel`/`ylabel`/`xscale`/`yscale`/`color`: those describe a single
+set of axes, and a grid panel keeps its own.
+
 ### 4.7 Export (`export.py`) ✅
 
 `save(figure, path)` sanitizes `path` (via `coola.utils.path.sanitize_path`),
 infers the format from the file suffix (`.png`, `.svg`, `.html`, ...),
-creates the parent directory if needed, and delegates to
-`backend.save(native, path, fmt)`. Each backend declares the formats
-it supports (see [4.2](#42-backend)), so requesting an unsupported
-format raises inside `backend.save`, and a path with no suffix raises
-in `export.save` before any backend is touched. Because this path is
-generic over any spec type, no code here needed to change as chart
-types were added (histogram -> +line/scatter -> +layer, steps 6-9);
-step 10 added explicit test coverage — a chart-type x format matrix
-per backend, see [Build order](#6-build-order) — to confirm that
-genericity actually holds rather than only assuming it from the
-design.
+looks up the backend and, when it declares `supported_formats` (see
+[4.2](#42-backend)), validates `fmt` against it before creating the
+parent directory — so an unsupported-format call never leaves an empty
+directory behind as a side effect — then delegates to
+`backend.save(native, path, fmt)`, which re-validates the format
+itself (`check_export_format`) as the authoritative check. A path with
+no suffix raises in `export.save` before any backend is touched.
+Because this path is generic over any spec type, no code here needed
+to change as chart types were added (histogram -> +line/scatter ->
++layer -> +grid, steps 6-9); step 10 added explicit test coverage — a
+chart-type x format matrix per backend, see
+[Build order](#6-build-order) — to confirm that genericity actually
+holds rather than only assuming it from the design.
 
 ### 4.8 Layering multiple specs on one axes — ✅ implemented
 
@@ -544,6 +606,68 @@ mixing a `HistogramSpec` with incompatible axis semantics): validating
 "do these children make sense together" is a backend/domain concern,
 not something `specs` can know without importing plotting-library
 context, consistent with [3.1](#31-principle-separate-spec-from-render).
+
+### 4.8a Grid layouts — ✅ implemented
+
+`plotmux.grid()` lays out several specs as independent panels — the
+backend-agnostic equivalent of matplotlib's `pyplot.subplots()` — as
+opposed to `layer()`, which draws every child onto one *shared* axes.
+Like `LayerSpec`, this needed no new mechanism in `Backend` or
+`figure.py`, just one more spec type:
+
+```python
+@dataclass(frozen=True)
+class GridSpec(BaseSpec):
+    r"""A spec that lays out multiple child specs as independent panels."""
+
+    cells: tuple[BaseSpec, ...]
+    ncols: int = 1
+
+    def __post_init__(self) -> None:
+        if not self.cells:
+            msg = "cells must contain at least one spec"
+            raise InvalidSpecError(msg)
+        if any(isinstance(child, GridSpec) for child in self.cells):
+            msg = "cells must not contain a GridSpec (nesting is not supported)"
+            raise InvalidSpecError(msg)
+        if self.ncols <= 0:
+            msg = f"ncols must be a positive integer, but received {self.ncols}"
+            raise InvalidSpecError(msg)
+```
+
+Nesting is rejected for the same reason as `LayerSpec` — layout is one
+flat pass over `cells`, so callers must flatten nested grids
+themselves. A cell may itself be a `LayerSpec`, since layering and
+gridding are independent, composable concerns (several series sharing
+one panel's axes).
+
+`GridSpec` inherits `xlabel`/`ylabel`/`xscale`/`yscale` from
+`BaseSpec` but every backend's grid renderer ignores them — they have
+no meaning at the grid level since each cell keeps its own axes and
+style. `grid()` in `api.py` reflects this: unlike `hist`/`line`/
+`scatter`/`layer`, it does not expose those parameters at all, only
+`title` (shown once above the whole grid), `ncols`, and `backend`.
+
+**Backend side:** one more `_AX_RENDERERS`/`_FIG_RENDERERS`-style dict
+entry per backend, `GridSpec -> render_grid`, following the same
+pattern as layering:
+
+- **matplotlib** (`backends/matplotlib/grid.py`): creates one `Figure`
+  with `ncols`-wide subplots (`len(cells)` panels, extra axes in a
+  short last row turned off), then renders each cell's spec onto its
+  own `Axes` via the existing per-type `render_<type>(ax, spec)`
+  functions.
+- **bokeh** (`backends/bokeh/grid.py`): renders each cell to its own
+  `bokeh.plotting.figure`, then composes them with
+  `bokeh.layouts.gridplot(..., ncols=ncols)`.
+- **altair** (`backends/altair/grid.py`): renders each cell to its own
+  `alt.Chart`, then composes them with `alt.concat(*charts,
+  columns=ncols)`, altair's declarative grid-concatenation primitive
+  (distinct from `alt.layer`, used for `LayerSpec`).
+- **xy**: not yet implemented — `xy` has no chart-composition operator
+  suited to independent-panel layout at the time of writing (see
+  [6.1](#61-candidate-future-backends)), so `grid(..., backend="xy")`
+  raises `UnsupportedSpecError`.
 
 ### 4.9 Specifying colors across backends — ✅ implemented
 

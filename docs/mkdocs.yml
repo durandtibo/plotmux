@@ -30,6 +30,7 @@ nav:
       - uguide/colors.md
       - uguide/figure.md
       - uguide/layer.md
+      - uguide/grid.md
   - Developer Guide:
       - dev/development.md
       - dev/architecture.md
@@ -38,6 +39,7 @@ nav:
       - refs/backends.md
       - refs/colors.md
       - refs/config.md
+      - refs/exceptions.md
       - refs/export.md
       - refs/figure.md
       - refs/specs.md
