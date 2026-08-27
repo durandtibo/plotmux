@@ -98,6 +98,8 @@ no plotting library installed. Only the backend you actually use needs to be ins
 |----------------|-----------------------------------------------|------------------------------|
 | `matplotlib`   | [Matplotlib](https://matplotlib.org/)         | Python 3.10+                 |
 | `xy`           | [`xy`](https://github.com/durandtibo/xy)      | Python 3.11+                 |
+| `bokeh`        | [Bokeh](https://bokeh.org/)                   | Python 3.10+                 |
+| `altair`       | [Altair](https://altair-viz.github.io/)       | Python 3.10+                 |
 
 ## Quick check
 

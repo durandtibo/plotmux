@@ -5,8 +5,8 @@ how to display, save, or escape to the native figure it wraps.
 
 ## Overview
 
-`plotmux.hist()`, `plotmux.line()`, `plotmux.scatter()`, and `plotmux.layer()` all return a
-`Figure`. It keeps three things together:
+`plotmux.hist()`, `plotmux.line()`, `plotmux.scatter()`, `plotmux.layer()`, and `plotmux.grid()`
+all return a `Figure`. It keeps three things together:
 
 - `spec`: the backend-agnostic spec that was rendered
 - `backend_name`: the name of the backend that rendered it
@@ -53,6 +53,8 @@ formats depend on the backend:
 |----------------|----------------------------------------------------|
 | `matplotlib`   | `png`, `svg`, `pdf`, `jpg`, `jpeg`                 |
 | `xy`           | `png`, `jpg`, `jpeg`, `webp`, `svg`, `pdf`, `html`  |
+| `bokeh`        | `html`                                             |
+| `altair`       | `html`, `json`                                     |
 
 Requesting an unsupported format raises a `ValueError` listing the formats the backend supports.
 

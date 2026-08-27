@@ -7,3 +7,5 @@
 ::: plotmux.specs.scatter
 
 ::: plotmux.specs.layer
+
+::: plotmux.specs.grid

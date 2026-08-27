@@ -163,16 +163,19 @@ plotmux/
 │   ├── docs/                   # Documentation source
 │   └── mkdocs.yml              # MkDocs configuration
 ├── src/plotmux/
-│   ├── api.py                  # Public plotting API (hist, line, scatter, layer)
+│   ├── api.py                  # Public plotting API (hist, line, scatter, layer, grid)
 │   ├── config.py               # Default-backend configuration
 │   ├── figure.py                # Figure wrapper
 │   ├── export.py                # Figure export utilities
+│   ├── exceptions.py            # PlotmuxError hierarchy
 │   ├── specs/                  # Backend-agnostic chart specifications
 │   ├── backends/                # One package per rendering backend
 │   │   ├── base.py             # Backend interface + dispatch helpers
 │   │   ├── registry.py         # Backend registration/lookup
 │   │   ├── matplotlib/         # Matplotlib backend
-│   │   └── xy/                 # xy backend
+│   │   ├── xy/                 # xy backend
+│   │   ├── bokeh/               # Bokeh backend
+│   │   └── altair/              # Altair backend
 │   ├── colors/                  # Color parsing and palettes
 │   ├── testing/                 # pytest fixtures for downstream users
 │   └── utils/                   # Small utilities (ranges, optional imports)
@@ -199,7 +202,8 @@ plotmux/
    never import a plotting library.
 
 3. **Add a renderer for each backend** (`src/plotmux/backends/matplotlib/`,
-   `src/plotmux/backends/xy/`), and register it in that backend's `_RENDERERS` dict.
+   `src/plotmux/backends/xy/`, `src/plotmux/backends/bokeh/`, `src/plotmux/backends/altair/`), and
+   register it in that backend's `_RENDERERS` dict.
 
 4. **Export the spec and the public function** from `src/plotmux/specs/__init__.py`,
    `src/plotmux/api.py`, and `src/plotmux/__init__.py`.

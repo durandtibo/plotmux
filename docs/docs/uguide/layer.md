@@ -46,4 +46,5 @@ Layering is one flat pass over its children, so flatten nested layers yourself b
 ## What's Next
 
 - [The Plotting API](api.md): the unified plotting functions combined by `layer`
+- [Grid Layouts](grid.md): lay out several charts (or layers) as independent panels in a grid
 - [Colors](colors.md): how colors are assigned to layer children

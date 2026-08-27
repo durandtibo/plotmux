@@ -134,6 +134,14 @@ on top of a histogram, without leaving the unified API.
 
 [Learn more →](uguide/layer.md)
 
+### 🔲 **Grid Layouts**
+
+Lay out multiple charts as independent panels in a grid with `plotmux.grid()`, the backend-agnostic
+equivalent of Matplotlib's `pyplot.subplots()`. Panels can themselves be layers, since layering and
+gridding are independent, composable concerns.
+
+[Learn more →](uguide/grid.md)
+
 ### 🖌️ **Backend-Agnostic Colors**
 
 Use the same color syntax everywhere: hex strings, CSS/Matplotlib named colors

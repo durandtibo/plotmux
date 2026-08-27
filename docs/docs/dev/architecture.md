@@ -7,15 +7,16 @@ full, up-to-date design document.
 ## Goal
 
 `plotmux` is a lightweight abstraction layer over Python's plotting libraries: users write plotting
-code once against `plotmux`'s unified API and choose the rendering backend (`matplotlib`, `xy`, ...)
-at runtime. Swapping backends should be a one-line configuration change, and adding a new backend or
-chart type should not require changing existing code.
+code once against `plotmux`'s unified API and choose the rendering backend (`matplotlib`, `xy`,
+`bokeh`, `altair`, ...) at runtime. Swapping backends should be a one-line configuration change, and
+adding a new backend or chart type should not require changing existing code.
 
 The unified API targets a small set of generic, broadly-useful chart types and figure-level concerns
 — the ones almost every plotting task needs (histograms, line charts, scatter plots, layering them
-together, common axis styling, per-mark color, export) — not comprehensive coverage of every chart
-type a backend can draw. A niche or highly backend-specific plot is expected to stay behind the
-escape hatch (`Figure.to_native()`) rather than becoming a new spec.
+together, laying them out in a grid, common axis styling, per-mark color, export) — not
+comprehensive coverage of every chart type a backend can draw. A niche or highly backend-specific
+plot is expected to stay behind the escape hatch (`Figure.to_native()`) rather than becoming a new
+spec.
 
 ## Principle: Separate Spec From Render
 
@@ -37,7 +38,8 @@ src/plotmux/
 ├── utils/
 │   ├── range.py                  # find_range(): quantile-or-explicit axis bounds
 │   └── imports/                  # one module per optional backend dependency
-│                                  # (is_matplotlib_available(), is_xy_available())
+│                                  # (is_matplotlib_available(), is_xy_available(),
+│                                  #  is_bokeh_available(), is_altair_available())
 ├── colors/
 │   ├── parser.py                 # parse_color(): canonical RGBA normalization
 │   ├── palette.py                # PRIMARY/SECONDARY/TERTIARY, DEFAULT_PALETTE
@@ -47,22 +49,26 @@ src/plotmux/
 │   ├── histogram.py              # HistogramSpec
 │   ├── line.py                   # LineSpec
 │   ├── scatter.py                # ScatterSpec
-│   └── layer.py                  # LayerSpec (rejects nesting + empty layers)
+│   ├── layer.py                  # LayerSpec (rejects nesting + empty layers)
+│   └── grid.py                   # GridSpec (rejects nesting + empty cells)
 ├── backends/
 │   ├── base.py                   # Backend ABC + dispatch helpers
-│   ├── registry.py                # register_backend() / get_backend()
+│   ├── registry.py                # register_backend() / get_backend() / entry points
 │   ├── matplotlib/                # MatplotlibBackend
-│   └── xy/                        # XyBackend
+│   ├── xy/                        # XyBackend (no grid.py yet)
+│   ├── bokeh/                     # BokehBackend
+│   └── altair/                    # AltairBackend
 ├── figure.py                     # Figure wrapper
 ├── export.py                      # save(figure, path)
 ├── config.py                      # default backend + context manager
-├── api.py                         # public hist(), line(), scatter(), layer()
+├── exceptions.py                  # PlotmuxError hierarchy
+├── api.py                         # public hist(), line(), scatter(), layer(), grid()
 └── testing/fixtures.py            # pytest fixtures for downstream users
 ```
 
 `specs/<type>.py` plus one `_RENDERERS` entry per backend is the shape a new, similarly generic
-chart type would take. A new backend adds a new `backends/<name>/` subpackage alongside
-`matplotlib/` and `xy/`.
+chart type would take. A new backend adds a new `backends/<name>/` subpackage alongside the
+existing ones.
 
 ## Data Flow
 
@@ -88,10 +94,11 @@ figure.py           Figure(spec, backend_name, native)
 user code           fig.show() / fig.save("out.png") / fig.to_native()
 ```
 
-Backend registration is eager, not lazy: `plotmux/__init__.py` imports
-`plotmux.backends.matplotlib` and `plotmux.backends.xy` for their side effect — each subpackage's
+Backend registration is eager, not lazy: `plotmux/__init__.py` imports each built-in backend
+subpackage (`matplotlib`, `xy`, `bokeh`, `altair`) for their side effect — each subpackage's
 `__init__.py` calls `register_backend(...)` only if its underlying library is installed
-(`is_matplotlib_available()` / `is_xy_available()`). It then calls
+(`is_matplotlib_available()` / `is_xy_available()` / `is_bokeh_available()` /
+`is_altair_available()`). It then calls
 `plotmux.backends.registry.load_entry_point_backends()`, which imports every third-party backend
 advertised via the `plotmux.backends` entry-point group (see
 [Adding a Third-Party Backend](../uguide/backends.md#adding-a-third-party-backend)), after the two
@@ -120,20 +127,37 @@ itself, so it resolves without Matplotlib installed.
 
 ### `Backend` and the Registry
 
-`Backend` is an ABC with two methods, `render(spec, **kwargs)` and `save(native, path, fmt)`.
+`Backend` is an ABC with two methods, `render(spec, **kwargs)` and `save(native, path, fmt)`, plus a
+`supported_formats: ClassVar[frozenset[str]]` each concrete backend declares.
 `resolve_renderer()` and `check_export_format()` in `backends/base.py` factor out the
 lookup-or-raise dispatch logic (`{spec_type: renderer}` lookup, `{format}` membership check) shared
 by every backend, so a backend only owns its dict of renderers, not the dispatch mechanics around
 it. `backends/registry.py` maps a backend name to its registered instance, and raises a
-`RuntimeError` listing available backends when an unregistered name is requested — typically because
-its underlying plotting library is not installed.
+`BackendNotFoundError` (also a `RuntimeError`) listing available backends when an unregistered name
+is requested — typically because its underlying plotting library is not installed.
 
-### Layering
+### `plotmux.exceptions`
 
-`LayerSpec` draws multiple child specs on one shared set of axes. Layering is one flat pass: a
-`LayerSpec` nested inside `layers` is rejected in `__post_init__`, so callers must flatten nested
-layers themselves rather than relying on recursive dispatch. Each backend's own
-`backends/<name>/layer.py` owns composing the children onto shared axes/chart state.
+Every exception `plotmux` raises is a `PlotmuxError`, in addition to whichever standard-library
+exception type the raise site already used (`ValueError`, `RuntimeError`, `NotImplementedError`).
+Each concrete exception (`InvalidSpecError`, `InvalidColorError`, `UnsupportedSpecError`,
+`UnsupportedFormatError`, `ExportError`, `BackendNotFoundError`) multiply-inherits from both, so
+existing `except ValueError`-style code keeps working unchanged, while new code can catch anything
+`plotmux`-specific in one place with `except PlotmuxError`.
+
+### Layering and Grid Layouts
+
+`LayerSpec` draws multiple child specs on one shared set of axes; `GridSpec` lays out multiple
+child specs as independent panels, the backend-agnostic equivalent of Matplotlib's
+`pyplot.subplots()`. Both are one flat pass over their children: a `LayerSpec` nested inside
+`layers`, or a `GridSpec` nested inside `cells`, is rejected in `__post_init__`, so callers must
+flatten nesting themselves rather than relying on recursive dispatch. A `GridSpec` cell may itself
+be a `LayerSpec`, since layering and gridding are independent, composable concerns. Each backend's
+own `backends/<name>/layer.py` / `backends/<name>/grid.py` owns composing the children onto shared
+axes/chart state or independent panels; the `xy` backend has `layer.py` but not yet `grid.py`.
+`GridSpec` inherits `xlabel`/`ylabel`/`xscale`/`yscale` from `BaseSpec` but every backend's grid
+renderer ignores them, since each panel keeps its own — `grid()` in `api.py` does not even expose
+them as parameters.
 
 ### `Figure`
 
@@ -154,9 +178,10 @@ in the common single-threaded case.
 - `coola`'s optional-dependency pattern (`is_*_available`, `*_available`, `raise_*_missing_error`)
   is reused as-is by `plotmux.utils.imports`. New backends follow the same pattern instead of
   introducing a new one.
-- `matplotlib` and `xy` are optional extras (`xy` is further gated to `python_version >= '3.11'` in
-  its extra marker). Only `numpy` and `coola` are hard dependencies, so the core package (specs,
-  registry, config, public API) must import cleanly with no plotting library installed.
+- `matplotlib`, `xy`, `bokeh`, and `altair` are optional extras (`xy` is further gated to
+  `python_version >= '3.11'` in its extra marker). Only `numpy` and `coola` are hard dependencies,
+  so the core package (specs, registry, config, public API) must import cleanly with no plotting
+  library installed.
 - `plotmux.utils.range.find_range` implements quantile-or-explicit axis bounds (e.g. `xmin="q0.1"`)
   once, and is reused by every spec that needs it rather than reimplemented.
 - Style conventions: `from __future__ import annotations`, explicit `__all__`, Google-style
