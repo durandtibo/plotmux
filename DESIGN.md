@@ -349,11 +349,23 @@ whichever standard-library exception type the raise site already used
 
 ```python
 class PlotmuxError(Exception): ...
+
+
 class InvalidSpecError(PlotmuxError, ValueError): ...
+
+
 class InvalidColorError(PlotmuxError, ValueError): ...
+
+
 class UnsupportedSpecError(PlotmuxError, NotImplementedError): ...
+
+
 class UnsupportedFormatError(PlotmuxError, ValueError): ...
+
+
 class ExportError(PlotmuxError, ValueError): ...
+
+
 class BackendNotFoundError(PlotmuxError, RuntimeError): ...
 ```
 
