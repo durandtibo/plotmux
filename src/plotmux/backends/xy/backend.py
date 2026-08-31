@@ -17,7 +17,14 @@ from plotmux.backends.xy.layer import render_layer
 from plotmux.backends.xy.line import render_line
 from plotmux.backends.xy.scatter import render_scatter
 from plotmux.backends.xy.style import apply_common_style
-from plotmux.specs import BaseSpec, CdfSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import (
+    BaseSpec,
+    CdfSpec,
+    HistogramSpec,
+    LayerSpec,
+    LineSpec,
+    ScatterSpec,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable

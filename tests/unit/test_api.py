@@ -4,7 +4,14 @@ import numpy as np
 import pytest
 
 import plotmux
-from plotmux.specs import CdfSpec, GridSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import (
+    CdfSpec,
+    GridSpec,
+    HistogramSpec,
+    LayerSpec,
+    LineSpec,
+    ScatterSpec,
+)
 from plotmux.testing.fixtures import matplotlib_available, xy_available
 
 ##########################
