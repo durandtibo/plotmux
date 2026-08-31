@@ -13,12 +13,20 @@ from bokeh.models import Div
 from bokeh.plotting import figure as bokeh_figure
 
 from plotmux.backends.base import resolve_renderer
+from plotmux.backends.bokeh.cdf import render_cdf
 from plotmux.backends.bokeh.histogram import render_histogram
 from plotmux.backends.bokeh.layer import render_layer
 from plotmux.backends.bokeh.line import render_line
 from plotmux.backends.bokeh.scatter import render_scatter
 from plotmux.backends.bokeh.style import apply_common_style
-from plotmux.specs import BaseSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import (
+    BaseSpec,
+    CdfSpec,
+    HistogramSpec,
+    LayerSpec,
+    LineSpec,
+    ScatterSpec,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -39,6 +47,7 @@ if TYPE_CHECKING:
 # rejected (see ``GridSpec.__post_init__``).
 _FIG_RENDERERS: dict[type[BaseSpec], Callable[..., figure]] = {
     HistogramSpec: render_histogram,
+    CdfSpec: render_cdf,
     LineSpec: render_line,
     ScatterSpec: render_scatter,
     LayerSpec: render_layer,

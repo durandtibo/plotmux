@@ -5,7 +5,14 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from plotmux.specs import GridSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import (
+    CdfSpec,
+    GridSpec,
+    HistogramSpec,
+    LayerSpec,
+    LineSpec,
+    ScatterSpec,
+)
 from plotmux.testing.fixtures import matplotlib_available
 from plotmux.utils.imports import is_matplotlib_available
 
@@ -46,6 +53,15 @@ def test_matplotlib_backend_render_histogram(backend: MatplotlibBackend) -> None
     spec = HistogramSpec(values=np.arange(101), bins=10)
     native = backend.render(spec)
     assert isinstance(native, Figure)
+
+
+@matplotlib_available
+def test_matplotlib_backend_render_cdf(backend: MatplotlibBackend) -> None:
+    spec = CdfSpec(values=np.arange(101), nbins=10)
+    native = backend.render(spec)
+    assert isinstance(native, Figure)
+    ax = native.axes[0]
+    assert ax.get_ylim() == pytest.approx((0, 1))
 
 
 @matplotlib_available

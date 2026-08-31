@@ -5,7 +5,14 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from plotmux.specs import GridSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import (
+    CdfSpec,
+    GridSpec,
+    HistogramSpec,
+    LayerSpec,
+    LineSpec,
+    ScatterSpec,
+)
 from plotmux.testing.fixtures import bokeh_available
 from plotmux.utils.imports import is_bokeh_available
 
@@ -54,6 +61,15 @@ def test_bokeh_backend_render_histogram_density(backend: BokehBackend) -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, density=True)
     native = backend.render(spec)
     assert isinstance(native, figure)
+
+
+@bokeh_available
+def test_bokeh_backend_render_cdf(backend: BokehBackend) -> None:
+    spec = CdfSpec(values=np.arange(101), nbins=10)
+    native = backend.render(spec)
+    assert isinstance(native, figure)
+    assert native.y_range.start == 0
+    assert native.y_range.end == 1
 
 
 @bokeh_available

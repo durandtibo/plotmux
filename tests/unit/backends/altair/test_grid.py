@@ -3,7 +3,14 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from plotmux.specs import GridSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import (
+    CdfSpec,
+    GridSpec,
+    HistogramSpec,
+    LayerSpec,
+    LineSpec,
+    ScatterSpec,
+)
 from plotmux.testing.fixtures import altair_available
 from plotmux.utils.imports import is_altair_available
 
@@ -65,6 +72,13 @@ def test_render_grid_accepts_layer_spec_cell() -> None:
 @altair_available
 def test_render_grid_with_histogram() -> None:
     spec = GridSpec(cells=(HistogramSpec(values=np.arange(101), bins=10),))
+    chart = render_grid(spec)
+    assert len(chart.concat) == 1
+
+
+@altair_available
+def test_render_grid_supports_cdf_spec() -> None:
+    spec = GridSpec(cells=(CdfSpec(values=np.arange(101), nbins=10),))
     chart = render_grid(spec)
     assert len(chart.concat) == 1
 

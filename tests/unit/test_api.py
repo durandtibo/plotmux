@@ -4,7 +4,14 @@ import numpy as np
 import pytest
 
 import plotmux
-from plotmux.specs import GridSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import (
+    CdfSpec,
+    GridSpec,
+    HistogramSpec,
+    LayerSpec,
+    LineSpec,
+    ScatterSpec,
+)
 from plotmux.testing.fixtures import matplotlib_available, xy_available
 
 ##########################
@@ -50,6 +57,69 @@ def test_hist_common_style() -> None:
     fig = plotmux.hist(
         np.arange(101),
         bins=10,
+        title="t",
+        xlabel="x",
+        ylabel="y",
+        xscale="log",
+        yscale="log",
+    )
+    assert fig.spec.title == "t"
+    assert fig.spec.xlabel == "x"
+    assert fig.spec.ylabel == "y"
+    assert fig.spec.xscale == "log"
+    assert fig.spec.yscale == "log"
+    ax = fig.native.axes[0]
+    assert ax.get_title() == "t"
+    assert ax.get_xlabel() == "x"
+    assert ax.get_ylabel() == "y"
+    assert ax.get_xscale() == "log"
+    assert ax.get_yscale() == "log"
+
+
+#########################
+#     Tests for cdf     #
+#########################
+
+
+@matplotlib_available
+def test_cdf_returns_figure_with_matplotlib_backend() -> None:
+    fig = plotmux.cdf(np.arange(101), nbins=10)
+    assert fig.backend_name == "matplotlib"
+    assert isinstance(fig.spec, CdfSpec)
+    assert fig.spec.nbins == 10
+
+
+@matplotlib_available
+def test_cdf_explicit_backend() -> None:
+    fig = plotmux.cdf(np.arange(101), nbins=10, backend="matplotlib")
+    assert fig.backend_name == "matplotlib"
+
+
+@xy_available
+def test_cdf_explicit_xy_backend() -> None:
+    fig = plotmux.cdf(np.arange(101), nbins=10, backend="xy")
+    assert fig.backend_name == "xy"
+    assert fig.spec.nbins == 10
+
+
+def test_cdf_unknown_backend_raises() -> None:
+    with pytest.raises(RuntimeError, match="No backend registered"):
+        plotmux.cdf(np.arange(101), backend="does-not-exist")
+
+
+@matplotlib_available
+def test_cdf_default_kwargs() -> None:
+    fig = plotmux.cdf(np.arange(101))
+    assert fig.spec.nbins is None
+    assert fig.spec.color is None
+    assert fig.spec.ylabel == "cumulative probability"
+
+
+@matplotlib_available
+def test_cdf_common_style() -> None:
+    fig = plotmux.cdf(
+        np.arange(101),
+        nbins=10,
         title="t",
         xlabel="x",
         ylabel="y",

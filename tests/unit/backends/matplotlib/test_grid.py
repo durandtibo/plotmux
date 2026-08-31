@@ -3,7 +3,14 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from plotmux.specs import GridSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import (
+    CdfSpec,
+    GridSpec,
+    HistogramSpec,
+    LayerSpec,
+    LineSpec,
+    ScatterSpec,
+)
 from plotmux.testing.fixtures import matplotlib_available
 from plotmux.utils.imports import is_matplotlib_available
 
@@ -131,3 +138,10 @@ def test_render_grid_unsupported_spec_raises() -> None:
     object.__setattr__(spec, "title", None)
     with pytest.raises(NotImplementedError, match="No matplotlib renderer registered"):
         render_grid(spec)
+
+
+@matplotlib_available
+def test_render_grid_supports_cdf_spec() -> None:
+    spec = GridSpec(cells=(CdfSpec(values=np.arange(101), nbins=10),))
+    fig = render_grid(spec)
+    assert len(fig.axes) == 1
