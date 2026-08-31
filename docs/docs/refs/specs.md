@@ -2,6 +2,8 @@
 
 ::: plotmux.specs.histogram
 
+::: plotmux.specs.cdf
+
 ::: plotmux.specs.line
 
 ::: plotmux.specs.scatter

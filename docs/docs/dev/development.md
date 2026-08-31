@@ -163,7 +163,7 @@ plotmux/
 │   ├── docs/                   # Documentation source
 │   └── mkdocs.yml              # MkDocs configuration
 ├── src/plotmux/
-│   ├── api.py                  # Public plotting API (hist, line, scatter, layer, grid)
+│   ├── api.py                  # Public plotting API (hist, cdf, line, scatter, layer, grid)
 │   ├── config.py               # Default-backend configuration
 │   ├── figure.py                # Figure wrapper
 │   ├── export.py                # Figure export utilities

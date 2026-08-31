@@ -12,8 +12,9 @@ code once against `plotmux`'s unified API and choose the rendering backend (`mat
 adding a new backend or chart type should not require changing existing code.
 
 The unified API targets a small set of generic, broadly-useful chart types and figure-level concerns
-— the ones almost every plotting task needs (histograms, line charts, scatter plots, layering them
-together, laying them out in a grid, common axis styling, per-mark color, export) — not
+— the ones almost every plotting task needs (histograms, empirical CDFs, line charts, scatter
+plots, layering them together, laying them out in a grid, common axis styling, per-mark color,
+export) — not
 comprehensive coverage of every chart type a backend can draw. A niche or highly backend-specific
 plot is expected to stay behind the escape hatch (`Figure.to_native()`) rather than becoming a new
 spec.
@@ -37,6 +38,7 @@ library-specific state back into user code.
 src/plotmux/
 ├── utils/
 │   ├── range.py                  # find_range(): quantile-or-explicit axis bounds
+│   ├── cdf.py                    # compute_cdf_steps(): binned empirical CDF step vertices
 │   └── imports/                  # one module per optional backend dependency
 │                                  # (is_matplotlib_available(), is_xy_available(),
 │                                  #  is_bokeh_available(), is_altair_available())
@@ -47,6 +49,7 @@ src/plotmux/
 ├── specs/
 │   ├── base.py                   # BaseSpec (title/xlabel/ylabel/xscale/yscale)
 │   ├── histogram.py              # HistogramSpec
+│   ├── cdf.py                    # CdfSpec
 │   ├── line.py                   # LineSpec
 │   ├── scatter.py                # ScatterSpec
 │   ├── layer.py                  # LayerSpec (rejects nesting + empty layers)
@@ -55,16 +58,19 @@ src/plotmux/
 │   ├── base.py                   # Backend ABC + dispatch helpers
 │   ├── registry.py                # register_backend() / get_backend() / entry points
 │   ├── matplotlib/                # MatplotlibBackend
-│   ├── xy/                        # XyBackend (no grid.py yet)
+│   ├── xy/                        # XyBackend
 │   ├── bokeh/                     # BokehBackend
 │   └── altair/                    # AltairBackend
 ├── figure.py                     # Figure wrapper
 ├── export.py                      # save(figure, path)
 ├── config.py                      # default backend + context manager
 ├── exceptions.py                  # PlotmuxError hierarchy
-├── api.py                         # public hist(), line(), scatter(), layer(), grid()
+├── api.py                         # public hist(), cdf(), line(), scatter(), layer(), grid()
 └── testing/fixtures.py            # pytest fixtures for downstream users
 ```
+
+Every backend (`matplotlib`, `xy`, `bokeh`, `altair`) implements all six specs, including `grid.py`
+and `cdf.py`.
 
 `specs/<type>.py` plus one `_RENDERERS` entry per backend is the shape a new, similarly generic
 chart type would take. A new backend adds a new `backends/<name>/` subpackage alongside the
@@ -125,6 +131,14 @@ colors, RGB(A) float tuples) into one canonical representation, an RGBA tuple of
 receives an already-validated, canonical color. The named-color table is bundled with `plotmux`
 itself, so it resolves without Matplotlib installed.
 
+### `CdfSpec`
+
+`CdfSpec` plots the empirical cumulative distribution function of `values`, approximated as a
+binned step curve. `plotmux.utils.cdf.compute_cdf_steps()` computes the `(x, y)` step vertices
+shared by every backend except matplotlib, which instead calls `Axes.hist(...,
+cumulative=True, histtype="step")` directly (see `plotmux.backends.matplotlib.cdf`). Unlike the
+other specs, `CdfSpec.ylabel` defaults to `"cumulative probability"` instead of `None`.
+
 ### `Backend` and the Registry
 
 `Backend` is an ABC with two methods, `render(spec, **kwargs)` and `save(native, path, fmt)`, plus a
@@ -154,7 +168,7 @@ child specs as independent panels, the backend-agnostic equivalent of Matplotlib
 flatten nesting themselves rather than relying on recursive dispatch. A `GridSpec` cell may itself
 be a `LayerSpec`, since layering and gridding are independent, composable concerns. Each backend's
 own `backends/<name>/layer.py` / `backends/<name>/grid.py` owns composing the children onto shared
-axes/chart state or independent panels; the `xy` backend has `layer.py` but not yet `grid.py`.
+axes/chart state or independent panels; every built-in backend implements both.
 `GridSpec` inherits `xlabel`/`ylabel`/`xscale`/`yscale` from `BaseSpec` but every backend's grid
 renderer ignores them, since each panel keeps its own — `grid()` in `api.py` does not even expose
 them as parameters.

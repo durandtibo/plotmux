@@ -103,10 +103,11 @@ See the [user guide](uguide/api.md) for detailed examples.
 
 ### 🎨 **Unified Plotting API**
 
-Plot histograms, line charts, and scatter plots with one API, regardless of the backend that
-renders them:
+Plot histograms, empirical CDFs, line charts, and scatter plots with one API, regardless of the
+backend that renders them:
 
 - `plotmux.hist()` for histograms, with optional binning, density, and quantile-based axis ranges
+- `plotmux.cdf()` for empirical cumulative distribution functions
 - `plotmux.line()` for line charts
 - `plotmux.scatter()` for scatter charts
 - Common figure-level styling (`title`, `xlabel`, `ylabel`, `xscale`, `yscale`) shared by every
