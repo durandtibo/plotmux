@@ -2,11 +2,21 @@ r"""Top-level package for ``plotmux``."""
 
 from __future__ import annotations
 
-__all__ = ["__version__", "backend", "grid", "hist", "layer", "line", "scatter", "set_backend"]
+__all__ = [
+    "__version__",
+    "backend",
+    "cdf",
+    "grid",
+    "hist",
+    "layer",
+    "line",
+    "scatter",
+    "set_backend",
+]
 
 from importlib.metadata import PackageNotFoundError, version
 
-from plotmux.api import grid, hist, layer, line, scatter
+from plotmux.api import cdf, grid, hist, layer, line, scatter
 
 # The four built-in backend submodules (plotmux.backends.{altair,bokeh,
 # matplotlib,xy}) are *not* imported here. Each one eagerly imports its

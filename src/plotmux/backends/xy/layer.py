@@ -9,10 +9,11 @@ from typing import TYPE_CHECKING, Any
 import xy
 
 from plotmux.backends.base import resolve_renderer
+from plotmux.backends.xy.cdf import render_cdf
 from plotmux.backends.xy.histogram import render_histogram
 from plotmux.backends.xy.line import render_line
 from plotmux.backends.xy.scatter import render_scatter
-from plotmux.specs import BaseSpec, HistogramSpec, LineSpec, ScatterSpec
+from plotmux.specs import BaseSpec, CdfSpec, HistogramSpec, LineSpec, ScatterSpec
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
 # ``_RENDERERS``-dict pattern as every backend (see ``Backend``).
 _MARK_RENDERERS: dict[type[BaseSpec], Callable[..., xy.Chart]] = {
     HistogramSpec: render_histogram,
+    CdfSpec: render_cdf,
     LineSpec: render_line,
     ScatterSpec: render_scatter,
 }

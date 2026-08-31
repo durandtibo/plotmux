@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from plotmux.specs import HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import CdfSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
 from plotmux.testing.fixtures import xy_available
 from plotmux.utils.imports import is_xy_available
 
@@ -53,6 +53,13 @@ def test_xy_backend_render_histogram(backend: XyBackend) -> None:
 @xy_available
 def test_xy_backend_render_histogram_density(backend: XyBackend) -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, density=True)
+    native = backend.render(spec)
+    assert isinstance(native, Chart)
+
+
+@xy_available
+def test_xy_backend_render_cdf(backend: XyBackend) -> None:
+    spec = CdfSpec(values=np.arange(101), nbins=10)
     native = backend.render(spec)
     assert isinstance(native, Chart)
 

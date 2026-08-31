@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from plotmux.specs import HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import CdfSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
 from plotmux.testing.fixtures import matplotlib_available
 from plotmux.utils.imports import is_matplotlib_available
 
@@ -134,3 +134,13 @@ def test_render_layer_unsupported_spec_raises() -> None:
     with pytest.raises(NotImplementedError, match="No matplotlib renderer registered"):
         render_layer(ax, spec)
     plt.close(fig)
+
+
+@matplotlib_available
+def test_render_layer_supports_cdf_spec() -> None:
+    fig, ax = plt.subplots()
+    spec = LayerSpec(layers=(CdfSpec(values=np.arange(101), nbins=10),))
+    render_layer(ax, spec)
+    assert len(ax.patches) == 1
+    plt.close(fig)
+

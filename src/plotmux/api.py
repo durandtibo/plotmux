@@ -2,7 +2,7 @@ r"""Contain the public plotting API."""
 
 from __future__ import annotations
 
-__all__ = ["grid", "hist", "layer", "line", "scatter"]
+__all__ = ["cdf", "grid", "hist", "layer", "line", "scatter"]
 
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -13,6 +13,7 @@ from plotmux.config import get_default_backend
 from plotmux.figure import Figure
 from plotmux.specs import (
     BaseSpec,
+    CdfSpec,
     GridSpec,
     HistogramSpec,
     LayerSpec,
@@ -120,6 +121,85 @@ def hist(
         xmax=xmax,
         label=label,
         density=density,
+        color=color,
+        title=title,
+        xlabel=xlabel,
+        ylabel=ylabel,
+        xscale=xscale,
+        yscale=yscale,
+    )
+    return _render(spec, backend, **kwargs)
+
+
+def cdf(
+    values: Sequence[float] | np.ndarray,
+    *,
+    nbins: int | None = None,
+    xmin: float | str | None = None,
+    xmax: float | str | None = None,
+    label: str | None = None,
+    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
+    title: str | None = None,
+    xlabel: str | None = None,
+    ylabel: str | None = "cumulative probability",
+    xscale: Literal["linear", "log"] = "linear",
+    yscale: Literal["linear", "log"] = "linear",
+    backend: str | None = None,
+    **kwargs: Any,
+) -> Figure:
+    r"""Plot the empirical cumulative distribution function (CDF) of
+    an array of values.
+
+    Args:
+        values: The array of values to plot.
+        nbins: The number of bins to use to approximate the
+            cumulative distribution. Must be a positive integer, or
+            ``None`` to use the backend's default binning.
+        xmin: Specifies the lower bound of the x-axis range. It can
+            be an explicit value, a quantile string such as
+            ``"q0.1"``, or ``None`` to use the minimum of ``values``.
+        xmax: Specifies the upper bound of the x-axis range. Same
+            semantics as ``xmin`` but for the upper bound.
+        label: An optional label used e.g. in the legend.
+        color: An optional color for the curve. It can be a hex
+            string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
+            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
+            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
+            backend's default color.
+        title: An optional figure title.
+        xlabel: An optional x-axis label.
+        ylabel: An optional y-axis label. Defaults to
+            ``"cumulative probability"``.
+        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
+        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+        backend: The name of the backend to use to render the
+            figure, or ``None`` to use the current default backend
+            (see ``plotmux.set_backend``).
+        **kwargs: Additional backend-specific keyword arguments,
+            forwarded to the backend's renderer.
+
+    Returns:
+        The rendered figure.
+
+    Raises:
+        ValueError: if ``nbins`` is set and is not a positive
+            integer, ``color`` is not a valid color, or ``xmin`` and
+            ``xmax`` are both explicit numeric values with
+            ``xmin >= xmax``.
+
+    Example:
+        ```pycon
+        >>> import plotmux
+        >>> fig = plotmux.cdf([1, 2, 2, 3, 3, 3])  # doctest: +SKIP
+
+        ```
+    """
+    spec = CdfSpec(
+        values=np.asarray(values),
+        nbins=nbins,
+        xmin=xmin,
+        xmax=xmax,
+        label=label,
         color=color,
         title=title,
         xlabel=xlabel,

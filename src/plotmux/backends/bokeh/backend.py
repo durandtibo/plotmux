@@ -17,6 +17,7 @@ from bokeh.plotting import save as bokeh_save
 from bokeh.resources import CDN
 
 from plotmux.backends.base import Backend, check_export_format
+from plotmux.backends.bokeh.cdf import render_cdf
 from plotmux.backends.bokeh.grid import render_grid
 from plotmux.backends.bokeh.histogram import render_histogram
 from plotmux.backends.bokeh.layer import render_layer
@@ -25,6 +26,7 @@ from plotmux.backends.bokeh.scatter import render_scatter
 from plotmux.backends.bokeh.style import apply_common_style
 from plotmux.specs import (
     BaseSpec,
+    CdfSpec,
     GridSpec,
     HistogramSpec,
     LayerSpec,
@@ -103,6 +105,7 @@ class BokehBackend(Backend):
 
     _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., Figure | LayoutDOM]]] = {
         HistogramSpec: _make_renderer(render_histogram),
+        CdfSpec: _make_renderer(render_cdf),
         LineSpec: _make_renderer(render_line),
         ScatterSpec: _make_renderer(render_scatter),
         LayerSpec: _make_renderer(render_layer),

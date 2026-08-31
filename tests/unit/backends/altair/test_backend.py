@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from plotmux.specs import GridSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import CdfSpec, GridSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
 from plotmux.testing.fixtures import altair_available
 from plotmux.utils.imports import is_altair_available
 
@@ -51,6 +51,13 @@ def test_altair_backend_render_histogram(backend: AltairBackend) -> None:
 @altair_available
 def test_altair_backend_render_histogram_density(backend: AltairBackend) -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, density=True)
+    native = backend.render(spec)
+    assert isinstance(native, alt.Chart)
+
+
+@altair_available
+def test_altair_backend_render_cdf(backend: AltairBackend) -> None:
+    spec = CdfSpec(values=np.arange(101), nbins=10)
     native = backend.render(spec)
     assert isinstance(native, alt.Chart)
 
