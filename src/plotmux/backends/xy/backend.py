@@ -12,14 +12,17 @@ from typing import TYPE_CHECKING, ClassVar
 
 from plotmux.backends.base import Backend, check_export_format, make_renderer
 from plotmux.backends.xy.cdf import render_cdf
+from plotmux.backends.xy.grid import XyGrid, render_grid, render_grid_html
 from plotmux.backends.xy.histogram import render_histogram
 from plotmux.backends.xy.layer import render_layer
 from plotmux.backends.xy.line import render_line
 from plotmux.backends.xy.scatter import render_scatter
 from plotmux.backends.xy.style import apply_common_style
+from plotmux.exceptions import UnsupportedFormatError
 from plotmux.specs import (
     BaseSpec,
     CdfSpec,
+    GridSpec,
     HistogramSpec,
     LayerSpec,
     LineSpec,
@@ -57,23 +60,47 @@ class XyBackend(Backend):
         LineSpec: make_renderer(render_line, apply_common_style),
         ScatterSpec: make_renderer(render_scatter, apply_common_style),
         LayerSpec: make_renderer(render_layer, apply_common_style),
+        # ``GridSpec`` is *not* wrapped in ``make_renderer``: unlike every
+        # other entry, ``render_grid`` returns an ``XyGrid``, not a bare
+        # ``xy.Chart``, and title/labels/scale have no grid-level meaning
+        # (each cell already styled itself, see ``render_grid``) -- same
+        # rationale as matplotlib's/bokeh's/altair's own ``GridSpec`` entry.
+        GridSpec: render_grid,
     }
 
     # ``render`` is inherited from ``Backend``: it dispatches on
     # ``type(spec)`` against ``_RENDERERS`` above, so this backend does not
     # need its own copy of that dispatch body.
 
-    def save(self, native: xy.Chart, path: Path, fmt: str) -> None:
-        r"""Export an xy ``Chart`` to a file.
+    def save(self, native: xy.Chart | XyGrid, path: Path, fmt: str) -> None:
+        r"""Export an xy ``Chart`` or ``XyGrid`` to a file.
 
         Args:
-            native: The xy ``Chart`` to export.
+            native: The xy ``Chart`` (any spec type but ``GridSpec``)
+                or ``XyGrid`` (a rendered ``GridSpec``, see
+                ``plotmux.backends.xy.grid``) to export.
             path: The path where to save the figure.
             fmt: The export format (e.g. ``"png"``, ``"svg"``,
                 ``"html"``).
 
         Raises:
-            ValueError: if ``fmt`` is not a supported export format.
+            ValueError: if ``fmt`` is not a supported export format,
+                or ``native`` is an ``XyGrid`` and ``fmt`` is not
+                ``"html"`` (see ``XyGrid``'s docstring for why grid
+                export is HTML-only).
         """
         check_export_format(fmt, self.supported_formats, self.name)
-        native.write_image(path, format=fmt)
+        if isinstance(native, XyGrid):
+            if fmt != "html":
+                msg = (
+                    f"Unsupported export format {fmt!r} for an xy grid: only "
+                    f"'html' is supported. xy has no chart-composition "
+                    f"primitive for arranging independent panels (see "
+                    f"XyGrid's docstring), so a grid's per-cell charts can "
+                    f"only be composed as separate, embedded documents in "
+                    f"one HTML page, not rasterized into one PNG/SVG/PDF."
+                )
+                raise UnsupportedFormatError(msg)
+            path.write_text(render_grid_html(native), encoding="utf-8")
+        else:
+            native.write_image(path, format=fmt)

@@ -55,3 +55,21 @@ def test_save_chart_type_format_matrix(
     fig.save(path)
     assert path.is_file()
     assert path.stat().st_size > 0
+
+
+@xy_available
+def test_save_grid_html(tmp_path: Path) -> None:
+    # ``GridSpec`` is HTML-only for xy: unlike the other three backends, xy
+    # has no chart-composition primitive suited to arranging independent
+    # panels, so it cannot be rasterized into PNG/SVG/PDF -- see
+    # ``plotmux.backends.xy.grid.XyGrid``.
+    fig = plotmux.grid(
+        HistogramSpec(values=np.arange(101), bins=10),
+        LineSpec(x=np.arange(0, 100, 10), y=np.arange(10)),
+        ncols=2,
+        backend="xy",
+    )
+    path = tmp_path / "fig.html"
+    fig.save(path)
+    assert path.is_file()
+    assert path.stat().st_size > 0

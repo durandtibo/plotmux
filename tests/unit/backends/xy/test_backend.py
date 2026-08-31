@@ -5,7 +5,14 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from plotmux.specs import CdfSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import (
+    CdfSpec,
+    GridSpec,
+    HistogramSpec,
+    LayerSpec,
+    LineSpec,
+    ScatterSpec,
+)
 from plotmux.testing.fixtures import xy_available
 from plotmux.utils.imports import is_xy_available
 
@@ -99,6 +106,21 @@ def test_xy_backend_render_applies_common_style(backend: XyBackend) -> None:
 
 
 @xy_available
+def test_xy_backend_render_grid(backend: XyBackend) -> None:
+    from plotmux.backends.xy.grid import XyGrid
+
+    spec = GridSpec(
+        cells=(
+            LineSpec(x=np.arange(10), y=np.arange(10) ** 2),
+            ScatterSpec(x=np.arange(10), y=np.arange(10) ** 2),
+        )
+    )
+    native = backend.render(spec)
+    assert isinstance(native, XyGrid)
+    assert len(native.charts) == 2
+
+
+@xy_available
 def test_xy_backend_render_unsupported_spec(backend: XyBackend) -> None:
     with pytest.raises(NotImplementedError, match="No xy renderer registered"):
         backend.render(object())
@@ -123,3 +145,21 @@ def test_xy_backend_save_supported_formats(backend: XyBackend, tmp_path: Path, f
     path = tmp_path / f"fig.{fmt}"
     backend.save(native, path, fmt)
     assert path.is_file()
+
+
+@xy_available
+def test_xy_backend_save_grid_html(backend: XyBackend, tmp_path: Path) -> None:
+    spec = GridSpec(cells=(HistogramSpec(values=np.arange(101), bins=10),))
+    native = backend.render(spec)
+    path = tmp_path / "fig.html"
+    backend.save(native, path, "html")
+    assert path.is_file()
+    assert path.stat().st_size > 0
+
+
+@xy_available
+def test_xy_backend_save_grid_unsupported_format(backend: XyBackend, tmp_path: Path) -> None:
+    spec = GridSpec(cells=(HistogramSpec(values=np.arange(101), bins=10),))
+    native = backend.render(spec)
+    with pytest.raises(ValueError, match="Unsupported export format 'png' for an xy grid"):
+        backend.save(native, tmp_path / "fig.png", "png")
