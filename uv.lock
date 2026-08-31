@@ -1053,15 +1053,15 @@ wheels = [
 
 [[package]]
 name = "feu"
-version = "0.8.2"
+version = "0.8.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "packaging" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5d/cf/d566c338bec4bd077f2576eaf96c30d44b0078a13dd39c72c9b3c30d44e9/feu-0.8.2.tar.gz", hash = "sha256:f91240f1b6823d9452dd00573a61c4494f895aad4693c554ad3af8ba3aa27e2e", size = 56124, upload-time = "2026-08-16T22:32:31.249Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a1/34/f022e330f97153e3094d7c5a0311a6083ea820b66552f9c348c431b267fc/feu-0.8.3.tar.gz", hash = "sha256:370abd065128c608512cc0c7886a867eb80d2f2fda86715d42d111d45e8c2593", size = 56781, upload-time = "2026-08-31T04:03:06.338Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ae/f7/d2996a1dc80c4dd324858a2ccedb0bf82af135620e1dfa89361f228d6192/feu-0.8.2-py3-none-any.whl", hash = "sha256:657158de43688c57f2971a8920d73fa291685db0b2e3c621eaa63a7b1ff99a77", size = 91244, upload-time = "2026-08-16T22:32:29.889Z" },
+    { url = "https://files.pythonhosted.org/packages/34/76/bd4a6bd8094b8081e0b15ad55b14feb91b3eff1c2f5e136c822378060247/feu-0.8.3-py3-none-any.whl", hash = "sha256:41f350553cc0d0998eec363ae0d3c1aeea15899fb88e0be22635d8d42602d3ec", size = 92920, upload-time = "2026-08-31T04:03:05.293Z" },
 ]
 
 [package.optional-dependencies]
@@ -3966,11 +3966,11 @@ wheels = [
 
 [[package]]
 name = "websocket-client"
-version = "1.9.0"
+version = "1.9.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/2c/41/aa4bf9664e4cda14c3b39865b12251e8e7d239f4cd0e3cc1b6c2ccde25c1/websocket_client-1.9.0.tar.gz", hash = "sha256:9e813624b6eb619999a97dc7958469217c3176312b3a16a4bd1bc7e08a46ec98", size = 70576, upload-time = "2025-10-07T21:16:36.495Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2e/1d/ae61bca2a99d0735311b7b11b81931279b4a45c74a45034d31b39ad565d1/websocket_client-1.9.1.tar.gz", hash = "sha256:2e0916d2e28ccc82702f2f70aa7a654588e84a5cf2f5914099638b33547f2b7c", size = 82936, upload-time = "2026-08-29T13:45:40.346Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/34/db/b10e48aa8fff7407e67470363eac595018441cf32d5e1001567a7aeba5d2/websocket_client-1.9.0-py3-none-any.whl", hash = "sha256:af248a825037ef591efbf6ed20cc5faa03d3b47b9e5a2230a529eeee1c1fc3ef", size = 82616, upload-time = "2025-10-07T21:16:34.951Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/0e/7b514f6eb4bf518a9af0285c1a78297467b95fd7d1ebab08b41f8889ab2f/websocket_client-1.9.1-py3-none-any.whl", hash = "sha256:19a871b81d0022589dd9e8e1b1891e0516d32113837dfb987d7691b6a425a1e2", size = 95460, upload-time = "2026-08-29T13:45:39.255Z" },
 ]
 
 [[package]]
