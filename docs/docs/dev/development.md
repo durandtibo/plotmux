@@ -331,7 +331,7 @@ The project uses GitHub Actions for CI. Workflows are in `.github/workflows/`:
 4. **Run pre-commit hooks** before committing
 5. **Write clear commit messages**
 6. **Add docstrings, with a runnable `pycon` example, to all public APIs**
-7. **Keep dependencies minimal** — new hard dependencies need a strong justification; prefer an
+7. **Keep dependencies minimal**: new hard dependencies need a strong justification; prefer an
    optional extra
 8. **Follow existing code style**, in particular the separation between specs (backend-agnostic)
    and backends (library-specific), see [Architecture](architecture.md)

@@ -6,8 +6,8 @@ a grid.
 ## Overview
 
 `plotmux.grid()` accepts any number of child specs, or already-rendered `Figure`s, and lays each one
-out in its own, independent panel — the backend-agnostic equivalent of Matplotlib's
-`pyplot.subplots()`. This is different from [`plotmux.layer()`](layer.md), which draws every child
+out in its own, independent panel (the backend-agnostic equivalent of Matplotlib's
+`pyplot.subplots()`). This is different from [`plotmux.layer()`](layer.md), which draws every child
 onto one *shared* set of axes: with `grid`, each child keeps its own axes.
 
 ```pycon
@@ -54,7 +54,7 @@ items is not a multiple of `ncols`:
 Unlike `hist`, `line`, `scatter`, and `layer`, `grid` only accepts `title` and `backend`, plus
 `ncols`. `title` is shown once above the whole grid, not any individual panel. `xlabel`, `ylabel`,
 `xscale`, `yscale`, and `color` have no meaning at the grid level since each panel keeps its own
-style — set those on the child specs themselves instead.
+style: set those on the child specs themselves instead.
 
 ## Restrictions
 
