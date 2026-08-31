@@ -14,10 +14,10 @@ four built-in backends:
 - `"xy"`: renders with [`xy`](https://github.com/durandtibo/xy). Requires the `xy` extra
   (Python 3.11+).
 - `"bokeh"`: renders with [Bokeh](https://bokeh.org/). Requires the `bokeh` extra. Only the
-  `"html"` export format is supported — static image export (`png`/`svg`) would additionally
+  `"html"` export format is supported: static image export (`png`/`svg`) would additionally
   require a Selenium webdriver at runtime, which is outside the scope of a `pip install bokeh`.
 - `"altair"`: renders with [Altair](https://altair-viz.github.io/) (Vega-Lite). Requires the
-  `altair` extra. Only the `"html"`/`"json"` export formats are supported — static image export
+  `altair` extra. Only the `"html"`/`"json"` export formats are supported: static image export
   (`png`/`svg`/`pdf`) would additionally require the `vl-convert-python` package, which is outside
   the scope of a `pip install altair`.
 

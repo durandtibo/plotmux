@@ -11,10 +11,10 @@ code once against `plotmux`'s unified API and choose the rendering backend (`mat
 `bokeh`, `altair`, ...) at runtime. Swapping backends should be a one-line configuration change, and
 adding a new backend or chart type should not require changing existing code.
 
-The unified API targets a small set of generic, broadly-useful chart types and figure-level concerns
-— the ones almost every plotting task needs (histograms, empirical CDFs, line charts, scatter
+The unified API targets a small set of generic, broadly-useful chart types and figure-level concerns:
+the ones almost every plotting task needs (histograms, empirical CDFs, line charts, scatter
 plots, layering them together, laying them out in a grid, common axis styling, per-mark color,
-export) — not
+export), not
 comprehensive coverage of every chart type a backend can draw. A niche or highly backend-specific
 plot is expected to stay behind the escape hatch (`Figure.to_native()`) rather than becoming a new
 spec.
@@ -23,9 +23,9 @@ spec.
 
 Two layers:
 
-1. **Chart specs** (`plotmux.specs`) — plain, backend-agnostic frozen dataclasses describing *what*
+1. **Chart specs** (`plotmux.specs`): plain, backend-agnostic frozen dataclasses describing *what*
    to plot (data + encoding + style). They never import a plotting library.
-2. **Backends** (`plotmux.backends`) — one package per plotting library, responsible for turning a
+2. **Backends** (`plotmux.backends`): one package per plotting library, responsible for turning a
    spec into that library's native figure object and for exporting it to a file.
 
 This mirrors the Vega-Lite/Altair split, and is what makes "swap backend in one line" true: because a
@@ -101,7 +101,7 @@ user code           fig.show() / fig.save("out.png") / fig.to_native()
 ```
 
 Backend registration is eager, not lazy: `plotmux/__init__.py` imports each built-in backend
-subpackage (`matplotlib`, `xy`, `bokeh`, `altair`) for their side effect — each subpackage's
+subpackage (`matplotlib`, `xy`, `bokeh`, `altair`) for their side effect; each subpackage's
 `__init__.py` calls `register_backend(...)` only if its underlying library is installed
 (`is_matplotlib_available()` / `is_xy_available()` / `is_bokeh_available()` /
 `is_altair_available()`). It then calls
@@ -110,14 +110,14 @@ advertised via the `plotmux.backends` entry-point group (see
 [Adding a Third-Party Backend](../uguide/backends.md#adding-a-third-party-backend)), after the two
 built-in backends so a plugin can freely reuse those names' absence or presence. So by the time
 user code calls `plotmux.hist(...)`, the registry already holds every backend whose library is
-installed — `api.py` only looks it up, it never triggers registration itself.
+installed: `api.py` only looks it up, it never triggers registration itself.
 
 ## Key Components
 
 ### `BaseSpec`
 
-Holds the figure-level fields every chart type inherits — `title`, `xlabel`, `ylabel`, `xscale`,
-`yscale` — so they are defined once instead of being redeclared per chart type, and gives
+Holds the figure-level fields every chart type inherits (`title`, `xlabel`, `ylabel`, `xscale`,
+`yscale`) so they are defined once instead of being redeclared per chart type, and gives
 `Backend.render`/the `_RENDERERS` dicts a common type to dispatch on. These fields are
 `kw_only=True` so they (all defaulted) can precede a subclass's own required fields
 (e.g. `HistogramSpec.values`) without violating the dataclass "no non-default field after a
@@ -148,7 +148,7 @@ lookup-or-raise dispatch logic (`{spec_type: renderer}` lookup, `{format}` membe
 by every backend, so a backend only owns its dict of renderers, not the dispatch mechanics around
 it. `backends/registry.py` maps a backend name to its registered instance, and raises a
 `BackendNotFoundError` (also a `RuntimeError`) listing available backends when an unregistered name
-is requested — typically because its underlying plotting library is not installed.
+is requested, typically because its underlying plotting library is not installed.
 
 ### `plotmux.exceptions`
 
@@ -170,7 +170,7 @@ be a `LayerSpec`, since layering and gridding are independent, composable concer
 own `backends/<name>/layer.py` / `backends/<name>/grid.py` owns composing the children onto shared
 axes/chart state or independent panels; every built-in backend implements both.
 `GridSpec` inherits `xlabel`/`ylabel`/`xscale`/`yscale` from `BaseSpec` but every backend's grid
-renderer ignores them, since each panel keeps its own — `grid()` in `api.py` does not even expose
+renderer ignores them, since each panel keeps its own; `grid()` in `api.py` does not even expose
 them as parameters.
 
 ### `Figure`
