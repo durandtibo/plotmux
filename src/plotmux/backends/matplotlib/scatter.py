@@ -19,12 +19,17 @@ def render_scatter(ax: Axes, spec: ScatterSpec, **kwargs: Any) -> Axes:
         ax: The matplotlib ``Axes`` to draw onto.
         spec: The scatter spec to render.
         **kwargs: Additional keyword arguments forwarded to
-            ``Axes.scatter``.
+            ``Axes.scatter``. Overrides the spec-derived ``label``/
+            ``color``/``s`` when it repeats one of those keys (e.g. a
+            shared ``color=`` passed to ``plotmux.layer``/
+            ``plotmux.grid``), instead of raising a ``TypeError`` for
+            "multiple values for keyword argument".
 
     Returns:
         The ``Axes`` the markers were drawn onto.
     """
-    ax.scatter(spec.x, spec.y, label=spec.label, color=spec.color, s=spec.size, **kwargs)
+    style = {"label": spec.label, "color": spec.color, "s": spec.size, **kwargs}
+    ax.scatter(spec.x, spec.y, **style)
     if spec.label is not None:
         ax.legend()
     return ax

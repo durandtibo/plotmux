@@ -50,5 +50,7 @@ class LineSpec(BaseSpec):
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
 
     def __post_init__(self) -> None:
-        _check_equal_length(self.x, self.y)
+        x, y = _check_equal_length(self.x, self.y)
+        object.__setattr__(self, "x", x)
+        object.__setattr__(self, "y", y)
         self._normalize_color()

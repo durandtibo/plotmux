@@ -8,14 +8,9 @@ from __future__ import annotations
 
 __all__ = ["XyBackend"]
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from plotmux.backends.base import (
-    Backend,
-    check_export_format,
-    make_renderer,
-    resolve_renderer,
-)
+from plotmux.backends.base import Backend, check_export_format, make_renderer
 from plotmux.backends.xy.histogram import render_histogram
 from plotmux.backends.xy.layer import render_layer
 from plotmux.backends.xy.line import render_line
@@ -55,23 +50,9 @@ class XyBackend(Backend):
         LayerSpec: make_renderer(render_layer, apply_common_style),
     }
 
-    def render(self, spec: BaseSpec, **kwargs: Any) -> xy.Chart:
-        r"""Render a spec into an xy ``Chart``.
-
-        Args:
-            spec: The backend-agnostic spec to render.
-            **kwargs: Additional xy-specific keyword arguments,
-                forwarded to the underlying mark constructor.
-
-        Returns:
-            The resulting xy ``Chart``.
-
-        Raises:
-            NotImplementedError: if there is no xy renderer
-                registered for the type of ``spec``.
-        """
-        renderer = resolve_renderer(self._RENDERERS, spec, self.name)
-        return renderer(spec, **kwargs)
+    # ``render`` is inherited from ``Backend``: it dispatches on
+    # ``type(spec)`` against ``_RENDERERS`` above, so this backend does not
+    # need its own copy of that dispatch body.
 
     def save(self, native: xy.Chart, path: Path, fmt: str) -> None:
         r"""Export an xy ``Chart`` to a file.

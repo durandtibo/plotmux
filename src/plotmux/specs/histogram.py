@@ -5,14 +5,12 @@ from __future__ import annotations
 __all__ = ["HistogramSpec"]
 
 from dataclasses import dataclass
-from numbers import Real
-from typing import TYPE_CHECKING
+from numbers import Integral, Real
+
+import numpy as np
 
 from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import BaseSpec
-
-if TYPE_CHECKING:
-    import numpy as np
 
 
 @dataclass(frozen=True)
@@ -54,9 +52,10 @@ class HistogramSpec(BaseSpec):
             Inherited from ``BaseSpec``.
 
     Raises:
-        ValueError: if ``bins`` is not a positive integer,
-            ``color`` is not a valid color, or ``xmin`` and ``xmax``
-            are both explicit numeric values with ``xmin >= xmax``.
+        ValueError: if ``bins`` is not a positive integer, ``values``
+            is not 1-dimensional or is empty, ``color`` is not a
+            valid color, or ``xmin`` and ``xmax`` are both explicit
+            numeric values with ``xmin >= xmax``.
 
     Example:
         ```pycon
@@ -78,9 +77,22 @@ class HistogramSpec(BaseSpec):
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
 
     def __post_init__(self) -> None:
-        if self.bins <= 0:
+        if not isinstance(self.bins, Integral) or isinstance(self.bins, bool) or self.bins <= 0:
             msg = f"bins must be a positive integer, but received {self.bins}"
             raise InvalidSpecError(msg)
+        # Coerced with ``np.asarray`` so a spec can be constructed directly
+        # (e.g. ``HistogramSpec(values=[1, 2, 3])``) and not only through
+        # ``plotmux.hist``, which already converts its input before
+        # construction (see ``plotmux.specs.base._check_equal_length``,
+        # which does the same for ``LineSpec``/``ScatterSpec``).
+        values = np.asarray(self.values)
+        if values.ndim != 1:
+            msg = f"values must be 1-dimensional, but received shape {values.shape}"
+            raise InvalidSpecError(msg)
+        if values.size == 0:
+            msg = "values must not be empty"
+            raise InvalidSpecError(msg)
+        object.__setattr__(self, "values", values)
         # Only checked when both bounds are already explicit numbers: a
         # quantile string (e.g. "q0.1") or ``None`` is resolved against the
         # data later by ``find_range``, so it cannot be range-checked here.

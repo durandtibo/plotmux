@@ -4,8 +4,9 @@ from __future__ import annotations
 
 __all__ = ["LayerSpec"]
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
+from plotmux.colors.palette import DEFAULT_PALETTE
 from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import BaseSpec
 
@@ -54,3 +55,45 @@ class LayerSpec(BaseSpec):
         if any(isinstance(child, LayerSpec) for child in self.layers):
             msg = "layers must not contain a LayerSpec (nesting is not supported)"
             raise InvalidSpecError(msg)
+        object.__setattr__(self, "layers", tuple(_assign_default_colors(self.layers)))
+
+
+def _assign_default_colors(layers: tuple[BaseSpec, ...]) -> tuple[BaseSpec, ...]:
+    r"""Give each color-carrying child with no explicit ``color`` a
+    distinct color from ``DEFAULT_PALETTE``, cycling through it in draw
+    order.
+
+    Every backend renders an uncolored child by passing its
+    ``color=None`` straight to the underlying plotting call.
+    matplotlib auto-cycles colors for repeated ``color=None`` calls on
+    the same ``Axes``, but bokeh/altair/xy do not, so the same
+    ``LayerSpec`` used to render with distinct series colors under
+    matplotlib and identical/overlapping colors everywhere else.
+    Assigning the colors here, once, backend-agnostically, makes every
+    backend agree.
+
+    A child with an explicit ``color`` is left untouched and does not
+    consume a palette slot, so mixing explicit and default colors
+    still cycles the palette only across the children that need it.
+
+    Args:
+        layers: The child specs to assign default colors to.
+
+    Returns:
+        The same children, in the same order, with ``color=None``
+            replaced by a palette color on each one that has a
+            ``color`` field.
+    """
+    result = []
+    i = 0
+    for child in layers:
+        # ``color`` is not a field on ``BaseSpec`` itself (``GridSpec`` has
+        # none), so it is looked up dynamically rather than narrowed by
+        # ``isinstance`` against every current and future color-carrying
+        # spec type.
+        if getattr(child, "color", "unset") is None:
+            result.append(replace(child, color=DEFAULT_PALETTE[i % len(DEFAULT_PALETTE)]))
+            i += 1
+        else:
+            result.append(child)
+    return tuple(result)

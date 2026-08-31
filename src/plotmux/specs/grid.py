@@ -5,6 +5,7 @@ from __future__ import annotations
 __all__ = ["GridSpec"]
 
 from dataclasses import dataclass
+from numbers import Integral
 
 from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import BaseSpec
@@ -71,6 +72,6 @@ class GridSpec(BaseSpec):
         if any(isinstance(child, GridSpec) for child in self.cells):
             msg = "cells must not contain a GridSpec (nesting is not supported)"
             raise InvalidSpecError(msg)
-        if self.ncols <= 0:
+        if not isinstance(self.ncols, Integral) or isinstance(self.ncols, bool) or self.ncols <= 0:
             msg = f"ncols must be a positive integer, but received {self.ncols}"
             raise InvalidSpecError(msg)

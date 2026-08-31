@@ -9,7 +9,7 @@ from __future__ import annotations
 
 __all__ = ["AltairBackend"]
 
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar, cast
 
 from plotmux.backends.altair.grid import render_grid
 from plotmux.backends.altair.histogram import render_histogram
@@ -17,12 +17,7 @@ from plotmux.backends.altair.layer import render_layer
 from plotmux.backends.altair.line import render_line
 from plotmux.backends.altair.scatter import render_scatter
 from plotmux.backends.altair.style import apply_common_style
-from plotmux.backends.base import (
-    Backend,
-    check_export_format,
-    make_renderer,
-    resolve_renderer,
-)
+from plotmux.backends.base import Backend, check_export_format, make_renderer
 from plotmux.specs import (
     BaseSpec,
     GridSpec,
@@ -76,23 +71,9 @@ class AltairBackend(Backend):
         GridSpec: render_grid,
     }
 
-    def render(self, spec: BaseSpec, **kwargs: Any) -> alt.typing.ChartType:
-        r"""Render a spec into an altair ``Chart``.
-
-        Args:
-            spec: The backend-agnostic spec to render.
-            **kwargs: Additional altair-specific keyword arguments,
-                forwarded to the underlying mark constructor.
-
-        Returns:
-            The resulting altair ``Chart``.
-
-        Raises:
-            NotImplementedError: if there is no altair renderer
-                registered for the type of ``spec``.
-        """
-        renderer = resolve_renderer(self._RENDERERS, spec, self.name)
-        return renderer(spec, **kwargs)
+    # ``render`` is inherited from ``Backend``: it dispatches on
+    # ``type(spec)`` against ``_RENDERERS`` above, so this backend does not
+    # need its own copy of that dispatch body.
 
     def save(self, native: alt.typing.ChartType, path: Path, fmt: str) -> None:
         r"""Export an altair ``Chart`` to a file.

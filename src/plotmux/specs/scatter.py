@@ -55,7 +55,9 @@ class ScatterSpec(BaseSpec):
     size: float | None = None
 
     def __post_init__(self) -> None:
-        _check_equal_length(self.x, self.y)
+        x, y = _check_equal_length(self.x, self.y)
+        object.__setattr__(self, "x", x)
+        object.__setattr__(self, "y", y)
         if self.size is not None and self.size <= 0:
             msg = f"size must be a positive number, but received {self.size}"
             raise InvalidSpecError(msg)

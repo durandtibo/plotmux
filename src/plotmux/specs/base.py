@@ -12,11 +12,13 @@ __all__ = ["BaseSpec"]
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Literal
 
+import numpy as np
+
 from plotmux.colors import parse_color
 from plotmux.exceptions import InvalidSpecError
 
 if TYPE_CHECKING:
-    import numpy as np
+    from numpy.typing import ArrayLike
 
 
 @dataclass(frozen=True)
@@ -91,25 +93,36 @@ class BaseSpec:
             object.__setattr__(self, name, parse_color(value))
 
 
-def _check_equal_length(x: np.ndarray, y: np.ndarray) -> None:
-    r"""Check that ``x`` and ``y`` have the same length.
+def _check_equal_length(x: ArrayLike, y: ArrayLike) -> tuple[np.ndarray, np.ndarray]:
+    r"""Coerce ``x`` and ``y`` to ``np.ndarray`` and check that they have
+    the same length.
 
     Shared by every spec that pairs an ``x`` array with a ``y`` array
     (``LineSpec``, ``ScatterSpec``, ...), so the check and its error
-    message are written once.
+    message are written once. ``x``/``y`` are coerced with
+    ``np.asarray`` first so a spec can be constructed directly (e.g.
+    ``LineSpec(x=[1, 2, 3], y=[1, 2, 3])``) and not only through
+    ``plotmux.line``/``plotmux.scatter``, which already convert their
+    inputs before construction.
 
     Args:
         x: The array of x values.
         y: The array of y values.
+
+    Returns:
+        The ``(x, y)`` pair, each coerced to an ``np.ndarray``.
 
     Raises:
         InvalidSpecError: if ``x`` and ``y`` do not have the same
             length. Also a ``ValueError``, so existing ``except
             ValueError`` code keeps working unchanged.
     """
+    x = np.asarray(x)
+    y = np.asarray(y)
     if x.ndim != 1 or y.ndim != 1:
         msg = f"x and y must be 1-dimensional, but received shapes {x.shape} and {y.shape}"
         raise InvalidSpecError(msg)
     if x.shape[0] != y.shape[0]:
         msg = f"x and y must have the same length, but received {x.shape[0]} and {y.shape[0]}"
         raise InvalidSpecError(msg)
+    return x, y

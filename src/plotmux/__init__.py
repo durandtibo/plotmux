@@ -8,13 +8,14 @@ from importlib.metadata import PackageNotFoundError, version
 
 from plotmux.api import grid, hist, layer, line, scatter
 
-# Import backend subpackages for their side effect of registering
-# themselves in plotmux.backends.registry, if their underlying
-# plotting library is installed.
-from plotmux.backends import altair as _altair_backend  # noqa: F401
-from plotmux.backends import bokeh as _bokeh_backend  # noqa: F401
-from plotmux.backends import matplotlib as _matplotlib_backend  # noqa: F401
-from plotmux.backends import xy as _xy_backend  # noqa: F401
+# The four built-in backend submodules (plotmux.backends.{altair,bokeh,
+# matplotlib,xy}) are *not* imported here. Each one eagerly imports its
+# underlying plotting library as a side effect of registering itself (see
+# e.g. plotmux.backends.matplotlib), so importing all four unconditionally
+# would pay that cost for every library that happens to be installed, even
+# if only one backend is ever used. Instead, plotmux.backends.registry.
+# get_backend imports the matching submodule lazily, the first time that
+# backend's name is actually requested.
 from plotmux.backends.registry import load_entry_point_backends
 from plotmux.config import backend, set_backend
 

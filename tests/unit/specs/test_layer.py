@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from plotmux.colors.palette import DEFAULT_PALETTE
 from plotmux.specs import HistogramSpec, LayerSpec, LineSpec, ScatterSpec
 
 ################################
@@ -14,7 +15,29 @@ def test_layer_spec_layers() -> None:
     hist_spec = HistogramSpec(values=np.arange(101), bins=10)
     line_spec = LineSpec(x=np.arange(10), y=np.arange(10))
     spec = LayerSpec(layers=(hist_spec, line_spec))
-    assert spec.layers == (hist_spec, line_spec)
+    assert len(spec.layers) == 2
+    assert spec.layers[0].bins == 10
+    np.testing.assert_array_equal(spec.layers[0].values, hist_spec.values)
+    np.testing.assert_array_equal(spec.layers[1].x, line_spec.x)
+    np.testing.assert_array_equal(spec.layers[1].y, line_spec.y)
+
+
+def test_layer_spec_assigns_default_colors_to_uncolored_children() -> None:
+    hist_spec = HistogramSpec(values=np.arange(101), bins=10)
+    line_spec = LineSpec(x=np.arange(10), y=np.arange(10))
+    spec = LayerSpec(layers=(hist_spec, line_spec))
+    assert spec.layers[0].color == DEFAULT_PALETTE[0]
+    assert spec.layers[1].color == DEFAULT_PALETTE[1]
+
+
+def test_layer_spec_keeps_explicit_colors_and_only_cycles_palette_over_the_rest() -> None:
+    red_line = LineSpec(x=np.arange(10), y=np.arange(10), color="#ff0000")
+    scatter = ScatterSpec(x=np.arange(10), y=np.arange(10))
+    hist_spec = HistogramSpec(values=np.arange(101), bins=10)
+    spec = LayerSpec(layers=(red_line, scatter, hist_spec))
+    assert spec.layers[0].color == (1.0, 0.0, 0.0, 1.0)
+    assert spec.layers[1].color == DEFAULT_PALETTE[0]
+    assert spec.layers[2].color == DEFAULT_PALETTE[1]
 
 
 def test_layer_spec_single_child() -> None:
