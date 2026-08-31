@@ -1,7 +1,8 @@
 # plotmux design
 
 Status: in progress — core abstraction, six chart specs (histogram,
-cdf, line, scatter, layer, grid), four backends (matplotlib, xy,
+cdf, line, scatter, layer, grid, with grid now implemented across all
+four backends), four backends (matplotlib, xy,
 bokeh, altair), per-mark color (`parse_color`), common axis styling
 (title/labels/scale, `apply_common_style`), layering multiple specs on
 one axes (`plotmux.layer()`), laying out multiple specs as independent
@@ -14,7 +15,7 @@ colors and a default categorical palette (`DEFAULT_PALETTE`), lazy
 per-backend-library imports, and a third-party backend plugin
 mechanism (`plotmux.backends` entry-point group) are implemented.
 Sections are marked ✅ implemented or 🚧 planned.
-Date: 2026-08-30
+Date: 2026-08-30 (updated same day: xy `grid()` support added)
 
 ## 1. Goal
 
@@ -130,8 +131,12 @@ src/plotmux/
 │   │   ├── cdf.py                 # render_cdf(spec) -> xy.Chart
 │   │   ├── line.py               # render_line(spec) -> xy.Chart
 │   │   ├── scatter.py            # render_scatter(spec) -> xy.Chart
-│   │   └── layer.py              # render_layer(spec) -> composed xy.Chart
-│   │                             # (grid not yet implemented for xy, see 6.1)
+│   │   ├── layer.py              # render_layer(spec) -> composed xy.Chart
+│   │   └── grid.py               # render_grid(spec) -> XyGrid; render_grid_html()
+│   │                             #   composes it to one HTML page at export time
+│   │                             #   (xy has no chart-composition primitive for
+│   │                             #   independent panels, so PNG/SVG/PDF/... are
+│   │                             #   not supported for a grid, only "html")
 │   ├── bokeh/
 │   │   ├── __init__.py          # registers BokehBackend if available
 │   │   ├── backend.py           # BokehBackend
@@ -167,9 +172,10 @@ implemented across all four backends, closing what used to be the
 "no further chart-type addition currently planned" line — a CDF
 turned out to meet the same generic/broadly-useful bar as the other
 five. `specs/{line,scatter,layer,grid}.py` and the matching
-per-backend renderers are implemented across all four backends except
-`xy`, which still does not have a `grid.py` (see
-[6.1](#61-candidate-future-backends)). The layout leaves room for one
+per-backend renderers are now implemented across all four backends,
+including `xy` (see [4.8a](#48a-grid-layouts---implemented) and
+[8.1](#81-close-the-xy-grid-gap) for the caveat: xy's grid export is
+HTML-only). The layout leaves room for one
 more chart type (a new `specs/<type>.py` plus one `_RENDERERS` entry
 per backend) if a similarly generic type comes up. A new backend (see
 [6.1](#61-candidate-future-backends)) adds a new `backends/<name>/`
@@ -691,7 +697,7 @@ mixing a `HistogramSpec` with incompatible axis semantics): validating
 not something `specs` can know without importing plotting-library
 context, consistent with [3.1](#31-principle-separate-spec-from-render).
 
-### 4.8a Grid layouts — ✅ implemented (matplotlib, bokeh, altair; xy pending)
+### 4.8a Grid layouts — ✅ implemented (all four backends)
 
 `plotmux.grid()` lays out several specs as independent panels — the
 backend-agnostic equivalent of matplotlib's `pyplot.subplots()` — as
@@ -748,12 +754,32 @@ pattern as layering:
   `alt.Chart`, then composes them with `alt.concat(*charts,
   columns=ncols)`, altair's declarative grid-concatenation primitive
   (distinct from `alt.layer`, used for `LayerSpec`).
-- **xy**: still not implemented — `xy` has no chart-composition
-  operator suited to independent-panel layout at the time of writing
-  (see [6.1](#61-candidate-future-backends)), so `grid(...,
-  backend="xy")` raises `UnsupportedSpecError`. This is the one
-  remaining feature gap between xy and the other three backends; see
-  [8.1](#81-close-the-xy-grid-gap) for a proposed way to close it.
+- **xy** (`backends/xy/grid.py`): unlike the other three, xy has no
+  chart-composition operator suited to independent-panel layout at
+  all — `xy.facet_chart` looked like the obvious candidate but is
+  strictly *data-driven* faceting (it repeats one fixed mark
+  composition once per value of a `by` data column), not a way to
+  arrange arbitrary, already-built, heterogeneous charts side by side
+  (confirmed against the installed `xy` version; see
+  [8.1](#81-close-the-xy-grid-gap) for how this was resolved). So this
+  backend does *not* render a `GridSpec` straight to an `xy.Chart` the
+  way its other renderers do: `render_grid` renders and styles each
+  cell independently (same as the other three backends) but returns
+  an `XyGrid` — a small dataclass just holding the per-cell charts,
+  `ncols`, and `title` — deferring actual layout to export time.
+  `XyBackend.save` special-cases an `XyGrid` native object: each
+  cell's own `Chart.to_html()` is already a complete, self-contained
+  document (own `<head>`, inline script, a restrictive CSP), so cells
+  can't be concatenated as HTML fragments into one document without
+  one cell's script or CSP clobbering another's — instead,
+  `render_grid_html` embeds each cell's document in its own sandboxed
+  `<iframe srcdoc=...>` and arranges the iframes with CSS grid. This
+  makes `grid(..., backend="xy")` HTML-only: `XyBackend.save` raises
+  `UnsupportedFormatError` for any other format, with a message
+  explaining why (no rasterization path exists for an `XyGrid`, unlike
+  a bare `xy.Chart`, which still supports the full `supported_formats`
+  set). This is the one deliberate, permanent asymmetry between xy and
+  the other three backends' grid support — not a gap still to close.
 
 ### 4.9 Specifying colors across backends — ✅ implemented
 
@@ -977,7 +1003,7 @@ xy objects, and nothing yet reads `DEFAULT_PALETTE` automatically.
 15. ✅ `GridSpec` + `plotmux.grid()` + matplotlib, bokeh, and altair
     `render_grid` — see [4.8a](#48a-grid-layouts---implemented). `xy`
     left unimplemented pending a suitable composition primitive (see
-    [6.1](#61-candidate-future-backends)).
+    step 19 below).
 16. ✅ Lazy backend registration: `backends/registry.py::get_backend`
     imports a built-in backend's submodule on first request instead
     of `plotmux/__init__.py` importing all four eagerly — see
@@ -997,7 +1023,17 @@ xy objects, and nothing yet reads `DEFAULT_PALETTE` automatically.
     the first chart type shipped after `InvalidSpecError`/`InvalidColorError`
     existed, so its `__post_init__` raises them directly instead of
     plain `ValueError` from day one.
-19. 🚧 Close the xy `grid()` gap — see
+19. ✅ `backends/xy/grid.py` — closed the xy `grid()` gap. Confirmed
+    `xy.facet_chart` (the obvious candidate) is strictly data-driven
+    faceting, not a general independent-panel composer, so
+    `render_grid` renders and styles each cell exactly as the other
+    three backends do but returns an `XyGrid` (per-cell charts +
+    `ncols` + `title`) instead of a bare `xy.Chart`; `XyBackend.save`
+    special-cases it, composing each cell's standalone
+    `Chart.to_html()` document into one page via sandboxed
+    `<iframe srcdoc=...>` elements laid out with CSS grid, and raising
+    `UnsupportedFormatError` for any format other than `"html"` — see
+    [4.8a](#48a-grid-layouts---implemented) and
     [8.1](#81-close-the-xy-grid-gap).
 20. 🚧 Decide and implement default-palette assignment for
     `LayerSpec` children with no explicit `color` — see
@@ -1032,10 +1068,11 @@ following the matplotlib/xy/bokeh/altair precedent exactly — see the
 backend-agnostic rule in [Section 5](#5-why-this-shape). Picking one
 should be driven by actual user requests, not by this list.
 
-xy's missing `grid()` support (see
-[4.8a](#48a-grid-layouts---implemented) and
-[8.1](#81-close-the-xy-grid-gap)) is a gap in an *existing* backend,
-not a new-backend candidate, and is prioritized separately.
+xy's `grid()` support (see [4.8a](#48a-grid-layouts---implemented) and
+[8.1](#81-close-the-xy-grid-gap)) is now implemented, HTML-only, via
+its own `XyGrid`/`render_grid_html` composition rather than a native
+`xy` layout primitive — that gap in an *existing* backend has been
+closed.
 
 ## 7. Open questions
 
@@ -1120,28 +1157,47 @@ more scalable, and easier to maintain, given the current
 implementation. None are scheduled; each is written so it can become
 a new numbered step in [Build order](#6-build-order) once picked up.
 
-### 8.1 Close the xy `grid()` gap
+### 8.1 Close the xy `grid()` gap — ✅ done
 
-**Problem:** xy is the only one of the four backends without
-`GridSpec` support (see [4.8a](#48a-grid-layouts---implemented)), so
-`plotmux.grid(..., backend="xy")` always raises `UnsupportedSpecError`.
-This is a maintenance liability as much as a feature gap: it is an
-asymmetry a new contributor has to rediscover (via test failures or
-the exception message) rather than one the type system or docs make
-obvious up front, and every new chart type added from here on has to
-remember to *also* skip xy's grid tests.
+**Problem (as it stood):** xy was the only one of the four backends
+without `GridSpec` support (see
+[4.8a](#48a-grid-layouts---implemented)), so `plotmux.grid(...,
+backend="xy")` always raised `UnsupportedSpecError`. This was a
+maintenance liability as much as a feature gap: an asymmetry a new
+contributor would have to rediscover (via test failures or the
+exception message) rather than one the type system or docs made
+obvious up front, and every new chart type added from then on would
+have had to remember to *also* skip xy's grid tests.
 
-**Proposal:** xy's own layout primitive for independent panels (an
-`xy.grid`/`xy.facet`-shaped chart, if one exists in the installed `xy`
-version, or a manual multi-`Chart` HTML/SVG composition otherwise)
-should be evaluated the same way step 5's "second backend" step
-evaluated xy itself — a spike to confirm whether it can back
-`GridSpec` at all before committing. If no reasonable primitive
-exists, the design should say so explicitly in
-[4.8a](#48a-grid-layouts---implemented) as a permanent, not
-provisional, limitation, and `grid()`'s docstring/README should list
-the backend gap up front rather than leaving users to discover it via
-a runtime `UnsupportedSpecError`.
+**Resolution:** a spike (mirroring step 5's "second backend" spike
+that first evaluated xy itself) checked xy's own layout primitives for
+independent panels before committing to anything. `xy.facet_chart`
+looked like the obvious candidate but turned out to be strictly
+data-driven faceting — it repeats *one* fixed mark composition once
+per value of a `by` data column, it does not arrange arbitrary,
+already-built, heterogeneous charts (a histogram next to a line chart)
+side by side — so it could not back `GridSpec` directly. No other
+composition primitive exists in the installed `xy` version either.
+
+Rather than leaving the gap open or declaring it permanent, `render_grid`
+(`backends/xy/grid.py`) renders and styles each cell exactly as the
+other three backends do, but returns a small `XyGrid` dataclass (the
+per-cell charts, `ncols`, `title`) instead of a bare `xy.Chart` — layout
+is deferred from render time to export time. `XyBackend.save`
+special-cases an `XyGrid`: each cell's own `Chart.to_html()` is
+already a complete, self-contained document (own `<head>`, inline
+script, a restrictive CSP), so cells cannot be concatenated as raw
+HTML fragments into one page without one cell's script or CSP
+clobbering another's. Instead, `render_grid_html` embeds each cell's
+document in its own sandboxed `<iframe srcdoc=...>` and arranges the
+iframes with CSS grid (`grid-template-columns: repeat(ncols, 1fr)`).
+This makes xy's `GridSpec` support HTML-only: `XyBackend.save` raises
+`UnsupportedFormatError`, with a message explaining why, for any other
+format — a bare `xy.Chart` (every non-`GridSpec` render) is unaffected
+and still supports the full `supported_formats` set. This is a
+deliberate, permanent asymmetry, now documented in
+[4.8a](#48a-grid-layouts---implemented) rather than a silent
+`UnsupportedSpecError` a user had to discover at runtime.
 
 ### 8.2 Assign default-palette colors in `LayerSpec`
 
