@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from plotmux.specs import HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import CdfSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
 from plotmux.testing.fixtures import altair_available
 from plotmux.utils.imports import is_altair_available
 
@@ -53,6 +53,13 @@ def test_render_layer_with_histogram() -> None:
     )
     chart = render_layer(spec)
     assert len(chart.layer) == 2
+
+
+@altair_available
+def test_render_layer_supports_cdf_spec() -> None:
+    spec = LayerSpec(layers=(CdfSpec(values=np.arange(101), nbins=10),))
+    chart = render_layer(spec)
+    assert len(chart.layer) == 1
 
 
 @altair_available

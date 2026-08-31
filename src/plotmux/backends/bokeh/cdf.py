@@ -45,9 +45,7 @@ def render_cdf(fig: figure, spec: CdfSpec, **kwargs: Any) -> figure:
         The ``figure`` the CDF was drawn onto.
     """
     xmin, xmax = find_range(spec.values, xmin=spec.xmin, xmax=spec.xmax)
-    x, y = compute_cdf_steps(
-        spec.values, bins=spec.nbins or _DEFAULT_NBINS, xmin=xmin, xmax=xmax
-    )
+    x, y = compute_cdf_steps(spec.values, bins=spec.nbins or _DEFAULT_NBINS, xmin=xmin, xmax=xmax)
     # ``spec.color``, once set, is already a canonical RGBA tuple: it went
     # through ``parse_color`` in ``CdfSpec.__post_init__``.
     color = (

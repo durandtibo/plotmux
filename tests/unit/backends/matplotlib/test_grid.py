@@ -138,4 +138,3 @@ def test_render_grid_supports_cdf_spec() -> None:
     spec = GridSpec(cells=(CdfSpec(values=np.arange(101), nbins=10),))
     fig = render_grid(spec)
     assert len(fig.axes) == 1
-

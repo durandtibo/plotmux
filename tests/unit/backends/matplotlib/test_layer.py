@@ -143,4 +143,3 @@ def test_render_layer_supports_cdf_spec() -> None:
     render_layer(ax, spec)
     assert len(ax.patches) == 1
     plt.close(fig)
-
