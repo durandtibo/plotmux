@@ -38,9 +38,25 @@ def test_histogram_spec_custom() -> None:
     assert spec.color == (1.0, 0.0, 0.0, 1.0)
 
 
-def test_histogram_spec_empty_values() -> None:
-    spec = HistogramSpec(values=np.array([]))
-    assert spec.values.size == 0
+def test_histogram_spec_empty_values_raises() -> None:
+    with pytest.raises(ValueError, match="values must not be empty"):
+        HistogramSpec(values=np.array([]))
+
+
+def test_histogram_spec_non_1d_values_raises() -> None:
+    with pytest.raises(ValueError, match="values must be 1-dimensional"):
+        HistogramSpec(values=np.arange(12).reshape(3, 4))
+
+
+def test_histogram_spec_values_coerced_from_list() -> None:
+    spec = HistogramSpec(values=[1, 2, 3])
+    assert isinstance(spec.values, np.ndarray)
+    assert spec.values.tolist() == [1, 2, 3]
+
+
+def test_histogram_spec_bins_non_integer_raises() -> None:
+    with pytest.raises(ValueError, match="bins must be a positive integer"):
+        HistogramSpec(values=np.arange(101), bins=2.5)
 
 
 def test_histogram_spec_bins_boundary_one() -> None:

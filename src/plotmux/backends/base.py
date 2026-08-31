@@ -131,17 +131,32 @@ class Backend(ABC):
     #: instead of discovering them only via a ``ValueError`` from ``save``.
     supported_formats: ClassVar[frozenset[str]]
 
-    @abstractmethod
+    #: A ``{spec_type: renderer}`` dict, one entry per spec type this
+    #: backend supports. ``render`` below dispatches on ``type(spec)``
+    #: against this dict via ``resolve_renderer``, so a concrete backend
+    #: only ever needs to own this mapping, not the dispatch mechanics
+    #: around it -- every backend used to hand-write an identical
+    #: ``render`` body doing exactly that lookup-then-call.
+    _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., Any]]]
+
     def render(self, spec: BaseSpec, **kwargs: Any) -> Any:
         r"""Render a spec into the backend's native figure object.
 
         Args:
             spec: The backend-agnostic spec to render.
-            **kwargs: Additional backend-specific keyword arguments.
+            **kwargs: Additional backend-specific keyword arguments,
+                forwarded to the underlying plotting call.
 
         Returns:
             The backend's native figure object.
+
+        Raises:
+            NotImplementedError: if there is no renderer registered
+                for the type of ``spec`` in this backend's
+                ``_RENDERERS``.
         """
+        renderer = resolve_renderer(self._RENDERERS, spec, self.name)
+        return renderer(spec, **kwargs)
 
     @abstractmethod
     def save(self, native: Any, path: Path, fmt: str) -> None:

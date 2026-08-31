@@ -156,7 +156,12 @@ def test_layer_accepts_figure_items() -> None:
     line_fig = plotmux.line(np.arange(10), np.arange(10))
     fig = plotmux.layer(line_fig, ScatterSpec(x=np.arange(10), y=np.arange(10)))
     assert isinstance(fig.spec, LayerSpec)
-    assert fig.spec.layers[0] is line_fig.spec
+    # Not ``is line_fig.spec``: an uncolored child is replaced with an
+    # equivalent copy carrying a ``LayerSpec``-assigned default color (see
+    # ``plotmux.specs.layer._assign_default_colors``), so identity is not
+    # preserved, only the data.
+    np.testing.assert_array_equal(fig.spec.layers[0].x, line_fig.spec.x)
+    np.testing.assert_array_equal(fig.spec.layers[0].y, line_fig.spec.y)
     ax = fig.native.axes[0]
     assert len(ax.lines) == 1
     assert len(ax.collections) == 1

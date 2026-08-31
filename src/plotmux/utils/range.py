@@ -34,7 +34,9 @@ def find_range(
     Raises:
         ValueError: if ``xmin`` or ``xmax`` is a string that does
             not have the format ``"q<quantile>"`` where
-            ``<quantile>`` is a float in the range ``[0, 1]``.
+            ``<quantile>`` is a float in the range ``[0, 1]``, or if
+            the resolved lower bound is strictly greater than the
+            resolved upper bound (e.g. ``xmin="q0.9", xmax="q0.1"``).
 
     Example:
         ```pycon
@@ -54,6 +56,13 @@ def find_range(
         return float("nan"), float("nan")
     lo: float = np.nanmin(values).item() if xmin is None else _resolve(values, xmin)
     hi: float = np.nanmax(values).item() if xmax is None else _resolve(values, xmax)
+    if lo > hi:
+        msg = (
+            f"the resolved lower bound must not be greater than the resolved upper "
+            f"bound, but received xmin={xmin!r} (resolved to {lo}) and "
+            f"xmax={xmax!r} (resolved to {hi})"
+        )
+        raise ValueError(msg)
     return (lo, hi)
 
 

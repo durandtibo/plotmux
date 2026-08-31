@@ -72,4 +72,12 @@ def render_layer(spec: LayerSpec, **kwargs: Any) -> alt.LayerChart:
     # arguments this call never passes -- every ``charts`` entry here is
     # always a plain ``Chart`` (from ``_MARK_RENDERERS``), so the result is
     # always a ``LayerChart``.
-    return cast("alt.LayerChart", alt.layer(*charts))
+    #
+    # ``resolve_scale(color="independent")``: Vega-Lite defaults to a
+    # *shared* color scale across layers, so without this every layer's own
+    # ``color`` encoding (each built by ``prepare_color`` against the same
+    # field name, "label") gets merged into one scale and only the first
+    # layer's color range survives -- every other backend renders each
+    # child's own color correctly, so this keeps altair consistent with
+    # them.
+    return cast("alt.LayerChart", alt.layer(*charts).resolve_scale(color="independent"))

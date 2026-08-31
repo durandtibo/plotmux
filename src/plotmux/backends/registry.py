@@ -4,6 +4,7 @@ from __future__ import annotations
 
 __all__ = ["ENTRY_POINT_GROUP", "get_backend", "load_entry_point_backends", "register_backend"]
 
+import importlib
 import warnings
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
@@ -20,6 +21,20 @@ _REGISTRY: dict[str, Backend] = {}
 # The entry-point group third-party packages use to plug in a backend
 # without editing plotmux's source. See ``load_entry_point_backends``.
 ENTRY_POINT_GROUP = "plotmux.backends"
+
+# Maps a built-in backend's registered ``name`` to the submodule that
+# registers it as an import-time side effect (see e.g.
+# ``plotmux.backends.matplotlib``). ``get_backend`` imports the matching
+# submodule lazily, on first request for that name, instead of
+# ``plotmux/__init__.py`` eagerly importing all four (and so all four
+# underlying plotting libraries) on every ``import plotmux`` regardless of
+# which backend, if any, actually gets used.
+_BUILTIN_BACKEND_MODULES = {
+    "altair": "plotmux.backends.altair",
+    "bokeh": "plotmux.backends.bokeh",
+    "matplotlib": "plotmux.backends.matplotlib",
+    "xy": "plotmux.backends.xy",
+}
 
 
 def register_backend(backend: Backend) -> None:
@@ -62,6 +77,15 @@ def get_backend(name: str) -> Backend:
             ``RuntimeError``, so existing ``except RuntimeError``
             code keeps working unchanged.
     """
+    if name not in _REGISTRY and name in _BUILTIN_BACKEND_MODULES:
+        # Import lazily, on first request for this name: this is what lets
+        # ``plotmux/__init__.py`` skip eagerly importing every built-in
+        # backend submodule (and so every underlying plotting library) up
+        # front. A submodule whose plotting library is not installed
+        # imports fine but registers nothing (see e.g.
+        # ``plotmux.backends.matplotlib``), so ``name`` simply stays
+        # unregistered and the lookup below still raises normally.
+        importlib.import_module(_BUILTIN_BACKEND_MODULES[name])
     try:
         return _REGISTRY[name]
     except KeyError as err:

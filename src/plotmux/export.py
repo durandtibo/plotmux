@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from coola.utils.path import sanitize_path
 
+from plotmux.backends.base import check_export_format
 from plotmux.backends.registry import get_backend
 from plotmux.exceptions import ExportError
 
@@ -34,6 +35,9 @@ def save(figure: Figure, path: str | Path) -> None:
         ExportError: if ``path`` has no suffix, so the export format
             cannot be inferred. Also a ``ValueError``, so existing
             ``except ValueError`` code keeps working unchanged.
+        UnsupportedFormatError: if the backend does not support the
+            inferred export format. See
+            ``plotmux.backends.base.check_export_format``.
     """
     path = sanitize_path(path)
     fmt = path.suffix.lstrip(".").lower()
@@ -41,12 +45,18 @@ def save(figure: Figure, path: str | Path) -> None:
         msg = f"Cannot infer the export format from path {path!r}: it has no suffix"
         raise ExportError(msg)
     backend = get_backend(figure.backend_name)
+    # Checked, and raised as ``UnsupportedFormatError`` -- the documented
+    # exception type for this case (see ``plotmux.exceptions``) -- before
+    # creating the parent directory: a backend's own ``save`` also calls
+    # ``check_export_format`` before writing (see e.g.
+    # ``plotmux.backends.matplotlib.backend.MatplotlibBackend.save``), but
+    # this call must not depend on every backend (including a third-party
+    # or test one) doing so itself, nor on that check's error type.
+    # ``supported_formats`` is a required ``Backend`` attribute, but a
+    # backend that declares none (e.g. a minimal test double) is treated as
+    # accepting any format, rather than this raising an ``AttributeError``.
     supported = getattr(backend, "supported_formats", None)
-    if supported is not None and fmt not in supported:
-        msg = (
-            f"Unsupported export format {fmt!r} for backend {figure.backend_name!r}: "
-            f"expected one of {sorted(supported)}"
-        )
-        raise ExportError(msg)
+    if supported is not None:
+        check_export_format(fmt, supported, backend.name)
     path.parent.mkdir(parents=True, exist_ok=True)
     backend.save(figure.native, path, fmt)

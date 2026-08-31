@@ -21,21 +21,25 @@ def render_histogram(ax: Axes, spec: HistogramSpec, **kwargs: Any) -> Axes:
         ax: The matplotlib ``Axes`` to draw onto.
         spec: The histogram spec to render.
         **kwargs: Additional keyword arguments forwarded to
-            ``Axes.hist``.
+            ``Axes.hist``. Overrides the spec-derived ``bins``/
+            ``range``/``label``/``density``/``color`` when it repeats
+            one of those keys (e.g. a shared ``density=`` passed to
+            ``plotmux.layer``/``plotmux.grid``), instead of raising a
+            ``TypeError`` for "multiple values for keyword argument".
 
     Returns:
         The ``Axes`` the histogram was drawn onto.
     """
     xmin, xmax = find_range(spec.values, xmin=spec.xmin, xmax=spec.xmax)
-    ax.hist(
-        spec.values,
-        bins=spec.bins,
-        range=(xmin, xmax),
-        label=spec.label,
-        density=spec.density,
-        color=spec.color,
+    style = {
+        "bins": spec.bins,
+        "range": (xmin, xmax),
+        "label": spec.label,
+        "density": spec.density,
+        "color": spec.color,
         **kwargs,
-    )
+    }
+    ax.hist(spec.values, **style)
     if spec.label is not None:
         ax.legend()
     return ax

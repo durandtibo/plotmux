@@ -16,7 +16,7 @@ from bokeh.plotting import figure as bokeh_figure
 from bokeh.plotting import save as bokeh_save
 from bokeh.resources import CDN
 
-from plotmux.backends.base import Backend, check_export_format, resolve_renderer
+from plotmux.backends.base import Backend, check_export_format
 from plotmux.backends.bokeh.grid import render_grid
 from plotmux.backends.bokeh.histogram import render_histogram
 from plotmux.backends.bokeh.layer import render_layer
@@ -114,25 +114,9 @@ class BokehBackend(Backend):
         GridSpec: render_grid,
     }
 
-    def render(self, spec: BaseSpec, **kwargs: Any) -> Figure | LayoutDOM:
-        r"""Render a spec into a bokeh ``figure`` or layout.
-
-        Args:
-            spec: The backend-agnostic spec to render.
-            **kwargs: Additional bokeh-specific keyword arguments,
-                forwarded to the underlying glyph method.
-
-        Returns:
-            The resulting bokeh ``figure``, or -- for a ``GridSpec``
-                -- the resulting bokeh layout (see
-                ``plotmux.backends.bokeh.grid.render_grid``).
-
-        Raises:
-            NotImplementedError: if there is no bokeh renderer
-                registered for the type of ``spec``.
-        """
-        renderer = resolve_renderer(self._RENDERERS, spec, self.name)
-        return renderer(spec, **kwargs)
+    # ``render`` is inherited from ``Backend``: it dispatches on
+    # ``type(spec)`` against ``_RENDERERS`` above, so this backend does not
+    # need its own copy of that dispatch body.
 
     def save(self, native: Figure | LayoutDOM, path: Path, fmt: str) -> None:
         r"""Export a bokeh ``figure`` to a file.

@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from matplotlib.figure import Figure as MplFigure
 
-from plotmux.backends.base import Backend, check_export_format, resolve_renderer
+from plotmux.backends.base import Backend, check_export_format
 from plotmux.backends.matplotlib.grid import render_grid
 from plotmux.backends.matplotlib.histogram import render_histogram
 from plotmux.backends.matplotlib.layer import render_layer
@@ -105,24 +105,9 @@ class MatplotlibBackend(Backend):
         GridSpec: render_grid,
     }
 
-    def render(self, spec: BaseSpec, **kwargs: Any) -> MplFigure:
-        r"""Render a spec into a matplotlib ``Figure``.
-
-        Args:
-            spec: The backend-agnostic spec to render.
-            **kwargs: Additional matplotlib-specific keyword
-                arguments, forwarded to the underlying plotting
-                call.
-
-        Returns:
-            The resulting matplotlib ``Figure``.
-
-        Raises:
-            NotImplementedError: if there is no matplotlib renderer
-                registered for the type of ``spec``.
-        """
-        renderer = resolve_renderer(self._RENDERERS, spec, self.name)
-        return renderer(spec, **kwargs)
+    # ``render`` is inherited from ``Backend``: it dispatches on
+    # ``type(spec)`` against ``_RENDERERS`` above, so this backend does not
+    # need its own copy of that dispatch body.
 
     def save(self, native: MplFigure, path: Path, fmt: str) -> None:
         r"""Export a matplotlib ``Figure`` to a file.
