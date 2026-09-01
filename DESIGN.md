@@ -11,14 +11,16 @@ multiply-inherits from both a `PlotmuxError` base and the matching
 builtin exception type, export (`Figure.save()` /
 `export.save()`, with format coverage tested across every chart type x
 every backend-supported format), a `colors/` package with predefined
-colors and a default categorical palette (`DEFAULT_PALETTE`), lazy
+colors and a default categorical palette (`DEFAULT_PALETTE`) that
+`LayerSpec` now assigns automatically to uncolored children, lazy
 per-backend-library imports, and a third-party backend plugin
 mechanism (`plotmux.backends` entry-point group) are implemented.
 Sections are marked ✅ implemented or 🚧 planned.
-Date: 2026-08-31 (updated: reconciled with current implementation --
-documented `utils/cdf.py::compute_cdf_steps`, `config.py`'s
-`ContextVar`-based default backend, and `Figure`'s
-`supported_formats`/rich-display forwarding)
+Date: 2026-09-01 (updated: reconciled with current implementation --
+`LayerSpec.__post_init__` already assigns `DEFAULT_PALETTE` colors to
+children with no explicit `color` (`specs/layer.py::_assign_default_colors`),
+which closes the "who assigns default colors" open question and
+proposal 8.2; the doc previously still listed both as unresolved)
 
 ## 1. Goal
 
@@ -874,14 +876,18 @@ touches `parse_color`, never a backend.
 
 Multiple series or multiple `LayerSpec` children defaulting to
 *distinct* colors when the user sets no `color` at all (a color
-*cycle*, not an explicit color) is a separate, harder problem, see
-[Open questions](#7-open-questions): matplotlib gets this for free
-from its own default cycle when children share an `Axes` (see
-[4.8](#48-layering-multiple-specs-on-one-axes)), but there is no
-agreed cross-backend cycle vocabulary yet: `DEFAULT_PALETTE` (see
-[4.9.1](#491-predefined-colors--implemented)) supplies values a future
-mechanism could assign from, but nothing currently reads it
-automatically.
+*cycle*, not an explicit color) is resolved: matplotlib gets this for
+free from its own default cycle when children share an `Axes` (see
+[4.8](#48-layering-multiple-specs-on-one-axes)), but bokeh/altair/xy do
+not, so `LayerSpec.__post_init__` assigns successive `DEFAULT_PALETTE`
+entries to any child whose own `color` field is `None`
+(`specs/layer.py::_assign_default_colors`, see
+[4.9.1](#491-predefined-colors--implemented)), giving every backend
+matplotlib's for-free behavior instead of three of four looking worse
+by omission. A child with an explicit `color` is left untouched and
+does not consume a palette slot. `GridSpec` deliberately gets no such
+assignment: each cell keeps its own independent axes, so there is no
+shared-axes indistinguishability problem to solve there.
 
 #### 4.9.1 Predefined colors ✅ implemented
 
@@ -907,18 +913,16 @@ named CSS/matplotlib color, e.g. `"tab:blue"`, passed straight through
 `parse_color` resolves named colors against, kept as its own module so
 `parser.py` stays focused on parsing logic rather than data.
 
-This is the concrete mechanism for the *default*-color-cycle open
-question raised in [4.9](#49-specifying-colors-across-backends) and
-[Open questions](#7-open-questions): a `LayerSpec` (or a future
-multi-series spec) with children that set no explicit `color` can pull
-successive entries from `DEFAULT_PALETTE`, giving every backend the
-same default look instead of only matplotlib getting one for free from
-its own cycle. This step only ships the palette *values*; *assigning*
-palette entries to series/layers automatically is left open (see
-[Open questions](#7-open-questions) and
-[8.2](#82-assign-default-palette-colors-in-layerspec)), `palette.py`
-itself stays backend-agnostic, holding RGBA tuples, not matplotlib or
-xy objects, and nothing yet reads `DEFAULT_PALETTE` automatically.
+This is the concrete mechanism behind the default-color-cycle
+resolution described in [4.9](#49-specifying-colors-across-backends):
+`LayerSpec.__post_init__` pulls successive entries from
+`DEFAULT_PALETTE` for any child that sets no explicit `color`, giving
+every backend the same default look instead of only matplotlib getting
+one for free from its own cycle (see
+[8.2](#82-assign-default-palette-colors-in-layerspec) for how
+this was resolved). `palette.py` itself stays backend-agnostic, holding
+RGBA tuples, not matplotlib or xy objects; only `specs/layer.py` reads
+`DEFAULT_PALETTE` automatically, and only for `LayerSpec`.
 
 ## 5. Why this shape
 
@@ -1073,8 +1077,8 @@ xy objects, and nothing yet reads `DEFAULT_PALETTE` automatically.
     `UnsupportedFormatError` for any format other than `"html"`, see
     [4.8a](#48a-grid-layouts---implemented) and
     [8.1](#81-close-the-xy-grid-gap).
-20. 🚧 Decide and implement default-palette assignment for
-    `LayerSpec` children with no explicit `color`, see
+20. ✅ Default-palette assignment for `LayerSpec` children with no
+    explicit `color`, see
     [8.2](#82-assign-default-palette-colors-in-layerspec).
 
 ### 6.1 Candidate future backends
@@ -1114,19 +1118,19 @@ closed.
 
 ## 7. Open questions
 
-- Title/labels/linear-log scale live on `BaseSpec` and explicit
-  per-mark `color` lives on each chart-type spec; both are
-  implemented. Should *default* style (a color cycle for multiple
-  series/layers when no `color` is set, fonts) follow the same
-  per-spec-field pattern, or live on `config.py` as a global theme
-  instead? Per-spec fields are simple but don't let a user set one
-  palette for a whole session the way `set_backend` sets one backend
-  for a whole session. `DEFAULT_PALETTE` (see
-  [4.9.1](#491-predefined-colors--implemented)) supplies the *values*
-  for a default palette either way; this question is only about where
-  the *assignment* of palette entries to series/layers is decided,
-  see [8.2](#82-assign-default-palette-colors-in-layerspec) for a
-  concrete proposal.
+- ✅ resolved for `LayerSpec`: default color-cycle *assignment* lives
+  at the spec layer, in `LayerSpec.__post_init__`
+  (`specs/layer.py::_assign_default_colors`), not on `config.py` as a
+  global theme, see [8.2](#82-assign-default-palette-colors-in-layerspec).
+  Still open: does the same per-spec-field pattern generalize to a
+  future multi-series spec, and should other default *style* (fonts,
+  etc., not just color) follow it too, or live on `config.py` instead
+  so a user can set one theme for a whole session the way
+  `set_backend` sets one backend for a whole session? `GridSpec` was
+  deliberately left out of the `LayerSpec` resolution (see
+  [4.8](#48-layering-multiple-specs-on-one-axes)), so a similar
+  question would still apply there if grid cells ever needed
+  coordinated default colors.
 - `colors/parser.py::parse_color` resolves named colors via
   `matplotlib.colors.to_rgba`, gated by `check_matplotlib()`, so this
   works even when the matplotlib *backend* is unavailable, but it
@@ -1142,14 +1146,13 @@ closed.
   string, confirmed against `xy`'s own `_parse_color(css: str, ...)`;
   `rgba_to_xy()` emits `"rgba(r, g, b, a)"` with `0`-`255` ints for
   `r`/`g`/`b`.
-- still open: does layering two xy children via `xy.chart(*marks)`
-  give them distinct colors automatically (like matplotlib's
-  shared-`Axes` default color cycle), or can two layered children
-  render indistinguishably unless the caller sets an explicit color
-  per child? Not blocking: `plotmux.layer()` works either way, this
-  only affects the *default* look when no child sets `color`, which
-  is the same unresolved default-style question as the first bullet
-  above.
+- ✅ resolved: layering two xy children via `xy.chart(*marks)` does
+  *not* give them distinct colors automatically the way matplotlib's
+  shared-`Axes` cycle does, but this no longer matters in practice:
+  `LayerSpec.__post_init__` now assigns distinct `DEFAULT_PALETTE`
+  colors to uncolored children before any backend renders them (see
+  the first bullet above), so xy receives already-distinct `color`
+  values on each child regardless of its own lack of a native cycle.
 - `config.backend()`/`set_backend()` accept any string and only fail
   at render time via `get_backend`. Is that late failure acceptable,
   or should `set_backend`/`backend()` validate against the registry
@@ -1237,29 +1240,33 @@ deliberate, permanent asymmetry, now documented in
 [4.8a](#48a-grid-layouts---implemented) rather than a silent
 `UnsupportedSpecError` a user had to discover at runtime.
 
-### 8.2 Assign default-palette colors in `LayerSpec`
+### 8.2 Assign default-palette colors in `LayerSpec` ✅ done
 
-**Problem:** [Open questions](#7-open-questions) has carried "who
-assigns `DEFAULT_PALETTE` entries to layered series with no explicit
-`color`" since before layering shipped. matplotlib gets a reasonable
-default for free (its own `Axes` color cycle); xy, bokeh, and altair
-currently do not, so the same `plotmux.layer(...)` call can look
-visibly worse (indistinguishable series) on three of the four
-backends purely because no one owns this assignment.
+**Problem (as it stood):** [Open questions](#7-open-questions) carried
+"who assigns `DEFAULT_PALETTE` entries to layered series with no
+explicit `color`" since before layering shipped. matplotlib got a
+reasonable default for free (its own `Axes` color cycle); xy, bokeh,
+and altair did not, so the same `plotmux.layer(...)` call could look
+visibly worse (indistinguishable series) on three of the four backends
+purely because no one owned this assignment.
 
-**Proposal:** resolve it at the spec layer, not per backend, so all
+**Resolution:** resolved at the spec layer, not per backend, so all
 four backends benefit uniformly rather than three of them needing
-their own workaround: in `LayerSpec.__post_init__` (or a small
-`specs/base.py` helper next to `_normalize_color`), assign successive
-`DEFAULT_PALETTE` entries to any child spec whose own `color` is
-`None`, skipping children that already set one explicitly. This keeps
-the "canonical input, one parser/assigner, reused everywhere" pattern
-this codebase already favors (`find_range`, `parse_color`), requires
-zero backend changes (each backend already reads `spec.color` off the
-child it renders), and gives every backend matplotlib's for-free
-behavior instead of leaving three of four to look worse by omission.
-`GridSpec` is deliberately out of scope for this change: each grid
-cell is visually independent, so there is no shared-axes
+their own workaround: `LayerSpec.__post_init__` calls a small helper,
+`specs/layer.py::_assign_default_colors`, which assigns successive
+`DEFAULT_PALETTE` entries (via `dataclasses.replace`, since specs are
+frozen) to any child spec whose own `color` field is `None`, skipping
+children that already set one explicitly and children with no `color`
+field at all (looked up with `getattr(child, "color", "unset")` rather
+than an `isinstance` check, since `color` isn't a `BaseSpec` field and
+new color-carrying spec types shouldn't need this helper updated).
+This keeps the "canonical input, one parser/assigner, reused
+everywhere" pattern this codebase already favors (`find_range`,
+`parse_color`), required zero backend changes (each backend already
+reads `spec.color` off the child it renders), and gives every backend
+matplotlib's for-free behavior instead of leaving three of four to
+look worse by omission. `GridSpec` was deliberately left out of scope:
+each grid cell is visually independent, so there is no shared-axes
 indistinguishability problem to solve there.
 
 ### 8.3 Backend-name validation as a fast, opt-in check
