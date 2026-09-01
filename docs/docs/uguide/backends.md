@@ -119,10 +119,19 @@ class MyBackend(Backend):
 register_backend(MyBackend())
 ```
 
-`plotmux` imports every module advertised this way when it starts up, after its own built-in
-`matplotlib`/`xy` backends, so a third-party backend can freely reuse those names' absence or
-presence. A module that fails to import (e.g. its own underlying library is missing) is silently
-skipped, mirroring how the built-in backends guard their own registration.
+`plotmux` imports every module advertised this way once, when it starts up (`import plotmux`).
+Built-in backends, by contrast, are registered lazily: none of the four (`matplotlib`, `xy`,
+`bokeh`, `altair`) is imported at `import plotmux` time, only the first time that name is actually
+requested (e.g. via `backend="matplotlib"` or `plotmux.set_backend("matplotlib")`). So a
+third-party plugin module runs before any built-in backend has necessarily registered itself, and
+can freely reuse a built-in name — the last one registered under a given name wins.
+
+A plugin module that fails to import because its own underlying library is missing (`ImportError`)
+is silently skipped, mirroring how the built-in backends guard their own registration behind an
+"is this library installed" check. Any other exception raised while a plugin module is loading (a
+bug in the plugin itself, e.g. a broken `register_backend(...)` call) is caught and turned into a
+`RuntimeWarning` instead of propagating, so a broken third-party plugin can never crash
+`import plotmux` for every user; it can only fail to register itself.
 
 ## What's Next
 

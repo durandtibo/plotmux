@@ -70,3 +70,14 @@ that new backends can be plugged in without breaking existing code.
 Typical use cases include libraries and applications that want to stay backend-agnostic, teams that
 use different plotting tools across projects, and anyone who wants to avoid rewriting plotting code
 every time they change visualization libraries.
+
+## Backends
+
+plotmux ships with four built-in backends, each behind its own optional dependency:
+[Matplotlib](https://matplotlib.org/) (`matplotlib`, the default), [`xy`](https://github.com/durandtibo/xy),
+[Bokeh](https://bokeh.org/), and [Altair](https://altair-viz.github.io/). A third-party package can
+also register its own backend without a change to plotmux's source, via the `plotmux.backends`
+entry-point group. See the
+[Choosing a Backend](https://durandtibo.github.io/plotmux/uguide/backends/) guide for the full list,
+including per-backend export-format support, and for how to write and register a third-party
+backend.

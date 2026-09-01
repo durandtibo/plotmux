@@ -18,12 +18,16 @@ mechanism (`plotmux.backends` entry-point group), and fast,
 no-import validation of the backend name passed to `set_backend()`/
 `backend()` (`known_backend_names()`) are implemented. Sections are
 marked ✅ implemented or 🚧 planned.
-Date: 2026-09-01 (updated: implemented proposal 8.3,
+Date: 2026-09-01 (updated: implemented proposals 8.3 and 8.4. 8.3:
 `backends/registry.py::known_backend_names()` +
 `config.set_backend()` validation, so a typo'd or unknown backend name
 now raises `BackendNotFoundError` immediately instead of only on the
 next render call; see [8.3](#83-backend-name-validation-as-a-fast-opt-in-check)
-and build order step 21)
+and build order step 21. 8.4: documented the entry-point plugin
+mechanism where users will find it (README + uguide page + a stale
+`plotmux/__init__.py` comment fix); see
+[8.4](#84-document-the-entry-point-plugin-mechanism-where-users-will-find-it)
+and build order step 22)
 
 ## 1. Goal
 
@@ -1086,6 +1090,11 @@ RGBA tuples, not matplotlib or xy objects; only `specs/layer.py` reads
 21. ✅ `backends/registry.py::known_backend_names()` +
     `config.set_backend()` validation against it, see
     [8.3](#83-backend-name-validation-as-a-fast-opt-in-check).
+22. ✅ Documented the entry-point plugin mechanism where users will
+    find it: README "Backends" section + updated
+    `docs/docs/uguide/backends.md` + fixed a stale comment in
+    `plotmux/__init__.py`, see
+    [8.4](#84-document-the-entry-point-plugin-mechanism-where-users-will-find-it).
 
 ### 6.1 Candidate future backends
 
@@ -1302,23 +1311,33 @@ installed) still only fails later, at render time, via the existing
 `get_backend`/`BackendNotFoundError` path — this is strictly additive
 to that path, not a replacement for it.
 
-### 8.4 Document the entry-point plugin mechanism where users will find it
+### 8.4 Document the entry-point plugin mechanism where users will find it ✅ done
 
-**Problem:** the third-party plugin mechanism
+**Problem (as it stood):** the third-party plugin mechanism
 ([3.4](#34-lazy-registration-and-third-party-plugins)) is implemented
 and is exactly the extensibility story [Section 5](#5-why-this-shape)
-promises, but nothing outside this design doc and the
-`load_entry_point_backends` docstring currently tells a prospective
-backend author it exists: the natural first place to look, the
-README's backend list, does not mention it.
-
-**Proposal:** add a short "writing a third-party backend" subsection
-to the README (or a `docs/` page linked from it) that mirrors
-`load_entry_point_backends`'s docstring: the `[project.entry-points.
+promises. A "Adding a Third-Party Backend" subsection already existed
+on `docs/docs/uguide/backends.md` (the `[project.entry-points.
 "plotmux.backends"]` shape, the "module calls `register_backend(...)`
-at import time" contract, and the ImportError-vs-other-exception
-handling contract (silently skipped vs. warned). This is a
-documentation-only change with no code impact, but it is what turns
-[6.1](#61-candidate-future-backends)'s "ship as a plugin" option from
-a design-doc footnote into something an outside contributor can
-actually act on.
+at import time" contract), but two things were still missing: the
+README, the natural first place to look, said nothing about the
+mechanism or even listed the four built-in backends; and the uguide
+page itself omitted the ImportError-vs-other-exception handling
+contract (silently skipped vs. turned into a `RuntimeWarning`) and had
+gone stale against [3.4](#34-lazy-registration-and-third-party-plugins)'s
+lazy-registration change, still claiming plugin modules import "after
+its own built-in `matplotlib`/`xy` backends" when none of the four
+built-ins are imported eagerly any more.
+
+**Resolution:** added a "Backends" section to the README (short list
+of the four built-in backends plus a mention of the entry-point
+mechanism) linking to the uguide page; updated that page to state the
+actual load order (plugins import at `import plotmux` time, built-ins
+lazily on first request, so a plugin can freely reuse a built-in
+name) and to document the ImportError-vs-other-exception contract;
+and fixed the corresponding stale comment in `plotmux/__init__.py`,
+which made the same now-incorrect "runs after the two built-in
+backends" claim. Documentation-only, no code-behavior impact, but it
+is what turns [6.1](#61-candidate-future-backends)'s "ship as a
+plugin" option from a design-doc footnote into something an outside
+contributor can actually act on.

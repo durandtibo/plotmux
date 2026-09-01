@@ -30,9 +30,10 @@ from plotmux.backends.registry import load_entry_point_backends
 from plotmux.config import backend, set_backend
 
 # Register any third-party backend plugged in via the "plotmux.backends"
-# entry-point group (see load_entry_point_backends). This runs after the
-# two built-in backends above so a plugin can freely reuse those names'
-# absence/presence, but never runs before them.
+# entry-point group (see load_entry_point_backends), so a plugin backend is
+# discovered before any built-in one has necessarily registered itself
+# (none have, at this point: see the comment above), rather than needing
+# its own eager-import special case.
 load_entry_point_backends()
 
 try:
