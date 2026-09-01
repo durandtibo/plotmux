@@ -2,7 +2,13 @@ r"""Contain the registry of available rendering backends."""
 
 from __future__ import annotations
 
-__all__ = ["ENTRY_POINT_GROUP", "get_backend", "load_entry_point_backends", "register_backend"]
+__all__ = [
+    "ENTRY_POINT_GROUP",
+    "get_backend",
+    "known_backend_names",
+    "load_entry_point_backends",
+    "register_backend",
+]
 
 import importlib
 import warnings
@@ -96,6 +102,32 @@ def get_backend(name: str) -> Backend:
             f"Available backends: {available}"
         )
         raise BackendNotFoundError(msg) from err
+
+
+def known_backend_names() -> frozenset[str]:
+    r"""Return every backend name that could resolve, without importing
+    or registering anything.
+
+    This is the union of the built-in backend names
+    (``_BUILTIN_BACKEND_MODULES``), the names advertised under the
+    ``plotmux.backends`` entry-point group (querying
+    ``importlib.metadata.entry_points`` is itself cheap: it reads
+    installed packages' metadata, it does not import them), and
+    whatever is already registered in ``_REGISTRY`` (covers a backend
+    registered programmatically via ``register_backend`` outside both
+    of the above, e.g. in a test or a script). Used by
+    ``plotmux.config.set_backend``/``backend`` to reject a typo'd or
+    nonexistent name immediately, at zero import cost, rather than
+    only at the next render call (see ``plotmux.backends.get_backend``):
+    a name in this set may still fail at render time if its underlying
+    plotting library is not installed, since being *known* is not the
+    same as being *registered*.
+
+    Returns:
+        The set of currently-resolvable backend names.
+    """
+    entry_point_names = {ep.name for ep in entry_points(group=ENTRY_POINT_GROUP)}
+    return frozenset(_BUILTIN_BACKEND_MODULES) | entry_point_names | frozenset(_REGISTRY)
 
 
 def load_entry_point_backends() -> None:
