@@ -63,6 +63,17 @@ items raises a `ValueError`. Layout is one flat pass over `cells`, so flatten ne
 before calling `grid` rather than relying on recursive dispatch. `grid` also requires at least one
 item, and `ncols` must be a positive integer.
 
+## The `xy` Backend Is HTML-Only for Grids
+
+`xy` has no primitive for arranging arbitrary, already-built, independent panels side by side (its
+`facet_chart` repeats one fixed chart per value of a data column, which is a different thing), so
+`grid(..., backend="xy")` lays out each panel's standalone chart as a sandboxed HTML `<iframe>`
+at export time instead of producing a single rasterizable native figure. As a result,
+`fig.save(...)` only accepts an `.html` path for an `xy` grid; every other format `xy` otherwise
+supports (`png`, `svg`, `pdf`, ...) raises a `ValueError` for this one figure shape. Every other
+backend (`matplotlib`, `bokeh`, `altair`) supports its full usual set of formats for `grid()` too.
+See [The Figure Object](figure.md#saving-a-figure) for the full per-backend format table.
+
 ## What's Next
 
 - [The Plotting API](api.md): the unified plotting functions combined by `grid`

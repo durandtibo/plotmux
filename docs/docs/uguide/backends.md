@@ -79,8 +79,24 @@ like a single process-wide default in the common single-threaded case.
 
 ## Error Handling
 
-Requesting a backend whose underlying library is not installed raises a `RuntimeError` that lists
-the currently available backends:
+`plotmux.set_backend()`/`plotmux.backend()` reject an unknown name immediately, at the call site,
+before storing it — this catches a typo like `"mtaplotlib"` right away instead of only on the next
+plotting call, at zero import cost:
+
+```pycon
+>>> import plotmux
+>>> plotmux.set_backend("not_a_backend")  # doctest: +SKIP
+Traceback (most recent call last):
+    ...
+RuntimeError: Unknown backend 'not_a_backend'. Known backends: ['altair', 'bokeh', 'matplotlib', 'xy']
+
+```
+
+A name that passes this check (a built-in name, or one advertised by an installed third-party
+plugin) can still fail later, when a plotting function actually renders with it, if its underlying
+library turns out not to be installed — being *known* is not the same as being *registered*.
+Passing such a name directly to a plotting function's `backend` argument (bypassing
+`set_backend`/`backend`) raises the same error there instead:
 
 ```pycon
 >>> import plotmux
@@ -119,12 +135,23 @@ class MyBackend(Backend):
 register_backend(MyBackend())
 ```
 
-`plotmux` imports every module advertised this way when it starts up, after its own built-in
-`matplotlib`/`xy` backends, so a third-party backend can freely reuse those names' absence or
-presence. A module that fails to import (e.g. its own underlying library is missing) is silently
-skipped, mirroring how the built-in backends guard their own registration.
+`plotmux` imports every module advertised this way once, when it starts up (`import plotmux`).
+Built-in backends, by contrast, are registered lazily: none of the four (`matplotlib`, `xy`,
+`bokeh`, `altair`) is imported at `import plotmux` time, only the first time that name is actually
+requested (e.g. via `backend="matplotlib"` or `plotmux.set_backend("matplotlib")`). So a
+third-party plugin module runs before any built-in backend has necessarily registered itself, and
+can freely reuse a built-in name — the last one registered under a given name wins.
+
+A plugin module that fails to import because its own underlying library is missing (`ImportError`)
+is silently skipped, mirroring how the built-in backends guard their own registration behind an
+"is this library installed" check. Any other exception raised while a plugin module is loading (a
+bug in the plugin itself, e.g. a broken `register_backend(...)` call) is caught and turned into a
+`RuntimeWarning` instead of propagating, so a broken third-party plugin can never crash
+`import plotmux` for every user; it can only fail to register itself.
 
 ## What's Next
 
 - [The Plotting API](api.md): the unified plotting functions
+- [The Figure Object](figure.md): per-backend export format support, including the one `xy`/`grid`
+  exception
 - [Layering Charts](layer.md): combine several charts on one set of axes
