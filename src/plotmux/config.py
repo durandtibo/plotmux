@@ -8,6 +8,9 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import TYPE_CHECKING
 
+from plotmux.backends.registry import known_backend_names
+from plotmux.exceptions import BackendNotFoundError
+
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
@@ -26,6 +29,21 @@ def set_backend(name: str) -> None:
         name: The name of the backend to use by default, e.g.
             ``"matplotlib"``.
 
+    Raises:
+        BackendNotFoundError: if ``name`` is not a *known* backend
+            name, i.e. it is neither a built-in backend, nor advertised
+            by an installed third-party plugin via the
+            ``plotmux.backends`` entry-point group, nor already
+            registered. This check costs no import: it only compares
+            ``name`` against the known set (see
+            ``plotmux.backends.registry.known_backend_names``), so a
+            typo'd name is caught here, immediately, instead of only
+            surfacing on the next ``plotmux.hist(...)``/etc. call. A
+            name that passes this check can still fail later, at
+            render time, if its underlying plotting library turns out
+            not to be installed: being *known* is not the same as
+            being *registered*.
+
     Example:
         ```pycon
         >>> import plotmux
@@ -33,6 +51,10 @@ def set_backend(name: str) -> None:
 
         ```
     """
+    if name not in known_backend_names():
+        available = sorted(known_backend_names())
+        msg = f"Unknown backend {name!r}. Known backends: {available}"
+        raise BackendNotFoundError(msg)
     _DEFAULT_BACKEND.set(name)
 
 

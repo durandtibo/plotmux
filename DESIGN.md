@@ -13,14 +13,17 @@ builtin exception type, export (`Figure.save()` /
 every backend-supported format), a `colors/` package with predefined
 colors and a default categorical palette (`DEFAULT_PALETTE`) that
 `LayerSpec` now assigns automatically to uncolored children, lazy
-per-backend-library imports, and a third-party backend plugin
-mechanism (`plotmux.backends` entry-point group) are implemented.
-Sections are marked ✅ implemented or 🚧 planned.
-Date: 2026-09-01 (updated: reconciled with current implementation --
-`LayerSpec.__post_init__` already assigns `DEFAULT_PALETTE` colors to
-children with no explicit `color` (`specs/layer.py::_assign_default_colors`),
-which closes the "who assigns default colors" open question and
-proposal 8.2; the doc previously still listed both as unresolved)
+per-backend-library imports, a third-party backend plugin
+mechanism (`plotmux.backends` entry-point group), and fast,
+no-import validation of the backend name passed to `set_backend()`/
+`backend()` (`known_backend_names()`) are implemented. Sections are
+marked ✅ implemented or 🚧 planned.
+Date: 2026-09-01 (updated: implemented proposal 8.3,
+`backends/registry.py::known_backend_names()` +
+`config.set_backend()` validation, so a typo'd or unknown backend name
+now raises `BackendNotFoundError` immediately instead of only on the
+next render call; see [8.3](#83-backend-name-validation-as-a-fast-opt-in-check)
+and build order step 21)
 
 ## 1. Goal
 
@@ -1080,6 +1083,9 @@ RGBA tuples, not matplotlib or xy objects; only `specs/layer.py` reads
 20. ✅ Default-palette assignment for `LayerSpec` children with no
     explicit `color`, see
     [8.2](#82-assign-default-palette-colors-in-layerspec).
+21. ✅ `backends/registry.py::known_backend_names()` +
+    `config.set_backend()` validation against it, see
+    [8.3](#83-backend-name-validation-as-a-fast-opt-in-check).
 
 ### 6.1 Candidate future backends
 
@@ -1153,17 +1159,16 @@ closed.
   colors to uncolored children before any backend renders them (see
   the first bullet above), so xy receives already-distinct `color`
   values on each child regardless of its own lack of a native cycle.
-- `config.backend()`/`set_backend()` accept any string and only fail
-  at render time via `get_backend`. Is that late failure acceptable,
-  or should `set_backend`/`backend()` validate against the registry
-  eagerly so a typo'd backend name fails at the call site instead of
-  the next plot call? Now that registration is lazy (see
-  [3.4](#34-lazy-registration-and-third-party-plugins)), eager
-  validation would itself force-import that backend's submodule (and
-  underlying library) at `set_backend`-call time, which is exactly
-  the cost laziness was introduced to avoid, so this question is now
-  more clearly a real trade-off (fail fast vs. stay lazy) rather than
-  a straightforward "yes, validate."
+- ✅ resolved: `config.set_backend()`/`backend()` now reject a name
+  that isn't even *known* immediately, at the call site, without
+  importing anything (see
+  [8.3](#83-backend-name-validation-as-a-fast-opt-in-check)). A name
+  that is known but not yet *registered* (its underlying library isn't
+  installed) still only fails at render time via `get_backend`, since
+  that check would require an import laziness was introduced to avoid
+  (see [3.4](#34-lazy-registration-and-third-party-plugins)); this
+  remainder is an intentional, narrower trade-off, not an open
+  question anymore.
 - ✅ resolved: `LayerSpec.__post_init__` rejects nesting (a
   `LayerSpec` inside `layers` raises `InvalidSpecError`); callers must
   flatten nested layers themselves.
@@ -1269,26 +1274,33 @@ look worse by omission. `GridSpec` was deliberately left out of scope:
 each grid cell is visually independent, so there is no shared-axes
 indistinguishability problem to solve there.
 
-### 8.3 Backend-name validation as a fast, opt-in check
+### 8.3 Backend-name validation as a fast, opt-in check ✅ done
 
-**Problem:** [Open questions](#7-open-questions) already covers the
-trade-off (fail fast vs. stay lazy): `set_backend("mtaplotlib")`
-(typo) only fails on the next `plotmux.hist(...)` call, not at the
+**Problem (as it stood):** [Open questions](#7-open-questions) covered
+the trade-off (fail fast vs. stay lazy): `set_backend("mtaplotlib")`
+(typo) only failed on the next `plotmux.hist(...)` call, not at the
 `set_backend` call site, and that latency can be confusing in a
 notebook where the two calls are cells apart.
 
-**Proposal:** rather than making `set_backend`/`backend()` eagerly
-import the target backend's submodule (reintroducing the eager-import
-cost laziness was added to avoid, see
-[3.4](#34-lazy-registration-and-third-party-plugins)), validate the
-name against the *known* set (`_BUILTIN_BACKEND_MODULES` keys plus
-whatever `entry_points(group=ENTRY_POINT_GROUP)` currently advertises)
-without importing anything. This catches a typo'd or nonexistent
+**Resolution:** rather than making `set_backend`/`backend()` eagerly
+import the target backend's submodule (which would reintroduce the
+eager-import cost laziness was added to avoid, see
+[3.4](#34-lazy-registration-and-third-party-plugins)),
+`backends/registry.py::known_backend_names()` computes the *known* set
+without importing anything: the union of `_BUILTIN_BACKEND_MODULES`
+keys, whatever `entry_points(group=ENTRY_POINT_GROUP)` currently
+advertises (reading installed packages' metadata is cheap; it does not
+import them), and whatever is already in `_REGISTRY` (covers a backend
+registered programmatically, e.g. in a test or script, outside both of
+the above). `config.set_backend()` checks the requested name against
+this set and raises `BackendNotFoundError` immediately if it matches
+none of them; `config.backend()` inherits the same check since it
+calls `set_backend()` internally. This catches a typo'd or nonexistent
 backend name immediately, at zero import cost, while a name that is
-merely not yet *registered* (e.g. the library isn't installed) still
-only fails at render time with today's message. This is strictly
-additive to the registry's existing `BackendNotFoundError` path, not
-a replacement for it.
+merely *known* but not yet *registered* (e.g. the library isn't
+installed) still only fails later, at render time, via the existing
+`get_backend`/`BackendNotFoundError` path — this is strictly additive
+to that path, not a replacement for it.
 
 ### 8.4 Document the entry-point plugin mechanism where users will find it
 
