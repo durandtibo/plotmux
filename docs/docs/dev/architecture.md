@@ -100,17 +100,35 @@ figure.py           Figure(spec, backend_name, native)
 user code           fig.show() / fig.save("out.png") / fig.to_native()
 ```
 
-Backend registration is eager, not lazy: `plotmux/__init__.py` imports each built-in backend
-subpackage (`matplotlib`, `xy`, `bokeh`, `altair`) for their side effect; each subpackage's
-`__init__.py` calls `register_backend(...)` only if its underlying library is installed
-(`is_matplotlib_available()` / `is_xy_available()` / `is_bokeh_available()` /
-`is_altair_available()`). It then calls
-`plotmux.backends.registry.load_entry_point_backends()`, which imports every third-party backend
-advertised via the `plotmux.backends` entry-point group (see
-[Adding a Third-Party Backend](../uguide/backends.md#adding-a-third-party-backend)), after the two
-built-in backends so a plugin can freely reuse those names' absence or presence. So by the time
-user code calls `plotmux.hist(...)`, the registry already holds every backend whose library is
-installed: `api.py` only looks it up, it never triggers registration itself.
+Backend registration is lazy, not eager: `plotmux/__init__.py` does *not* import any of the four
+built-in backend subpackages (`matplotlib`, `xy`, `bokeh`, `altair`) at `import plotmux` time.
+Instead, `backends/registry.py` holds a `{name: module path}` map, and `get_backend(name)` imports
+the matching submodule the first time that name is actually requested (e.g. via
+`backend="matplotlib"`, or the first `plotmux.hist(...)` call after `plotmux.set_backend("xy")`);
+each subpackage's `__init__.py` still calls `register_backend(...)` as an import-time side effect,
+guarded by that library's `is_*_available()` check, only now triggered later. This means a process
+that only ever renders with `matplotlib` never imports `xy`, `bokeh`, or `altair` (or their
+underlying libraries) even if all three happen to be installed alongside it.
+
+`plotmux/__init__.py` additionally calls `plotmux.backends.registry.load_entry_point_backends()`
+once, at import time: this imports every third-party backend advertised via the `plotmux.backends`
+entry-point group (see
+[Adding a Third-Party Backend](../uguide/backends.md#adding-a-third-party-backend)). Since none of
+the four built-ins are imported yet at that point either, a third-party plugin can freely register
+under any name, built-in or not — whichever registers last for a given name wins. A plugin module
+that fails to import because its own underlying library isn't installed is silently skipped
+(`ImportError`); any other exception it raises while loading is caught and turned into a
+`RuntimeWarning` instead of propagating, so a broken third-party plugin can only fail to register
+itself, never crash `import plotmux` for every user.
+
+`api.py` never triggers registration itself: it only calls `get_backend(name)`, which is what
+actually imports a built-in submodule lazily, or raises `BackendNotFoundError` if `name` isn't
+registered (typically because its library isn't installed). `config.set_backend()`/`backend()`
+additionally reject a name that isn't even *known* — neither a built-in name, an
+entry-point-advertised name, nor already registered — immediately, at the call site, without
+importing anything (`backends/registry.py::known_backend_names()`); a name that is known but not
+yet registered still only fails later, at render time, since validating that would require the
+same import laziness was introduced to avoid.
 
 ## Key Components
 
@@ -121,7 +139,12 @@ Holds the figure-level fields every chart type inherits (`title`, `xlabel`, `yla
 `Backend.render`/the `_RENDERERS` dicts a common type to dispatch on. These fields are
 `kw_only=True` so they (all defaulted) can precede a subclass's own required fields
 (e.g. `HistogramSpec.values`) without violating the dataclass "no non-default field after a
-default field" rule.
+default field" rule. It also owns two small helpers a concrete spec's own `__post_init__` calls
+instead of reimplementing: `_normalize_color(name="color")` parses a `str | tuple | None` color
+field via `parse_color` and writes the canonical RGBA value back in place (`object.__setattr__`,
+since specs are frozen), and the module-level `_check_equal_length(x, y)` coerces `x`/`y` to
+`np.ndarray` and raises `InvalidSpecError` if their lengths differ (shared by `LineSpec` and
+`ScatterSpec`).
 
 ### Color Parsing
 
@@ -173,6 +196,24 @@ axes/chart state or independent panels; every built-in backend implements both.
 renderer ignores them, since each panel keeps its own; `grid()` in `api.py` does not even expose
 them as parameters.
 
+`LayerSpec.__post_init__` also assigns successive `DEFAULT_PALETTE` entries (see
+[Color Parsing](#color-parsing)) to any child spec whose own `color` field is left `None`,
+skipping children that already set one explicitly. Matplotlib gets distinct per-child colors for
+free from its own `Axes` color cycle when children share an axes, but `xy`/`bokeh`/`altair` do
+not, so this assignment happens once, backend-agnostically, at the spec layer
+(`specs/layer.py::_assign_default_colors`), rather than every backend needing its own workaround.
+`GridSpec` gets no such assignment: each cell is visually independent, so there is no
+shared-axes indistinguishability problem to solve there.
+
+`xy`'s grid support is the one asymmetry across backends: `xy` has no composition primitive for
+arbitrary, already-built, independent panels (`xy.facet_chart` is data-driven faceting, not this),
+so `backends/xy/grid.py::render_grid` returns a small `XyGrid` (the per-cell charts, `ncols`,
+`title`) instead of a bare `xy.Chart`, deferring layout to export time: `XyBackend.save` embeds
+each cell's standalone HTML document in its own sandboxed `<iframe srcdoc=...>` and arranges them
+with CSS grid, which makes `grid(..., backend="xy")` `"html"`-only — every other format raises
+`UnsupportedFormatError` for an `XyGrid`, even though a bare (non-grid) `xy.Chart` supports the
+full `supported_formats` set.
+
 ### `Figure`
 
 The object returned to the user by every public plotting function. It is a thin wrapper holding
@@ -186,6 +227,13 @@ The current default backend is stored in a `contextvars.ContextVar` rather than 
 global, so it is thread/task-local: `set_backend()`/`backend(...)` in one thread or `asyncio` task
 never leaks into or races with another one, while still behaving like a single process-wide default
 in the common single-threaded case.
+
+`set_backend()` also validates its `name` argument against `known_backend_names()` before storing
+it, raising `BackendNotFoundError` immediately for a name that's neither built-in, advertised by an
+installed entry-point plugin, nor already registered — this catches a typo'd backend name at the
+`set_backend` call site instead of only on the next plotting call, at zero import cost (see
+[Data Flow](#data-flow)); `backend(...)` inherits the same check since it calls `set_backend()`
+internally.
 
 ## Constraints From the Existing Codebase
 

@@ -79,8 +79,24 @@ like a single process-wide default in the common single-threaded case.
 
 ## Error Handling
 
-Requesting a backend whose underlying library is not installed raises a `RuntimeError` that lists
-the currently available backends:
+`plotmux.set_backend()`/`plotmux.backend()` reject an unknown name immediately, at the call site,
+before storing it — this catches a typo like `"mtaplotlib"` right away instead of only on the next
+plotting call, at zero import cost:
+
+```pycon
+>>> import plotmux
+>>> plotmux.set_backend("not_a_backend")  # doctest: +SKIP
+Traceback (most recent call last):
+    ...
+RuntimeError: Unknown backend 'not_a_backend'. Known backends: ['altair', 'bokeh', 'matplotlib', 'xy']
+
+```
+
+A name that passes this check (a built-in name, or one advertised by an installed third-party
+plugin) can still fail later, when a plotting function actually renders with it, if its underlying
+library turns out not to be installed — being *known* is not the same as being *registered*.
+Passing such a name directly to a plotting function's `backend` argument (bypassing
+`set_backend`/`backend`) raises the same error there instead:
 
 ```pycon
 >>> import plotmux
@@ -136,4 +152,6 @@ bug in the plugin itself, e.g. a broken `register_backend(...)` call) is caught 
 ## What's Next
 
 - [The Plotting API](api.md): the unified plotting functions
+- [The Figure Object](figure.md): per-backend export format support, including the one `xy`/`grid`
+  exception
 - [Layering Charts](layer.md): combine several charts on one set of axes
