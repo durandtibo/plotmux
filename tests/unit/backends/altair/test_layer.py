@@ -3,7 +3,14 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from plotmux.specs import CdfSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec, SlopeSpec
+from plotmux.specs import (
+    CdfSpec,
+    HistogramSpec,
+    LayerSpec,
+    LineSpec,
+    ScatterSpec,
+    SlopeSpec,
+)
 from plotmux.testing.fixtures import altair_available
 from plotmux.utils.imports import is_altair_available
 

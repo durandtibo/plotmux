@@ -1,6 +1,5 @@
-r"""Render a ``SlopeSpec`` into an altair ``Chart``, given the x-range it
-should span.
-"""
+r"""Render a ``SlopeSpec`` into an altair ``Chart``, given the x-range
+it should span."""
 
 from __future__ import annotations
 

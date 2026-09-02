@@ -1,7 +1,6 @@
 r"""Contain a helper to resolve the x-range a ``SlopeSpec`` should span
 when drawn by a backend with no native "line by slope, independent of
-data range" primitive.
-"""
+data range" primitive."""
 
 from __future__ import annotations
 

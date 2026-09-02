@@ -1,6 +1,5 @@
 r"""Render a ``SlopeSpec`` into an xy ``Chart``, given the x-range it
-should span.
-"""
+should span."""
 
 from __future__ import annotations
 
