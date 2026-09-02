@@ -1,6 +1,6 @@
 r"""Define ``pytest`` markers to skip tests based on the availability of
 ``plotmux``'s optional backend dependencies (``altair``, ``bokeh``,
-``matplotlib``, ``xy``).
+``matplotlib``, ``plotly``, ``xy``).
 
 ``pytest`` is required to use these fixtures. Each ``<package>_available``
 marker skips the test unless the package is installed, and each
@@ -28,6 +28,8 @@ __all__ = [
     "bokeh_not_available",
     "matplotlib_available",
     "matplotlib_not_available",
+    "plotly_available",
+    "plotly_not_available",
     "xy_available",
     "xy_not_available",
 ]
@@ -38,6 +40,7 @@ from plotmux.utils.imports import (
     is_altair_available,
     is_bokeh_available,
     is_matplotlib_available,
+    is_plotly_available,
     is_xy_available,
 )
 
@@ -60,6 +63,13 @@ matplotlib_available: pytest.MarkDecorator = pytest.mark.skipif(
 )
 matplotlib_not_available: pytest.MarkDecorator = pytest.mark.skipif(
     is_matplotlib_available(), reason="Skip if matplotlib is available"
+)
+
+plotly_available: pytest.MarkDecorator = pytest.mark.skipif(
+    not is_plotly_available(), reason="Requires plotly"
+)
+plotly_not_available: pytest.MarkDecorator = pytest.mark.skipif(
+    is_plotly_available(), reason="Skip if plotly is available"
 )
 
 xy_available: pytest.MarkDecorator = pytest.mark.skipif(not is_xy_available(), reason="Requires xy")

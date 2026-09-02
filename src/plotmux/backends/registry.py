@@ -39,6 +39,7 @@ _BUILTIN_BACKEND_MODULES = {
     "altair": "plotmux.backends.altair",
     "bokeh": "plotmux.backends.bokeh",
     "matplotlib": "plotmux.backends.matplotlib",
+    "plotly": "plotmux.backends.plotly",
     "xy": "plotmux.backends.xy",
 }
 
