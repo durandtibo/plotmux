@@ -58,6 +58,13 @@ jobs:
       package-name: matplotlib
       package-versions: ${{ toJson(fromJson(needs.get-versions.outputs.package_versions).matplotlib) }}
 
+  plotly:
+    needs: get-versions
+    uses: ./.github/workflows/test-code-dep.yaml
+    with:
+      package-name: plotly
+      package-versions: ${{ toJson(fromJson(needs.get-versions.outputs.package_versions).plotly) }}
+
   xy:
     needs: get-versions
     uses: ./.github/workflows/test-code-dep.yaml

@@ -21,7 +21,10 @@ jobs:
         dist-type: [ "sdist", "wheel" ]
         package-extra: [
           "",
+          'altair',
+          'bokeh',
           'matplotlib',
+          'plotly',
           'xy',
         ]
 
