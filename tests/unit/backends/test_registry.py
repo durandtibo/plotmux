@@ -95,11 +95,15 @@ def test_get_backend_lazily_imports_builtin_backend_module() -> None:
     # ``_REGISTRY``/``sys.modules``) since re-importing an already-imported
     # module is a no-op that would not re-run its registration side effect.
     _REGISTRY.pop("matplotlib", None)
+
+    class FakeMatplotlibBackend(FakeBackend):
+        name = "matplotlib"
+
     with patch("plotmux.backends.registry.importlib.import_module") as mock_import:
-        mock_import.side_effect = lambda _name: register_backend(FakeBackend())
+        mock_import.side_effect = lambda _name: register_backend(FakeMatplotlibBackend())
         backend = get_backend("matplotlib")
     mock_import.assert_called_once_with("plotmux.backends.matplotlib")
-    assert isinstance(backend, FakeBackend)
+    assert isinstance(backend, FakeMatplotlibBackend)
 
 
 ##############################################
