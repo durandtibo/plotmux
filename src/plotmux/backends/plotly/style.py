@@ -7,7 +7,7 @@ unconditionally.
 
 from __future__ import annotations
 
-__all__ = ["DASH_STYLE", "apply_common_style", "rgba_to_plotly"]
+__all__ = ["DASH_STYLE", "MARKER_STYLE", "apply_common_style", "rgba_to_plotly"]
 
 from typing import TYPE_CHECKING, Any, cast
 
@@ -26,6 +26,19 @@ DASH_STYLE: dict[str, str] = {
     "dashed": "dash",
     "dotted": "dot",
     "dashdot": "dashdot",
+}
+
+#: Maps ``ScatterSpec.marker``'s portable shape name to plotly's
+#: ``go.Scatter(marker_symbol=...)`` value. Every one of plotmux's six
+#: portable names has a direct plotly equivalent, unlike altair (see
+#: ``plotmux.backends.altair.style.MARKER_STYLE``).
+MARKER_STYLE: dict[str, str] = {
+    "circle": "circle",
+    "square": "square",
+    "triangle": "triangle-up",
+    "diamond": "diamond",
+    "cross": "cross",
+    "x": "x",
 }
 
 
@@ -66,8 +79,9 @@ def apply_common_style(fig: Figure, spec: BaseSpec) -> Figure:
     ``Figure``.
 
     Applies ``title``/``xlabel``/``ylabel``/``xscale``/``yscale``/
-    ``background_color``/``ymin``/``ymax`` from ``spec`` (defined on
-    ``BaseSpec``, shared by every chart type). Called once per
+    ``background_color``/``ymin``/``ymax``/``legend_title`` from
+    ``spec`` (defined on ``BaseSpec``, shared by every chart type).
+    Called once per
     standalone figure or ``LayerSpec``, right after every trace has
     been added, via ``fig.update_layout`` -- unlike bokeh's
     per-``figure`` axis type (a construction-time argument), plotly's
@@ -108,5 +122,7 @@ def apply_common_style(fig: Figure, spec: BaseSpec) -> Figure:
     # explicit bounds set together are forwarded.
     if spec.ymin is not None and spec.ymax is not None:
         layout["yaxis_range"] = [spec.ymin, spec.ymax]
+    if spec.legend_title is not None:
+        layout["legend_title_text"] = spec.legend_title
     fig.update_layout(**layout)
     return fig

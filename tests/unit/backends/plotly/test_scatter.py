@@ -66,3 +66,17 @@ def test_render_scatter_alpha() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), alpha=0.5)
     fig = render_scatter(go.Figure(), spec)
     assert fig.data[0].opacity == 0.5
+
+
+@plotly_available
+def test_render_scatter_marker() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), marker="square")
+    fig = render_scatter(go.Figure(), spec)
+    assert fig.data[0].marker.symbol == "square"
+
+
+@plotly_available
+def test_render_scatter_no_marker_uses_backend_default() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
+    fig = render_scatter(go.Figure(), spec)
+    assert fig.data[0].marker.symbol is None

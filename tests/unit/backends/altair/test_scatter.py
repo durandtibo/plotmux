@@ -88,3 +88,27 @@ def test_render_scatter_edgecolor() -> None:
     mark = chart.to_dict()["mark"]
     assert mark["filled"] is True
     assert mark["stroke"] is not None
+
+
+@altair_available
+def test_render_scatter_marker() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), marker="square")
+    chart = render_scatter(spec)
+    assert chart.to_dict()["mark"]["shape"] == "square"
+
+
+@altair_available
+def test_render_scatter_no_marker_uses_backend_default() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
+    chart = render_scatter(spec)
+    assert "shape" not in chart.to_dict()["mark"]
+
+
+@altair_available
+def test_render_scatter_marker_x_has_no_altair_equivalent() -> None:
+    # altair has no native "x" point shape (see
+    # ``plotmux.backends.altair.style.MARKER_STYLE``'s docstring) -- falls
+    # back to altair's own default shape, same as leaving ``marker`` unset.
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), marker="x")
+    chart = render_scatter(spec)
+    assert "shape" not in chart.to_dict()["mark"]

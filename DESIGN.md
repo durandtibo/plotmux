@@ -31,12 +31,12 @@ example (see
 [8.2](#82-case-study-reproducing-bokehs-legend-example)): mostly
 reproducible unchanged (auto-generated legends from `label`, a
 scatter+line pair sharing one label merging into one legend entry,
-dashed-line styling, a two-panel grid), but two gaps remain, not
-yet closed: a legend title distinct from the figure title, and
-scatter marker shape (e.g. square vs. circle) -- a claimed
+dashed-line styling, a two-panel grid), and two gaps found there -- a
+legend title distinct from the figure title, and scatter marker shape
+(e.g. square vs. circle) -- are now closed too (a claimed
 "hollow-vs-filled fill control via `edgecolor`" close from the first
 pass through 8.2 turned out to be bokeh-only behavior, not a real
-cross-backend fix, and was corrected. Checked against bokeh's own log
+cross-backend fix, and was corrected). Checked against bokeh's own log
 plot example next (see
 [8.3](#83-case-study-reproducing-bokehs-log-plot-example)): mostly
 reproducible unchanged (log y-axis with explicit bounds, figure
@@ -1200,10 +1200,11 @@ once picked up.
   color, explicit `ymin`/`ymax` axis bounds, and altair/xy support for
   `SlopeSpec` as a `layer()` child) is now closed; see 8.1 for what
   each one turned into.
-- A `BaseSpec`-level `legend_title` field and a `ScatterSpec.marker`
-  shape field, per
-  [8.2](#82-case-study-reproducing-bokehs-legend-example): the two
-  gaps found reproducing bokeh's legend example. Not yet closed.
+- Nothing carried over from
+  [8.2](#82-case-study-reproducing-bokehs-legend-example): both gaps
+  it identified (a `BaseSpec.legend_title` field and a
+  `ScatterSpec.marker` shape field) are now closed; see 8.2 for what
+  each one turned into.
 - A `BaseSpec`-level `xmin`/`xmax` pair, a `BaseSpec`-level
   `legend_location` field (to ship together with `legend_title`
   above), and a tri-state `ScatterSpec.fill` field, per
@@ -1377,64 +1378,67 @@ of it already is:
 - **Two figures side by side.** Already `plotmux.grid(fig1_spec,
   fig2_spec, ncols=2)` (see [4.8a](#48a-grid-layouts)).
 
-Two gaps remain, both new (not raised by
-[8.1](#81-case-study-reproducing-bokehs-slope-example)):
+Two gaps were found, both new (not raised by
+[8.1](#81-case-study-reproducing-bokehs-slope-example)). Both are now
+closed:
 
 - **Legend title.** Bokeh's `p.legend.title = "Markers"` sets a
   heading on the legend box itself, independent of the figure title.
-  plotmux has no equivalent field anywhere: `BaseSpec` has `title`
+  plotmux had no equivalent field anywhere: `BaseSpec` has `title`
   (the figure/axes title) but nothing for the legend specifically, so
-  there is no way to reproduce `p1.legend.title = 'Markers'`/
-  `p2.legend.title = 'Lines'` today. Candidate fix: a
-  `BaseSpec`-level `legend_title: str | None` field (figure-level,
-  like `title`/`background_color`, since a legend belongs to the axes
-  as a whole, not to any one mark), applied once in each backend's
-  `apply_common_style`: matplotlib `ax.legend(title=...)` (folds into
-  the existing `ax.legend()` call rather than a second one); bokeh
-  `fig.legend.title = ...` (bokeh already auto-creates `fig.legend`
-  once any glyph carries a `legend_label`, so this only needs setting
-  after the marks are drawn, mirroring how `ymin`/`ymax` are set
-  post-hoc); altair `alt.Legend(title=...)` in place of the current
-  hardcoded `legend=alt.Legend(title=None)` (see
-  `plotmux.backends.altair.style`); plotly `fig.update_layout(
-  legend_title_text=...)`; xy would need its own equivalent checked
-  against its legend API. `GridSpec`/`LayerSpec` themselves need no
-  change: `legend_title` is a `BaseSpec` field like `title`, so a
-  `layer()` call already exposes it the same way `title` is exposed
-  today.
+  there was no way to reproduce `p1.legend.title = 'Markers'`/
+  `p2.legend.title = 'Lines'`. Closed by a `BaseSpec`-level
+  `legend_title: str | None` field (figure-level, like
+  `title`/`background_color`, since a legend belongs to the axes as a
+  whole, not to any one mark), applied once in each backend's
+  `apply_common_style`: matplotlib `ax.legend(title=...)`, re-issued
+  only when a legend already exists (i.e. some mark set a `label` and
+  its own renderer already called the label-less `ax.legend()`) to
+  avoid a spurious "no artists with labels found" warning otherwise;
+  bokeh `fig.legend.title = ...`, guarded the same way (`if
+  fig.legend:`) since bokeh warns when setting a legend property with
+  no legend yet added; altair re-`encode`s `color` with
+  `alt.Legend(title=...)`, replacing the hardcoded
+  `legend=alt.Legend(title=None)` `color_encoding` sets on a labeled
+  mark -- Vega-Lite's shared top-level encoding on a `LayerSpec` makes
+  this a no-op when no mark carries a label, same as every other
+  backend; plotly `fig.update_layout(legend_title_text=...)`; xy
+  appends an `xy.legend(title=...)` chrome child alongside the
+  `x_axis`/`y_axis` pair `apply_common_style` already adds, needing no
+  guard since an unlabeled `xy.legend()` simply draws nothing.
+  `GridSpec`/`LayerSpec` themselves needed no change: `legend_title`
+  is a `BaseSpec` field like `title`, so a `layer()` call already
+  exposes it the same way `title` is exposed.
 - **Marker shape.** Bokeh's `marker="square"` (vs. the implicit
-  default circle) has no `ScatterSpec` equivalent: `ScatterSpec` (see
-  [4.9](#49-specifying-colors-across-backends)) has `color`, `size`,
+  default circle) had no `ScatterSpec` equivalent: `ScatterSpec` (see
+  [4.9](#49-specifying-colors-across-backends)) had `color`, `size`,
   `edgecolor`, and `alpha`, but no shape field, so every plotmux
-  scatter series renders as whatever each backend's own default marker
-  shape is (a circle on matplotlib/bokeh/altair/xy/plotly), with no
-  way to request a square, triangle, cross, etc., and so no way to
-  reproduce this example's hollow green square series unchanged.
-  Candidate fix: `ScatterSpec.marker: Literal["circle", "square",
+  scatter series rendered as whatever each backend's own default
+  marker shape is, with no way to request a square, triangle, cross,
+  etc. Closed by `ScatterSpec.marker: Literal["circle", "square",
   "triangle", "diamond", "cross", "x"] | None = None` (a small,
   backend-portable set rather than passing through each backend's full
   native marker vocabulary, mirroring how `LineSpec.linestyle` exposes
   four portable names rather than every backend's native dash
-  vocabulary), translated per backend: matplotlib `Axes.scatter`'s
-  `marker=` (`"o"`/`"s"`/`"^"`/`"D"`/`"+"`/`"x"`); bokeh
-  `figure.scatter`'s `marker=` (accepts `"circle"`/`"square"`/
-  `"triangle"`/`"diamond"`/`"cross"`/`"x"` directly); altair
-  `mark_point(shape=...)` (`"circle"`/`"square"`/`"triangle-up"`/
-  `"diamond"`/`"cross"`, no native `"x"` -- the one likely
-  per-backend asymmetry, same pattern as
-  `BarSpec.width`'s altair gap, see
-  [7](#7-open-questions)); plotly `go.Scatter(marker_symbol=...)`
-  (`"circle"`/`"square"`/`"triangle-up"`/`"diamond"`/`"cross"`/`"x"`);
-  xy would need its own equivalent checked against its scatter mark
-  API. A translation table per backend (`MARKER_STYLE`, mirroring
-  altair's existing `STROKE_DASH` table in
-  `plotmux.backends.altair.style`) is the natural shape for this,
-  same pattern as `linestyle`.
+  vocabulary), translated per backend: matplotlib
+  `Axes.scatter(marker=...)` via a `MARKER_STYLE` table
+  (`plotmux.backends.matplotlib.scatter.MARKER_STYLE`, mapping to
+  `"o"`/`"s"`/`"^"`/`"D"`/`"+"`/`"x"`); bokeh `figure.scatter(marker=
+  ...)`, which accepts plotmux's own names directly, no table needed;
+  altair `mark_point(shape=...)` via
+  `plotmux.backends.altair.style.MARKER_STYLE` (`"circle"`/`"square"`/
+  `"triangle-up"`/`"diamond"`/`"cross"` -- no `"x"` entry, altair's
+  only asymmetry in this set, same pattern as `BarSpec.width`'s altair
+  gap, see [7](#7-open-questions); `marker="x"` silently falls back to
+  altair's own default shape rather than raising); plotly
+  `go.Scatter(marker_symbol=...)` via
+  `plotmux.backends.plotly.style.MARKER_STYLE` (every one of the six
+  names has a direct plotly equivalent); xy `xy.scatter(symbol=...)`,
+  which -- like bokeh -- accepts plotmux's own names directly.
 
-Neither gap is scheduled (see [8](#8-candidate-future-work)); both are
-small, additive `BaseSpec`/`ScatterSpec` fields following precedent
-already established by [8.1](#81-case-study-reproducing-bokehs-slope-example),
-not a new mechanism.
+Both gaps closed following precedent already established by
+[8.1](#81-case-study-reproducing-bokehs-slope-example): small,
+additive `BaseSpec`/`ScatterSpec` fields, no new mechanism.
 
 ### 8.3 Case study: reproducing bokeh's log plot example
 
@@ -1487,8 +1491,9 @@ Three gaps, none raised by
   every chart type, the `xmin`/`xmax` analogue of `ymin`/`ymax`.
 - **Legend position.** Bokeh's `p.legend.location = "top_left"` has no
   plotmux equivalent, the same shape of gap as
-  [8.2](#82-case-study-reproducing-bokehs-legend-example)'s missing
-  `legend_title`: `BaseSpec` has nothing legend-specific at all today.
+  [8.2](#82-case-study-reproducing-bokehs-legend-example)'s
+  now-closed `legend_title` gap was before it: `BaseSpec` has
+  `legend_title` (see 8.2) but nothing for legend *position* yet.
   Candidate fix: a `BaseSpec`-level `legend_location: Literal["best",
   "top_left", "top_right", "bottom_left", "bottom_right", ...] | None
   = None` field, naturally proposed *alongside* `legend_title` as one

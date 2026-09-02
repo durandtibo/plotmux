@@ -49,11 +49,19 @@ def rgba_to_xy(color: tuple[float, float, float, float]) -> str:
 def apply_common_style(chart: xy.Chart, spec: BaseSpec) -> xy.Chart:
     r"""Apply the common figure-level style fields onto an xy ``Chart``.
 
-    Applies ``title``/``xlabel``/``ylabel``/``xscale``/``yscale`` from
-    ``spec`` (defined on ``BaseSpec``, shared by every chart type).
-    Called once per backend, right after the chart-specific renderer
-    has built its ``Chart``, so a new chart type gets title/label/scale
-    support for free.
+    Applies ``title``/``xlabel``/``ylabel``/``xscale``/``yscale``/
+    ``legend_title`` from ``spec`` (defined on ``BaseSpec``, shared by
+    every chart type). Called once per backend, right after the
+    chart-specific renderer has built its ``Chart``, so a new chart
+    type gets title/label/scale support for free.
+
+    ``legend_title`` is appended as an ``xy.legend(title=...)`` chrome
+    child alongside the ``x_axis``/``y_axis`` pair below, mirroring
+    bokeh's ``fig.legend.title``/altair's legend-only ``color``
+    re-``encode`` -- unlike those two, xy's ``legend`` chrome needs no
+    "does a legend already exist" guard: an ``xy.legend()`` with no
+    named series simply draws nothing, so it is safe to append
+    unconditionally whenever ``legend_title`` is set.
 
     xy charts are structure-immutable (see ``xy.Chart.append``'s
     docstring), so this builds a new ``Chart`` instead of mutating
@@ -90,6 +98,8 @@ def apply_common_style(chart: xy.Chart, spec: BaseSpec) -> xy.Chart:
         xy.x_axis(label=spec.xlabel, type_=spec.xscale),
         xy.y_axis(label=spec.ylabel, type_=spec.yscale, domain=y_domain),
     )
+    if spec.legend_title is not None:
+        children = (*children, xy.legend(title=spec.legend_title))
     style = dict(chart.style or {})
     if spec.background_color is not None:
         # ``spec.background_color``, once set, is already a canonical RGBA

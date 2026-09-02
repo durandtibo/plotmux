@@ -51,5 +51,12 @@ def render_scatter(fig: figure, spec: ScatterSpec, **kwargs: Any) -> figure:
     # ``plotmux.backends.bokeh.histogram.render_histogram``).
     if spec.alpha is not None:
         kwargs.setdefault("alpha", spec.alpha)
+    # bokeh's ``figure.scatter(marker=...)`` accepts plotmux's portable
+    # shape names directly (``"circle"``/``"square"``/``"triangle"``/
+    # ``"diamond"``/``"cross"``/``"x"``), unlike matplotlib, so no
+    # translation table is needed here (see
+    # ``plotmux.backends.matplotlib.scatter.MARKER_STYLE``).
+    if spec.marker is not None:
+        kwargs.setdefault("marker", spec.marker)
     fig.scatter(x=spec.x, y=spec.y, fill_color=color, line_color=edgecolor, **kwargs)
     return fig

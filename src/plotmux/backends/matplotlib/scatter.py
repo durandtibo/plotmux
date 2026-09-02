@@ -2,7 +2,7 @@ r"""Render a ``ScatterSpec`` onto a matplotlib ``Axes``."""
 
 from __future__ import annotations
 
-__all__ = ["render_scatter"]
+__all__ = ["MARKER_STYLE", "render_scatter"]
 
 from typing import TYPE_CHECKING, Any
 
@@ -10,6 +10,21 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
     from plotmux.specs import ScatterSpec
+
+#: Maps ``ScatterSpec.marker``'s portable shape name to matplotlib's own
+#: single-character/string ``Axes.scatter(marker=...)`` code. Shared by
+#: this module only (matplotlib is the only backend needing a translation
+#: table for every one of the six portable names -- bokeh and xy accept
+#: them directly, see ``plotmux.backends.bokeh.scatter``/
+#: ``plotmux.backends.xy.scatter``).
+MARKER_STYLE = {
+    "circle": "o",
+    "square": "s",
+    "triangle": "^",
+    "diamond": "D",
+    "cross": "+",
+    "x": "x",
+}
 
 
 def render_scatter(ax: Axes, spec: ScatterSpec, **kwargs: Any) -> Axes:
@@ -20,10 +35,11 @@ def render_scatter(ax: Axes, spec: ScatterSpec, **kwargs: Any) -> Axes:
         spec: The scatter spec to render.
         **kwargs: Additional keyword arguments forwarded to
             ``Axes.scatter``. Overrides the spec-derived ``label``/
-            ``color``/``s``/``edgecolors``/``alpha`` when it repeats
-            one of those keys (e.g. a shared ``color=`` passed to
-            ``plotmux.layer``/``plotmux.grid``), instead of raising a
-            ``TypeError`` for "multiple values for keyword argument".
+            ``color``/``s``/``edgecolors``/``alpha``/``marker`` when
+            it repeats one of those keys (e.g. a shared ``color=``
+            passed to ``plotmux.layer``/``plotmux.grid``), instead of
+            raising a ``TypeError`` for "multiple values for keyword
+            argument".
 
     Returns:
         The ``Axes`` the markers were drawn onto.
@@ -41,6 +57,8 @@ def render_scatter(ax: Axes, spec: ScatterSpec, **kwargs: Any) -> Axes:
     # explicitly set, letting matplotlib's own default take over otherwise.
     if spec.edgecolor is not None:
         style.setdefault("edgecolors", spec.edgecolor)
+    if spec.marker is not None:
+        style.setdefault("marker", MARKER_STYLE[spec.marker])
     ax.scatter(spec.x, spec.y, **style)
     if spec.label is not None:
         ax.legend()
