@@ -26,10 +26,38 @@ backend, plotly, has since been added (see
 [3.2](#32-package-layout)), following the same `layer()`-only
 treatment for `SlopeSpec` as altair/xy, for the same reason: no
 native "line by slope, independent of data range" primitive (see
-`plotmux.backends.plotly.slope`). See
+`plotmux.backends.plotly.slope`). Checked against bokeh's own legend
+example (see
+[8.2](#82-case-study-reproducing-bokehs-legend-example)): mostly
+reproducible unchanged (auto-generated legends from `label`, a
+scatter+line pair sharing one label merging into one legend entry,
+dashed-line styling, a two-panel grid), but two gaps remain, not
+yet closed: a legend title distinct from the figure title, and
+scatter marker shape (e.g. square vs. circle) -- a claimed
+"hollow-vs-filled fill control via `edgecolor`" close from the first
+pass through 8.2 turned out to be bokeh-only behavior, not a real
+cross-backend fix, and was corrected. Checked against bokeh's own log
+plot example next (see
+[8.3](#83-case-study-reproducing-bokehs-log-plot-example)): mostly
+reproducible unchanged (log y-axis with explicit bounds, figure
+background color, labeled dashed/dotted lines, line+scatter legend
+merges), but three more gaps remain, not yet closed: explicit x-axis
+bounds (`xmin`/`xmax` at the `BaseSpec` level, distinct from
+`HistogramSpec`/`CdfSpec`'s existing quantile-capable `xmin`/`xmax`),
+legend position, and a portable hollow (no-fill) marker. Checked
+against bokeh's own stacked bar example next (see
+[8.4](#84-case-study-reproducing-bokehs-stacked-bar-example)): the
+first case study *not* close to reproducible -- no stacking mechanism
+exists at all (`layer()`'s `BarSpec` support overlaps bars rather than
+stacking them), `BarSpec`'s categorical (string) x-axis support is
+inconsistent across backends (works on matplotlib/plotly, broken on
+bokeh and altair, unverified on xy), and legend orientation is a third
+missing legend-chrome field alongside `legend_title`/`legend_location`;
+hover tooltips and fine-grained chrome cosmetics are deliberately left
+as escape-hatch, non-goal territory rather than gaps. See
 [7](#7-open-questions) for what's still unresolved and
 [8](#8-candidate-future-work) for what's next.
-Date: 2026-09-01.
+Date: 2026-09-02.
 
 ## 1. Goal
 
@@ -1172,6 +1200,24 @@ once picked up.
   color, explicit `ymin`/`ymax` axis bounds, and altair/xy support for
   `SlopeSpec` as a `layer()` child) is now closed; see 8.1 for what
   each one turned into.
+- A `BaseSpec`-level `legend_title` field and a `ScatterSpec.marker`
+  shape field, per
+  [8.2](#82-case-study-reproducing-bokehs-legend-example): the two
+  gaps found reproducing bokeh's legend example. Not yet closed.
+- A `BaseSpec`-level `xmin`/`xmax` pair, a `BaseSpec`-level
+  `legend_location` field (to ship together with `legend_title`
+  above), and a tri-state `ScatterSpec.fill` field, per
+  [8.3](#83-case-study-reproducing-bokehs-log-plot-example): the three
+  gaps found reproducing bokeh's log plot example. Not yet closed.
+- A new `StackedBarSpec` chart type, portable categorical (string)
+  `x`-axis support for `BarSpec` (currently broken on bokeh, broken on
+  altair, unverified on xy), and a `BaseSpec`-level
+  `legend_orientation` field (to ship together with `legend_title`/
+  `legend_location` above), per
+  [8.4](#84-case-study-reproducing-bokehs-stacked-bar-example): the
+  gaps found reproducing bokeh's stacked bar example. The most
+  significant of the four case studies so far -- stacking needs a new
+  spec type, not just a new field. Not yet closed.
 
 ### 8.1 Case study: reproducing bokeh's slope example
 
@@ -1285,3 +1331,351 @@ same call -- the only difference is architectural, not user-visible:
 their `SlopeSpec` support depends on the `ScatterSpec` sibling being in
 the same `layer()` call to supply a range, which the bokeh example's own
 structure (a scatter plus a reference line, layered) already satisfies.
+
+### 8.2 Case study: reproducing bokeh's legend example
+
+Checked against
+[bokeh's `legend` annotation example](https://docs.bokeh.org/en/latest/docs/examples/basic/annotations/legend.html)
+(two side-by-side figures in a `gridplot`: the left one three labeled
+scatter series in default/orange/green; the right one a labeled
+scatter+line pair sharing the label `"sin(x)"` -- meant to merge into
+one legend entry -- plus a dashed orange line and a hollow green
+square marker paired with a green line, each figure's legend given its
+own title, `"Markers"`/`"Lines"`) to see whether it is reproducible
+through plotmux's unified API, unchanged, on all five backends. Most
+of it already is:
+
+- **Auto-generated legends from `label`.** Every color-carrying spec's
+  `label` field (see e.g. [4.9](#49-specifying-colors-across-backends))
+  already maps onto bokeh's `legend_label`, matplotlib's
+  `ax.legend()`-collected artist label, altair's `label:N` color
+  encoding, and plotly's `showlegend=True` -- no gap.
+- **A scatter and a line sharing one label merging into a single
+  legend entry.** Already correct on every backend once both children
+  are drawn via one `layer()` call: matplotlib's `Axes.legend()`
+  dedupes by artist label the same way bokeh's own `legend_label`
+  matching does; altair's shared `label:N` encoding and plotly's
+  shared `name` behave the same way -- no gap, no extra mechanism
+  needed.
+- **Dashed line, line width.** Already closed by
+  [8.1](#81-case-study-reproducing-bokehs-slope-example)'s
+  `LineSpec.linewidth`/`linestyle`.
+- **Hollow (no-fill) marker via `ScatterSpec.edgecolor`.** Partially
+  wrong when first checked here: `edgecolor` (see
+  [8.1](#81-case-study-reproducing-bokehs-slope-example)) only adds a
+  *second*, separate edge color on top of whatever fills the marker --
+  it does not make the fill transparent. `spec.color=None` +
+  `edgecolor=<green>` happens to *look* hollow on bokeh only, because
+  bokeh's own `fill_color=None` (what `color=None` forwards to, see
+  `plotmux.backends.bokeh.scatter.render_scatter`) is bokeh's native
+  "transparent fill" value; on matplotlib/altair/plotly/xy, `color=None`
+  instead falls back to that library's own default *opaque* fill, so
+  the same spec renders filled everywhere but bokeh. This is folded
+  into the "no-fill marker" gap identified in
+  [8.3](#83-case-study-reproducing-bokehs-log-plot-example), not a
+  closed item.
+- **Two figures side by side.** Already `plotmux.grid(fig1_spec,
+  fig2_spec, ncols=2)` (see [4.8a](#48a-grid-layouts)).
+
+Two gaps remain, both new (not raised by
+[8.1](#81-case-study-reproducing-bokehs-slope-example)):
+
+- **Legend title.** Bokeh's `p.legend.title = "Markers"` sets a
+  heading on the legend box itself, independent of the figure title.
+  plotmux has no equivalent field anywhere: `BaseSpec` has `title`
+  (the figure/axes title) but nothing for the legend specifically, so
+  there is no way to reproduce `p1.legend.title = 'Markers'`/
+  `p2.legend.title = 'Lines'` today. Candidate fix: a
+  `BaseSpec`-level `legend_title: str | None` field (figure-level,
+  like `title`/`background_color`, since a legend belongs to the axes
+  as a whole, not to any one mark), applied once in each backend's
+  `apply_common_style`: matplotlib `ax.legend(title=...)` (folds into
+  the existing `ax.legend()` call rather than a second one); bokeh
+  `fig.legend.title = ...` (bokeh already auto-creates `fig.legend`
+  once any glyph carries a `legend_label`, so this only needs setting
+  after the marks are drawn, mirroring how `ymin`/`ymax` are set
+  post-hoc); altair `alt.Legend(title=...)` in place of the current
+  hardcoded `legend=alt.Legend(title=None)` (see
+  `plotmux.backends.altair.style`); plotly `fig.update_layout(
+  legend_title_text=...)`; xy would need its own equivalent checked
+  against its legend API. `GridSpec`/`LayerSpec` themselves need no
+  change: `legend_title` is a `BaseSpec` field like `title`, so a
+  `layer()` call already exposes it the same way `title` is exposed
+  today.
+- **Marker shape.** Bokeh's `marker="square"` (vs. the implicit
+  default circle) has no `ScatterSpec` equivalent: `ScatterSpec` (see
+  [4.9](#49-specifying-colors-across-backends)) has `color`, `size`,
+  `edgecolor`, and `alpha`, but no shape field, so every plotmux
+  scatter series renders as whatever each backend's own default marker
+  shape is (a circle on matplotlib/bokeh/altair/xy/plotly), with no
+  way to request a square, triangle, cross, etc., and so no way to
+  reproduce this example's hollow green square series unchanged.
+  Candidate fix: `ScatterSpec.marker: Literal["circle", "square",
+  "triangle", "diamond", "cross", "x"] | None = None` (a small,
+  backend-portable set rather than passing through each backend's full
+  native marker vocabulary, mirroring how `LineSpec.linestyle` exposes
+  four portable names rather than every backend's native dash
+  vocabulary), translated per backend: matplotlib `Axes.scatter`'s
+  `marker=` (`"o"`/`"s"`/`"^"`/`"D"`/`"+"`/`"x"`); bokeh
+  `figure.scatter`'s `marker=` (accepts `"circle"`/`"square"`/
+  `"triangle"`/`"diamond"`/`"cross"`/`"x"` directly); altair
+  `mark_point(shape=...)` (`"circle"`/`"square"`/`"triangle-up"`/
+  `"diamond"`/`"cross"`, no native `"x"` -- the one likely
+  per-backend asymmetry, same pattern as
+  `BarSpec.width`'s altair gap, see
+  [7](#7-open-questions)); plotly `go.Scatter(marker_symbol=...)`
+  (`"circle"`/`"square"`/`"triangle-up"`/`"diamond"`/`"cross"`/`"x"`);
+  xy would need its own equivalent checked against its scatter mark
+  API. A translation table per backend (`MARKER_STYLE`, mirroring
+  altair's existing `STROKE_DASH` table in
+  `plotmux.backends.altair.style`) is the natural shape for this,
+  same pattern as `linestyle`.
+
+Neither gap is scheduled (see [8](#8-candidate-future-work)); both are
+small, additive `BaseSpec`/`ScatterSpec` fields following precedent
+already established by [8.1](#81-case-study-reproducing-bokehs-slope-example),
+not a new mechanism.
+
+### 8.3 Case study: reproducing bokeh's log plot example
+
+Checked against
+[bokeh's `logplot` annotation example](https://docs.bokeh.org/en/latest/docs/examples/basic/annotations/logplot.html)
+(one figure, log y-axis spanning `0.001` to `10**22`, explicit
+`x_range=(0, 5)`, a light-gray figure background, six labeled `y=...`
+curves -- most drawn as a plain line, two paired with a scatter on the
+same data, one scatter left hollow (`fill_color=None`) -- using dashed,
+dotted, and dotdash line styles, a legend positioned `top_left`) to see
+whether it is reproducible through plotmux's unified API, unchanged, on
+all five backends. Most of it already is:
+
+- **Log y-axis, explicit y bounds spanning many orders of magnitude,
+  figure background color.** Already `yscale="log"`, `ymin=0.001`,
+  `ymax=10.0**22`, `background_color="#fafafa"` -- all closed by
+  [8.1](#81-case-study-reproducing-bokehs-slope-example) (see
+  `BaseSpec.yscale`/`ymin`/`ymax`/`background_color`).
+- **Labeled lines and line+scatter pairs sharing one legend entry,
+  dashed/dotted line styles, per-line color and width.** Already
+  `LineSpec.label`/`color`/`linewidth`/`linestyle` plus a `layer()`
+  call per curve that needs both a line and a scatter on the same
+  data, same as [8.2](#82-case-study-reproducing-bokehs-legend-example)'s
+  scatter+line merge -- no gap.
+
+Three gaps, none raised by
+[8.1](#81-case-study-reproducing-bokehs-slope-example)/[8.2](#82-case-study-reproducing-bokehs-legend-example):
+
+- **Explicit x-axis bounds.** Bokeh's `x_range=(0, 5)` has no plotmux
+  equivalent: `BaseSpec` has `ymin`/`ymax` (see
+  [8.1](#81-case-study-reproducing-bokehs-slope-example)) but no
+  `xmin`/`xmax` counterpart at the same figure level -- `xmin`/`xmax`
+  exist today only on `HistogramSpec`/`CdfSpec`, resolved through
+  `find_range`'s quantile-or-explicit convention against that spec's
+  own single data array (see [4.1](#41-basespec)), which is a
+  different feature (a data-driven bound) from a plain axis-range
+  override that applies regardless of chart type. Candidate fix: a
+  `BaseSpec`-level `xmin: float | None`/`xmax: float | None` pair,
+  explicit-value-only like `ymin`/`ymax` (not the quantile-string
+  form), applied post-hoc in each backend's `apply_common_style`
+  alongside `ymin`/`ymax`: matplotlib `Axes.set_xlim`; bokeh
+  `figure.x_range.start`/`.end`; altair
+  `alt.Scale(domainMin=..., domainMax=...)` on the x encoding; plotly
+  `fig.update_xaxes(range=[xmin, xmax])`; xy `xy.x_axis(domain=(xmin,
+  xmax))` (xy's `domain` takes both bounds together, same "only both
+  set together are forwarded" caveat `ymin`/`ymax` already documents
+  for xy). This would sit alongside `HistogramSpec.xmin`/`CdfSpec.xmin`
+  without replacing them -- those two remain quantile-capable and
+  data-scoped; the new field is a plain figure-level override open to
+  every chart type, the `xmin`/`xmax` analogue of `ymin`/`ymax`.
+- **Legend position.** Bokeh's `p.legend.location = "top_left"` has no
+  plotmux equivalent, the same shape of gap as
+  [8.2](#82-case-study-reproducing-bokehs-legend-example)'s missing
+  `legend_title`: `BaseSpec` has nothing legend-specific at all today.
+  Candidate fix: a `BaseSpec`-level `legend_location: Literal["best",
+  "top_left", "top_right", "bottom_left", "bottom_right", ...] | None
+  = None` field, naturally proposed *alongside* `legend_title` as one
+  `legend_title`/`legend_location` pair rather than two unrelated
+  additions, since both are set together in the bokeh original
+  (`p.legend.title`/`p.legend.location`) and both apply post-hoc in the
+  same `apply_common_style` step: matplotlib `ax.legend(loc=...)`
+  (matplotlib's own location strings, e.g. `"upper left"`, need a small
+  name-mapping table since bokeh spells them
+  `"top_left"`/plotmux would too); bokeh `fig.legend.location = ...`
+  (bokeh's own vocabulary directly, no translation needed since this
+  candidate's names were chosen to match bokeh's); altair
+  `alt.Legend(orient=...)` (altair's `orient` only supports the
+  outer-edge positions -- `"top"`, `"bottom"`, `"left"`, `"right"`, plus
+  the four corners -- not an arbitrary inside-plot corner the way
+  matplotlib's `loc` does, likely another small, permanent per-backend
+  asymmetry, same pattern as the marker-shape gap's altair note in
+  [8.2](#82-case-study-reproducing-bokehs-legend-example)); plotly
+  `fig.update_layout(legend=dict(x=..., y=...))` (plotly has no named
+  corner enum, only `x`/`y` fractional coordinates, so this candidate's
+  name set would need a name-to-`(x, y)` table); xy would need its own
+  equivalent checked against its legend API.
+- **Hollow (no-fill) marker as a portable concept.** Distinct from the
+  marker-*shape* gap in
+  [8.2](#82-case-study-reproducing-bokehs-legend-example): even with a
+  circular marker, this example's `p.scatter(x, x**2, fill_color=None,
+  line_color="olivedrab")` has no reliable plotmux equivalent today
+  because `ScatterSpec.color` has no "explicitly transparent" value
+  distinct from "unset, use the backend default" -- `color=None` means
+  the latter, and as the correction above notes, only bokeh's own
+  default for an unset fill happens to be transparent; every other
+  backend's default fill is opaque, so the same spec would render
+  filled markers on matplotlib/altair/plotly/xy and hollow ones only on
+  bokeh. Candidate fix: a tri-state `ScatterSpec.fill: bool | None =
+  None` (`None`/`True` = filled, using `color`, today's behavior;
+  `False` = no fill, drawing only the `edgecolor`/`color` outline),
+  translated per backend: matplotlib `Axes.scatter(facecolors="none")`
+  when `fill is False`; bokeh `fill_color=None` (today's accidental
+  bokeh-only path becomes the explicit, intentional one); altair
+  `mark_point(filled=False)`; plotly `go.Scatter(marker_color=
+  "rgba(0,0,0,0)")` with the outline drawn via `marker.line` (already
+  wired for `edgecolor`, see [4.9](#49-specifying-colors-across-backends));
+  xy would need its own equivalent checked against its scatter mark
+  API (likely `color=None` combined with a nonzero `stroke_width`,
+  verified rather than assumed, per xy's own "structure-immutable
+  `Chart`" notes in [4.1.1](#411-axis-labels-title-and-linearlog-scale)).
+
+None of these three are scheduled (see [8](#8-candidate-future-work));
+all three are small, additive `BaseSpec`/`ScatterSpec` fields following
+the same precedent as
+[8.1](#81-case-study-reproducing-bokehs-slope-example)/[8.2](#82-case-study-reproducing-bokehs-legend-example),
+not a new mechanism. `legend_location` is proposed to ship together
+with [8.2](#82-case-study-reproducing-bokehs-legend-example)'s
+`legend_title` rather than separately, since both describe the same
+`BaseSpec`-level "legend" concept and both are set together in this
+example's own bokeh source.
+
+### 8.4 Case study: reproducing bokeh's stacked bar example
+
+Checked against
+[bokeh's `stacked` bar chart example](https://docs.bokeh.org/en/latest/docs/examples/basic/bars/stacked.html)
+(one `vbar_stack` call stacking three year-series on top of each other
+per fruit, a categorical (string) x-axis, a fixed 3-color palette, a
+horizontal legend pinned top-left, hover tooltips, and assorted
+chrome removal -- no gridlines, no minor ticks, no plot outline) to
+see whether it is reproducible through plotmux's unified API,
+unchanged, on all five backends. Unlike
+[8.1](#81-case-study-reproducing-bokehs-slope-example)/[8.2](#82-case-study-reproducing-bokehs-legend-example)/[8.3](#83-case-study-reproducing-bokehs-log-plot-example),
+this is not close to reproducible: it needs one significant new
+capability, hits a portability gap in an existing one, and legitimately
+sits in [1](#1-goal)'s stated non-goal territory for the rest.
+
+- **Stacking.** No plotmux equivalent at all: `BarSpec` (see
+  [4.9](#49-specifying-colors-across-backends)) is a single series, and
+  `layer()`'s `BarSpec` support (see
+  [4.8](#48-layering-multiple-specs-on-one-axes)) draws each child's
+  bars independently onto the shared axes with no coordination between
+  them -- several `BarSpec`s at the same `x` positions simply overlap
+  (each fully drawn, the last child on top), they do not stack into
+  cumulative segments the way `vbar_stack` does. This is a real gap,
+  not a documentation nuance: today's `layer()` mechanism has no path
+  to bokeh's stacking behavior at all, unlike, say, marker shape or
+  legend title, which are one new field away. Candidate fix: a new
+  chart type, `StackedBarSpec(x, series: tuple[BarSeries, ...])` (a
+  small per-series `(y, label, color)` tuple, mirroring how
+  `LayerSpec.layers` holds a tuple of children) rather than overloading
+  `layer()` -- stacking is fundamentally a different composition rule
+  from layering (cumulative y-offset vs. shared axes), so it earns its
+  own spec and its own `_RENDERERS` entry per backend, the same
+  reasoning that gave `BarSpec` itself its own spec rather than folding
+  it into `HistogramSpec` (see [3.2](#32-package-layout)):
+  matplotlib `Axes.bar(..., bottom=running_total)`, incrementing
+  `running_total` per series (matplotlib's own idiom for a stacked
+  bar, no native stacking primitive); bokeh
+  `figure.vbar_stack(names, x=..., source=...)` directly (bokeh's own
+  primitive, matched almost one-to-one); altair
+  `mark_bar().encode(x=..., y=..., color=...)` with the data reshaped
+  long-form (one row per `(x, series)` pair) -- Vega-Lite stacks a bar
+  mark automatically whenever `y` is quantitative and `color` is a
+  discrete encoding, no explicit stacking argument needed; plotly
+  `go.Bar` per series plus `fig.update_layout(barmode="stack")`; xy
+  would need its own equivalent checked against its bar-chart API
+  (unclear whether `xy.bar_chart` has a native stacking mode or would
+  need the same running-total approach as matplotlib).
+- **Categorical (string) x-axis.** `BarSpec.x` (see
+  [4.9](#49-specifying-colors-across-backends)) is typed and
+  documented as an array of positions, and every renderer reflects
+  that assumption inconsistently across backends when `x` actually
+  holds strings (e.g. `fruits = ["Apples", "Pears", ...]`, this
+  example's own `x`):
+  - matplotlib: works today, unchanged -- `Axes.bar` accepts a string
+    `x` natively and draws categorical ticks.
+  - plotly: works today, unchanged -- `go.Bar(x=...)` accepts a string
+    `x` natively the same way.
+  - bokeh: **broken**. `BokehBackend`'s shared `_make_renderer` (see
+    `plotmux.backends.bokeh.backend`) always constructs
+    `bokeh_figure(x_axis_type=spec.xscale, ...)` with bokeh's default
+    linear numeric `x_range`; bokeh requires a categorical
+    `FactorRange` x_range (typically `figure(x_range=fruits)`, as this
+    example's own source sets explicitly) before a glyph is drawn with
+    string x-values, or it raises. `plotmux.bar(fruits, counts,
+    backend="bokeh")` fails outright today; matplotlib and plotly
+    render the identical call correctly.
+  - altair: **broken**. `render_bar` (see above) hardcodes
+    `.encode(x="x:Q", y="y:Q")` -- the `:Q` (quantitative) type
+    specifier -- rather than inferring or accepting a categorical
+    (`:N`, nominal) type, so passing string `x` values produces
+    invalid encoded data (altair/Vega-Lite expects numbers under a
+    `:Q` field) rather than a categorical axis.
+  - xy: unverified -- would need checking against `xy.bar`'s own
+    x-axis type inference/argument.
+
+  So a categorical x-axis is not a portable `BarSpec` feature today,
+  only an accident of which backend happens to be selected -- the same
+  shape of problem as [8.3](#83-case-study-reproducing-bokehs-log-plot-example)'s
+  hollow-marker finding (works on one backend by that backend's own
+  default, breaks or misbehaves on the others). Candidate fix: detect
+  a non-numeric `spec.x` (e.g. `spec.x.dtype.kind in "US"`) in
+  `BarSpec.__post_init__` or leave it to each renderer, and have
+  bokeh's `_make_renderer` construct the `figure` with
+  `x_range=list(spec.x)` when `x` is categorical (bokeh's `FactorRange`
+  needs the ordered category list up front, so this bar-specific
+  construction can no longer share the generic `_make_renderer` used
+  by every other chart type unchanged -- it would need its own
+  bokeh-specific wrapper, or `_make_renderer` itself would need an
+  optional `figure_kwargs(spec)` hook), and altair's `render_bar` to
+  encode `x="x:N"` instead of `x="x:Q"` in that case. This would need
+  to land together with (or before) the stacking fix above, since
+  `StackedBarSpec`'s own `x` has exactly the same categorical-vs-numeric
+  question.
+- **Legend orientation** (`p.legend.orientation = "horizontal"`). A
+  third legend-chrome field, alongside
+  [8.2](#82-case-study-reproducing-bokehs-legend-example)'s
+  `legend_title` and [8.3](#83-case-study-reproducing-bokehs-log-plot-example)'s
+  `legend_location`, that plotmux has no equivalent for. Natural to add
+  as a third field in the same batch: `legend_orientation:
+  Literal["vertical", "horizontal"] | None = None`, applied in
+  `apply_common_style`: matplotlib `ax.legend(ncols=len(handles))` when
+  `"horizontal"` (matplotlib has no direct orientation flag, only a
+  column count, so horizontal is approximated as one row); bokeh
+  `fig.legend.orientation = ...` directly (bokeh's own vocabulary,
+  matched one-to-one); altair `alt.Legend(direction=...)`; plotly
+  `fig.update_layout(legend=dict(orientation="h" if ... else "v"))`;
+  xy would need its own equivalent checked against its legend API.
+
+Deliberately **not** treated as gaps, matching [1](#1-goal)'s stated
+non-goals:
+
+- **Hover tooltips** (`tools="hover", tooltips="$name @fruits:
+  @$name"`). An interactive, backend-specific power feature with no
+  meaning on matplotlib (a static image) and no obvious common
+  vocabulary across bokeh/plotly's very different tooltip-templating
+  systems and altair's own `tooltip` encoding channel; reachable per
+  backend via `Figure.to_native()` (see [4.3](#43-figure)), the
+  documented escape hatch for exactly this kind of niche,
+  backend-specific feature, not a candidate for the unified API.
+- **Gridline/minor-tick/outline removal, `toolbar_location=None`,
+  `x_range.range_padding`.** Fine-grained chrome cosmetics with no
+  existing common-style precedent (unlike `background_color`, which
+  *is* on `BaseSpec` because every backend has an equally central
+  notion of "figure background"); same escape-hatch treatment as
+  above.
+
+None of the three real gaps above are scheduled (see
+[8](#8-candidate-future-work)). Stacking is the first of this
+document's four case studies to require a genuinely new spec type
+rather than a new field on an existing one; the categorical-x-axis fix
+is a prerequisite for stacking to be usable with string categories
+(this example's own case) even though it is independently useful for
+plain `BarSpec` today.
