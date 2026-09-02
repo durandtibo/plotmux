@@ -174,6 +174,21 @@ def test_figure_repr_png_none_when_unsupported() -> None:
     assert fig._repr_png_() is None
 
 
+def test_figure_repr_jpeg_forwards_to_native() -> None:
+    native = Mock()
+    native._repr_jpeg_.return_value = b"native-jpeg-bytes"
+    spec = HistogramSpec(values=[1, 2, 3])
+    fig = Figure(spec=spec, backend_name="fake", native=native)
+    assert fig._repr_jpeg_() == b"native-jpeg-bytes"
+
+
+def test_figure_repr_jpeg_missing_on_native_raises() -> None:
+    spec = HistogramSpec(values=[1, 2, 3])
+    fig = Figure(spec=spec, backend_name="fake", native=object())
+    with pytest.raises(AttributeError):
+        fig._repr_jpeg_()
+
+
 def test_figure_getattr_unknown_attribute_raises() -> None:
     spec = HistogramSpec(values=[1, 2, 3])
     fig = Figure(spec=spec, backend_name="fake", native=object())

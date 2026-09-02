@@ -112,3 +112,20 @@ def test_scatter_spec_mismatched_length() -> None:
 def test_scatter_spec_invalid_size(size: float) -> None:
     with pytest.raises(ValueError, match="size must be a positive number"):
         ScatterSpec(x=np.arange(10), y=np.arange(10), size=size)
+
+
+@pytest.mark.parametrize("alpha", [0.0, 1.0])
+def test_scatter_spec_alpha_boundary_values(alpha: float) -> None:
+    assert ScatterSpec(x=np.arange(10), y=np.arange(10), alpha=alpha).alpha == alpha
+
+
+def test_scatter_spec_edgecolor_defaults_independent_of_color() -> None:
+    # edgecolor is not derived from color at the spec level (only at
+    # render time), so it stays None even when color is set.
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red")
+    assert spec.edgecolor is None
+
+
+def test_scatter_spec_edgecolor_rgba_tuple() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), edgecolor=(0.1, 0.2, 0.3, 0.4))
+    assert spec.edgecolor == (0.1, 0.2, 0.3, 0.4)

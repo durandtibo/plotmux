@@ -40,6 +40,28 @@ def test_layer_spec_keeps_explicit_colors_and_only_cycles_palette_over_the_rest(
     assert spec.layers[2].color == DEFAULT_PALETTE[1]
 
 
+def test_layer_spec_palette_cycles_when_children_exceed_palette_size() -> None:
+    children = tuple(
+        ScatterSpec(x=np.arange(10), y=np.arange(10)) for _ in range(len(DEFAULT_PALETTE) + 1)
+    )
+    spec = LayerSpec(layers=children)
+    assert spec.layers[0].color == DEFAULT_PALETTE[0]
+    assert spec.layers[-1].color == DEFAULT_PALETTE[0]
+
+
+def test_layer_spec_grid_child_without_color_field_is_left_untouched() -> None:
+    # GridSpec has no ``color`` field: ``getattr(child, "color", "unset")``
+    # falls back to "unset" (not None), so it must not be treated as a
+    # color-carrying child needing a palette slot.
+    from plotmux.specs import GridSpec
+
+    grid_child = GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),))
+    line_spec = LineSpec(x=np.arange(10), y=np.arange(10))
+    spec = LayerSpec(layers=(grid_child, line_spec))
+    assert spec.layers[0] is grid_child
+    assert spec.layers[1].color == DEFAULT_PALETTE[0]
+
+
 def test_layer_spec_single_child() -> None:
     spec = LayerSpec(layers=(LineSpec(x=np.arange(10), y=np.arange(10)),))
     assert len(spec.layers) == 1

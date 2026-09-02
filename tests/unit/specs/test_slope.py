@@ -77,3 +77,23 @@ def test_slope_spec_is_frozen() -> None:
     spec = SlopeSpec(gradient=1)
     with pytest.raises(AttributeError):
         spec.gradient = 2
+
+
+@pytest.mark.parametrize("alpha", [0.0, 1.0])
+def test_slope_spec_alpha_boundary_values(alpha: float) -> None:
+    assert SlopeSpec(gradient=1, alpha=alpha).alpha == alpha
+
+
+def test_slope_spec_negative_gradient() -> None:
+    spec = SlopeSpec(gradient=-3.0)
+    assert spec.gradient == -3.0
+
+
+def test_slope_spec_zero_gradient() -> None:
+    spec = SlopeSpec(gradient=0.0)
+    assert spec.gradient == 0.0
+
+
+def test_slope_spec_ymin_greater_than_ymax_raises() -> None:
+    with pytest.raises(ValueError, match="ymin must not be greater than ymax"):
+        SlopeSpec(gradient=1, ymin=10, ymax=0)

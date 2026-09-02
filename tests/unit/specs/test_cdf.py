@@ -67,6 +67,11 @@ def test_cdf_spec_nbins_boundary_one() -> None:
     assert CdfSpec(values=np.arange(101), nbins=1).nbins == 1
 
 
+def test_cdf_spec_nbins_bool_raises() -> None:
+    with pytest.raises(ValueError, match="nbins must be a positive integer or None"):
+        CdfSpec(values=np.arange(101), nbins=True)
+
+
 # --- color parsing ---
 
 
@@ -142,3 +147,8 @@ def test_cdf_spec_xmin_greater_than_xmax_raises_for_numpy_integers() -> None:
 def test_cdf_spec_invalid_alpha(alpha: float) -> None:
     with pytest.raises(ValueError, match="alpha must be in the range"):
         CdfSpec(values=np.arange(101), alpha=alpha)
+
+
+@pytest.mark.parametrize("alpha", [0.0, 1.0])
+def test_cdf_spec_alpha_boundary_values(alpha: float) -> None:
+    assert CdfSpec(values=np.arange(101), alpha=alpha).alpha == alpha

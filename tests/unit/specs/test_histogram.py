@@ -115,6 +115,17 @@ def test_histogram_spec_invalid_bins(bins: int) -> None:
         HistogramSpec(values=np.arange(101), bins=bins)
 
 
+def test_histogram_spec_bins_bool_raises() -> None:
+    # bool is an Integral subclass, but it must not be accepted as bins.
+    with pytest.raises(ValueError, match="bins must be a positive integer"):
+        HistogramSpec(values=np.arange(101), bins=True)
+
+
+def test_histogram_spec_bins_numpy_integer_accepted() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=np.int64(5))
+    assert spec.bins == 5
+
+
 def test_histogram_spec_xmin_equal_xmax_raises() -> None:
     with pytest.raises(ValueError, match="xmin must be strictly less than xmax"):
         HistogramSpec(values=np.arange(101), xmin=5, xmax=5)
@@ -144,3 +155,19 @@ def test_histogram_spec_xmin_greater_than_xmax_raises_for_numpy_integers() -> No
 def test_histogram_spec_invalid_alpha(alpha: float) -> None:
     with pytest.raises(ValueError, match="alpha must be in the range"):
         HistogramSpec(values=np.arange(101), alpha=alpha)
+
+
+@pytest.mark.parametrize("alpha", [0.0, 1.0])
+def test_histogram_spec_alpha_boundary_values(alpha: float) -> None:
+    assert HistogramSpec(values=np.arange(101), alpha=alpha).alpha == alpha
+
+
+def test_histogram_spec_xmin_only_explicit_does_not_raise() -> None:
+    spec = HistogramSpec(values=np.arange(101), xmin=5)
+    assert spec.xmin == 5
+    assert spec.xmax is None
+
+
+def test_histogram_spec_ymin_greater_than_ymax_raises() -> None:
+    with pytest.raises(ValueError, match="ymin must not be greater than ymax"):
+        HistogramSpec(values=np.arange(101), ymin=10, ymax=0)

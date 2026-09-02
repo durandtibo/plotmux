@@ -81,6 +81,25 @@ def test_set_backend_unknown_name_lists_known_backends() -> None:
         set_backend("not_a_backend")
 
 
+def test_set_backend_unknown_name_lists_sorted_backends() -> None:
+    with pytest.raises(RuntimeError) as exc_info:
+        set_backend("not_a_backend")
+    from plotmux.backends.registry import known_backend_names
+
+    available = sorted(known_backend_names())
+    assert str(exc_info.value) == f"Unknown backend 'not_a_backend'. Known backends: {available}"
+
+
+def test_set_backend_empty_string_raises() -> None:
+    with pytest.raises(RuntimeError, match="Unknown backend ''"):
+        set_backend("")
+
+
+def test_set_backend_case_sensitive() -> None:
+    with pytest.raises(RuntimeError, match="Unknown backend 'Matplotlib'"):
+        set_backend("Matplotlib")
+
+
 def test_set_backend_unknown_name_leaves_default_unchanged() -> None:
     assert get_default_backend() == "matplotlib"
     with pytest.raises(RuntimeError):
@@ -138,4 +157,14 @@ def test_backend_context_manager_unknown_name_raises() -> None:
     assert get_default_backend() == "matplotlib"
     with pytest.raises(RuntimeError, match="Unknown backend"), backend("not_a_backend"):
         pass  # pragma: no cover
+    assert get_default_backend() == "matplotlib"
+
+
+def test_backend_context_manager_restores_nested_previous_on_inner_error() -> None:
+    with backend("xy"):
+        assert get_default_backend() == "xy"
+        with pytest.raises(ValueError, match="boom"), backend("altair"):  # noqa: PT012
+            msg = "boom"
+            raise ValueError(msg)
+        assert get_default_backend() == "xy"
     assert get_default_backend() == "matplotlib"
