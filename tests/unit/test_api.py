@@ -527,6 +527,4 @@ def test_layer_ymin_greater_than_ymax_raises() -> None:
 @matplotlib_available
 def test_layer_invalid_background_color_raises() -> None:
     with pytest.raises(ValueError, match="Invalid color"):
-        plotmux.layer(
-            LineSpec(x=np.arange(10), y=np.arange(10)), background_color="not-a-color"
-        )
+        plotmux.layer(LineSpec(x=np.arange(10), y=np.arange(10)), background_color="not-a-color")
