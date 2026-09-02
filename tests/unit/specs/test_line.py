@@ -14,12 +14,32 @@ def test_line_spec_defaults() -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10))
     assert spec.label is None
     assert spec.color is None
+    assert spec.alpha is None
+    assert spec.linewidth is None
+    assert spec.linestyle == "solid"
 
 
 def test_line_spec_custom() -> None:
-    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="my-line", color="#ff0000")
+    spec = LineSpec(
+        x=np.arange(10),
+        y=np.arange(10),
+        label="my-line",
+        color="#ff0000",
+        alpha=0.5,
+        linewidth=2.0,
+        linestyle="dashed",
+    )
     assert spec.label == "my-line"
     assert spec.color == (1.0, 0.0, 0.0, 1.0)
+    assert spec.alpha == 0.5
+    assert spec.linewidth == 2.0
+    assert spec.linestyle == "dashed"
+
+
+@pytest.mark.parametrize("alpha", [2.0, -0.1])
+def test_line_spec_invalid_alpha(alpha: float) -> None:
+    with pytest.raises(ValueError, match="alpha must be in the range"):
+        LineSpec(x=np.arange(10), y=np.arange(10), alpha=alpha)
 
 
 def test_line_spec_empty_arrays() -> None:

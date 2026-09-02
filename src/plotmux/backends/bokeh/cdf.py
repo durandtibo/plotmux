@@ -58,6 +58,11 @@ def render_cdf(fig: figure, spec: CdfSpec, **kwargs: Any) -> figure:
     # kwarg is only added when a label is actually set.
     if spec.label is not None:
         kwargs.setdefault("legend_label", spec.label)
+    # bokeh's glyph ``alpha`` property rejects ``None`` outright, so it is
+    # only added when ``spec.alpha`` is explicitly set (see
+    # ``plotmux.backends.bokeh.histogram.render_histogram``).
+    if spec.alpha is not None:
+        kwargs.setdefault("alpha", spec.alpha)
     fig.line(x=x, y=y, line_color=color, **kwargs)
     # Assigned as a fresh ``Range1d`` rather than mutating
     # ``fig.y_range.start``/``.end`` in place: bokeh's default ``y_range``

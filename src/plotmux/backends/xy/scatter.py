@@ -25,8 +25,9 @@ def render_scatter(spec: ScatterSpec, **kwargs: Any) -> xy.Chart:
     Returns:
         The resulting xy ``Chart``.
     """
-    # ``spec.color``, once set, is already a canonical RGBA tuple: it went
-    # through ``parse_color`` in ``ScatterSpec.__post_init__``.
+    # ``spec.color``/``spec.edgecolor``, once set, are already canonical
+    # RGBA tuples: they went through ``parse_color`` in
+    # ``ScatterSpec.__post_init__``.
     color = (
         None
         if spec.color is None
@@ -34,6 +35,17 @@ def render_scatter(spec: ScatterSpec, **kwargs: Any) -> xy.Chart:
     )
     if spec.size is not None:
         kwargs.setdefault("size", spec.size)
+    if spec.alpha is not None:
+        kwargs.setdefault("opacity", spec.alpha)
+    if spec.edgecolor is not None:
+        # ``xy.scatter``'s ``stroke``/``stroke_width`` draw a separate
+        # marker edge on top of ``color``'s fill (``stroke_width`` defaults
+        # to ``0.0``, no visible edge, so a nonzero width is needed for
+        # ``stroke`` to actually show).
+        kwargs.setdefault(
+            "stroke", rgba_to_xy(cast("tuple[float, float, float, float]", spec.edgecolor))
+        )
+        kwargs.setdefault("stroke_width", 1.0)
     return xy.scatter_chart(
         xy.scatter(spec.x, spec.y, name=spec.label, color=color, **kwargs),
     )

@@ -9,11 +9,12 @@ from __future__ import annotations
 
 __all__ = ["apply_common_style", "rgba_to_bokeh"]
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from bokeh.colors import RGB
 
 if TYPE_CHECKING:
+    from bokeh.models import DataRange1d
     from bokeh.plotting import figure
 
     from plotmux.specs import BaseSpec
@@ -78,4 +79,31 @@ def apply_common_style(fig: figure, spec: BaseSpec) -> figure:
         fig.xaxis.axis_label = spec.xlabel
     if spec.ylabel is not None:
         fig.yaxis.axis_label = spec.ylabel
+    if spec.background_color is not None:
+        # ``spec.background_color``, once set, is already a canonical RGBA
+        # tuple: it went through ``parse_color`` in
+        # ``BaseSpec._validate_base``. ``figure.background_fill_color`` is
+        # statically typed as bokeh's ``Color`` union, which does not
+        # include ``bokeh.colors.RGB`` even though it is accepted at
+        # runtime -- same pre-existing gap as every glyph's ``fill_color``/
+        # ``line_color`` elsewhere in this backend (e.g.
+        # ``plotmux.backends.bokeh.scatter.render_scatter``).
+        fig.background_fill_color = cast(
+            "str",
+            rgba_to_bokeh(cast("tuple[float, float, float, float]", spec.background_color)),
+        )
+    # bokeh's default ``y_range`` is a ``DataRange1d`` (auto-fit to the
+    # data), whose ``start``/``end`` can still be pinned individually
+    # without losing auto-fit on the bound left unset -- unlike
+    # ``plotmux.backends.bokeh.cdf.render_cdf``, which replaces the whole
+    # range with a ``Range1d`` because it always pins both bounds at once.
+    # ``figure.y_range`` is statically typed as the abstract ``Range`` base
+    # class, which declares neither attribute (only concrete subclasses
+    # like ``DataRange1d`` do, see ``render_cdf``'s own such comment), so
+    # it is cast to narrow it for the assignment.
+    y_range = cast("DataRange1d", fig.y_range)
+    if spec.ymin is not None:
+        y_range.start = spec.ymin
+    if spec.ymax is not None:
+        y_range.end = spec.ymax
     return fig

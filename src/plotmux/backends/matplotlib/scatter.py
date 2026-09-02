@@ -20,15 +20,27 @@ def render_scatter(ax: Axes, spec: ScatterSpec, **kwargs: Any) -> Axes:
         spec: The scatter spec to render.
         **kwargs: Additional keyword arguments forwarded to
             ``Axes.scatter``. Overrides the spec-derived ``label``/
-            ``color``/``s`` when it repeats one of those keys (e.g. a
-            shared ``color=`` passed to ``plotmux.layer``/
-            ``plotmux.grid``), instead of raising a ``TypeError`` for
-            "multiple values for keyword argument".
+            ``color``/``s``/``edgecolors``/``alpha`` when it repeats
+            one of those keys (e.g. a shared ``color=`` passed to
+            ``plotmux.layer``/``plotmux.grid``), instead of raising a
+            ``TypeError`` for "multiple values for keyword argument".
 
     Returns:
         The ``Axes`` the markers were drawn onto.
     """
-    style = {"label": spec.label, "color": spec.color, "s": spec.size, **kwargs}
+    style = {
+        "label": spec.label,
+        "color": spec.color,
+        "s": spec.size,
+        "alpha": spec.alpha,
+        **kwargs,
+    }
+    # ``Axes.scatter``'s own ``edgecolors`` (plural) parameter defaults to
+    # ``"face"`` (edge matches fill), which is already what happens by not
+    # setting it at all -- so it is only added when ``spec.edgecolor`` is
+    # explicitly set, letting matplotlib's own default take over otherwise.
+    if spec.edgecolor is not None:
+        style.setdefault("edgecolors", spec.edgecolor)
     ax.scatter(spec.x, spec.y, **style)
     if spec.label is not None:
         ax.legend()

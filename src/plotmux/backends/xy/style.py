@@ -8,7 +8,7 @@ from __future__ import annotations
 
 __all__ = ["apply_common_style", "rgba_to_xy"]
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import xy
 
@@ -76,11 +76,28 @@ def apply_common_style(chart: xy.Chart, spec: BaseSpec) -> xy.Chart:
     Returns:
         A new ``Chart`` with the common style fields applied.
     """
+    # ``xy.y_axis``'s ``domain`` takes both bounds together (``tuple[float,
+    # float]``, no partial-bound form) -- unlike matplotlib's
+    # ``Axes.set_ylim``/bokeh's ``y_range.start``/``.end`` (see
+    # ``plotmux.backends.matplotlib.style``/
+    # ``plotmux.backends.bokeh.style``), which can pin just one bound and
+    # leave the other autoscaled. So only both explicit bounds together are
+    # forwarded here; either alone is left for xy's own autoscale, same as
+    # neither being set.
+    y_domain = (spec.ymin, spec.ymax) if spec.ymin is not None and spec.ymax is not None else None
     children = (
         *chart.children,
         xy.x_axis(label=spec.xlabel, type_=spec.xscale),
-        xy.y_axis(label=spec.ylabel, type_=spec.yscale),
+        xy.y_axis(label=spec.ylabel, type_=spec.yscale, domain=y_domain),
     )
+    style = dict(chart.style or {})
+    if spec.background_color is not None:
+        # ``spec.background_color``, once set, is already a canonical RGBA
+        # tuple: it went through ``parse_color`` in
+        # ``BaseSpec._validate_base``.
+        style["backgroundColor"] = rgba_to_xy(
+            cast("tuple[float, float, float, float]", spec.background_color)
+        )
     return xy.Chart(
         chart.kind,
         children,
@@ -89,4 +106,5 @@ def apply_common_style(chart: xy.Chart, spec: BaseSpec) -> xy.Chart:
         height=chart.height,
         padding=chart.padding,
         data=chart.data,
+        style=style or None,
     )

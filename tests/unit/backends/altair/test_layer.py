@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from plotmux.specs import CdfSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import CdfSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec, SlopeSpec
 from plotmux.testing.fixtures import altair_available
 from plotmux.utils.imports import is_altair_available
 
@@ -67,4 +67,23 @@ def test_render_layer_unsupported_spec_raises() -> None:
     spec = LayerSpec.__new__(LayerSpec)
     object.__setattr__(spec, "layers", (object(),))
     with pytest.raises(NotImplementedError, match="No altair renderer registered"):
+        render_layer(spec)
+
+
+@altair_available
+def test_render_layer_supports_slope_spec_with_data_sibling() -> None:
+    spec = LayerSpec(
+        layers=(
+            ScatterSpec(x=np.arange(10), y=np.arange(10)),
+            SlopeSpec(gradient=2, intercept=10),
+        )
+    )
+    chart = render_layer(spec)
+    assert len(chart.layer) == 2
+
+
+@altair_available
+def test_render_layer_slope_spec_without_data_sibling_raises() -> None:
+    spec = LayerSpec(layers=(SlopeSpec(gradient=2), SlopeSpec(gradient=-1)))
+    with pytest.raises(NotImplementedError, match="no data-bound sibling"):
         render_layer(spec)

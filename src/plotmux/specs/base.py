@@ -40,6 +40,23 @@ class BaseSpec:
         ylabel: An optional y-axis label.
         xscale: The x-axis scale, ``"linear"`` or ``"log"``.
         yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+        background_color: An optional figure background color. It
+            can be a hex string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
+            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
+            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
+            backend's default (usually white/transparent). See
+            ``plotmux.colors.parse_color`` for the exact semantics.
+        ymin: An optional lower bound for the y-axis. Unlike
+            ``HistogramSpec.xmin``/``CdfSpec.xmin`` (see
+            ``plotmux.utils.range.find_range``), this is an explicit
+            value only, not a quantile string: it is figure-level
+            (every chart type has a y-axis; not every chart type has
+            a single data array to resolve a quantile against), so it
+            is applied as a plain axis bound after the mark is drawn,
+            rather than folded into any one renderer's own data
+            processing. ``None`` leaves the axis autoscaled.
+        ymax: An optional upper bound for the y-axis. Same semantics
+            as ``ymin`` but for the upper bound.
 
     These are figure-level concerns shared by every chart type, so
     they live here rather than being redeclared per chart type. Every
@@ -50,6 +67,10 @@ class BaseSpec:
     Unlike ``title``/``xlabel``/``ylabel``, ``xscale``/``yscale``
     default to ``"linear"`` rather than ``None``: an axis always has
     *some* scale, so there is no meaningful "unset" state to skip.
+
+    Raises:
+        ValueError: if ``background_color`` is not a valid color, or
+            ``ymin``/``ymax`` are both set with ``ymin > ymax``.
     """
 
     # ``kw_only=True`` so these figure-level fields (all defaulted) can
@@ -62,6 +83,35 @@ class BaseSpec:
     ylabel: str | None = field(default=None, kw_only=True)
     xscale: Literal["linear", "log"] = field(default="linear", kw_only=True)
     yscale: Literal["linear", "log"] = field(default="linear", kw_only=True)
+    background_color: (
+        str | tuple[float, float, float] | tuple[float, float, float, float] | None
+    ) = field(default=None, kw_only=True)
+    ymin: float | None = field(default=None, kw_only=True)
+    ymax: float | None = field(default=None, kw_only=True)
+
+    def _validate_base(self) -> None:
+        r"""Validate/normalize the figure-level fields shared by every
+        spec: ``background_color``, ``ymin``, ``ymax``.
+
+        A dataclass does not chain subclass/base ``__post_init__``
+        automatically, so this is not itself a ``__post_init__`` --
+        every subclass's own ``__post_init__`` calls this once,
+        alongside its usual ``self._normalize_color()`` call, the same
+        way every color-carrying spec already calls
+        ``_normalize_color`` instead of reimplementing it.
+
+        Raises:
+            ValueError: if ``background_color`` is not a valid color,
+                or ``ymin``/``ymax`` are both set with
+                ``ymin > ymax``.
+        """
+        self._normalize_color("background_color")
+        if self.ymin is not None and self.ymax is not None and self.ymin > self.ymax:
+            msg = (
+                f"ymin must not be greater than ymax, but received "
+                f"ymin={self.ymin} and ymax={self.ymax}"
+            )
+            raise InvalidSpecError(msg)
 
     def _normalize_color(self, name: str = "color") -> None:
         r"""Normalize a ``str | tuple | None`` color field to its

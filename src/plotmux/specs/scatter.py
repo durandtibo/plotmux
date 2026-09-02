@@ -31,11 +31,21 @@ class ScatterSpec(BaseSpec):
             ``plotmux.colors.parse_color`` for the exact semantics.
         size: An optional marker size. ``None`` uses the backend's
             default size.
+        edgecolor: An optional, separate color for the marker edge
+            (as opposed to ``color``, which fills the marker). Same
+            format as ``color``. ``None`` uses ``color`` for the edge
+            too (every backend's renderer already does this when
+            ``edgecolor`` is unset -- see e.g.
+            ``plotmux.backends.bokeh.scatter.render_scatter``), so a
+            plain, single-color marker still needs only ``color``.
+        alpha: An optional marker opacity, in ``[0, 1]``. ``None``
+            uses the backend's default (usually fully opaque).
 
     Raises:
         ValueError: if ``x`` and ``y`` do not have the same length,
-            ``size`` is not a positive number, or ``color`` is not a
-            valid color.
+            ``size`` is not a positive number, ``alpha`` is not in
+            ``[0, 1]``, or ``color``/``edgecolor`` is not a valid
+            color.
 
     Example:
         ```pycon
@@ -53,6 +63,8 @@ class ScatterSpec(BaseSpec):
     label: str | None = None
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
     size: float | None = None
+    edgecolor: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
+    alpha: float | None = None
 
     def __post_init__(self) -> None:
         x, y = _check_equal_length(self.x, self.y)
@@ -61,4 +73,9 @@ class ScatterSpec(BaseSpec):
         if self.size is not None and self.size <= 0:
             msg = f"size must be a positive number, but received {self.size}"
             raise InvalidSpecError(msg)
+        if self.alpha is not None and not 0.0 <= self.alpha <= 1.0:
+            msg = f"alpha must be in the range [0, 1], but received {self.alpha}"
+            raise InvalidSpecError(msg)
         self._normalize_color()
+        self._normalize_color("edgecolor")
+        self._validate_base()

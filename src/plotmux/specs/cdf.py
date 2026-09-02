@@ -38,6 +38,8 @@ class CdfSpec(BaseSpec):
             backend's default color. See
             ``plotmux.colors.parse_color`` for the exact
             semantics.
+        alpha: An optional curve opacity, in ``[0, 1]``. ``None``
+            uses the backend's default (usually fully opaque).
         title: An optional figure title. Inherited from ``BaseSpec``.
         xlabel: An optional x-axis label. Inherited from
             ``BaseSpec``.
@@ -73,9 +75,13 @@ class CdfSpec(BaseSpec):
     xmax: float | str | None = None
     label: str | None = None
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
+    alpha: float | None = None
     ylabel: str | None = field(default="cumulative probability", kw_only=True)
 
     def __post_init__(self) -> None:
+        if self.alpha is not None and not 0.0 <= self.alpha <= 1.0:
+            msg = f"alpha must be in the range [0, 1], but received {self.alpha}"
+            raise InvalidSpecError(msg)
         if self.nbins is not None and (
             not isinstance(self.nbins, Integral) or isinstance(self.nbins, bool) or self.nbins <= 0
         ):
@@ -103,3 +109,4 @@ class CdfSpec(BaseSpec):
             )
             raise InvalidSpecError(msg)
         self._normalize_color()
+        self._validate_base()

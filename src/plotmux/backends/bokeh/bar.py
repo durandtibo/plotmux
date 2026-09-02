@@ -42,5 +42,10 @@ def render_bar(fig: figure, spec: BarSpec, **kwargs: Any) -> figure:
     if color is not None:
         style.setdefault("fill_color", color)
         style.setdefault("line_color", color)
+    # bokeh's glyph ``alpha`` property rejects ``None`` outright, so it is
+    # only added when ``spec.alpha`` is explicitly set (see
+    # ``plotmux.backends.bokeh.histogram.render_histogram``).
+    if spec.alpha is not None:
+        style.setdefault("alpha", spec.alpha)
     fig.vbar(x=spec.x, top=spec.y, **style)
     return fig

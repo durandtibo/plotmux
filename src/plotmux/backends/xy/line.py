@@ -32,6 +32,12 @@ def render_line(spec: LineSpec, **kwargs: Any) -> xy.Chart:
         if spec.color is None
         else rgba_to_xy(cast("tuple[float, float, float, float]", spec.color))
     )
+    if spec.alpha is not None:
+        kwargs.setdefault("opacity", spec.alpha)
+    if spec.linewidth is not None:
+        kwargs.setdefault("width", spec.linewidth)
+    if spec.linestyle != "solid":
+        kwargs.setdefault("dash", spec.linestyle)
     return xy.line_chart(
         xy.line(spec.x, spec.y, name=spec.label, color=color, **kwargs),
     )

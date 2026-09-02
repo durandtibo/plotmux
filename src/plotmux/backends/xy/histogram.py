@@ -34,6 +34,8 @@ def render_histogram(spec: HistogramSpec, **kwargs: Any) -> xy.Chart:
         if spec.color is None
         else rgba_to_xy(cast("tuple[float, float, float, float]", spec.color))
     )
+    if spec.alpha is not None:
+        kwargs.setdefault("opacity", spec.alpha)
     return xy.histogram_chart(
         xy.hist(
             spec.values,

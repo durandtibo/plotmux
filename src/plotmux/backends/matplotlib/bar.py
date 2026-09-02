@@ -28,7 +28,13 @@ def render_bar(ax: Axes, spec: BarSpec, **kwargs: Any) -> Axes:
     Returns:
         The ``Axes`` the bars were drawn onto.
     """
-    style = {"width": spec.width, "label": spec.label, "color": spec.color, **kwargs}
+    style = {
+        "width": spec.width,
+        "label": spec.label,
+        "color": spec.color,
+        "alpha": spec.alpha,
+        **kwargs,
+    }
     ax.bar(spec.x, spec.y, **style)
     if spec.label is not None:
         ax.legend()

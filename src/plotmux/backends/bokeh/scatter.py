@@ -26,12 +26,18 @@ def render_scatter(fig: figure, spec: ScatterSpec, **kwargs: Any) -> figure:
     Returns:
         The ``figure`` the markers were drawn onto.
     """
-    # ``spec.color``, once set, is already a canonical RGBA tuple: it went
-    # through ``parse_color`` in ``ScatterSpec.__post_init__``.
+    # ``spec.color``/``spec.edgecolor``, once set, are already canonical
+    # RGBA tuples: they went through ``parse_color`` in
+    # ``ScatterSpec.__post_init__``.
     color = (
         None
         if spec.color is None
         else rgba_to_bokeh(cast("tuple[float, float, float, float]", spec.color))
+    )
+    edgecolor = (
+        color
+        if spec.edgecolor is None
+        else rgba_to_bokeh(cast("tuple[float, float, float, float]", spec.edgecolor))
     )
     # bokeh raises ``ValueError`` if ``legend_label`` is passed as ``None``
     # (unlike matplotlib's ``label=None``, which is a silent no-op), so the
@@ -40,5 +46,10 @@ def render_scatter(fig: figure, spec: ScatterSpec, **kwargs: Any) -> figure:
         kwargs.setdefault("legend_label", spec.label)
     if spec.size is not None:
         kwargs.setdefault("size", spec.size)
-    fig.scatter(x=spec.x, y=spec.y, fill_color=color, line_color=color, **kwargs)
+    # bokeh's glyph ``alpha`` property rejects ``None`` outright, so it is
+    # only added when ``spec.alpha`` is explicitly set (see
+    # ``plotmux.backends.bokeh.histogram.render_histogram``).
+    if spec.alpha is not None:
+        kwargs.setdefault("alpha", spec.alpha)
+    fig.scatter(x=spec.x, y=spec.y, fill_color=color, line_color=edgecolor, **kwargs)
     return fig

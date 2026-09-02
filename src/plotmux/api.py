@@ -60,11 +60,17 @@ def hist(
     label: str | None = None,
     density: bool = False,
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
+    alpha: float | None = None,
     title: str | None = None,
     xlabel: str | None = None,
     ylabel: str | None = None,
     xscale: Literal["linear", "log"] = "linear",
     yscale: Literal["linear", "log"] = "linear",
+    background_color: (
+        str | tuple[float, float, float] | tuple[float, float, float, float] | None
+    ) = None,
+    ymin: float | None = None,
+    ymax: float | None = None,
     backend: str | None = None,
     **kwargs: Any,
 ) -> Figure:
@@ -90,11 +96,19 @@ def hist(
             CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
             RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
             backend's default color.
+        alpha: An optional bar opacity, in ``[0, 1]``. ``None`` uses
+            the backend's default (usually fully opaque).
         title: An optional figure title.
         xlabel: An optional x-axis label.
         ylabel: An optional y-axis label.
         xscale: The x-axis scale, ``"linear"`` or ``"log"``.
         yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+        background_color: An optional figure background color. Same
+            format as ``color``. ``None`` uses the backend's default.
+        ymin: An optional explicit lower bound for the y-axis.
+            ``None`` leaves the axis autoscaled.
+        ymax: An optional explicit upper bound for the y-axis.
+            ``None`` leaves the axis autoscaled.
         backend: The name of the backend to use to render the
             figure, or ``None`` to use the current default backend
             (see ``plotmux.set_backend``).
@@ -105,9 +119,11 @@ def hist(
         The rendered figure.
 
     Raises:
-        ValueError: if ``bins`` is not a positive integer,
-            ``color`` is not a valid color, or ``xmin`` and ``xmax``
-            are both explicit numeric values with ``xmin >= xmax``.
+        ValueError: if ``bins`` is not a positive integer, ``alpha``
+            is not in ``[0, 1]``, ``color``/``background_color`` is
+            not a valid color, ``xmin`` and ``xmax`` are both
+            explicit numeric values with ``xmin >= xmax``, or
+            ``ymin``/``ymax`` are both set with ``ymin > ymax``.
 
     Example:
         ```pycon
@@ -124,11 +140,15 @@ def hist(
         label=label,
         density=density,
         color=color,
+        alpha=alpha,
         title=title,
         xlabel=xlabel,
         ylabel=ylabel,
         xscale=xscale,
         yscale=yscale,
+        background_color=background_color,
+        ymin=ymin,
+        ymax=ymax,
     )
     return _render(spec, backend, **kwargs)
 
@@ -140,11 +160,17 @@ def bar(
     label: str | None = None,
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
     width: float = 0.8,
+    alpha: float | None = None,
     title: str | None = None,
     xlabel: str | None = None,
     ylabel: str | None = None,
     xscale: Literal["linear", "log"] = "linear",
     yscale: Literal["linear", "log"] = "linear",
+    background_color: (
+        str | tuple[float, float, float] | tuple[float, float, float, float] | None
+    ) = None,
+    ymin: float | None = None,
+    ymax: float | None = None,
     backend: str | None = None,
     **kwargs: Any,
 ) -> Figure:
@@ -162,11 +188,19 @@ def bar(
             backend's default color.
         width: The width of each bar, in ``x`` data units. Must be a
             positive number.
+        alpha: An optional bar opacity, in ``[0, 1]``. ``None`` uses
+            the backend's default (usually fully opaque).
         title: An optional figure title.
         xlabel: An optional x-axis label.
         ylabel: An optional y-axis label.
         xscale: The x-axis scale, ``"linear"`` or ``"log"``.
         yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+        background_color: An optional figure background color. Same
+            format as ``color``. ``None`` uses the backend's default.
+        ymin: An optional explicit lower bound for the y-axis.
+            ``None`` leaves the axis autoscaled.
+        ymax: An optional explicit upper bound for the y-axis.
+            ``None`` leaves the axis autoscaled.
         backend: The name of the backend to use to render the
             figure, or ``None`` to use the current default backend
             (see ``plotmux.set_backend``).
@@ -178,8 +212,10 @@ def bar(
 
     Raises:
         ValueError: if ``x`` and ``y`` do not have the same length,
-            ``width`` is not a positive number, or ``color`` is not
-            a valid color.
+            ``width`` is not a positive number, ``alpha`` is not in
+            ``[0, 1]``, ``color``/``background_color`` is not a
+            valid color, or ``ymin``/``ymax`` are both set with
+            ``ymin > ymax``.
 
     Example:
         ```pycon
@@ -194,11 +230,15 @@ def bar(
         label=label,
         color=color,
         width=width,
+        alpha=alpha,
         title=title,
         xlabel=xlabel,
         ylabel=ylabel,
         xscale=xscale,
         yscale=yscale,
+        background_color=background_color,
+        ymin=ymin,
+        ymax=ymax,
     )
     return _render(spec, backend, **kwargs)
 
@@ -211,11 +251,17 @@ def cdf(
     xmax: float | str | None = None,
     label: str | None = None,
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
+    alpha: float | None = None,
     title: str | None = None,
     xlabel: str | None = None,
     ylabel: str | None = "cumulative probability",
     xscale: Literal["linear", "log"] = "linear",
     yscale: Literal["linear", "log"] = "linear",
+    background_color: (
+        str | tuple[float, float, float] | tuple[float, float, float, float] | None
+    ) = None,
+    ymin: float | None = None,
+    ymax: float | None = None,
     backend: str | None = None,
     **kwargs: Any,
 ) -> Figure:
@@ -238,12 +284,23 @@ def cdf(
             CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
             RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
             backend's default color.
+        alpha: An optional curve opacity, in ``[0, 1]``. ``None``
+            uses the backend's default (usually fully opaque).
         title: An optional figure title.
         xlabel: An optional x-axis label.
         ylabel: An optional y-axis label. Defaults to
             ``"cumulative probability"``.
         xscale: The x-axis scale, ``"linear"`` or ``"log"``.
         yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+        background_color: An optional figure background color. Same
+            format as ``color``. ``None`` uses the backend's default.
+        ymin: An optional explicit lower bound for the y-axis.
+            ``None`` leaves the axis autoscaled (bokeh's ``CdfSpec``
+            renderer hardcodes its own ``0``/``1`` bounds regardless;
+            an explicit ``ymin``/``ymax`` here overrides that, see
+            ``plotmux.backends.bokeh.cdf.render_cdf``).
+        ymax: An optional explicit upper bound for the y-axis.
+            ``None`` leaves the axis autoscaled.
         backend: The name of the backend to use to render the
             figure, or ``None`` to use the current default backend
             (see ``plotmux.set_backend``).
@@ -255,9 +312,11 @@ def cdf(
 
     Raises:
         ValueError: if ``nbins`` is set and is not a positive
-            integer, ``color`` is not a valid color, or ``xmin`` and
-            ``xmax`` are both explicit numeric values with
-            ``xmin >= xmax``.
+            integer, ``alpha`` is not in ``[0, 1]``,
+            ``color``/``background_color`` is not a valid color,
+            ``xmin`` and ``xmax`` are both explicit numeric values
+            with ``xmin >= xmax``, or ``ymin``/``ymax`` are both set
+            with ``ymin > ymax``.
 
     Example:
         ```pycon
@@ -273,11 +332,15 @@ def cdf(
         xmax=xmax,
         label=label,
         color=color,
+        alpha=alpha,
         title=title,
         xlabel=xlabel,
         ylabel=ylabel,
         xscale=xscale,
         yscale=yscale,
+        background_color=background_color,
+        ymin=ymin,
+        ymax=ymax,
     )
     return _render(spec, backend, **kwargs)
 
@@ -288,11 +351,19 @@ def line(
     *,
     label: str | None = None,
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
+    alpha: float | None = None,
+    linewidth: float | None = None,
+    linestyle: Literal["solid", "dashed", "dotted", "dashdot"] = "solid",
     title: str | None = None,
     xlabel: str | None = None,
     ylabel: str | None = None,
     xscale: Literal["linear", "log"] = "linear",
     yscale: Literal["linear", "log"] = "linear",
+    background_color: (
+        str | tuple[float, float, float] | tuple[float, float, float, float] | None
+    ) = None,
+    ymin: float | None = None,
+    ymax: float | None = None,
     backend: str | None = None,
     **kwargs: Any,
 ) -> Figure:
@@ -308,11 +379,22 @@ def line(
             CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
             RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
             backend's default color.
+        alpha: An optional line opacity, in ``[0, 1]``. ``None`` uses
+            the backend's default (usually fully opaque).
+        linewidth: An optional line width. ``None`` uses the
+            backend's default width.
+        linestyle: The line's dash style.
         title: An optional figure title.
         xlabel: An optional x-axis label.
         ylabel: An optional y-axis label.
         xscale: The x-axis scale, ``"linear"`` or ``"log"``.
         yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+        background_color: An optional figure background color. Same
+            format as ``color``. ``None`` uses the backend's default.
+        ymin: An optional explicit lower bound for the y-axis.
+            ``None`` leaves the axis autoscaled.
+        ymax: An optional explicit upper bound for the y-axis.
+            ``None`` leaves the axis autoscaled.
         backend: The name of the backend to use to render the
             figure, or ``None`` to use the current default backend
             (see ``plotmux.set_backend``).
@@ -324,7 +406,9 @@ def line(
 
     Raises:
         ValueError: if ``x`` and ``y`` do not have the same length,
-            or ``color`` is not a valid color.
+            ``alpha`` is not in ``[0, 1]``,
+            ``color``/``background_color`` is not a valid color, or
+            ``ymin``/``ymax`` are both set with ``ymin > ymax``.
 
     Example:
         ```pycon
@@ -338,11 +422,17 @@ def line(
         y=np.asarray(y),
         label=label,
         color=color,
+        alpha=alpha,
+        linewidth=linewidth,
+        linestyle=linestyle,
         title=title,
         xlabel=xlabel,
         ylabel=ylabel,
         xscale=xscale,
         yscale=yscale,
+        background_color=background_color,
+        ymin=ymin,
+        ymax=ymax,
     )
     return _render(spec, backend, **kwargs)
 
@@ -354,11 +444,18 @@ def scatter(
     label: str | None = None,
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
     size: float | None = None,
+    edgecolor: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
+    alpha: float | None = None,
     title: str | None = None,
     xlabel: str | None = None,
     ylabel: str | None = None,
     xscale: Literal["linear", "log"] = "linear",
     yscale: Literal["linear", "log"] = "linear",
+    background_color: (
+        str | tuple[float, float, float] | tuple[float, float, float, float] | None
+    ) = None,
+    ymin: float | None = None,
+    ymax: float | None = None,
     backend: str | None = None,
     **kwargs: Any,
 ) -> Figure:
@@ -376,11 +473,22 @@ def scatter(
             backend's default color.
         size: An optional marker size. ``None`` uses the backend's
             default size.
+        edgecolor: An optional, separate color for the marker edge.
+            Same format as ``color``. ``None`` uses ``color`` for the
+            edge too.
+        alpha: An optional marker opacity, in ``[0, 1]``. ``None``
+            uses the backend's default (usually fully opaque).
         title: An optional figure title.
         xlabel: An optional x-axis label.
         ylabel: An optional y-axis label.
         xscale: The x-axis scale, ``"linear"`` or ``"log"``.
         yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+        background_color: An optional figure background color. Same
+            format as ``color``. ``None`` uses the backend's default.
+        ymin: An optional explicit lower bound for the y-axis.
+            ``None`` leaves the axis autoscaled.
+        ymax: An optional explicit upper bound for the y-axis.
+            ``None`` leaves the axis autoscaled.
         backend: The name of the backend to use to render the
             figure, or ``None`` to use the current default backend
             (see ``plotmux.set_backend``).
@@ -392,8 +500,11 @@ def scatter(
 
     Raises:
         ValueError: if ``x`` and ``y`` do not have the same length,
-            ``size`` is not a positive number, or ``color`` is not a
-            valid color.
+            ``size`` is not a positive number, ``alpha`` is not in
+            ``[0, 1]``,
+            ``color``/``edgecolor``/``background_color`` is not a
+            valid color, or ``ymin``/``ymax`` are both set with
+            ``ymin > ymax``.
 
     Example:
         ```pycon
@@ -408,11 +519,16 @@ def scatter(
         label=label,
         color=color,
         size=size,
+        edgecolor=edgecolor,
+        alpha=alpha,
         title=title,
         xlabel=xlabel,
         ylabel=ylabel,
         xscale=xscale,
         yscale=yscale,
+        background_color=background_color,
+        ymin=ymin,
+        ymax=ymax,
     )
     return _render(spec, backend, **kwargs)
 
@@ -425,11 +541,17 @@ def slope(
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
     linewidth: float | None = None,
     linestyle: Literal["solid", "dashed", "dotted", "dashdot"] = "solid",
+    alpha: float | None = None,
     title: str | None = None,
     xlabel: str | None = None,
     ylabel: str | None = None,
     xscale: Literal["linear", "log"] = "linear",
     yscale: Literal["linear", "log"] = "linear",
+    background_color: (
+        str | tuple[float, float, float] | tuple[float, float, float, float] | None
+    ) = None,
+    ymin: float | None = None,
+    ymax: float | None = None,
     backend: str | None = None,
     **kwargs: Any,
 ) -> Figure:
@@ -459,11 +581,19 @@ def slope(
         linewidth: An optional line width. ``None`` uses the
             backend's default width.
         linestyle: The line's dash style.
+        alpha: An optional line opacity, in ``[0, 1]``. ``None`` uses
+            the backend's default (usually fully opaque).
         title: An optional figure title.
         xlabel: An optional x-axis label.
         ylabel: An optional y-axis label.
         xscale: The x-axis scale, ``"linear"`` or ``"log"``.
         yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+        background_color: An optional figure background color. Same
+            format as ``color``. ``None`` uses the backend's default.
+        ymin: An optional explicit lower bound for the y-axis.
+            ``None`` leaves the axis autoscaled.
+        ymax: An optional explicit upper bound for the y-axis.
+            ``None`` leaves the axis autoscaled.
         backend: The name of the backend to use to render the
             figure, or ``None`` to use the current default backend
             (see ``plotmux.set_backend``).
@@ -474,9 +604,14 @@ def slope(
         The rendered figure.
 
     Raises:
-        ValueError: if ``color`` is not a valid color.
+        ValueError: if ``alpha`` is not in ``[0, 1]``,
+            ``color``/``background_color`` is not a valid color, or
+            ``ymin``/``ymax`` are both set with ``ymin > ymax``.
         NotImplementedError: if the resolved backend is ``altair`` or
-            ``xy``, which have no ``SlopeSpec`` renderer registered.
+            ``xy`` and this ``slope(...)`` call is not layered with a
+            data-bound spec (see ``layer``): standalone ``SlopeSpec``
+            support remains matplotlib/bokeh only (see DESIGN.md,
+            section 8.1).
 
     Example:
         ```pycon
@@ -492,11 +627,15 @@ def slope(
         color=color,
         linewidth=linewidth,
         linestyle=linestyle,
+        alpha=alpha,
         title=title,
         xlabel=xlabel,
         ylabel=ylabel,
         xscale=xscale,
         yscale=yscale,
+        background_color=background_color,
+        ymin=ymin,
+        ymax=ymax,
     )
     return _render(spec, backend, **kwargs)
 
@@ -508,6 +647,11 @@ def layer(
     ylabel: str | None = None,
     xscale: Literal["linear", "log"] = "linear",
     yscale: Literal["linear", "log"] = "linear",
+    background_color: (
+        str | tuple[float, float, float] | tuple[float, float, float, float] | None
+    ) = None,
+    ymin: float | None = None,
+    ymax: float | None = None,
     backend: str | None = None,
     **kwargs: Any,
 ) -> Figure:
@@ -528,6 +672,14 @@ def layer(
         ylabel: An optional y-axis label.
         xscale: The x-axis scale, ``"linear"`` or ``"log"``.
         yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+        background_color: An optional figure background color. It
+            can be a hex string, a CSS/matplotlib named color, or an
+            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
+            backend's default.
+        ymin: An optional explicit lower bound for the y-axis.
+            ``None`` leaves the axis autoscaled.
+        ymax: An optional explicit upper bound for the y-axis.
+            ``None`` leaves the axis autoscaled.
         backend: The name of the backend to use to render the
             figure, or ``None`` to use the current default backend
             (see ``plotmux.set_backend``).
@@ -538,9 +690,10 @@ def layer(
         The rendered figure.
 
     Raises:
-        ValueError: if no ``items`` are given, or one of the given
+        ValueError: if no ``items`` are given, one of the given
             specs is itself a ``LayerSpec`` (nesting is not
-            supported).
+            supported), ``background_color`` is not a valid color,
+            or ``ymin``/``ymax`` are both set with ``ymin > ymax``.
 
     Example:
         ```pycon
@@ -562,6 +715,9 @@ def layer(
         ylabel=ylabel,
         xscale=xscale,
         yscale=yscale,
+        background_color=background_color,
+        ymin=ymin,
+        ymax=ymax,
     )
     return _render(spec, backend, **kwargs)
 

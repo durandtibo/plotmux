@@ -32,8 +32,9 @@ def render_scatter(spec: ScatterSpec, **kwargs: Any) -> alt.Chart:
         The resulting altair ``Chart``.
     """
     data = [{"x": x, "y": y} for x, y in zip(spec.x, spec.y)]
-    # ``spec.color``, once set, is already a canonical RGBA tuple: it went
-    # through ``parse_color`` in ``ScatterSpec.__post_init__``.
+    # ``spec.color``/``spec.edgecolor``, once set, are already canonical
+    # RGBA tuples: they went through ``parse_color`` in
+    # ``ScatterSpec.__post_init__``.
     color = (
         None
         if spec.color is None
@@ -41,6 +42,21 @@ def render_scatter(spec: ScatterSpec, **kwargs: Any) -> alt.Chart:
     )
     if spec.size is not None:
         kwargs.setdefault("size", spec.size)
+    if spec.alpha is not None:
+        kwargs.setdefault("opacity", spec.alpha)
+    if spec.edgecolor is not None:
+        # altair has no field-based encoding channel for a mark's stroke
+        # (unlike ``color``, see ``color_encoding``/``prepare_color``), so
+        # the edge color is passed as a constant ``mark_point`` property
+        # rather than an encoding -- it never gets its own legend entry,
+        # matching bokeh's/matplotlib's edge color (also never legended
+        # separately from the fill color, see
+        # ``plotmux.backends.bokeh.scatter.render_scatter``).
+        kwargs.setdefault("filled", True)
+        kwargs.setdefault(
+            "stroke",
+            rgba_to_altair(cast("tuple[float, float, float, float]", spec.edgecolor)),
+        )
     data, encoding_color = prepare_color(data, spec.label, color, kwargs)
     chart = alt.Chart(alt.Data(values=data)).mark_point(**kwargs).encode(x="x:Q", y="y:Q")
     if encoding_color is not None:
