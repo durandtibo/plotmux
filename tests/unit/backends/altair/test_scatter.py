@@ -72,3 +72,19 @@ def test_render_scatter_explicit_size_kwarg_not_overridden() -> None:
     # (``kwargs.setdefault("size", spec.size)`` in ``render_scatter``).
     chart = render_scatter(spec, size=99.0)
     assert chart.to_dict()["mark"]["size"] == 99.0
+
+
+@altair_available
+def test_render_scatter_alpha() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), alpha=0.5)
+    chart = render_scatter(spec)
+    assert chart.to_dict()["mark"]["opacity"] == 0.5
+
+
+@altair_available
+def test_render_scatter_edgecolor() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), edgecolor="blue")
+    chart = render_scatter(spec)
+    mark = chart.to_dict()["mark"]
+    assert mark["filled"] is True
+    assert mark["stroke"] is not None

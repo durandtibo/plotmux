@@ -57,3 +57,10 @@ def test_render_bar_width() -> None:
     spec = BarSpec(x=np.arange(5), y=np.arange(5), width=0.3)
     fig = render_bar(figure(), spec)
     assert fig.renderers[0].glyph.width == 0.3
+
+
+@bokeh_available
+def test_render_bar_alpha() -> None:
+    spec = BarSpec(x=np.arange(5), y=np.arange(5), alpha=0.5)
+    fig = render_bar(figure(), spec)
+    assert fig.renderers[0].glyph.line_alpha == 0.5

@@ -56,3 +56,24 @@ def test_render_line_forwards_kwargs() -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10))
     chart = render_line(spec, strokeWidth=5.0)
     assert chart.to_dict()["mark"]["strokeWidth"] == 5.0
+
+
+@altair_available
+def test_render_line_alpha() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), alpha=0.5)
+    chart = render_line(spec)
+    assert chart.to_dict()["mark"]["opacity"] == 0.5
+
+
+@altair_available
+def test_render_line_linewidth() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), linewidth=3.0)
+    chart = render_line(spec)
+    assert chart.to_dict()["mark"]["strokeWidth"] == 3.0
+
+
+@altair_available
+def test_render_line_linestyle() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), linestyle="dashed")
+    chart = render_line(spec)
+    assert chart.to_dict()["mark"]["strokeDash"] is not None

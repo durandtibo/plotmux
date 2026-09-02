@@ -49,3 +49,10 @@ def test_render_bar_color() -> None:
     spec = BarSpec(x=np.arange(5), y=np.arange(5), color="red")
     chart = render_bar(spec)
     assert chart.to_dict()["mark"]["color"] == "rgba(255, 0, 0, 1.0)"
+
+
+@altair_available
+def test_render_bar_alpha() -> None:
+    spec = BarSpec(x=np.arange(5), y=np.arange(5), alpha=0.5)
+    chart = render_bar(spec)
+    assert chart.to_dict()["mark"]["opacity"] == 0.5
