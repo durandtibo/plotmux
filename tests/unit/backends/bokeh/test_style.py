@@ -115,3 +115,29 @@ def test_apply_common_style_no_ymin_ymax() -> None:
     fig = figure()
     out = apply_common_style(fig, spec)
     assert isinstance(out, figure)
+
+
+@bokeh_available
+def test_apply_common_style_legend_title() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_title="Lines")
+    fig = figure()
+    fig.circle([1, 2], [3, 4], legend_label="s")
+    out = apply_common_style(fig, spec)
+    assert out.legend[0].title == "Lines"
+
+
+@bokeh_available
+def test_apply_common_style_no_legend_title() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10)
+    fig = figure()
+    fig.circle([1, 2], [3, 4], legend_label="s")
+    out = apply_common_style(fig, spec)
+    assert out.legend[0].title is None
+
+
+@bokeh_available
+def test_apply_common_style_legend_title_no_legend_is_noop() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_title="Lines")
+    fig = figure()
+    out = apply_common_style(fig, spec)
+    assert len(out.legend) == 0

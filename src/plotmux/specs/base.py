@@ -57,6 +57,13 @@ class BaseSpec:
             processing. ``None`` leaves the axis autoscaled.
         ymax: An optional upper bound for the y-axis. Same semantics
             as ``ymin`` but for the upper bound.
+        legend_title: An optional heading for the legend box itself,
+            independent of ``title`` (the figure/axes title). ``None``
+            leaves the legend untitled (every backend's own default).
+            Only meaningful when at least one mark carries a
+            ``label`` -- a spec with ``legend_title`` set but no
+            labeled mark simply draws no legend at all, same as
+            today.
 
     These are figure-level concerns shared by every chart type, so
     they live here rather than being redeclared per chart type. Every
@@ -88,6 +95,7 @@ class BaseSpec:
     ) = field(default=None, kw_only=True)
     ymin: float | None = field(default=None, kw_only=True)
     ymax: float | None = field(default=None, kw_only=True)
+    legend_title: str | None = field(default=None, kw_only=True)
 
     def _validate_base(self) -> None:
         r"""Validate/normalize the figure-level fields shared by every

@@ -56,15 +56,25 @@ def test_base_spec_default_style() -> None:
     assert spec.background_color is None
     assert spec.ymin is None
     assert spec.ymax is None
+    assert spec.legend_title is None
 
 
 def test_base_spec_custom_style() -> None:
-    spec = FakeSpec(value=42, title="t", xlabel="x", ylabel="y", xscale="log", yscale="log")
+    spec = FakeSpec(
+        value=42,
+        title="t",
+        xlabel="x",
+        ylabel="y",
+        xscale="log",
+        yscale="log",
+        legend_title="Lines",
+    )
     assert spec.title == "t"
     assert spec.xlabel == "x"
     assert spec.ylabel == "y"
     assert spec.xscale == "log"
     assert spec.yscale == "log"
+    assert spec.legend_title == "Lines"
 
 
 @pytest.mark.parametrize("scale", ["linear", "log"])

@@ -104,3 +104,17 @@ def test_apply_common_style_returns_same_figure() -> None:
     fig = go.Figure()
     out = apply_common_style(fig, spec)
     assert out is fig
+
+
+@plotly_available
+def test_apply_common_style_legend_title() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_title="Lines")
+    fig = apply_common_style(go.Figure(), spec)
+    assert fig.layout.legend.title.text == "Lines"
+
+
+@plotly_available
+def test_apply_common_style_no_legend_title() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10)
+    fig = apply_common_style(go.Figure(), spec)
+    assert fig.layout.legend.title.text is None

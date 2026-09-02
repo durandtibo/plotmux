@@ -116,3 +116,20 @@ def test_apply_common_style_no_background_color() -> None:
     chart = render_histogram(spec)
     out = apply_common_style(chart, spec)
     assert not out.style
+
+
+@xy_available
+def test_apply_common_style_legend_title() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_title="Lines")
+    chart = render_histogram(spec)
+    out = apply_common_style(chart, spec)
+    assert len(out.children) == len(chart.children) + 3
+    assert out.children[-1].title == "Lines"
+
+
+@xy_available
+def test_apply_common_style_no_legend_title() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10)
+    chart = render_histogram(spec)
+    out = apply_common_style(chart, spec)
+    assert len(out.children) == len(chart.children) + 2

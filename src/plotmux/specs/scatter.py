@@ -5,7 +5,7 @@ from __future__ import annotations
 __all__ = ["ScatterSpec"]
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import BaseSpec, _check_equal_length
@@ -40,6 +40,15 @@ class ScatterSpec(BaseSpec):
             plain, single-color marker still needs only ``color``.
         alpha: An optional marker opacity, in ``[0, 1]``. ``None``
             uses the backend's default (usually fully opaque).
+        marker: An optional marker shape, one of a small,
+            backend-portable set (mirroring how ``LineSpec.linestyle``
+            exposes four portable names rather than every backend's
+            native dash vocabulary). ``None`` uses the backend's
+            default shape (a circle on every current backend). altair
+            has no native ``"x"`` shape (see
+            ``plotmux.backends.altair.style.MARKER_STYLE``), a small,
+            permanent per-backend asymmetry, the same pattern as
+            ``BarSpec.width``'s altair gap.
 
     Raises:
         ValueError: if ``x`` and ``y`` do not have the same length,
@@ -65,6 +74,7 @@ class ScatterSpec(BaseSpec):
     size: float | None = None
     edgecolor: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
     alpha: float | None = None
+    marker: Literal["circle", "square", "triangle", "diamond", "cross", "x"] | None = None
 
     def __post_init__(self) -> None:
         x, y = _check_equal_length(self.x, self.y)

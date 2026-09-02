@@ -87,3 +87,17 @@ def test_render_scatter_no_edgecolor() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
     chart = render_scatter(spec)
     assert isinstance(chart, Chart)
+
+
+@xy_available
+def test_render_scatter_marker() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), marker="square")
+    chart = render_scatter(spec)
+    assert chart.children[0].props["symbol"] == "square"
+
+
+@xy_available
+def test_render_scatter_no_marker_uses_backend_default() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
+    chart = render_scatter(spec)
+    assert chart.children[0].props["symbol"] == "circle"

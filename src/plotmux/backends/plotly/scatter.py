@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import plotly.graph_objects as go
 
-from plotmux.backends.plotly.style import rgba_to_plotly
+from plotmux.backends.plotly.style import MARKER_STYLE, rgba_to_plotly
 
 if TYPE_CHECKING:
     from plotly.graph_objects import Figure
@@ -69,6 +69,8 @@ def render_scatter(
     # ``spec.edgecolor`` is explicitly set.
     if edgecolor is not None:
         marker["line"] = {"color": edgecolor, "width": 1}
+    if spec.marker is not None:
+        marker["symbol"] = MARKER_STYLE[spec.marker]
     kwargs.setdefault("marker", marker)
     fig.add_trace(go.Scatter(x=spec.x, y=spec.y, mode="markers", **kwargs), row=row, col=col)
     return fig

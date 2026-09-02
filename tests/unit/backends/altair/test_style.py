@@ -198,3 +198,19 @@ def test_apply_common_style_no_background_color() -> None:
     chart = render_histogram(spec)
     out = apply_common_style(chart, spec)
     assert "background" not in out.to_dict()
+
+
+@altair_available
+def test_apply_common_style_legend_title() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s", legend_title="Lines")
+    chart = render_line(spec)
+    out = apply_common_style(chart, spec)
+    assert out.to_dict()["encoding"]["color"]["legend"]["title"] == "Lines"
+
+
+@altair_available
+def test_apply_common_style_no_legend_title() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10))
+    chart = render_line(spec)
+    out = apply_common_style(chart, spec)
+    assert "color" not in out.to_dict()["encoding"]

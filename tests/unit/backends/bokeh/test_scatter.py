@@ -80,3 +80,17 @@ def test_render_scatter_alpha() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), alpha=0.5)
     fig = render_scatter(figure(), spec)
     assert isinstance(fig, figure)
+
+
+@bokeh_available
+def test_render_scatter_marker() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), marker="square")
+    fig = render_scatter(figure(), spec)
+    assert fig.renderers[0].glyph.marker == "square"
+
+
+@bokeh_available
+def test_render_scatter_no_marker_uses_backend_default() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
+    fig = render_scatter(figure(), spec)
+    assert fig.renderers[0].glyph.marker == "circle"

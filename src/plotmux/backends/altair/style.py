@@ -8,6 +8,7 @@ unconditionally.
 from __future__ import annotations
 
 __all__ = [
+    "MARKER_STYLE",
     "STROKE_DASH",
     "apply_common_style",
     "color_encoding",
@@ -29,6 +30,21 @@ if TYPE_CHECKING:
 #: empty/absent ``strokeDash`` is altair's own default, a solid line. Shared
 #: by ``plotmux.backends.altair.line`` and ``plotmux.backends.altair.slope``.
 STROKE_DASH = {"dashed": [6, 4], "dotted": [1, 3], "dashdot": [6, 4, 1, 4]}
+
+#: Maps ``ScatterSpec.marker``'s portable shape name to altair's
+#: ``mark_point(shape=...)`` value. ``"x"`` is deliberately absent: altair
+#: has no native cross-hatch "x" point shape, the one likely per-backend
+#: asymmetry in this set (same pattern as ``BarSpec.width``'s altair gap,
+#: see ``plotmux.backends.altair.bar``) -- ``ScatterSpec(marker="x")``
+#: simply falls back to altair's own default shape (a circle) on this
+#: backend, same as leaving ``marker`` unset.
+MARKER_STYLE = {
+    "circle": "circle",
+    "square": "square",
+    "triangle": "triangle-up",
+    "diamond": "diamond",
+    "cross": "cross",
+}
 
 
 def rgba_to_altair(color: tuple[float, float, float, float]) -> str:
@@ -222,4 +238,13 @@ def apply_common_style(chart: alt.typing.ChartType, spec: BaseSpec) -> alt.typin
                 cast("tuple[float, float, float, float]", spec.background_color)
             )
         )
+    if spec.legend_title is not None:
+        # ``color_encoding`` (see above) hardcodes ``alt.Legend(title=None)``
+        # on every labeled mark's ``color`` encoding, hiding the redundant
+        # (always ``"label"``-titled) default legend title -- this
+        # re-``encode``s ``color`` with the caller's title instead,
+        # replacing that ``None``. A chart with no labeled mark at all has
+        # no ``color`` encoding to override, so this is a no-op then, same
+        # as every other backend's "no label -> no legend" behavior.
+        chart = chart.encode(color=alt.Color(legend=alt.Legend(title=spec.legend_title)))
     return chart

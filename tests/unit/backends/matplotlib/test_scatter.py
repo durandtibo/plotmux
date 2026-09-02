@@ -95,3 +95,23 @@ def test_render_scatter_edgecolor() -> None:
     render_scatter(ax, spec)
     assert tuple(ax.collections[0].get_edgecolor()[0]) == (0.0, 0.0, 1.0, 1.0)
     plt.close(fig)
+
+
+@matplotlib_available
+def test_render_scatter_marker() -> None:
+    fig, ax = plt.subplots()
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), marker="square")
+    render_scatter(ax, spec)
+    # A square marker's path has 5 vertices (4 corners, closed); a circle
+    # (matplotlib's default) has many more.
+    assert len(ax.collections[0].get_paths()[0].vertices) == 5
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_render_scatter_no_marker_uses_backend_default() -> None:
+    fig, ax = plt.subplots()
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
+    render_scatter(ax, spec)
+    assert len(ax.collections[0].get_paths()[0].vertices) != 5
+    plt.close(fig)

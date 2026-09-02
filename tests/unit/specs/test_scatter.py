@@ -17,6 +17,7 @@ def test_scatter_spec_defaults() -> None:
     assert spec.size is None
     assert spec.edgecolor is None
     assert spec.alpha is None
+    assert spec.marker is None
 
 
 def test_scatter_spec_custom() -> None:
@@ -28,12 +29,14 @@ def test_scatter_spec_custom() -> None:
         size=10.0,
         edgecolor="#000000",
         alpha=0.5,
+        marker="square",
     )
     assert spec.label == "my-scatter"
     assert spec.color == (1.0, 0.0, 0.0, 1.0)
     assert spec.size == 10.0
     assert spec.edgecolor == (0.0, 0.0, 0.0, 1.0)
     assert spec.alpha == 0.5
+    assert spec.marker == "square"
 
 
 @pytest.mark.parametrize("alpha", [2.0, -0.1])

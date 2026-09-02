@@ -46,6 +46,12 @@ def render_scatter(spec: ScatterSpec, **kwargs: Any) -> xy.Chart:
             "stroke", rgba_to_xy(cast("tuple[float, float, float, float]", spec.edgecolor))
         )
         kwargs.setdefault("stroke_width", 1.0)
+    # ``xy.scatter``'s ``symbol`` accepts plotmux's portable shape names
+    # directly (``"circle"``/``"square"``/``"triangle"``/``"diamond"``/
+    # ``"cross"``/``"x"``), unlike matplotlib, so no translation table is
+    # needed here (see ``plotmux.backends.matplotlib.scatter.MARKER_STYLE``).
+    if spec.marker is not None:
+        kwargs.setdefault("symbol", spec.marker)
     return xy.scatter_chart(
         xy.scatter(spec.x, spec.y, name=spec.label, color=color, **kwargs),
     )

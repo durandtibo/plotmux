@@ -26,11 +26,19 @@ def apply_common_style(ax: Axes, spec: BaseSpec) -> Axes:
     r"""Apply the common figure-level style fields onto an ``Axes``.
 
     Applies ``title``/``xlabel``/``ylabel``/``xscale``/``yscale``/
-    ``background_color``/``ymin``/``ymax`` from ``spec`` (defined on
-    ``BaseSpec``, shared by every chart type). Called once per
-    backend, right after the chart-specific renderer has drawn its
-    mark, so a new chart type gets title/label/scale support for
-    free.
+    ``background_color``/``ymin``/``ymax``/``legend_title`` from
+    ``spec`` (defined on ``BaseSpec``, shared by every chart type).
+    Called once per backend, right after the chart-specific renderer
+    has drawn its mark, so a new chart type gets title/label/scale
+    support for free.
+
+    ``legend_title`` only re-issues ``ax.legend(title=...)`` when a
+    legend already exists (i.e. some mark set a ``label``, and one of
+    the per-type renderers already called the label-less
+    ``ax.legend()`` -- see e.g.
+    ``plotmux.backends.matplotlib.scatter.render_scatter``): calling
+    ``ax.legend()`` with no labeled artist at all would print a
+    spurious "no artists with labels found" warning.
 
     Args:
         ax: The matplotlib ``Axes`` to style.
@@ -56,6 +64,8 @@ def apply_common_style(ax: Axes, spec: BaseSpec) -> Axes:
         ax.set_facecolor(cast("tuple[float, float, float, float]", spec.background_color))
     if spec.ymin is not None or spec.ymax is not None:
         ax.set_ylim(bottom=spec.ymin, top=spec.ymax)
+    if spec.legend_title is not None and ax.get_legend() is not None:
+        ax.legend(title=spec.legend_title)
     return ax
 
 

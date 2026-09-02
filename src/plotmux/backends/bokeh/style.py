@@ -54,10 +54,11 @@ def apply_common_style(fig: figure, spec: BaseSpec) -> figure:
     r"""Apply the common figure-level style fields onto a bokeh
     ``figure``.
 
-    Applies ``title``/``xlabel``/``ylabel`` from ``spec`` (defined on
-    ``BaseSpec``, shared by every chart type). Called once per
-    backend, right after the chart-specific renderer has drawn its
-    glyph, so a new chart type gets title/label support for free.
+    Applies ``title``/``xlabel``/``ylabel``/``legend_title`` from
+    ``spec`` (defined on ``BaseSpec``, shared by every chart type).
+    Called once per backend, right after the chart-specific renderer
+    has drawn its glyph, so a new chart type gets title/label support
+    for free.
 
     Unlike matplotlib's ``Axes.set_xscale``, bokeh's axis type
     (``"linear"``/``"log"``) is a construction-time argument of
@@ -106,4 +107,12 @@ def apply_common_style(fig: figure, spec: BaseSpec) -> figure:
         y_range.start = spec.ymin
     if spec.ymax is not None:
         y_range.end = spec.ymax
+    # bokeh auto-creates ``fig.legend`` once any glyph carries a
+    # ``legend_label``; setting ``fig.legend.title`` when none exists prints
+    # a "zero legends added" warning, so it is only set when a legend
+    # actually exists (``fig.legend`` is an empty splattable list otherwise,
+    # falsy) -- same shape of guard as bokeh's own ``alpha``/``linewidth``
+    # "only set when explicitly given" pattern elsewhere in this backend.
+    if spec.legend_title is not None and fig.legend:
+        fig.legend.title = spec.legend_title
     return fig

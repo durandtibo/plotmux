@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import altair as alt
 
-from plotmux.backends.altair.style import prepare_color, rgba_to_altair
+from plotmux.backends.altair.style import MARKER_STYLE, prepare_color, rgba_to_altair
 
 if TYPE_CHECKING:
     from plotmux.specs import ScatterSpec
@@ -57,6 +57,12 @@ def render_scatter(spec: ScatterSpec, **kwargs: Any) -> alt.Chart:
             "stroke",
             rgba_to_altair(cast("tuple[float, float, float, float]", spec.edgecolor)),
         )
+    # ``MARKER_STYLE`` has no ``"x"`` entry (altair has no native "x" point
+    # shape, see its docstring); ``.get`` leaves ``kwargs["shape"]`` unset
+    # then, falling back to altair's own default shape (a circle), same as
+    # ``spec.marker`` being unset.
+    if spec.marker is not None and spec.marker in MARKER_STYLE:
+        kwargs.setdefault("shape", MARKER_STYLE[spec.marker])
     data, encoding_color = prepare_color(data, spec.label, color, kwargs)
     chart = alt.Chart(alt.Data(values=data)).mark_point(**kwargs).encode(x="x:Q", y="y:Q")
     if encoding_color is not None:
