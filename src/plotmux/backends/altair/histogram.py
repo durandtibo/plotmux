@@ -59,6 +59,8 @@ def render_histogram(spec: HistogramSpec, **kwargs: Any) -> alt.Chart:
         if spec.color is None
         else rgba_to_altair(cast("tuple[float, float, float, float]", spec.color))
     )
+    if spec.alpha is not None:
+        kwargs.setdefault("opacity", spec.alpha)
     data, encoding_color = prepare_color(data, spec.label, color, kwargs)
     chart = alt.Chart(alt.Data(values=data)).mark_bar(**kwargs).encode(x="x:Q", x2="x2:Q", y="y:Q")
     if encoding_color is not None:

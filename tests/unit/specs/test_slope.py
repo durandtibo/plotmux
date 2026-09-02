@@ -17,6 +17,7 @@ def test_slope_spec_defaults() -> None:
     assert spec.color is None
     assert spec.linewidth is None
     assert spec.linestyle == "solid"
+    assert spec.alpha is None
 
 
 def test_slope_spec_custom() -> None:
@@ -27,6 +28,7 @@ def test_slope_spec_custom() -> None:
         color="#0000ff",
         linewidth=4,
         linestyle="dashed",
+        alpha=0.9,
     )
     assert spec.gradient == 2
     assert spec.intercept == 10
@@ -34,6 +36,13 @@ def test_slope_spec_custom() -> None:
     assert spec.color == (0.0, 0.0, 1.0, 1.0)
     assert spec.linewidth == 4
     assert spec.linestyle == "dashed"
+    assert spec.alpha == 0.9
+
+
+@pytest.mark.parametrize("alpha", [2.0, -0.1])
+def test_slope_spec_invalid_alpha(alpha: float) -> None:
+    with pytest.raises(ValueError, match="alpha must be in the range"):
+        SlopeSpec(gradient=1, alpha=alpha)
 
 
 # --- color parsing ---

@@ -43,6 +43,7 @@ def render_cdf(ax: Axes, spec: CdfSpec, **kwargs: Any) -> Axes:
         "range": (xmin, xmax),
         "label": spec.label,
         "color": spec.color,
+        "alpha": spec.alpha,
         "density": True,
         "cumulative": True,
         "histtype": "step",

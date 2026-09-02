@@ -54,6 +54,12 @@ def render_histogram(fig: figure, spec: HistogramSpec, **kwargs: Any) -> figure:
     # kwarg is only added when a label is actually set.
     if spec.label is not None:
         kwargs.setdefault("legend_label", spec.label)
+    # Like ``Slope.line_width`` (see ``plotmux.backends.bokeh.slope``),
+    # bokeh's glyph ``alpha`` property rejects ``None`` outright (unlike
+    # matplotlib's ``alpha=None``, a valid "fully opaque" sentinel), so it
+    # is only added when ``spec.alpha`` is explicitly set.
+    if spec.alpha is not None:
+        kwargs.setdefault("alpha", spec.alpha)
     fig.quad(
         top=counts,
         bottom=0,

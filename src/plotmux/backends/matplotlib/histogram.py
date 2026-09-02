@@ -37,6 +37,7 @@ def render_histogram(ax: Axes, spec: HistogramSpec, **kwargs: Any) -> Axes:
         "label": spec.label,
         "density": spec.density,
         "color": spec.color,
+        "alpha": spec.alpha,
         **kwargs,
     }
     ax.hist(spec.values, **style)

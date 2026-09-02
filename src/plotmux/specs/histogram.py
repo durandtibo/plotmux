@@ -41,6 +41,8 @@ class HistogramSpec(BaseSpec):
             backend's default color. See
             ``plotmux.colors.parse_color`` for the exact
             semantics.
+        alpha: An optional bar opacity, in ``[0, 1]``. ``None`` uses
+            the backend's default (usually fully opaque).
         title: An optional figure title. Inherited from ``BaseSpec``.
         xlabel: An optional x-axis label. Inherited from
             ``BaseSpec``.
@@ -75,8 +77,12 @@ class HistogramSpec(BaseSpec):
     label: str | None = None
     density: bool = False
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
+    alpha: float | None = None
 
     def __post_init__(self) -> None:
+        if self.alpha is not None and not 0.0 <= self.alpha <= 1.0:
+            msg = f"alpha must be in the range [0, 1], but received {self.alpha}"
+            raise InvalidSpecError(msg)
         if not isinstance(self.bins, Integral) or isinstance(self.bins, bool) or self.bins <= 0:
             msg = f"bins must be a positive integer, but received {self.bins}"
             raise InvalidSpecError(msg)
@@ -103,3 +109,4 @@ class HistogramSpec(BaseSpec):
             )
             raise InvalidSpecError(msg)
         self._normalize_color()
+        self._validate_base()

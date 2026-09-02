@@ -8,6 +8,7 @@ unconditionally.
 from __future__ import annotations
 
 __all__ = [
+    "STROKE_DASH",
     "apply_common_style",
     "color_encoding",
     "prepare_color",
@@ -15,12 +16,19 @@ __all__ = [
     "with_label_field",
 ]
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import altair as alt
 
 if TYPE_CHECKING:
     from plotmux.specs import BaseSpec
+
+#: Maps a ``linestyle``'s matplotlib-style dash name (``LineSpec.linestyle``/
+#: ``SlopeSpec.linestyle``) to the explicit on/off pixel-length list
+#: altair's ``strokeDash`` expects. ``"solid"`` is deliberately absent: an
+#: empty/absent ``strokeDash`` is altair's own default, a solid line. Shared
+#: by ``plotmux.backends.altair.line`` and ``plotmux.backends.altair.slope``.
+STROKE_DASH = {"dashed": [6, 4], "dotted": [1, 3], "dashdot": [6, 4, 1, 4]}
 
 
 def rgba_to_altair(color: tuple[float, float, float, float]) -> str:
@@ -187,10 +195,31 @@ def apply_common_style(chart: alt.typing.ChartType, spec: BaseSpec) -> alt.typin
     Returns:
         The styled chart.
     """
+    # ``alt.Scale``'s ``domainMin``/``domainMax`` use altair's own
+    # ``alt.Undefined`` sentinel for "unset" (not ``None``, which altair
+    # instead serializes as an explicit ``null`` bound), so ``spec.ymin``/
+    # ``spec.ymax`` are only passed through when actually set.
+    y_scale_kwargs: dict[str, Any] = {"type": spec.yscale}
+    if spec.ymin is not None:
+        y_scale_kwargs["domainMin"] = spec.ymin
+    if spec.ymax is not None:
+        y_scale_kwargs["domainMax"] = spec.ymax
     chart = chart.encode(
         x=alt.X("x:Q", title=spec.xlabel, scale=alt.Scale(type=spec.xscale)),
-        y=alt.Y("y:Q", title=spec.ylabel, scale=alt.Scale(type=spec.yscale)),
+        y=alt.Y("y:Q", title=spec.ylabel, scale=alt.Scale(**y_scale_kwargs)),
     )
     if spec.title is not None:
         chart = chart.properties(title=spec.title)
+    if spec.background_color is not None:
+        # ``spec.background_color``, once set, is already a canonical RGBA
+        # tuple: it went through ``parse_color`` in
+        # ``BaseSpec._validate_base``. ``Chart.properties(background=...)``
+        # sets the whole chart's (not just the plot area's) background,
+        # matching bokeh's ``background_fill_color``/matplotlib's
+        # ``Axes.set_facecolor`` closely enough for this figure-level field.
+        chart = chart.properties(
+            background=rgba_to_altair(
+                cast("tuple[float, float, float, float]", spec.background_color)
+            )
+        )
     return chart

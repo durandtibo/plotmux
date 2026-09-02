@@ -6,18 +6,24 @@ cdf, line, scatter, bar, slope, layer, grid), four backends
 layering, grid layout, a `plotmux.exceptions` hierarchy, export, a
 predefined-colors package, lazy per-backend imports, and a
 third-party backend plugin mechanism are all in place. `SlopeSpec` is
-the one deliberate exception to "every spec works on every backend":
-it is registered only on matplotlib and bokeh, the two backends with
-a native "line by slope, independent of data range" primitive (see
-[8.1](#81-case-study-reproducing-bokehs-slope-example)); `backend="altair"`/
-`backend="xy"` raise `UnsupportedSpecError` for it, by design. See
+registered as a standalone spec (`plotmux.slope(...)`) only on
+matplotlib and bokeh, the two backends with a native "line by slope,
+independent of data range" primitive; on altair and xy it is
+supported only as a `layer()` child alongside a data-bound sibling
+(see [8.1](#81-case-study-reproducing-bokehs-slope-example)), since
+those two backends need concrete endpoints, not a slope/intercept
+pair, and a standalone `SlopeSpec` has no data of its own to derive
+endpoints from. `plotmux.slope(...)`/a slope-only `layer()` still
+raise `UnsupportedSpecError` on those two backends. All of
+[8.1](#81-case-study-reproducing-bokehs-slope-example)'s gaps (per-mark
+alpha, separate marker edge color, `LineSpec`
+`linewidth`/`linestyle`, figure background color, explicit `ymin`/
+`ymax` axis bounds, and altair/xy support for `SlopeSpec` as a layer
+child) are now closed; bokeh's own slope example is reproducible,
+unchanged, on all four backends (modulo the standalone-vs-layered
+`SlopeSpec` distinction on altair/xy noted above). See
 [7](#7-open-questions) for what's still unresolved and
-[8](#8-candidate-future-work) for what's next, including
-[8.1](#81-case-study-reproducing-bokehs-slope-example)'s remaining
-gaps (per-mark alpha, separate marker fill/edge color, figure
-background color, explicit y-axis bounds, and altair/xy support for
-`SlopeSpec` itself) against reproducing bokeh's own slope example
-identically on all four backends.
+[8](#8-candidate-future-work) for what's next.
 Date: 2026-09-01.
 
 ## 1. Goal
@@ -195,22 +201,38 @@ natural encoding into an existing spec (unlike, say, a step-histogram
 variant, which would just be a `HistogramSpec` option).
 
 `SlopeSpec` was the eighth chart type added, and the first
-implemented on *fewer* than all four backends by design (see
-[8.1](#81-case-study-reproducing-bokehs-slope-example)): it is
-registered in `MatplotlibBackend._RENDERERS`/`BokehBackend._RENDERERS`
-(and each backend's own `layer.py`, so it can appear as a `layer()`
-child) and nowhere else. Requesting it on `altair`/`xy` raises the
-same `UnsupportedSpecError` any spec with no renderer registered for
-a backend would (via `resolve_renderer`, see [4.2](#42-backend)) --
-no special-casing was needed to leave a backend out, only to *not*
-add an entry for it, which is what "adding a chart type means adding
-one `_RENDERERS` entry per backend" (see [5](#5-why-this-shape))
-already implied for a backend that has no way to draw it.
+implemented on *fewer* than all four backends as a *standalone* spec,
+by design (see [8.1](#81-case-study-reproducing-bokehs-slope-example)):
+it is registered in `MatplotlibBackend._RENDERERS`/
+`BokehBackend._RENDERERS` (and each backend's own `layer.py`, so it
+can appear as a `layer()` child) directly, since matplotlib's
+`Axes.axline`/bokeh's `bokeh.models.Slope` are both genuine "line by
+slope, independent of data range" primitives. Requesting it
+standalone on `altair`/`xy` raises the same `UnsupportedSpecError` any
+spec with no renderer registered for a backend would (via
+`resolve_renderer`, see [4.2](#42-backend)) -- it is simply not
+registered in `AltairBackend._RENDERERS`/`XyBackend._RENDERERS`. As a
+`layer()` child on those two backends, though, `SlopeSpec` *is*
+supported: `plotmux.backends.altair.layer.render_layer`/
+`plotmux.backends.xy.layer.render_layer` compute the x-range spanned
+by its data-bound siblings (via
+`plotmux.utils.slope.resolve_slope_xrange`) and hand it to a
+`layer()`-only `render_slope(spec, xrange)` (registered only in each
+backend's own `layer.py` dispatch table, not in the backend's
+top-level `_RENDERERS`), which draws a plain two-point line between
+that range's endpoints -- altair's `mark_line`/xy's `xy.line` have no
+native slope primitive, so this is the closest equivalent, and it is
+exact (not an approximation) because the range comes from the actual
+sibling data, not a guess. A `layer()` call with only `SlopeSpec`
+children (no data-bound sibling to derive a range from) still raises
+`UnsupportedSpecError` on `altair`/`xy`, since there is nothing to
+compute a range from.
 Unlike every other spec, `SlopeSpec` is not data-bound: it describes
 a line by `(gradient, intercept)` rather than by `x`/`y` arrays, so it
 draws without owning any data of its own and typically appears as a
 `layer()` child alongside a data-bound spec (see
-[4.8](#48-layering-multiple-specs-on-one-axes)).
+[4.8](#48-layering-multiple-specs-on-one-axes)) -- required, rather
+than just typical, for altair/xy per the above.
 
 The layout otherwise leaves room for one more chart type (a new
 `specs/<type>.py` plus one `_RENDERERS` entry per backend) if a
@@ -1122,13 +1144,12 @@ once picked up.
 - `LayerSpec` child-compatibility warnings (e.g. mismatched
   `xscale`), if real usage shows this is a common mistake worth
   surfacing early rather than a silent axis-level override.
-- The remaining gaps identified in
-  [8.1](#81-case-study-reproducing-bokehs-slope-example): `SlopeSpec`
-  support for altair/xy (a real design change, not just two more
-  renderer files -- see 8.1), per-mark `alpha`, a separate marker
-  edge/fill color, `linewidth`/`linestyle` on `LineSpec`, a figure
-  background color, and explicit `ymin`/`ymax` axis bounds.
-  `SlopeSpec` itself, on matplotlib and bokeh, is already implemented.
+- Nothing carried over from [8.1](#81-case-study-reproducing-bokehs-slope-example):
+  every gap it identified (per-mark `alpha`, a separate marker edge
+  color, `linewidth`/`linestyle` on `LineSpec`, a figure background
+  color, explicit `ymin`/`ymax` axis bounds, and altair/xy support for
+  `SlopeSpec` as a `layer()` child) is now closed; see 8.1 for what
+  each one turned into.
 
 ### 8.1 Case study: reproducing bokeh's slope example
 
@@ -1138,83 +1159,106 @@ Checked against
 `alpha=0.8`, plus a dashed blue reference line of gradient 2 and
 y-intercept 10 at `line_width=4`, on a figure with a light-gray
 background and `y_range.start = 0`) to see whether it is reproducible
-through plotmux's unified API, unchanged, on all four backends. It is
-**not**, today, though the central gap (no slope annotation at all) is
-now closed on two of the four backends. Gaps, in order of how much
-they'd cost to close:
+through plotmux's unified API, unchanged, on all four backends. It
+**is**, now, on matplotlib and bokeh outright; on altair and xy with
+one caveat (`SlopeSpec` needs a data-bound `layer()` sibling to derive
+endpoints from -- see below), unavoidable given those two backends'
+own primitives. Every gap identified by this case study is closed:
 
-- **Slope/abline annotation: implemented, matplotlib + bokeh only.**
-  `specs/slope.py::SlopeSpec(gradient, intercept=0.0, color=None,
-  linewidth=None, linestyle="solid")` exists, plus one `_RENDERERS`
-  entry (and `layer.py` entry) on `MatplotlibBackend` (via
-  `Axes.axline`) and `BokehBackend` (via `fig.add_layout(bokeh.models.
-  Slope(...))`) -- both have a native "line by slope, independent of
-  data range" primitive, matched almost one-to-one by `SlopeSpec`'s
-  fields (see [3.2](#32-package-layout)). altair and xy remain
-  unregistered for `SlopeSpec`, by design rather than by omission:
-  altair has no such primitive (`mark_rule` would need a
-  `transform_calculate` construction with no natural axes-range input
-  to a standalone `SlopeSpec`, and one crude workaround -- drawing a
-  line between two very-far-apart endpoints -- would blow out
-  altair's own default autoscale, corrupting the rest of the chart
-  it's layered onto); xy has neither a native primitive nor any way to
-  read the current axes range from a standalone spec's render call
-  either. Closing this remaining half means giving `SlopeSpec` (or its
-  renderer) access to the actual data range it's being drawn against
-  -- e.g. by computing endpoints from sibling `LayerSpec` children
-  before altair/xy render, rather than from the spec alone -- which is
-  a real design change (a `SlopeSpec` renderer would stop being a pure
-  function of only its own spec), not just "write two more renderer
-  files," so it is left open rather than attempted here.
-- **No separate marker fill/edge color.** `ScatterSpec.color` maps to
-  both `fill_color` and `line_color` in every backend's renderer (see
-  e.g. `backends/bokeh/scatter.py`); the bokeh example wants a yellow
-  fill with a black edge. `render_scatter` in bokeh already hardcodes
-  `line_color=color`, so this can't be worked around through the
-  escape-hatch `**kwargs` either (passing `line_color=` would collide
-  with that hardcoded keyword). Needs a second, optional color field,
-  e.g. `ScatterSpec.edgecolor`, normalized through the same
-  `_normalize_color` machinery as `color`.
-- **No `alpha`.** No spec exposes an opacity field; matplotlib's and
-  xy's scatter renderers happen to forward unrecognized `**kwargs`
-  (so `alpha=` slips through today, backend-specific and undocumented),
-  but bokeh's and altair's do not accept it the same way, so nothing
-  currently reproduces `alpha=0.8` identically across all four. Needs
-  an `alpha: float | None` field, most naturally on `BaseSpec` next to
-  `color`-carrying fields (or on each color-carrying spec, mirroring
-  how `color` itself is placed per spec rather than on `BaseSpec`; see
-  [4.9](#49-specifying-colors-across-backends)).
-- **No line width or dash style on `LineSpec`.** `SlopeSpec` now has
-  `linewidth`/`linestyle` (see above), but `LineSpec` itself still
-  doesn't, so a data-bound trend line can't get the same styling
-  `SlopeSpec` gives an abline. Needs the same `linewidth: float | None`
-  / `linestyle: Literal["solid", "dashed", "dotted", "dashdot"]`
-  fields added to `LineSpec`, translated per backend the same way
-  `xscale`/`yscale` are (matplotlib: `linewidth`/`linestyle`
-  passthrough; bokeh: `line_width`/`line_dash`; altair:
-  `strokeWidth`/`strokeDash`; xy: its own line-style parameter).
-- **No figure background color.** The example sets
-  `background_fill_color="#fafafa"`. This is a `BaseSpec`-level,
-  figure-wide concern like `title`, not per-mark, and has no
-  representation today. Needs a `BaseSpec.background_color` field,
-  applied once in `apply_common_style` alongside title/labels/scale.
-- **No explicit y-axis start/end.** `HistogramSpec.xmin`/`xmax` (via
-  `find_range`, see [4.1](#41-basespec)) is the only axis-bound
-  control that exists, and it is x-only and histogram-only; bokeh's
-  CDF renderer separately hardcodes its own `y_range = Range1d(0, 1)`
-  (`backends/bokeh/cdf.py`) rather than going through a general
-  mechanism. The example's `p.y_range.start = 0` has no general
-  equivalent. Needs `ymin`/`ymax` fields, most naturally promoted to
-  `BaseSpec` (reusing `find_range`'s quantile-or-explicit convention)
-  now that a second use case wants them, rather than staying
-  histogram-specific `xmin`/`xmax`.
+- **Slope/abline annotation.** `specs/slope.py::SlopeSpec(gradient,
+  intercept=0.0, color=None, linewidth=None, linestyle="solid",
+  alpha=None)` (see [3.2](#32-package-layout)). Standalone
+  (`plotmux.slope(...)`), it is matplotlib (`Axes.axline`) and bokeh
+  (`fig.add_layout(bokeh.models.Slope(...))`) only, each with a native
+  "line by slope, independent of data range" primitive matched almost
+  one-to-one by `SlopeSpec`'s fields. altair and xy have neither: a
+  standalone `SlopeSpec` has no data of its own to derive concrete
+  endpoints from, and drawing between two arbitrary far-apart points
+  would blow out altair's own default autoscale (xy has the same
+  problem, plus no way to read back whatever range it picked). As a
+  `layer()` child on those two backends, though, `SlopeSpec` *is*
+  supported: `plotmux.backends.altair.layer.render_layer`/
+  `plotmux.backends.xy.layer.render_layer` compute the x-range spanned
+  by the `SlopeSpec`'s data-bound siblings
+  (`plotmux.utils.slope.resolve_slope_xrange`, reading each sibling's
+  `x` array, or a `HistogramSpec`/`CdfSpec`'s `find_range`-resolved
+  bound) and pass it to a `layer()`-only
+  `render_slope(spec, xrange)` (registered in each backend's own
+  `layer.py`, not the backend's top-level `_RENDERERS`), which draws a
+  plain two-point line spanning exactly that range -- exact, not an
+  approximation, since the range comes from the real sibling data. A
+  `layer()` call with no data-bound sibling (e.g. two `SlopeSpec`s
+  alone) still raises `UnsupportedSpecError` on altair/xy, since there
+  is nothing to derive a range from; this is the one respect in which
+  `SlopeSpec` support is narrower on altair/xy than on
+  matplotlib/bokeh, an unavoidable consequence of those two backends
+  having no slope-by-itself primitive at all, not a remaining gap.
+- **Separate marker fill/edge color.** `ScatterSpec.edgecolor`, an
+  optional second color field normalized through the same
+  `_normalize_color` machinery as `color` (see
+  [4.9](#49-specifying-colors-across-backends)); `None` (the default)
+  uses `color` for the edge too, so every existing single-color
+  `ScatterSpec` renders unchanged. matplotlib: `Axes.scatter`'s
+  `edgecolors`; bokeh: `figure.scatter`'s `line_color`, kept separate
+  from `fill_color` (both used to be set to the same `color`); altair:
+  `mark_point(filled=True, stroke=...)` (a constant mark property, not
+  a field-based encoding -- altair has no legend channel for a mark's
+  stroke, matching every other backend's edge color never getting its
+  own legend entry either); xy: `xy.scatter`'s `stroke`/`stroke_width`.
+- **`alpha`.** An `alpha: float | None` field on every color-carrying
+  spec (`HistogramSpec`, `CdfSpec`, `LineSpec`, `ScatterSpec`,
+  `BarSpec`, `SlopeSpec`) -- placed per spec rather than on
+  `BaseSpec`, mirroring how `color` itself is placed per spec (see
+  [4.9](#49-specifying-colors-across-backends)), since `alpha` is a
+  mark-level concern that has no meaning on `LayerSpec`/`GridSpec`.
+  matplotlib: `alpha` passthrough (`None` is matplotlib's own "fully
+  opaque" default, so it needs no special-casing); bokeh: each
+  glyph's `alpha` (sets both `fill_alpha`/`line_alpha`) -- unlike
+  matplotlib, bokeh's `alpha` property rejects `None` outright, so it
+  is only added to the call when explicitly set (same pattern
+  `SlopeSpec.linewidth` already used, see
+  `plotmux.backends.bokeh.slope`); altair: `opacity`; xy: `opacity`.
+- **`LineSpec` line width and dash style.** The same
+  `linewidth: float | None` / `linestyle: Literal["solid", "dashed",
+  "dotted", "dashdot"]` fields `SlopeSpec` already had, added to
+  `LineSpec` too, translated per backend the same way `xscale`/
+  `yscale` are: matplotlib `linewidth`/`linestyle` passthrough; bokeh
+  `line_width`/`line_dash`; altair `strokeWidth`/`strokeDash` (a
+  `STROKE_DASH` name-to-pixel-list map in
+  `plotmux.backends.altair.style`, shared with `SlopeSpec`'s own
+  altair renderer); xy `width`/`dash` (`xy.line` accepts the same
+  matplotlib-style dash names directly, no translation table needed).
+- **Figure background color.** `BaseSpec.background_color`, a
+  `BaseSpec`-level, figure-wide field (like `title`) rather than
+  per-mark, applied once in each backend's `apply_common_style`
+  alongside title/labels/scale/`ymin`/`ymax`: matplotlib
+  `Axes.set_facecolor`; bokeh `figure.background_fill_color`; altair
+  `Chart.properties(background=...)`; xy a `style={"backgroundColor":
+  ...}` entry on the `Chart` (xy's CSS-style-dict escape hatch, the
+  closest xy has to a background-color constructor argument).
+- **Explicit y-axis bounds.** `BaseSpec.ymin`/`ymax`: unlike
+  `HistogramSpec.xmin`/`xmax` (`float | str | None`, resolved via
+  `find_range`'s quantile-or-explicit convention, see
+  [4.1](#41-basespec)), these are `float | None` only -- an explicit
+  value, no quantile-string form -- since they are figure-level (every
+  chart type has a y-axis; not every chart type has one data array to
+  resolve a quantile against the way `HistogramSpec`/`CdfSpec` do).
+  Applied post-hoc in `apply_common_style`, after the mark is drawn:
+  matplotlib `Axes.set_ylim`; bokeh `figure.y_range.start`/`.end`
+  (pinned individually on the default auto-fitting `DataRange1d`, so
+  setting just one bound leaves the other autoscaled -- this is also
+  what makes bokeh's `CdfSpec` renderer's own hardcoded `y_range =
+  Range1d(0, 1)`, set before `apply_common_style` runs, correctly
+  overridable by an explicit `ymin`/`ymax`); altair
+  `alt.Scale(domainMin=..., domainMax=...)`; xy `xy.y_axis(domain=
+  (ymin, ymax))` -- xy's `domain` takes both bounds together, no
+  partial-bound form, so (unlike matplotlib/bokeh) only both explicit
+  bounds set together are forwarded; either alone is left autoscaled.
 
-None of the remaining gaps are scheduled; they are written down here
-as the precise, verified list of what plotmux would still need in
-order to claim "reproduces bokeh's slope example, unchanged, on all
-four backends" (matplotlib and bokeh alone can already reproduce it,
-modulo marker fill/edge color and alpha), so the gap can be closed
-deliberately (new fields, same pattern as every other addition, plus
-the one real design question for altair/xy `SlopeSpec` support) rather
-than piecemeal through backend-specific `**kwargs`, which cannot give
-the same call the same look on all four backends.
+matplotlib and bokeh reproduce the bokeh slope example exactly,
+unchanged, via one `layer()` call combining a styled `ScatterSpec` and
+`SlopeSpec`. altair and xy reproduce it the same way, with the same
+call -- the only difference is architectural, not user-visible: their
+`SlopeSpec` support depends on the `ScatterSpec` sibling being in the
+same `layer()` call to supply a range, which the bokeh example's own
+structure (a scatter plus a reference line, layered) already satisfies.

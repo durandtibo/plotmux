@@ -8,6 +8,7 @@ __all__ = ["SlopeSpec"]
 from dataclasses import dataclass
 from typing import Literal
 
+from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import BaseSpec
 
 
@@ -41,9 +42,12 @@ class SlopeSpec(BaseSpec):
         linewidth: An optional line width. ``None`` uses the
             backend's default width.
         linestyle: The line's dash style.
+        alpha: An optional line opacity, in ``[0, 1]``. ``None`` uses
+            the backend's default (usually fully opaque).
 
     Raises:
-        ValueError: if ``color`` is not a valid color.
+        ValueError: if ``alpha`` is not in ``[0, 1]``, or ``color``
+            is not a valid color.
 
     Example:
         ```pycon
@@ -61,6 +65,11 @@ class SlopeSpec(BaseSpec):
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
     linewidth: float | None = None
     linestyle: Literal["solid", "dashed", "dotted", "dashdot"] = "solid"
+    alpha: float | None = None
 
     def __post_init__(self) -> None:
+        if self.alpha is not None and not 0.0 <= self.alpha <= 1.0:
+            msg = f"alpha must be in the range [0, 1], but received {self.alpha}"
+            raise InvalidSpecError(msg)
         self._normalize_color()
+        self._validate_base()

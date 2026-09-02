@@ -75,3 +75,4 @@ class GridSpec(BaseSpec):
         if not isinstance(self.ncols, Integral) or isinstance(self.ncols, bool) or self.ncols <= 0:
             msg = f"ncols must be a positive integer, but received {self.ncols}"
             raise InvalidSpecError(msg)
+        self._validate_base()

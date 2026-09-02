@@ -15,15 +15,36 @@ def test_scatter_spec_defaults() -> None:
     assert spec.label is None
     assert spec.color is None
     assert spec.size is None
+    assert spec.edgecolor is None
+    assert spec.alpha is None
 
 
 def test_scatter_spec_custom() -> None:
     spec = ScatterSpec(
-        x=np.arange(10), y=np.arange(10), label="my-scatter", color="#ff0000", size=10.0
+        x=np.arange(10),
+        y=np.arange(10),
+        label="my-scatter",
+        color="#ff0000",
+        size=10.0,
+        edgecolor="#000000",
+        alpha=0.5,
     )
     assert spec.label == "my-scatter"
     assert spec.color == (1.0, 0.0, 0.0, 1.0)
     assert spec.size == 10.0
+    assert spec.edgecolor == (0.0, 0.0, 0.0, 1.0)
+    assert spec.alpha == 0.5
+
+
+@pytest.mark.parametrize("alpha", [2.0, -0.1])
+def test_scatter_spec_invalid_alpha(alpha: float) -> None:
+    with pytest.raises(ValueError, match="alpha must be in the range"):
+        ScatterSpec(x=np.arange(10), y=np.arange(10), alpha=alpha)
+
+
+def test_scatter_spec_invalid_edgecolor() -> None:
+    with pytest.raises(ValueError, match="Invalid color"):
+        ScatterSpec(x=np.arange(10), y=np.arange(10), edgecolor="not-a-color")
 
 
 def test_scatter_spec_empty_arrays() -> None:

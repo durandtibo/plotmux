@@ -40,6 +40,7 @@ def render_slope(ax: Axes, spec: SlopeSpec, **kwargs: Any) -> Axes:
         "color": spec.color,
         "linewidth": spec.linewidth,
         "linestyle": spec.linestyle,
+        "alpha": spec.alpha,
         **kwargs,
     }
     ax.axline((0, spec.intercept), slope=spec.gradient, **style)

@@ -56,6 +56,7 @@ class LayerSpec(BaseSpec):
             msg = "layers must not contain a LayerSpec (nesting is not supported)"
             raise InvalidSpecError(msg)
         object.__setattr__(self, "layers", tuple(_assign_default_colors(self.layers)))
+        self._validate_base()
 
 
 def _assign_default_colors(layers: tuple[BaseSpec, ...]) -> tuple[BaseSpec, ...]:

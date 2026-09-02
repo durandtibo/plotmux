@@ -47,6 +47,8 @@ def render_cdf(spec: CdfSpec, **kwargs: Any) -> xy.Chart:
         if spec.color is None
         else rgba_to_xy(cast("tuple[float, float, float, float]", spec.color))
     )
+    if spec.alpha is not None:
+        kwargs.setdefault("opacity", spec.alpha)
     return xy.line_chart(
         xy.line(x, y, name=spec.label, color=color, **kwargs),
     )

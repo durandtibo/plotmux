@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import altair as alt
 
-from plotmux.backends.altair.style import prepare_color, rgba_to_altair
+from plotmux.backends.altair.style import STROKE_DASH, prepare_color, rgba_to_altair
 
 if TYPE_CHECKING:
     from plotmux.specs import LineSpec
@@ -39,6 +39,12 @@ def render_line(spec: LineSpec, **kwargs: Any) -> alt.Chart:
         if spec.color is None
         else rgba_to_altair(cast("tuple[float, float, float, float]", spec.color))
     )
+    if spec.alpha is not None:
+        kwargs.setdefault("opacity", spec.alpha)
+    if spec.linewidth is not None:
+        kwargs.setdefault("strokeWidth", spec.linewidth)
+    if spec.linestyle in STROKE_DASH:
+        kwargs.setdefault("strokeDash", STROKE_DASH[spec.linestyle])
     data, encoding_color = prepare_color(data, spec.label, color, kwargs)
     chart = alt.Chart(alt.Data(values=data)).mark_line(**kwargs).encode(x="x:Q", y="y:Q")
     if encoding_color is not None:

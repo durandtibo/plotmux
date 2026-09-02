@@ -21,6 +21,14 @@ class FakeColorSpec(BaseSpec):
         self._normalize_color()
 
 
+@dataclass(frozen=True)
+class FakeValidatedSpec(BaseSpec):
+    value: int = 0
+
+    def __post_init__(self) -> None:
+        self._validate_base()
+
+
 ###############################
 #     Tests for BaseSpec     #
 ###############################
@@ -44,6 +52,9 @@ def test_base_spec_default_style() -> None:
     assert spec.ylabel is None
     assert spec.xscale == "linear"
     assert spec.yscale == "linear"
+    assert spec.background_color is None
+    assert spec.ymin is None
+    assert spec.ymax is None
 
 
 def test_base_spec_custom_style() -> None:
@@ -129,3 +140,29 @@ def test_check_equal_length_non_1d_raises() -> None:
     # InvalidSpecError here.
     with pytest.raises(ValueError, match="x and y must be 1-dimensional"):
         _check_equal_length(np.zeros((5, 3)), np.arange(5))
+
+
+##########################################
+#     Tests for BaseSpec._validate_base     #
+##########################################
+
+
+def test_validate_base_normalizes_background_color() -> None:
+    spec = FakeValidatedSpec(background_color="#ff0000")
+    assert spec.background_color == (1.0, 0.0, 0.0, 1.0)
+
+
+def test_validate_base_invalid_background_color_raises() -> None:
+    with pytest.raises(ValueError, match="Invalid color"):
+        FakeValidatedSpec(background_color="not-a-color")
+
+
+def test_validate_base_ymin_ymax_ok() -> None:
+    spec = FakeValidatedSpec(ymin=0, ymax=10)
+    assert spec.ymin == 0
+    assert spec.ymax == 10
+
+
+def test_validate_base_ymin_greater_than_ymax_raises() -> None:
+    with pytest.raises(ValueError, match="ymin must not be greater than ymax"):
+        FakeValidatedSpec(ymin=10, ymax=0)

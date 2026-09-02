@@ -33,6 +33,8 @@ def render_bar(spec: BarSpec, **kwargs: Any) -> xy.Chart:
         else rgba_to_xy(cast("tuple[float, float, float, float]", spec.color))
     )
     kwargs.setdefault("width", spec.width)
+    if spec.alpha is not None:
+        kwargs.setdefault("opacity", spec.alpha)
     return xy.bar_chart(
         xy.bar(spec.x, spec.y, name=spec.label, color=color, **kwargs),
     )

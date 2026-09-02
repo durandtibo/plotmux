@@ -20,15 +20,23 @@ def render_line(ax: Axes, spec: LineSpec, **kwargs: Any) -> Axes:
         spec: The line spec to render.
         **kwargs: Additional keyword arguments forwarded to
             ``Axes.plot``. Overrides the spec-derived ``label``/
-            ``color`` when it repeats one of those keys (e.g. a
-            shared ``color=`` passed to ``plotmux.layer``/
-            ``plotmux.grid``), instead of raising a ``TypeError`` for
-            "multiple values for keyword argument".
+            ``color``/``alpha``/``linewidth``/``linestyle`` when it
+            repeats one of those keys (e.g. a shared ``color=``
+            passed to ``plotmux.layer``/``plotmux.grid``), instead of
+            raising a ``TypeError`` for "multiple values for keyword
+            argument".
 
     Returns:
         The ``Axes`` the line was drawn onto.
     """
-    style = {"label": spec.label, "color": spec.color, **kwargs}
+    style = {
+        "label": spec.label,
+        "color": spec.color,
+        "alpha": spec.alpha,
+        "linewidth": spec.linewidth,
+        "linestyle": spec.linestyle,
+        **kwargs,
+    }
     ax.plot(spec.x, spec.y, **style)
     if spec.label is not None:
         ax.legend()

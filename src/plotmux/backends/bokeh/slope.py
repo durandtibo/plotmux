@@ -54,6 +54,8 @@ def render_slope(fig: figure, spec: SlopeSpec, **kwargs: Any) -> figure:
         style["line_color"] = color
     if spec.linewidth is not None:
         style["line_width"] = spec.linewidth
+    if spec.alpha is not None:
+        style["line_alpha"] = spec.alpha
     style.update(kwargs)
     # bokeh's ``Slope`` has no ``label``/legend integration of its own
     # (unlike a glyph's ``legend_label``): it is an annotation, not a

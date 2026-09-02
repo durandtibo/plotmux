@@ -11,7 +11,7 @@ from __future__ import annotations
 __all__ = ["apply_common_style", "attach_repr_png"]
 
 import io
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
@@ -25,11 +25,12 @@ if TYPE_CHECKING:
 def apply_common_style(ax: Axes, spec: BaseSpec) -> Axes:
     r"""Apply the common figure-level style fields onto an ``Axes``.
 
-    Applies ``title``/``xlabel``/``ylabel``/``xscale``/``yscale`` from
-    ``spec`` (defined on ``BaseSpec``, shared by every chart type).
-    Called once per backend, right after the chart-specific renderer
-    has drawn its mark, so a new chart type gets title/label/scale
-    support for free.
+    Applies ``title``/``xlabel``/``ylabel``/``xscale``/``yscale``/
+    ``background_color``/``ymin``/``ymax`` from ``spec`` (defined on
+    ``BaseSpec``, shared by every chart type). Called once per
+    backend, right after the chart-specific renderer has drawn its
+    mark, so a new chart type gets title/label/scale support for
+    free.
 
     Args:
         ax: The matplotlib ``Axes`` to style.
@@ -46,6 +47,15 @@ def apply_common_style(ax: Axes, spec: BaseSpec) -> Axes:
         ax.set_ylabel(spec.ylabel)
     ax.set_xscale(spec.xscale)
     ax.set_yscale(spec.yscale)
+    if spec.background_color is not None:
+        # ``spec.background_color``, once set, is already a canonical RGBA
+        # tuple: it went through ``parse_color`` in ``BaseSpec._validate_base``.
+        # matplotlib's ``Axes.set_facecolor`` accepts that tuple directly, no
+        # conversion helper needed (unlike bokeh/altair/xy's native color
+        # representations).
+        ax.set_facecolor(cast("tuple[float, float, float, float]", spec.background_color))
+    if spec.ymin is not None or spec.ymax is not None:
+        ax.set_ylim(bottom=spec.ymin, top=spec.ymax)
     return ax
 
 
