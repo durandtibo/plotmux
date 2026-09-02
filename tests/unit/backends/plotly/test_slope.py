@@ -55,3 +55,10 @@ def test_render_slope_label_shows_legend() -> None:
     trace = fig.data[0]
     assert trace.name == "trend"
     assert trace.showlegend is True
+
+
+@plotly_available
+def test_render_slope_alpha() -> None:
+    spec = SlopeSpec(gradient=2, intercept=10, alpha=0.5)
+    fig = render_slope(go.Figure(), spec, xrange=(0.0, 10.0))
+    assert fig.data[0].opacity == 0.5

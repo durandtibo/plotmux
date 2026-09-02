@@ -87,6 +87,21 @@ def test_get_backend_missing_lists_available() -> None:
         get_backend("missing")
 
 
+def test_get_backend_lazily_imports_builtin_backend_module() -> None:
+    # A built-in backend name (e.g. "matplotlib") not yet in ``_REGISTRY``
+    # is resolved by importing its submodule on first request, rather than
+    # raising immediately. ``importlib.import_module`` is mocked (instead
+    # of actually popping the already-imported submodule from
+    # ``_REGISTRY``/``sys.modules``) since re-importing an already-imported
+    # module is a no-op that would not re-run its registration side effect.
+    _REGISTRY.pop("matplotlib", None)
+    with patch("plotmux.backends.registry.importlib.import_module") as mock_import:
+        mock_import.side_effect = lambda _name: register_backend(FakeBackend())
+        backend = get_backend("matplotlib")
+    mock_import.assert_called_once_with("plotmux.backends.matplotlib")
+    assert isinstance(backend, FakeBackend)
+
+
 ##############################################
 #     Tests for load_entry_point_backends     #
 ##############################################

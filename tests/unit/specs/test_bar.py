@@ -89,3 +89,9 @@ def test_bar_spec_mismatched_length() -> None:
 def test_bar_spec_invalid_width(width: float) -> None:
     with pytest.raises(ValueError, match="width must be a positive number"):
         BarSpec(x=np.arange(10), y=np.arange(10), width=width)
+
+
+@pytest.mark.parametrize("alpha", [2.0, -0.1])
+def test_bar_spec_invalid_alpha(alpha: float) -> None:
+    with pytest.raises(ValueError, match="alpha must be in the range"):
+        BarSpec(x=np.arange(10), y=np.arange(10), alpha=alpha)

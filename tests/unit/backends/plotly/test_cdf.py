@@ -50,3 +50,10 @@ def test_render_cdf_color() -> None:
     spec = CdfSpec(values=np.arange(101), nbins=10, color="red")
     fig = render_cdf(go.Figure(), spec)
     assert fig.data[0].line.color is not None
+
+
+@plotly_available
+def test_render_cdf_alpha() -> None:
+    spec = CdfSpec(values=np.arange(101), nbins=10, alpha=0.5)
+    fig = render_cdf(go.Figure(), spec)
+    assert fig.data[0].opacity == 0.5

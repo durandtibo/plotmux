@@ -57,3 +57,17 @@ def test_render_line_forwards_kwargs() -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10))
     fig = render_line(figure(), spec, line_width=5.0)
     assert isinstance(fig, figure)
+
+
+@bokeh_available
+def test_render_line_alpha() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), alpha=0.5)
+    fig = render_line(figure(), spec)
+    assert isinstance(fig, figure)
+
+
+@bokeh_available
+def test_render_line_linewidth() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), linewidth=3.0)
+    fig = render_line(figure(), spec)
+    assert isinstance(fig, figure)

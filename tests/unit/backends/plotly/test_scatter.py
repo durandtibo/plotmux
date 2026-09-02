@@ -59,3 +59,10 @@ def test_render_scatter_label_shows_legend() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), label="my-scatter")
     fig = render_scatter(go.Figure(), spec)
     assert fig.data[0].name == "my-scatter"
+
+
+@plotly_available
+def test_render_scatter_alpha() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), alpha=0.5)
+    fig = render_scatter(go.Figure(), spec)
+    assert fig.data[0].opacity == 0.5

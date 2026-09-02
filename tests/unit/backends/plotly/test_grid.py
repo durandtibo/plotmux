@@ -112,3 +112,39 @@ def test_render_grid_unsupported_spec_raises() -> None:
     object.__setattr__(spec, "title", None)
     with pytest.raises(NotImplementedError, match="No plotly renderer registered"):
         render_grid(spec)
+
+
+@plotly_available
+def test_render_grid_cell_labels() -> None:
+    spec = GridSpec(
+        cells=(HistogramSpec(values=np.arange(101), bins=10, xlabel="x", ylabel="y"),),
+        ncols=1,
+    )
+    fig = render_grid(spec)
+    assert fig.layout.xaxis.title.text == "x"
+    assert fig.layout.yaxis.title.text == "y"
+
+
+@plotly_available
+def test_render_grid_no_cell_labels() -> None:
+    spec = GridSpec(cells=(HistogramSpec(values=np.arange(101), bins=10),), ncols=1)
+    fig = render_grid(spec)
+    assert fig.layout.xaxis.title.text is None
+    assert fig.layout.yaxis.title.text is None
+
+
+@plotly_available
+def test_render_grid_cell_ymin_ymax() -> None:
+    spec = GridSpec(
+        cells=(HistogramSpec(values=np.arange(101), bins=10, ymin=0.0, ymax=5.0),),
+        ncols=1,
+    )
+    fig = render_grid(spec)
+    assert tuple(fig.layout.yaxis.range) == (0.0, 5.0)
+
+
+@plotly_available
+def test_render_grid_cell_no_ymin_ymax() -> None:
+    spec = GridSpec(cells=(HistogramSpec(values=np.arange(101), bins=10),), ncols=1)
+    fig = render_grid(spec)
+    assert fig.layout.yaxis.range is None
