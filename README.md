@@ -73,9 +73,10 @@ every time they change visualization libraries.
 
 ## Backends
 
-plotmux ships with four built-in backends, each behind its own optional dependency:
+plotmux ships with five built-in backends, each behind its own optional dependency:
 [Matplotlib](https://matplotlib.org/) (`matplotlib`, the default), [`xy`](https://github.com/durandtibo/xy),
-[Bokeh](https://bokeh.org/), and [Altair](https://altair-viz.github.io/). A third-party package can
+[Bokeh](https://bokeh.org/), [Altair](https://altair-viz.github.io/), and [Plotly](https://plotly.com/python/).
+A third-party package can
 also register its own backend without a change to plotmux's source, via the `plotmux.backends`
 entry-point group. See the
 [Choosing a Backend](https://durandtibo.github.io/plotmux/uguide/backends/) guide for the full list,

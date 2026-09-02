@@ -7,7 +7,7 @@ default backend, and how to add a new one.
 
 A backend turns a backend-agnostic spec into a plotting library's native figure object (e.g. a
 Matplotlib `Figure`), and knows how to export that native object to a file. `plotmux` ships with
-four built-in backends:
+five built-in backends:
 
 - `"matplotlib"`: renders with [Matplotlib](https://matplotlib.org/) (the default). Requires the
   `matplotlib` extra.
@@ -20,6 +20,9 @@ four built-in backends:
   `altair` extra. Only the `"html"`/`"json"` export formats are supported: static image export
   (`png`/`svg`/`pdf`) would additionally require the `vl-convert-python` package, which is outside
   the scope of a `pip install altair`.
+- `"plotly"`: renders with [Plotly](https://plotly.com/python/). Requires the `plotly` extra. Only
+  the `"html"`/`"json"` export formats are supported: static image export (`png`/`svg`/`pdf`) would
+  additionally require the `kaleido` package, which is outside the scope of a `pip install plotly`.
 
 A backend is only registered if its underlying plotting library is installed, so importing
 `plotmux` never fails because a backend's dependency is missing; only calling a plotting function
@@ -88,7 +91,7 @@ plotting call, at zero import cost:
 >>> plotmux.set_backend("not_a_backend")  # doctest: +SKIP
 Traceback (most recent call last):
     ...
-RuntimeError: Unknown backend 'not_a_backend'. Known backends: ['altair', 'bokeh', 'matplotlib', 'xy']
+RuntimeError: Unknown backend 'not_a_backend'. Known backends: ['altair', 'bokeh', 'matplotlib', 'plotly', 'xy']
 
 ```
 
@@ -136,8 +139,8 @@ register_backend(MyBackend())
 ```
 
 `plotmux` imports every module advertised this way once, when it starts up (`import plotmux`).
-Built-in backends, by contrast, are registered lazily: none of the four (`matplotlib`, `xy`,
-`bokeh`, `altair`) is imported at `import plotmux` time, only the first time that name is actually
+Built-in backends, by contrast, are registered lazily: none of the five (`matplotlib`, `xy`,
+`bokeh`, `altair`, `plotly`) is imported at `import plotmux` time, only the first time that name is actually
 requested (e.g. via `backend="matplotlib"` or `plotmux.set_backend("matplotlib")`). So a
 third-party plugin module runs before any built-in backend has necessarily registered itself, and
 can freely reuse a built-in name — the last one registered under a given name wins.

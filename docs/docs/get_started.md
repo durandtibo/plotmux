@@ -25,7 +25,7 @@ uv pip install plotmux[altair]
 **Install with all optional dependencies:**
 
 ```shell
-uv pip install plotmux[matplotlib,xy,bokeh,altair]
+uv pip install plotmux[matplotlib,xy,bokeh,altair,plotly]
 ```
 
 ## Using pip
@@ -43,6 +43,7 @@ pip install plotmux[matplotlib]
 pip install plotmux[xy]
 pip install plotmux[bokeh]
 pip install plotmux[altair]
+pip install plotmux[plotly]
 ```
 
 ## Installing from source

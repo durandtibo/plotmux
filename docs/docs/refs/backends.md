@@ -9,3 +9,5 @@
 ::: plotmux.backends.bokeh.backend
 
 ::: plotmux.backends.altair.backend
+
+::: plotmux.backends.plotly.backend

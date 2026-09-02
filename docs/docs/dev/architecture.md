@@ -8,7 +8,7 @@ full, up-to-date design document.
 
 `plotmux` is a lightweight abstraction layer over Python's plotting libraries: users write plotting
 code once against `plotmux`'s unified API and choose the rendering backend (`matplotlib`, `xy`,
-`bokeh`, `altair`, ...) at runtime. Swapping backends should be a one-line configuration change, and
+`bokeh`, `altair`, `plotly`, ...) at runtime. Swapping backends should be a one-line configuration change, and
 adding a new backend or chart type should not require changing existing code.
 
 The unified API targets a small set of generic, broadly-useful chart types and figure-level concerns:
@@ -41,7 +41,8 @@ src/plotmux/
 │   ├── cdf.py                    # compute_cdf_steps(): binned empirical CDF step vertices
 │   └── imports/                  # one module per optional backend dependency
 │                                  # (is_matplotlib_available(), is_xy_available(),
-│                                  #  is_bokeh_available(), is_altair_available())
+│                                  #  is_bokeh_available(), is_altair_available(),
+│                                  #  is_plotly_available())
 ├── colors/
 │   ├── parser.py                 # parse_color(): canonical RGBA normalization
 │   ├── palette.py                # PRIMARY/SECONDARY/TERTIARY, DEFAULT_PALETTE
@@ -61,7 +62,8 @@ src/plotmux/
 │   ├── matplotlib/                # MatplotlibBackend
 │   ├── xy/                        # XyBackend
 │   ├── bokeh/                     # BokehBackend
-│   └── altair/                    # AltairBackend
+│   ├── altair/                    # AltairBackend
+│   └── plotly/                    # PlotlyBackend
 ├── figure.py                     # Figure wrapper
 ├── export.py                      # save(figure, path)
 ├── config.py                      # default backend + context manager
@@ -70,7 +72,7 @@ src/plotmux/
 └── testing/fixtures.py            # pytest fixtures for downstream users
 ```
 
-Every backend (`matplotlib`, `xy`, `bokeh`, `altair`) implements all seven specs, including
+Every backend (`matplotlib`, `xy`, `bokeh`, `altair`, `plotly`) implements all seven specs, including
 `grid.py` and `cdf.py`.
 
 `specs/<type>.py` plus one `_RENDERERS` entry per backend is the shape a new, similarly generic
@@ -101,21 +103,21 @@ figure.py           Figure(spec, backend_name, native)
 user code           fig.show() / fig.save("out.png") / fig.to_native()
 ```
 
-Backend registration is lazy, not eager: `plotmux/__init__.py` does *not* import any of the four
-built-in backend subpackages (`matplotlib`, `xy`, `bokeh`, `altair`) at `import plotmux` time.
-Instead, `backends/registry.py` holds a `{name: module path}` map, and `get_backend(name)` imports
-the matching submodule the first time that name is actually requested (e.g. via
+Backend registration is lazy, not eager: `plotmux/__init__.py` does *not* import any of the five
+built-in backend subpackages (`matplotlib`, `xy`, `bokeh`, `altair`, `plotly`) at `import plotmux`
+time. Instead, `backends/registry.py` holds a `{name: module path}` map, and `get_backend(name)`
+imports the matching submodule the first time that name is actually requested (e.g. via
 `backend="matplotlib"`, or the first `plotmux.hist(...)` call after `plotmux.set_backend("xy")`);
 each subpackage's `__init__.py` still calls `register_backend(...)` as an import-time side effect,
 guarded by that library's `is_*_available()` check, only now triggered later. This means a process
-that only ever renders with `matplotlib` never imports `xy`, `bokeh`, or `altair` (or their
-underlying libraries) even if all three happen to be installed alongside it.
+that only ever renders with `matplotlib` never imports `xy`, `bokeh`, `altair`, or `plotly` (or
+their underlying libraries) even if all four happen to be installed alongside it.
 
 `plotmux/__init__.py` additionally calls `plotmux.backends.registry.load_entry_point_backends()`
 once, at import time: this imports every third-party backend advertised via the `plotmux.backends`
 entry-point group (see
 [Adding a Third-Party Backend](../uguide/backends.md#adding-a-third-party-backend)). Since none of
-the four built-ins are imported yet at that point either, a third-party plugin can freely register
+the five built-ins are imported yet at that point either, a third-party plugin can freely register
 under any name, built-in or not — whichever registers last for a given name wins. A plugin module
 that fails to import because its own underlying library isn't installed is silently skipped
 (`ImportError`); any other exception it raises while loading is caught and turned into a
@@ -200,7 +202,7 @@ them as parameters.
 `LayerSpec.__post_init__` also assigns successive `DEFAULT_PALETTE` entries (see
 [Color Parsing](#color-parsing)) to any child spec whose own `color` field is left `None`,
 skipping children that already set one explicitly. Matplotlib gets distinct per-child colors for
-free from its own `Axes` color cycle when children share an axes, but `xy`/`bokeh`/`altair` do
+free from its own `Axes` color cycle when children share an axes, but `xy`/`bokeh`/`altair`/`plotly` do
 not, so this assignment happens once, backend-agnostically, at the spec layer
 (`specs/layer.py::_assign_default_colors`), rather than every backend needing its own workaround.
 `GridSpec` gets no such assignment: each cell is visually independent, so there is no
@@ -241,7 +243,7 @@ internally.
 - `coola`'s optional-dependency pattern (`is_*_available`, `*_available`, `raise_*_missing_error`)
   is reused as-is by `plotmux.utils.imports`. New backends follow the same pattern instead of
   introducing a new one.
-- `matplotlib`, `xy`, `bokeh`, and `altair` are optional extras (`xy` is further gated to
+- `matplotlib`, `xy`, `bokeh`, `altair`, and `plotly` are optional extras (`xy` is further gated to
   `python_version >= '3.11'` in its extra marker). Only `numpy` and `coola` are hard dependencies,
   so the core package (specs, registry, config, public API) must import cleanly with no plotting
   library installed.
