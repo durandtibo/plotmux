@@ -1038,13 +1038,24 @@ should be driven by actual user requests, not by this list.
   (matplotlib, xy, bokeh, altair) to earn its keep as backend #5, and
   should it ship as an external plugin rather than a backend in this
   repository (see [3.4](#34-lazy-registration-and-third-party-plugins))?
-- Histogram/cdf/line/scatter/layer/grid were picked as "generic and
-  broadly useful" (see [1. Goal](#1-goal)), but that bar isn't written
-  down precisely. A bar chart or a box plot both have a plausible
-  claim to it: should the next chart-type addition be decided case
-  by case as demand shows up, or does the project need an explicit
-  checklist (e.g. "used across most plotting libraries" + "no natural
-  encoding into an existing spec") before adding a seventh spec?
+- Histogram/cdf/line/scatter/bar/layer/grid were picked as "generic
+  and broadly useful" (see [1. Goal](#1-goal)), but that bar isn't
+  written down precisely. `BarSpec` cleared it informally (a bar chart
+  is in every one of the four backends' own plot catalogs, and has no
+  natural encoding into an existing spec), but a box plot has a
+  similarly plausible claim: should the next chart-type addition still
+  be decided case by case as demand shows up, or does the project need
+  an explicit, written-down checklist before adding an eighth spec?
+- `BarSpec.width` (a bar width in `x` data units, matching
+  matplotlib's/bokeh's own `width`) has no altair equivalent: altair's
+  `render_bar` deliberately does not forward it (see
+  `plotmux.backends.altair.bar`), since Vega-Lite derives a bar mark's
+  rendered width from its scale rather than accepting a data-unit
+  width at construction time. Is a silently-ignored `width` on that
+  one backend an acceptable, permanent asymmetry (bokeh's HTML-only
+  export and xy's HTML-only grid are already precedent for
+  backend-specific gaps), or does this need a warning, the same
+  open question as the `LayerSpec` child-compatibility one above?
 
 ## 8. Candidate future work
 
@@ -1054,8 +1065,9 @@ once picked up.
 - A fifth backend, most likely `plotly`, evaluated per
   [6](#6-candidate-future-backends) and the corresponding open
   question in [7](#7-open-questions).
-- A seventh chart type (e.g. bar chart), once one clears the "generic
-  and broadly useful" bar discussed in [7](#7-open-questions).
+- An eighth chart type (e.g. a box plot), once one clears the "generic
+  and broadly useful" bar discussed in [7](#7-open-questions). `BarSpec`
+  was the seventh, already implemented (see [3.2](#32-package-layout)).
 - Extending default-palette assignment (currently `LayerSpec`-only,
   see [4.9.1](#491-predefined-colors)) to any future multi-series
   spec, and deciding whether other default style belongs on
