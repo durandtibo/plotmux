@@ -6,7 +6,13 @@ bokeh, altair), per-mark color, common axis styling, layering, grid
 layout, a `plotmux.exceptions` hierarchy, export, a predefined-colors
 package, lazy per-backend imports, and a third-party backend plugin
 mechanism are all in place. See [7](#7-open-questions) for what's
-still unresolved and [8](#8-candidate-future-work) for what's next.
+still unresolved and [8](#8-candidate-future-work) for what's next,
+including [8.1](#81-case-study-reproducing-bokehs-slope-example)'s
+gap analysis against a concrete external example (a slope annotation,
+per-mark alpha, separate marker fill/edge color, line width/dash
+style, figure background color, explicit y-axis bounds) that the
+unified API cannot reproduce identically across all four backends
+today.
 Date: 2026-09-01.
 
 ## 1. Goal
@@ -1075,3 +1081,86 @@ once picked up.
 - `LayerSpec` child-compatibility warnings (e.g. mismatched
   `xscale`), if real usage shows this is a common mistake worth
   surfacing early rather than a silent axis-level override.
+- The additions identified in [8.1](#81-case-study-reproducing-bokehs-slope-example):
+  a `SlopeSpec` annotation, per-mark `alpha`, a separate marker
+  edge/fill color, `linewidth`/`linestyle` on line-drawing specs, a
+  figure background color, and explicit `ymin`/`ymax` axis bounds.
+
+### 8.1 Case study: reproducing bokeh's slope example
+
+Checked against
+[bokeh's `slope` annotation example](https://docs.bokeh.org/en/latest/docs/examples/basic/annotations/slope.html)
+(scatter markers with a separate yellow fill / black edge, drawn with
+`alpha=0.8`, plus a dashed blue reference line of gradient 2 and
+y-intercept 10 at `line_width=4`, on a figure with a light-gray
+background and `y_range.start = 0`) to see whether it is reproducible
+through plotmux's unified API, unchanged, on all four backends. It is
+**not**, today. Gaps, in order of how much they'd cost to close:
+
+- **No slope/abline annotation at all.** There is no spec for "a line
+  defined by `(gradient, intercept)` spanning the current axes",
+  distinct from `LineSpec` (which is data-bound: it needs `x`/`y`
+  arrays, not a closed-form line). Bokeh has `bokeh.models.Slope`
+  natively; matplotlib has `Axes.axline`; altair needs a
+  `mark_rule`/`transform_calculate` construction; xy has no native
+  primitive and would need the line's two endpoint coordinates
+  computed from the current axes range. This is the one gap that
+  can't be worked around through `**kwargs` on an existing spec — it
+  needs a new `specs/slope.py::SlopeSpec(gradient, intercept, color=None,
+  linewidth=None, linestyle="solid")` plus one `_RENDERERS` entry per
+  backend, the same shape as every other chart-type addition (see
+  [5](#5-why-this-shape)). Unlike `LayerSpec`/`GridSpec`, it draws
+  without needing any data of its own, so it would typically appear
+  as a `layer()` child alongside a data-bound spec (e.g.
+  `plotmux.layer(plotmux.scatter(...), SlopeSpec(...))`), which the
+  existing `layer()` mechanism already supports once the spec exists.
+- **No separate marker fill/edge color.** `ScatterSpec.color` maps to
+  both `fill_color` and `line_color` in every backend's renderer (see
+  e.g. `backends/bokeh/scatter.py`); the bokeh example wants a yellow
+  fill with a black edge. `render_scatter` in bokeh already hardcodes
+  `line_color=color`, so this can't be worked around through the
+  escape-hatch `**kwargs` either (passing `line_color=` would collide
+  with that hardcoded keyword). Needs a second, optional color field,
+  e.g. `ScatterSpec.edgecolor`, normalized through the same
+  `_normalize_color` machinery as `color`.
+- **No `alpha`.** No spec exposes an opacity field; matplotlib's and
+  xy's scatter renderers happen to forward unrecognized `**kwargs`
+  (so `alpha=` slips through today, backend-specific and undocumented),
+  but bokeh's and altair's do not accept it the same way, so nothing
+  currently reproduces `alpha=0.8` identically across all four. Needs
+  an `alpha: float | None` field, most naturally on `BaseSpec` next to
+  `color`-carrying fields (or on each color-carrying spec, mirroring
+  how `color` itself is placed per spec rather than on `BaseSpec`; see
+  [4.9](#49-specifying-colors-across-backends)).
+- **No line width or dash style.** `LineSpec` (and the not-yet-existing
+  `SlopeSpec`) have no `linewidth`/`linestyle` fields; the example's
+  `line_width=4, line_dash='dashed'` has no portable way to be
+  expressed today. Needs `linewidth: float | None` and
+  `linestyle: Literal["solid", "dashed", "dotted", "dashdot"] | None`
+  fields, translated per backend the same way `xscale`/`yscale` are
+  (matplotlib: `linewidth`/`linestyle` passthrough; bokeh:
+  `line_width`/`line_dash`; altair: `strokeWidth`/`strokeDash`; xy:
+  its own line-style parameter).
+- **No figure background color.** The example sets
+  `background_fill_color="#fafafa"`. This is a `BaseSpec`-level,
+  figure-wide concern like `title`, not per-mark, and has no
+  representation today. Needs a `BaseSpec.background_color` field,
+  applied once in `apply_common_style` alongside title/labels/scale.
+- **No explicit y-axis start/end.** `HistogramSpec.xmin`/`xmax` (via
+  `find_range`, see [4.1](#41-basespec)) is the only axis-bound
+  control that exists, and it is x-only and histogram-only; bokeh's
+  CDF renderer separately hardcodes its own `y_range = Range1d(0, 1)`
+  (`backends/bokeh/cdf.py`) rather than going through a general
+  mechanism. The example's `p.y_range.start = 0` has no general
+  equivalent. Needs `ymin`/`ymax` fields, most naturally promoted to
+  `BaseSpec` (reusing `find_range`'s quantile-or-explicit convention)
+  now that a second use case wants them, rather than staying
+  histogram-specific `xmin`/`xmax`.
+
+None of this is scheduled; it is written down here as the precise,
+verified list of what plotmux would need in order to claim
+"reproduces bokeh's slope example, unchanged, on all four backends,"
+so the gap can be closed deliberately (new spec + fields, same
+pattern as every other addition) rather than piecemeal through
+backend-specific `**kwargs`, which cannot give the same call the same
+look on all four backends.
