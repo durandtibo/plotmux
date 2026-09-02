@@ -42,7 +42,7 @@ def test_base_spec_is_dataclass() -> None:
 def test_base_spec_is_frozen() -> None:
     spec = FakeSpec(value=42)
     with pytest.raises(AttributeError):
-        spec.value = 43
+        spec.value = 43  # type: ignore[misc]
 
 
 def test_base_spec_default_style() -> None:
@@ -67,12 +67,12 @@ def test_base_spec_custom_style() -> None:
 
 
 @pytest.mark.parametrize("scale", ["linear", "log"])
-def test_base_spec_xscale_values(scale: str) -> None:
+def test_base_spec_xscale_values(scale: Literal["linear", "log"]) -> None:
     assert FakeSpec(xscale=scale).xscale == scale
 
 
 @pytest.mark.parametrize("scale", ["linear", "log"])
-def test_base_spec_yscale_values(scale: str) -> None:
+def test_base_spec_yscale_values(scale: Literal["linear", "log"]) -> None:
     assert FakeSpec(yscale=scale).yscale == scale
 
 

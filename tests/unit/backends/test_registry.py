@@ -7,9 +7,11 @@ import pytest
 
 from plotmux.backends.base import Backend
 from plotmux.backends.registry import (
+    _BUILTIN_BACKEND_MODULES,
     _REGISTRY,
     ENTRY_POINT_GROUP,
     get_backend,
+    known_backend_names,
     load_entry_point_backends,
     register_backend,
 )
@@ -104,6 +106,49 @@ def test_get_backend_lazily_imports_builtin_backend_module() -> None:
         backend = get_backend("matplotlib")
     mock_import.assert_called_once_with("plotmux.backends.matplotlib")
     assert isinstance(backend, FakeMatplotlibBackend)
+
+
+########################################
+#     Tests for known_backend_names     #
+########################################
+
+
+def test_known_backend_names_includes_builtins() -> None:
+    with patch("plotmux.backends.registry.entry_points", return_value=[]):
+        names = known_backend_names()
+    assert frozenset(_BUILTIN_BACKEND_MODULES) <= names
+
+
+def test_known_backend_names_includes_registered() -> None:
+    register_backend(FakeBackend())
+    with patch("plotmux.backends.registry.entry_points", return_value=[]):
+        names = known_backend_names()
+    assert "fake" in names
+
+
+def test_known_backend_names_includes_entry_point_advertised() -> None:
+    ep = Mock()
+    ep.name = "plugin_backend"
+    with patch("plotmux.backends.registry.entry_points", return_value=[ep]):
+        names = known_backend_names()
+    assert "plugin_backend" in names
+
+
+def test_known_backend_names_does_not_import_or_register_anything() -> None:
+    _REGISTRY.clear()
+    with (
+        patch("plotmux.backends.registry.entry_points", return_value=[]),
+        patch("plotmux.backends.registry.importlib.import_module") as mock_import,
+    ):
+        names = known_backend_names()
+    mock_import.assert_not_called()
+    assert "fake" not in names
+    assert _REGISTRY == {}
+
+
+def test_known_backend_names_returns_frozenset() -> None:
+    with patch("plotmux.backends.registry.entry_points", return_value=[]):
+        assert isinstance(known_backend_names(), frozenset)
 
 
 ##############################################

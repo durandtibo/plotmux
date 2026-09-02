@@ -55,6 +55,30 @@ def test_hist_default_kwargs() -> None:
 
 
 @matplotlib_available
+def test_hist_invalid_bins_raises() -> None:
+    with pytest.raises(ValueError, match="bins must be a positive integer"):
+        plotmux.hist(np.arange(101), bins=0)
+
+
+@matplotlib_available
+def test_hist_xmin_greater_than_xmax_raises() -> None:
+    with pytest.raises(ValueError, match="xmin must be strictly less than xmax"):
+        plotmux.hist(np.arange(101), xmin=10, xmax=0)
+
+
+@matplotlib_available
+def test_hist_ymin_greater_than_ymax_raises() -> None:
+    with pytest.raises(ValueError, match="ymin must not be greater than ymax"):
+        plotmux.hist(np.arange(101), ymin=10, ymax=0)
+
+
+@matplotlib_available
+def test_hist_invalid_background_color_raises() -> None:
+    with pytest.raises(ValueError, match="Invalid color"):
+        plotmux.hist(np.arange(101), background_color="not-a-color")
+
+
+@matplotlib_available
 def test_hist_common_style() -> None:
     fig = plotmux.hist(
         np.arange(101),
@@ -118,6 +142,12 @@ def test_cdf_default_kwargs() -> None:
 
 
 @matplotlib_available
+def test_cdf_invalid_nbins_raises() -> None:
+    with pytest.raises(ValueError, match="nbins must be a positive integer or None"):
+        plotmux.cdf(np.arange(101), nbins=0)
+
+
+@matplotlib_available
 def test_cdf_common_style() -> None:
     fig = plotmux.cdf(
         np.arange(101),
@@ -170,6 +200,18 @@ def test_line_mismatched_length_raises() -> None:
         plotmux.line(np.arange(10), np.arange(5))
 
 
+@matplotlib_available
+def test_line_invalid_alpha_raises() -> None:
+    with pytest.raises(ValueError, match="alpha must be in the range"):
+        plotmux.line(np.arange(10), np.arange(10), alpha=2.0)
+
+
+@matplotlib_available
+def test_line_invalid_color_raises() -> None:
+    with pytest.raises(ValueError, match="Invalid color"):
+        plotmux.line(np.arange(10), np.arange(10), color="not-a-color")
+
+
 #############################
 #     Tests for scatter     #
 #############################
@@ -205,6 +247,12 @@ def test_scatter_invalid_size_raises() -> None:
         plotmux.scatter(np.arange(10), np.arange(10), size=-1.0)
 
 
+@matplotlib_available
+def test_scatter_invalid_edgecolor_raises() -> None:
+    with pytest.raises(ValueError, match="Invalid color"):
+        plotmux.scatter(np.arange(10), np.arange(10), edgecolor="not-a-color")
+
+
 ########################
 #     Tests for bar     #
 ########################
@@ -232,6 +280,12 @@ def test_bar_unknown_backend_raises() -> None:
 def test_bar_mismatched_length_raises() -> None:
     with pytest.raises(ValueError, match="x and y must have the same length"):
         plotmux.bar(np.arange(10), np.arange(5))
+
+
+@matplotlib_available
+def test_bar_invalid_width_raises() -> None:
+    with pytest.raises(ValueError, match="width must be a positive number"):
+        plotmux.bar(np.arange(10), np.arange(10), width=0)
 
 
 @matplotlib_available
@@ -456,3 +510,23 @@ def test_grid_nested_grid_item_raises() -> None:
 def test_grid_title_becomes_suptitle() -> None:
     fig = plotmux.grid(LineSpec(x=np.arange(10), y=np.arange(10)), title="t")
     assert fig.native._suptitle.get_text() == "t"
+
+
+@matplotlib_available
+def test_grid_invalid_ncols_raises() -> None:
+    with pytest.raises(ValueError, match="ncols must be a positive integer"):
+        plotmux.grid(LineSpec(x=np.arange(10), y=np.arange(10)), ncols=0)
+
+
+@matplotlib_available
+def test_layer_ymin_greater_than_ymax_raises() -> None:
+    with pytest.raises(ValueError, match="ymin must not be greater than ymax"):
+        plotmux.layer(LineSpec(x=np.arange(10), y=np.arange(10)), ymin=10, ymax=0)
+
+
+@matplotlib_available
+def test_layer_invalid_background_color_raises() -> None:
+    with pytest.raises(ValueError, match="Invalid color"):
+        plotmux.layer(
+            LineSpec(x=np.arange(10), y=np.arange(10)), background_color="not-a-color"
+        )
