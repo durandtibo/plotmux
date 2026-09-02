@@ -12,7 +12,16 @@ from plotmux.backends.bokeh.cdf import render_cdf
 from plotmux.backends.bokeh.histogram import render_histogram
 from plotmux.backends.bokeh.line import render_line
 from plotmux.backends.bokeh.scatter import render_scatter
-from plotmux.specs import BarSpec, BaseSpec, CdfSpec, HistogramSpec, LineSpec, ScatterSpec
+from plotmux.backends.bokeh.slope import render_slope
+from plotmux.specs import (
+    BarSpec,
+    BaseSpec,
+    CdfSpec,
+    HistogramSpec,
+    LineSpec,
+    ScatterSpec,
+    SlopeSpec,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -31,6 +40,7 @@ _FIG_RENDERERS: dict[type[BaseSpec], Callable[..., figure]] = {
     CdfSpec: render_cdf,
     LineSpec: render_line,
     ScatterSpec: render_scatter,
+    SlopeSpec: render_slope,
 }
 
 

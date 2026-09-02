@@ -14,7 +14,14 @@ from plotmux.backends.xy.cdf import render_cdf
 from plotmux.backends.xy.histogram import render_histogram
 from plotmux.backends.xy.line import render_line
 from plotmux.backends.xy.scatter import render_scatter
-from plotmux.specs import BarSpec, BaseSpec, CdfSpec, HistogramSpec, LineSpec, ScatterSpec
+from plotmux.specs import (
+    BarSpec,
+    BaseSpec,
+    CdfSpec,
+    HistogramSpec,
+    LineSpec,
+    ScatterSpec,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable

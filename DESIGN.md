@@ -1,18 +1,23 @@
 # plotmux design
 
-Status: implemented. Core abstraction, seven chart specs (histogram,
-cdf, line, scatter, bar, layer, grid), four backends (matplotlib, xy,
-bokeh, altair), per-mark color, common axis styling, layering, grid
-layout, a `plotmux.exceptions` hierarchy, export, a predefined-colors
-package, lazy per-backend imports, and a third-party backend plugin
-mechanism are all in place. See [7](#7-open-questions) for what's
-still unresolved and [8](#8-candidate-future-work) for what's next,
-including [8.1](#81-case-study-reproducing-bokehs-slope-example)'s
-gap analysis against a concrete external example (a slope annotation,
-per-mark alpha, separate marker fill/edge color, line width/dash
-style, figure background color, explicit y-axis bounds) that the
-unified API cannot reproduce identically across all four backends
-today.
+Status: implemented. Core abstraction, eight chart specs (histogram,
+cdf, line, scatter, bar, slope, layer, grid), four backends
+(matplotlib, xy, bokeh, altair), per-mark color, common axis styling,
+layering, grid layout, a `plotmux.exceptions` hierarchy, export, a
+predefined-colors package, lazy per-backend imports, and a
+third-party backend plugin mechanism are all in place. `SlopeSpec` is
+the one deliberate exception to "every spec works on every backend":
+it is registered only on matplotlib and bokeh, the two backends with
+a native "line by slope, independent of data range" primitive (see
+[8.1](#81-case-study-reproducing-bokehs-slope-example)); `backend="altair"`/
+`backend="xy"` raise `UnsupportedSpecError` for it, by design. See
+[7](#7-open-questions) for what's still unresolved and
+[8](#8-candidate-future-work) for what's next, including
+[8.1](#81-case-study-reproducing-bokehs-slope-example)'s remaining
+gaps (per-mark alpha, separate marker fill/edge color, figure
+background color, explicit y-axis bounds, and altair/xy support for
+`SlopeSpec` itself) against reproducing bokeh's own slope example
+identically on all four backends.
 Date: 2026-09-01.
 
 ## 1. Goal
@@ -106,6 +111,8 @@ src/plotmux/
 │   ├── line.py                  # LineSpec
 │   ├── scatter.py                # ScatterSpec
 │   ├── bar.py                     # BarSpec
+│   ├── slope.py                   # SlopeSpec (gradient/intercept annotation,
+│   │                             #   not data-bound; matplotlib+bokeh only)
 │   ├── layer.py                  # LayerSpec (rejects nesting + empty layers)
 │   └── grid.py                   # GridSpec (rejects nesting + empty cells)
 ├── backends/
@@ -123,6 +130,7 @@ src/plotmux/
 │   │   ├── line.py               # render_line(ax, spec) -> Axes
 │   │   ├── scatter.py            # render_scatter(ax, spec) -> Axes
 │   │   ├── bar.py                 # render_bar(ax, spec) -> Axes
+│   │   ├── slope.py               # render_slope(ax, spec) -> Axes, via Axes.axline
 │   │   ├── layer.py              # render_layer(ax, spec) -> shared Axes
 │   │   └── grid.py               # render_grid(fig, spec) -> Figure with subplots
 │   ├── xy/
@@ -150,6 +158,8 @@ src/plotmux/
 │   │   ├── line.py               # render_line(fig, spec) -> figure
 │   │   ├── scatter.py            # render_scatter(fig, spec) -> figure
 │   │   ├── bar.py                 # render_bar(fig, spec) -> figure, via figure.vbar
+│   │   ├── slope.py               # render_slope(fig, spec) -> figure, via
+│   │   │                         #   fig.add_layout(bokeh.models.Slope(...))
 │   │   ├── layer.py              # render_layer(fig, spec) -> shared figure
 │   │   └── grid.py               # render_grid(spec) -> bokeh gridplot layout
 │   └── altair/
@@ -169,7 +179,8 @@ src/plotmux/
 ├── config.py                    # default backend + context manager
 ├── exceptions.py                # PlotmuxError hierarchy, multiply-inheriting
 │                                 # from the builtin type each raise site already used
-├── api.py                       # public hist(), cdf(), line(), scatter(), bar(), layer(), grid()
+├── api.py                       # public hist(), cdf(), line(), scatter(), bar(),
+│                                 #   slope(), layer(), grid()
 └── testing/fixtures.py          # shared test fixtures
 ```
 
@@ -181,11 +192,31 @@ was the seventh chart type added (see [7](#7-open-questions) for the
 bar chart's own history), on the strength of a bar chart being used
 across every one of the four backends' own plot catalogs, with no
 natural encoding into an existing spec (unlike, say, a step-histogram
-variant, which would just be a `HistogramSpec` option). The layout
-leaves room for one more chart type (a new `specs/<type>.py` plus one
-`_RENDERERS` entry per backend) if a similarly generic type comes up.
-A new backend (see [6](#6-candidate-future-backends)) adds a new
-`backends/<name>/` subpackage alongside the existing four, or, since
+variant, which would just be a `HistogramSpec` option).
+
+`SlopeSpec` was the eighth chart type added, and the first
+implemented on *fewer* than all four backends by design (see
+[8.1](#81-case-study-reproducing-bokehs-slope-example)): it is
+registered in `MatplotlibBackend._RENDERERS`/`BokehBackend._RENDERERS`
+(and each backend's own `layer.py`, so it can appear as a `layer()`
+child) and nowhere else. Requesting it on `altair`/`xy` raises the
+same `UnsupportedSpecError` any spec with no renderer registered for
+a backend would (via `resolve_renderer`, see [4.2](#42-backend)) --
+no special-casing was needed to leave a backend out, only to *not*
+add an entry for it, which is what "adding a chart type means adding
+one `_RENDERERS` entry per backend" (see [5](#5-why-this-shape))
+already implied for a backend that has no way to draw it.
+Unlike every other spec, `SlopeSpec` is not data-bound: it describes
+a line by `(gradient, intercept)` rather than by `x`/`y` arrays, so it
+draws without owning any data of its own and typically appears as a
+`layer()` child alongside a data-bound spec (see
+[4.8](#48-layering-multiple-specs-on-one-axes)).
+
+The layout otherwise leaves room for one more chart type (a new
+`specs/<type>.py` plus one `_RENDERERS` entry per backend) if a
+similarly generic type comes up. A new backend (see
+[6](#6-candidate-future-backends)) adds a new `backends/<name>/`
+subpackage alongside the existing four, or, since
 [3.4](#34-lazy-registration-and-third-party-plugins), can be added
 entirely outside this repository via the `plotmux.backends` entry
 point, with no subpackage here at all.
@@ -540,7 +571,7 @@ narrower gap, since checking registration would require the eager
 import laziness was introduced to avoid (see
 [3.4](#34-lazy-registration-and-third-party-plugins)).
 
-### 4.6 Public API (`api.py`): `hist()`, `cdf()`, `line()`, `scatter()`, `bar()`, `layer()`, `grid()`
+### 4.6 Public API (`api.py`): `hist()`, `cdf()`, `line()`, `scatter()`, `bar()`, `slope()`, `layer()`, `grid()`
 
 ```python
 def _render(spec: BaseSpec, backend: str | None, **kwargs: Any) -> Figure:
@@ -603,6 +634,16 @@ rule that fields which don't apply to every chart type live on that
 chart type's own spec, not on `BaseSpec`. Specs and backends remain
 directly importable for advanced use; `api.py` is only the
 convenience surface most users touch.
+
+`slope(gradient, intercept=0.0, *, label=None, color=None,
+linewidth=None, linestyle="solid", ...)` builds a `SlopeSpec` and
+calls `_render` like every other function here -- `_render` itself
+does not know or care that only two of the four backends have a
+`SlopeSpec` renderer registered; `get_backend(name).render(spec)`
+raises `UnsupportedSpecError` for `altair`/`xy` the same way it would
+for any spec/backend combination with no `_RENDERERS` entry (see
+[4.2](#42-backend)), so `slope()` needed no special dispatch logic of
+its own, only its own spec-construction body like `hist`/`line`/etc.
 
 `layer(*items, title=None, xlabel=None, ylabel=None, xscale="linear",
 yscale="linear", backend=None, **kwargs)` and `grid(*items, ncols=1,
@@ -1081,10 +1122,13 @@ once picked up.
 - `LayerSpec` child-compatibility warnings (e.g. mismatched
   `xscale`), if real usage shows this is a common mistake worth
   surfacing early rather than a silent axis-level override.
-- The additions identified in [8.1](#81-case-study-reproducing-bokehs-slope-example):
-  a `SlopeSpec` annotation, per-mark `alpha`, a separate marker
-  edge/fill color, `linewidth`/`linestyle` on line-drawing specs, a
-  figure background color, and explicit `ymin`/`ymax` axis bounds.
+- The remaining gaps identified in
+  [8.1](#81-case-study-reproducing-bokehs-slope-example): `SlopeSpec`
+  support for altair/xy (a real design change, not just two more
+  renderer files -- see 8.1), per-mark `alpha`, a separate marker
+  edge/fill color, `linewidth`/`linestyle` on `LineSpec`, a figure
+  background color, and explicit `ymin`/`ymax` axis bounds.
+  `SlopeSpec` itself, on matplotlib and bokeh, is already implemented.
 
 ### 8.1 Case study: reproducing bokeh's slope example
 
@@ -1095,25 +1139,33 @@ Checked against
 y-intercept 10 at `line_width=4`, on a figure with a light-gray
 background and `y_range.start = 0`) to see whether it is reproducible
 through plotmux's unified API, unchanged, on all four backends. It is
-**not**, today. Gaps, in order of how much they'd cost to close:
+**not**, today, though the central gap (no slope annotation at all) is
+now closed on two of the four backends. Gaps, in order of how much
+they'd cost to close:
 
-- **No slope/abline annotation at all.** There is no spec for "a line
-  defined by `(gradient, intercept)` spanning the current axes",
-  distinct from `LineSpec` (which is data-bound: it needs `x`/`y`
-  arrays, not a closed-form line). Bokeh has `bokeh.models.Slope`
-  natively; matplotlib has `Axes.axline`; altair needs a
-  `mark_rule`/`transform_calculate` construction; xy has no native
-  primitive and would need the line's two endpoint coordinates
-  computed from the current axes range. This is the one gap that
-  can't be worked around through `**kwargs` on an existing spec — it
-  needs a new `specs/slope.py::SlopeSpec(gradient, intercept, color=None,
-  linewidth=None, linestyle="solid")` plus one `_RENDERERS` entry per
-  backend, the same shape as every other chart-type addition (see
-  [5](#5-why-this-shape)). Unlike `LayerSpec`/`GridSpec`, it draws
-  without needing any data of its own, so it would typically appear
-  as a `layer()` child alongside a data-bound spec (e.g.
-  `plotmux.layer(plotmux.scatter(...), SlopeSpec(...))`), which the
-  existing `layer()` mechanism already supports once the spec exists.
+- **Slope/abline annotation: implemented, matplotlib + bokeh only.**
+  `specs/slope.py::SlopeSpec(gradient, intercept=0.0, color=None,
+  linewidth=None, linestyle="solid")` exists, plus one `_RENDERERS`
+  entry (and `layer.py` entry) on `MatplotlibBackend` (via
+  `Axes.axline`) and `BokehBackend` (via `fig.add_layout(bokeh.models.
+  Slope(...))`) -- both have a native "line by slope, independent of
+  data range" primitive, matched almost one-to-one by `SlopeSpec`'s
+  fields (see [3.2](#32-package-layout)). altair and xy remain
+  unregistered for `SlopeSpec`, by design rather than by omission:
+  altair has no such primitive (`mark_rule` would need a
+  `transform_calculate` construction with no natural axes-range input
+  to a standalone `SlopeSpec`, and one crude workaround -- drawing a
+  line between two very-far-apart endpoints -- would blow out
+  altair's own default autoscale, corrupting the rest of the chart
+  it's layered onto); xy has neither a native primitive nor any way to
+  read the current axes range from a standalone spec's render call
+  either. Closing this remaining half means giving `SlopeSpec` (or its
+  renderer) access to the actual data range it's being drawn against
+  -- e.g. by computing endpoints from sibling `LayerSpec` children
+  before altair/xy render, rather than from the spec alone -- which is
+  a real design change (a `SlopeSpec` renderer would stop being a pure
+  function of only its own spec), not just "write two more renderer
+  files," so it is left open rather than attempted here.
 - **No separate marker fill/edge color.** `ScatterSpec.color` maps to
   both `fill_color` and `line_color` in every backend's renderer (see
   e.g. `backends/bokeh/scatter.py`); the bokeh example wants a yellow
@@ -1132,15 +1184,15 @@ through plotmux's unified API, unchanged, on all four backends. It is
   `color`-carrying fields (or on each color-carrying spec, mirroring
   how `color` itself is placed per spec rather than on `BaseSpec`; see
   [4.9](#49-specifying-colors-across-backends)).
-- **No line width or dash style.** `LineSpec` (and the not-yet-existing
-  `SlopeSpec`) have no `linewidth`/`linestyle` fields; the example's
-  `line_width=4, line_dash='dashed'` has no portable way to be
-  expressed today. Needs `linewidth: float | None` and
-  `linestyle: Literal["solid", "dashed", "dotted", "dashdot"] | None`
-  fields, translated per backend the same way `xscale`/`yscale` are
-  (matplotlib: `linewidth`/`linestyle` passthrough; bokeh:
-  `line_width`/`line_dash`; altair: `strokeWidth`/`strokeDash`; xy:
-  its own line-style parameter).
+- **No line width or dash style on `LineSpec`.** `SlopeSpec` now has
+  `linewidth`/`linestyle` (see above), but `LineSpec` itself still
+  doesn't, so a data-bound trend line can't get the same styling
+  `SlopeSpec` gives an abline. Needs the same `linewidth: float | None`
+  / `linestyle: Literal["solid", "dashed", "dotted", "dashdot"]`
+  fields added to `LineSpec`, translated per backend the same way
+  `xscale`/`yscale` are (matplotlib: `linewidth`/`linestyle`
+  passthrough; bokeh: `line_width`/`line_dash`; altair:
+  `strokeWidth`/`strokeDash`; xy: its own line-style parameter).
 - **No figure background color.** The example sets
   `background_fill_color="#fafafa"`. This is a `BaseSpec`-level,
   figure-wide concern like `title`, not per-mark, and has no
@@ -1157,10 +1209,12 @@ through plotmux's unified API, unchanged, on all four backends. It is
   now that a second use case wants them, rather than staying
   histogram-specific `xmin`/`xmax`.
 
-None of this is scheduled; it is written down here as the precise,
-verified list of what plotmux would need in order to claim
-"reproduces bokeh's slope example, unchanged, on all four backends,"
-so the gap can be closed deliberately (new spec + fields, same
-pattern as every other addition) rather than piecemeal through
-backend-specific `**kwargs`, which cannot give the same call the same
-look on all four backends.
+None of the remaining gaps are scheduled; they are written down here
+as the precise, verified list of what plotmux would still need in
+order to claim "reproduces bokeh's slope example, unchanged, on all
+four backends" (matplotlib and bokeh alone can already reproduce it,
+modulo marker fill/edge color and alpha), so the gap can be closed
+deliberately (new fields, same pattern as every other addition, plus
+the one real design question for altair/xy `SlopeSpec` support) rather
+than piecemeal through backend-specific `**kwargs`, which cannot give
+the same call the same look on all four backends.

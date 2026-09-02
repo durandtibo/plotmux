@@ -3,7 +3,14 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from plotmux.specs import CdfSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import (
+    CdfSpec,
+    HistogramSpec,
+    LayerSpec,
+    LineSpec,
+    ScatterSpec,
+    SlopeSpec,
+)
 from plotmux.testing.fixtures import matplotlib_available
 from plotmux.utils.imports import is_matplotlib_available
 
@@ -99,6 +106,21 @@ def test_render_layer_with_histogram() -> None:
     )
     render_layer(ax, spec)
     assert len(ax.patches) == 10
+    assert len(ax.lines) == 1
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_render_layer_with_slope() -> None:
+    fig, ax = plt.subplots()
+    spec = LayerSpec(
+        layers=(
+            ScatterSpec(x=np.arange(10), y=np.arange(10) * 2 + 10, color="yellow"),
+            SlopeSpec(gradient=2, intercept=10, color="blue", linewidth=4, linestyle="dashed"),
+        )
+    )
+    render_layer(ax, spec)
+    assert len(ax.collections) == 1
     assert len(ax.lines) == 1
     plt.close(fig)
 

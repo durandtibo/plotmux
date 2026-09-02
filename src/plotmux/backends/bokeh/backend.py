@@ -24,6 +24,7 @@ from plotmux.backends.bokeh.histogram import render_histogram
 from plotmux.backends.bokeh.layer import render_layer
 from plotmux.backends.bokeh.line import render_line
 from plotmux.backends.bokeh.scatter import render_scatter
+from plotmux.backends.bokeh.slope import render_slope
 from plotmux.backends.bokeh.style import apply_common_style
 from plotmux.specs import (
     BarSpec,
@@ -34,6 +35,7 @@ from plotmux.specs import (
     LayerSpec,
     LineSpec,
     ScatterSpec,
+    SlopeSpec,
 )
 
 if TYPE_CHECKING:
@@ -111,6 +113,7 @@ class BokehBackend(Backend):
         CdfSpec: _make_renderer(render_cdf),
         LineSpec: _make_renderer(render_line),
         ScatterSpec: _make_renderer(render_scatter),
+        SlopeSpec: _make_renderer(render_slope),
         LayerSpec: _make_renderer(render_layer),
         # ``render_grid`` builds and arranges its own independent
         # per-cell ``figure``s into a layout rather than drawing onto one

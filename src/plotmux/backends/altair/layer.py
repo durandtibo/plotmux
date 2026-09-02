@@ -14,7 +14,14 @@ from plotmux.backends.altair.histogram import render_histogram
 from plotmux.backends.altair.line import render_line
 from plotmux.backends.altair.scatter import render_scatter
 from plotmux.backends.base import resolve_renderer
-from plotmux.specs import BarSpec, BaseSpec, CdfSpec, HistogramSpec, LineSpec, ScatterSpec
+from plotmux.specs import (
+    BarSpec,
+    BaseSpec,
+    CdfSpec,
+    HistogramSpec,
+    LineSpec,
+    ScatterSpec,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable

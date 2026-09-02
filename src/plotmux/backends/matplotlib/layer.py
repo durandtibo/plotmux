@@ -12,7 +12,16 @@ from plotmux.backends.matplotlib.cdf import render_cdf
 from plotmux.backends.matplotlib.histogram import render_histogram
 from plotmux.backends.matplotlib.line import render_line
 from plotmux.backends.matplotlib.scatter import render_scatter
-from plotmux.specs import BarSpec, BaseSpec, CdfSpec, HistogramSpec, LineSpec, ScatterSpec
+from plotmux.backends.matplotlib.slope import render_slope
+from plotmux.specs import (
+    BarSpec,
+    BaseSpec,
+    CdfSpec,
+    HistogramSpec,
+    LineSpec,
+    ScatterSpec,
+    SlopeSpec,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -31,6 +40,7 @@ _AX_RENDERERS: dict[type[BaseSpec], Callable[..., Axes]] = {
     CdfSpec: render_cdf,
     LineSpec: render_line,
     ScatterSpec: render_scatter,
+    SlopeSpec: render_slope,
 }
 
 

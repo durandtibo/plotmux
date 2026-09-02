@@ -11,8 +11,9 @@ from plotmux.specs import (
     LayerSpec,
     LineSpec,
     ScatterSpec,
+    SlopeSpec,
 )
-from plotmux.testing.fixtures import matplotlib_available, xy_available
+from plotmux.testing.fixtures import bokeh_available, matplotlib_available, xy_available
 
 ##########################
 #     Tests for hist     #
@@ -201,6 +202,43 @@ def test_scatter_mismatched_length_raises() -> None:
 def test_scatter_invalid_size_raises() -> None:
     with pytest.raises(ValueError, match="size must be a positive number"):
         plotmux.scatter(np.arange(10), np.arange(10), size=-1.0)
+
+
+###########################
+#     Tests for slope     #
+###########################
+
+
+@matplotlib_available
+def test_slope_returns_figure_with_matplotlib_backend() -> None:
+    fig = plotmux.slope(2, 10)
+    assert fig.backend_name == "matplotlib"
+    assert isinstance(fig.spec, SlopeSpec)
+    assert fig.spec.gradient == 2
+    assert fig.spec.intercept == 10
+
+
+@bokeh_available
+def test_slope_explicit_bokeh_backend() -> None:
+    fig = plotmux.slope(2, 10, backend="bokeh", color="blue", linewidth=4, linestyle="dashed")
+    assert fig.backend_name == "bokeh"
+
+
+@xy_available
+def test_slope_xy_backend_unsupported() -> None:
+    with pytest.raises(NotImplementedError, match="No xy renderer registered"):
+        plotmux.slope(2, 10, backend="xy")
+
+
+def test_slope_unknown_backend_raises() -> None:
+    with pytest.raises(RuntimeError, match="No backend registered"):
+        plotmux.slope(2, 10, backend="does-not-exist")
+
+
+@matplotlib_available
+def test_slope_invalid_color_raises() -> None:
+    with pytest.raises(ValueError, match="Invalid color"):
+        plotmux.slope(2, 10, color="not-a-color")
 
 
 ###########################
