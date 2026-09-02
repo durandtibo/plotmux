@@ -21,6 +21,7 @@ from plotmux.backends.matplotlib.histogram import render_histogram
 from plotmux.backends.matplotlib.layer import render_layer
 from plotmux.backends.matplotlib.line import render_line
 from plotmux.backends.matplotlib.scatter import render_scatter
+from plotmux.backends.matplotlib.slope import render_slope
 from plotmux.backends.matplotlib.style import apply_common_style, attach_repr_png
 from plotmux.specs import (
     BarSpec,
@@ -31,6 +32,7 @@ from plotmux.specs import (
     LayerSpec,
     LineSpec,
     ScatterSpec,
+    SlopeSpec,
 )
 
 if TYPE_CHECKING:
@@ -102,6 +104,7 @@ class MatplotlibBackend(Backend):
         CdfSpec: _make_renderer(render_cdf),
         LineSpec: _make_renderer(render_line),
         ScatterSpec: _make_renderer(render_scatter),
+        SlopeSpec: _make_renderer(render_slope),
         LayerSpec: _make_renderer(render_layer),
         # ``render_grid`` builds and styles its own ``Figure`` (one subplot
         # per cell, each individually styled) rather than a single shared

@@ -2,7 +2,7 @@ r"""Contain the public plotting API."""
 
 from __future__ import annotations
 
-__all__ = ["bar", "cdf", "grid", "hist", "layer", "line", "scatter"]
+__all__ = ["bar", "cdf", "grid", "hist", "layer", "line", "scatter", "slope"]
 
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -20,6 +20,7 @@ from plotmux.specs import (
     LayerSpec,
     LineSpec,
     ScatterSpec,
+    SlopeSpec,
 )
 
 if TYPE_CHECKING:
@@ -407,6 +408,90 @@ def scatter(
         label=label,
         color=color,
         size=size,
+        title=title,
+        xlabel=xlabel,
+        ylabel=ylabel,
+        xscale=xscale,
+        yscale=yscale,
+    )
+    return _render(spec, backend, **kwargs)
+
+
+def slope(
+    gradient: float,
+    intercept: float = 0.0,
+    *,
+    label: str | None = None,
+    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
+    linewidth: float | None = None,
+    linestyle: Literal["solid", "dashed", "dotted", "dashdot"] = "solid",
+    title: str | None = None,
+    xlabel: str | None = None,
+    ylabel: str | None = None,
+    xscale: Literal["linear", "log"] = "linear",
+    yscale: Literal["linear", "log"] = "linear",
+    backend: str | None = None,
+    **kwargs: Any,
+) -> Figure:
+    r"""Plot a slope (a.k.a. abline) annotation: a line defined by
+    ``y = gradient * x + intercept``, spanning the current axes.
+
+    Unlike ``line``, this draws no data of its own -- it is a
+    reference/trend line. Not supported by every backend: matplotlib
+    (via ``Axes.axline``) and bokeh (via ``bokeh.models.Slope``) both
+    have a native "line by slope, independent of data range"
+    primitive; altair and xy do not (see ``DESIGN.md``, section 8.1),
+    so ``backend="altair"``/``backend="xy"`` raises
+    ``UnsupportedSpecError``. It typically appears as a ``layer()``
+    child alongside a data-bound spec, e.g. a scatter plot with a
+    fitted trend line overlaid.
+
+    Args:
+        gradient: The line's slope.
+        intercept: The line's y-intercept (the ``y`` value at
+            ``x = 0``). Defaults to ``0.0``.
+        label: An optional label used e.g. in the legend.
+        color: An optional color for the line. It can be a hex
+            string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
+            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
+            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
+            backend's default color.
+        linewidth: An optional line width. ``None`` uses the
+            backend's default width.
+        linestyle: The line's dash style.
+        title: An optional figure title.
+        xlabel: An optional x-axis label.
+        ylabel: An optional y-axis label.
+        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
+        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+        backend: The name of the backend to use to render the
+            figure, or ``None`` to use the current default backend
+            (see ``plotmux.set_backend``).
+        **kwargs: Additional backend-specific keyword arguments,
+            forwarded to the backend's renderer.
+
+    Returns:
+        The rendered figure.
+
+    Raises:
+        ValueError: if ``color`` is not a valid color.
+        NotImplementedError: if the resolved backend is ``altair`` or
+            ``xy``, which have no ``SlopeSpec`` renderer registered.
+
+    Example:
+        ```pycon
+        >>> import plotmux
+        >>> fig = plotmux.slope(2, 10, backend="matplotlib")  # doctest: +SKIP
+
+        ```
+    """
+    spec = SlopeSpec(
+        gradient=gradient,
+        intercept=intercept,
+        label=label,
+        color=color,
+        linewidth=linewidth,
+        linestyle=linestyle,
         title=title,
         xlabel=xlabel,
         ylabel=ylabel,

@@ -13,11 +13,12 @@ __all__ = [
     "line",
     "scatter",
     "set_backend",
+    "slope",
 ]
 
 from importlib.metadata import PackageNotFoundError, version
 
-from plotmux.api import bar, cdf, grid, hist, layer, line, scatter
+from plotmux.api import bar, cdf, grid, hist, layer, line, scatter, slope
 
 # The four built-in backend submodules (plotmux.backends.{altair,bokeh,
 # matplotlib,xy}) are *not* imported here. Each one eagerly imports its

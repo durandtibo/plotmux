@@ -11,6 +11,7 @@ __all__ = [
     "LayerSpec",
     "LineSpec",
     "ScatterSpec",
+    "SlopeSpec",
 ]
 
 from plotmux.specs.bar import BarSpec
@@ -21,3 +22,4 @@ from plotmux.specs.histogram import HistogramSpec
 from plotmux.specs.layer import LayerSpec
 from plotmux.specs.line import LineSpec
 from plotmux.specs.scatter import ScatterSpec
+from plotmux.specs.slope import SlopeSpec
