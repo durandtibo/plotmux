@@ -1,12 +1,12 @@
 # plotmux design
 
-Status: implemented. Core abstraction, six chart specs (histogram, cdf,
-line, scatter, layer, grid), four backends (matplotlib, xy, bokeh,
-altair), per-mark color, common axis styling, layering, grid layout,
-a `plotmux.exceptions` hierarchy, export, a predefined-colors package,
-lazy per-backend imports, and a third-party backend plugin mechanism
-are all in place. See [7](#7-open-questions) for what's still
-unresolved and [8](#8-candidate-future-work) for what's next.
+Status: implemented. Core abstraction, seven chart specs (histogram,
+cdf, line, scatter, bar, layer, grid), four backends (matplotlib, xy,
+bokeh, altair), per-mark color, common axis styling, layering, grid
+layout, a `plotmux.exceptions` hierarchy, export, a predefined-colors
+package, lazy per-backend imports, and a third-party backend plugin
+mechanism are all in place. See [7](#7-open-questions) for what's
+still unresolved and [8](#8-candidate-future-work) for what's next.
 Date: 2026-09-01.
 
 ## 1. Goal
@@ -21,15 +21,15 @@ changing existing code.
 Scope: the unified API targets a small set of generic, broadly-useful
 chart types and figure-level concerns: the ones almost every plotting
 task needs (histograms, empirical CDFs, line charts, scatter plots,
-layering them together, laying them out in a grid, common axis
-styling, per-mark color, export), not comprehensive coverage of every
-chart type a backend can draw. Six chart specs (histogram, cdf, line,
-scatter, layer, grid, see [4](#4-key-components)) are the current
-surface; a new chart type is added when it is itself generic and
-broadly useful (e.g. a bar chart), not to chase parity with any one
-backend's full plot catalog. A niche or highly backend-specific plot
-is expected to stay behind the escape hatch (see [4.3](#43-figure))
-rather than becoming a new spec.
+bar charts, layering them together, laying them out in a grid, common
+axis styling, per-mark color, export), not comprehensive coverage of
+every chart type a backend can draw. Seven chart specs (histogram,
+cdf, line, scatter, bar, layer, grid, see
+[4](#4-key-components)) are the current surface; a new chart type is
+added when it is itself generic and broadly useful, not to chase
+parity with any one backend's full plot catalog. A niche or highly
+backend-specific plot is expected to stay behind the escape hatch (see
+[4.3](#43-figure)) rather than becoming a new spec.
 
 Non-goals: `plotmux` does not try to expose every feature of every
 backend through the unified API, nor to cover every possible plot
@@ -99,6 +99,7 @@ src/plotmux/
 │   ├── cdf.py                    # CdfSpec
 │   ├── line.py                  # LineSpec
 │   ├── scatter.py                # ScatterSpec
+│   ├── bar.py                     # BarSpec
 │   ├── layer.py                  # LayerSpec (rejects nesting + empty layers)
 │   └── grid.py                   # GridSpec (rejects nesting + empty cells)
 ├── backends/
@@ -115,6 +116,7 @@ src/plotmux/
 │   │   ├── cdf.py                 # render_cdf(ax, spec) -> Axes
 │   │   ├── line.py               # render_line(ax, spec) -> Axes
 │   │   ├── scatter.py            # render_scatter(ax, spec) -> Axes
+│   │   ├── bar.py                 # render_bar(ax, spec) -> Axes
 │   │   ├── layer.py              # render_layer(ax, spec) -> shared Axes
 │   │   └── grid.py               # render_grid(fig, spec) -> Figure with subplots
 │   ├── xy/
@@ -126,6 +128,7 @@ src/plotmux/
 │   │   ├── cdf.py                 # render_cdf(spec) -> xy.Chart
 │   │   ├── line.py               # render_line(spec) -> xy.Chart
 │   │   ├── scatter.py            # render_scatter(spec) -> xy.Chart
+│   │   ├── bar.py                 # render_bar(spec) -> xy.Chart, via xy.bar_chart
 │   │   ├── layer.py              # render_layer(spec) -> composed xy.Chart
 │   │   └── grid.py               # render_grid(spec) -> XyGrid; render_grid_html()
 │   │                             #   composes it to one HTML page at export time
@@ -140,6 +143,7 @@ src/plotmux/
 │   │   ├── cdf.py                 # render_cdf(fig, spec) -> figure
 │   │   ├── line.py               # render_line(fig, spec) -> figure
 │   │   ├── scatter.py            # render_scatter(fig, spec) -> figure
+│   │   ├── bar.py                 # render_bar(fig, spec) -> figure, via figure.vbar
 │   │   ├── layer.py              # render_layer(fig, spec) -> shared figure
 │   │   └── grid.py               # render_grid(spec) -> bokeh gridplot layout
 │   └── altair/
@@ -151,6 +155,7 @@ src/plotmux/
 │       ├── cdf.py                 # render_cdf(spec) -> alt.Chart
 │       ├── line.py               # render_line(spec) -> alt.Chart
 │       ├── scatter.py            # render_scatter(spec) -> alt.Chart
+│       ├── bar.py                 # render_bar(spec) -> alt.Chart, via mark_bar()
 │       ├── layer.py              # render_layer(spec) -> alt.LayerChart, via alt.layer(*charts)
 │       └── grid.py               # render_grid(spec) -> alt.ConcatChart, via alt.concat(*charts)
 ├── figure.py                    # Figure wrapper
@@ -158,17 +163,22 @@ src/plotmux/
 ├── config.py                    # default backend + context manager
 ├── exceptions.py                # PlotmuxError hierarchy, multiply-inheriting
 │                                 # from the builtin type each raise site already used
-├── api.py                       # public hist(), cdf(), line(), scatter(), layer(), grid()
+├── api.py                       # public hist(), cdf(), line(), scatter(), bar(), layer(), grid()
 └── testing/fixtures.py          # shared test fixtures
 ```
 
-`specs/{cdf,line,scatter,layer,grid}.py` and their matching
+`specs/{cdf,line,scatter,bar,layer,grid}.py` and their matching
 per-backend renderers are implemented across all four backends
 (matplotlib, xy, bokeh, altair), with one deliberate asymmetry: xy's
-grid export is HTML-only (see [4.8a](#48a-grid-layouts)). The layout
+grid export is HTML-only (see [4.8a](#48a-grid-layouts)). `BarSpec`
+was the seventh chart type added (see [7](#7-open-questions) for the
+bar chart's own history), on the strength of a bar chart being used
+across every one of the four backends' own plot catalogs, with no
+natural encoding into an existing spec (unlike, say, a step-histogram
+variant, which would just be a `HistogramSpec` option). The layout
 leaves room for one more chart type (a new `specs/<type>.py` plus one
 `_RENDERERS` entry per backend) if a similarly generic type comes up.
-A new backend (see [6.1](#61-candidate-future-backends)) adds a new
+A new backend (see [6](#6-candidate-future-backends)) adds a new
 `backends/<name>/` subpackage alongside the existing four, or, since
 [3.4](#34-lazy-registration-and-third-party-plugins), can be added
 entirely outside this repository via the `plotmux.backends` entry
@@ -234,7 +244,7 @@ library isn't installed is silently skipped (`ImportError`); any other
 exception it raises while loading is caught and turned into a
 `RuntimeWarning` instead of propagating, so a broken third-party
 plugin can never crash `import plotmux` for every user; it can only
-fail to register itself. This is what lets [6.1](#61-candidate-future-backends)'s
+fail to register itself. This is what lets [6](#6-candidate-future-backends)'s
 remaining candidates (plotly, plotnine, ...) ship as independent
 packages instead of requiring a PR into this repository.
 
@@ -430,8 +440,8 @@ before, while new code can catch anything plotmux-specific in one
 place with `except PlotmuxError`, without having to know or enumerate
 which builtin type backs each individual error. These are raised by
 spec validation (`__post_init__`, uniformly via `InvalidSpecError`
-across every spec: histogram, cdf, line, scatter, layer, grid), color
-parsing, backend dispatch, and export.
+across every spec: histogram, cdf, line, scatter, bar, layer, grid),
+color parsing, backend dispatch, and export.
 
 ### 4.3 `Figure`
 
@@ -524,7 +534,7 @@ narrower gap, since checking registration would require the eager
 import laziness was introduced to avoid (see
 [3.4](#34-lazy-registration-and-third-party-plugins)).
 
-### 4.6 Public API (`api.py`): `hist()`, `cdf()`, `line()`, `scatter()`, `layer()`, `grid()`
+### 4.6 Public API (`api.py`): `hist()`, `cdf()`, `line()`, `scatter()`, `bar()`, `layer()`, `grid()`
 
 ```python
 def _render(spec: BaseSpec, backend: str | None, **kwargs: Any) -> Figure:
@@ -574,17 +584,19 @@ body is only "build the matching spec from its arguments." `cdf(values,
 *, nbins=None, ...)` follows `hist`'s shape almost exactly (`nbins`
 in place of `bins`, `ylabel` defaulting to `"cumulative probability"`
 instead of `None`, see [4.1](#41-basespec)). `line(x, y,
-*, label=None, color=None, ...)` and `scatter(x, y, *, label=None,
-color=None, size=None, ...)` follow the same shape: build the matching
-spec (`LineSpec`/`ScatterSpec`), call `_render`. Both accept
-`title`/`xlabel`/`ylabel`/`xscale`/`yscale` with identical names and
-defaults as `hist()`, since they map straight onto `BaseSpec` fields
-shared by all specs: no per-function special-casing needed. `size` is
-`ScatterSpec`-only and `nbins`/`density` are `CdfSpec`/`HistogramSpec`-only,
-following the rule that fields which don't apply to every chart type
-live on that chart type's own spec, not on `BaseSpec`. Specs and
-backends remain directly importable for advanced use; `api.py` is
-only the convenience surface most users touch.
+*, label=None, color=None, ...)`, `scatter(x, y, *, label=None,
+color=None, size=None, ...)`, and `bar(x, y, *, label=None,
+color=None, width=0.8, ...)` follow the same shape: build the matching
+spec (`LineSpec`/`ScatterSpec`/`BarSpec`), call `_render`. All three
+accept `title`/`xlabel`/`ylabel`/`xscale`/`yscale` with identical
+names and defaults as `hist()`, since they map straight onto
+`BaseSpec` fields shared by all specs: no per-function special-casing
+needed. `size` is `ScatterSpec`-only, `width` is `BarSpec`-only, and
+`nbins`/`density` are `CdfSpec`/`HistogramSpec`-only, following the
+rule that fields which don't apply to every chart type live on that
+chart type's own spec, not on `BaseSpec`. Specs and backends remain
+directly importable for advanced use; `api.py` is only the
+convenience surface most users touch.
 
 `layer(*items, title=None, xlabel=None, ylabel=None, xscale="linear",
 yscale="linear", backend=None, **kwargs)` and `grid(*items, ncols=1,
@@ -939,8 +951,8 @@ and only for `LayerSpec`.
   matplotlib, xy, bokeh, altair) or, since
   [3.4](#34-lazy-registration-and-third-party-plugins), an entirely
   external package; a new chart type is a new spec plus one
-  `_RENDERERS` entry per backend (proven six times: histogram, cdf,
-  line, scatter, layer, grid). Neither touches the other, and common
+  `_RENDERERS` entry per backend (proven seven times: histogram, cdf,
+  line, scatter, bar, layer, grid). Neither touches the other, and common
   axis styling (title/labels/scale) is handled once per backend via
   `apply_common_style` (shared, for the two immutable-`Chart`
   backends, via `make_renderer`), not once per chart type, see
@@ -1026,13 +1038,24 @@ should be driven by actual user requests, not by this list.
   (matplotlib, xy, bokeh, altair) to earn its keep as backend #5, and
   should it ship as an external plugin rather than a backend in this
   repository (see [3.4](#34-lazy-registration-and-third-party-plugins))?
-- Histogram/cdf/line/scatter/layer/grid were picked as "generic and
-  broadly useful" (see [1. Goal](#1-goal)), but that bar isn't written
-  down precisely. A bar chart or a box plot both have a plausible
-  claim to it: should the next chart-type addition be decided case
-  by case as demand shows up, or does the project need an explicit
-  checklist (e.g. "used across most plotting libraries" + "no natural
-  encoding into an existing spec") before adding a seventh spec?
+- Histogram/cdf/line/scatter/bar/layer/grid were picked as "generic
+  and broadly useful" (see [1. Goal](#1-goal)), but that bar isn't
+  written down precisely. `BarSpec` cleared it informally (a bar chart
+  is in every one of the four backends' own plot catalogs, and has no
+  natural encoding into an existing spec), but a box plot has a
+  similarly plausible claim: should the next chart-type addition still
+  be decided case by case as demand shows up, or does the project need
+  an explicit, written-down checklist before adding an eighth spec?
+- `BarSpec.width` (a bar width in `x` data units, matching
+  matplotlib's/bokeh's own `width`) has no altair equivalent: altair's
+  `render_bar` deliberately does not forward it (see
+  `plotmux.backends.altair.bar`), since Vega-Lite derives a bar mark's
+  rendered width from its scale rather than accepting a data-unit
+  width at construction time. Is a silently-ignored `width` on that
+  one backend an acceptable, permanent asymmetry (bokeh's HTML-only
+  export and xy's HTML-only grid are already precedent for
+  backend-specific gaps), or does this need a warning, the same
+  open question as the `LayerSpec` child-compatibility one above?
 
 ## 8. Candidate future work
 
@@ -1042,8 +1065,9 @@ once picked up.
 - A fifth backend, most likely `plotly`, evaluated per
   [6](#6-candidate-future-backends) and the corresponding open
   question in [7](#7-open-questions).
-- A seventh chart type (e.g. bar chart), once one clears the "generic
-  and broadly useful" bar discussed in [7](#7-open-questions).
+- An eighth chart type (e.g. a box plot), once one clears the "generic
+  and broadly useful" bar discussed in [7](#7-open-questions). `BarSpec`
+  was the seventh, already implemented (see [3.2](#32-package-layout)).
 - Extending default-palette assignment (currently `LayerSpec`-only,
   see [4.9.1](#491-predefined-colors)) to any future multi-series
   spec, and deciding whether other default style belongs on

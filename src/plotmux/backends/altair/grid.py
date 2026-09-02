@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import altair as alt
 
+from plotmux.backends.altair.bar import render_bar
 from plotmux.backends.altair.cdf import render_cdf
 from plotmux.backends.altair.histogram import render_histogram
 from plotmux.backends.altair.layer import render_layer
@@ -16,6 +17,7 @@ from plotmux.backends.altair.scatter import render_scatter
 from plotmux.backends.altair.style import apply_common_style
 from plotmux.backends.base import resolve_renderer
 from plotmux.specs import (
+    BarSpec,
     BaseSpec,
     CdfSpec,
     HistogramSpec,
@@ -40,6 +42,7 @@ if TYPE_CHECKING:
 # ``GridSpec.__post_init__``).
 _CELL_RENDERERS: dict[type[BaseSpec], Callable[..., alt.typing.ChartType]] = {
     HistogramSpec: render_histogram,
+    BarSpec: render_bar,
     CdfSpec: render_cdf,
     LineSpec: render_line,
     ScatterSpec: render_scatter,

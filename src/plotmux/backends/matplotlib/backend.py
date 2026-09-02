@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from matplotlib.figure import Figure as MplFigure
 
 from plotmux.backends.base import Backend, check_export_format
+from plotmux.backends.matplotlib.bar import render_bar
 from plotmux.backends.matplotlib.cdf import render_cdf
 from plotmux.backends.matplotlib.grid import render_grid
 from plotmux.backends.matplotlib.histogram import render_histogram
@@ -22,6 +23,7 @@ from plotmux.backends.matplotlib.line import render_line
 from plotmux.backends.matplotlib.scatter import render_scatter
 from plotmux.backends.matplotlib.style import apply_common_style, attach_repr_png
 from plotmux.specs import (
+    BarSpec,
     BaseSpec,
     CdfSpec,
     GridSpec,
@@ -96,6 +98,7 @@ class MatplotlibBackend(Backend):
 
     _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., MplFigure]]] = {
         HistogramSpec: _make_renderer(render_histogram),
+        BarSpec: _make_renderer(render_bar),
         CdfSpec: _make_renderer(render_cdf),
         LineSpec: _make_renderer(render_line),
         ScatterSpec: _make_renderer(render_scatter),

@@ -8,12 +8,13 @@ from typing import TYPE_CHECKING, Any, cast
 
 import altair as alt
 
+from plotmux.backends.altair.bar import render_bar
 from plotmux.backends.altair.cdf import render_cdf
 from plotmux.backends.altair.histogram import render_histogram
 from plotmux.backends.altair.line import render_line
 from plotmux.backends.altair.scatter import render_scatter
 from plotmux.backends.base import resolve_renderer
-from plotmux.specs import BaseSpec, CdfSpec, HistogramSpec, LineSpec, ScatterSpec
+from plotmux.specs import BarSpec, BaseSpec, CdfSpec, HistogramSpec, LineSpec, ScatterSpec
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -26,6 +27,7 @@ if TYPE_CHECKING:
 # ``_RENDERERS``-dict pattern as every backend (see ``Backend``).
 _MARK_RENDERERS: dict[type[BaseSpec], Callable[..., alt.Chart]] = {
     HistogramSpec: render_histogram,
+    BarSpec: render_bar,
     CdfSpec: render_cdf,
     LineSpec: render_line,
     ScatterSpec: render_scatter,

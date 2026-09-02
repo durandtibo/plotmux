@@ -11,6 +11,7 @@ __all__ = ["AltairBackend"]
 
 from typing import TYPE_CHECKING, ClassVar, cast
 
+from plotmux.backends.altair.bar import render_bar
 from plotmux.backends.altair.cdf import render_cdf
 from plotmux.backends.altair.grid import render_grid
 from plotmux.backends.altair.histogram import render_histogram
@@ -20,6 +21,7 @@ from plotmux.backends.altair.scatter import render_scatter
 from plotmux.backends.altair.style import apply_common_style
 from plotmux.backends.base import Backend, check_export_format, make_renderer
 from plotmux.specs import (
+    BarSpec,
     BaseSpec,
     CdfSpec,
     GridSpec,
@@ -63,6 +65,7 @@ class AltairBackend(Backend):
     # helper with the ``xy`` backend rather than defining its own.
     _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., alt.typing.ChartType]]] = {
         HistogramSpec: make_renderer(render_histogram, apply_common_style),
+        BarSpec: make_renderer(render_bar, apply_common_style),
         CdfSpec: make_renderer(render_cdf, apply_common_style),
         LineSpec: make_renderer(render_line, apply_common_style),
         ScatterSpec: make_renderer(render_scatter, apply_common_style),

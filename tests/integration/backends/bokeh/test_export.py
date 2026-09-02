@@ -25,6 +25,10 @@ def _hist() -> Figure:
     return plotmux.hist(np.arange(101), bins=10, backend="bokeh")
 
 
+def _bar() -> Figure:
+    return plotmux.bar(np.arange(10), np.arange(10) ** 2, backend="bokeh")
+
+
 def _line() -> Figure:
     return plotmux.line(np.arange(10), np.arange(10) ** 2, backend="bokeh")
 
@@ -43,7 +47,7 @@ def _layer() -> Figure:
 
 
 @bokeh_available
-@pytest.mark.parametrize("make_figure", [_hist, _line, _scatter, _layer])
+@pytest.mark.parametrize("make_figure", [_hist, _bar, _line, _scatter, _layer])
 @pytest.mark.parametrize("fmt", FORMATS)
 def test_save_chart_type_format_matrix(
     make_figure,  # noqa: ANN001

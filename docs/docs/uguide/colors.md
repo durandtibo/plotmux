@@ -6,7 +6,7 @@ accept the same set of color formats, regardless of the backend rendering the fi
 ## Overview
 
 Every `color` argument in `plotmux` (`plotmux.hist(..., color=...)`, `plotmux.line(...,
-color=...)`, `plotmux.scatter(..., color=...)`) accepts one of:
+color=...)`, `plotmux.scatter(..., color=...)`, `plotmux.bar(..., color=...)`) accepts one of:
 
 - a hex string, `"#rrggbb"` or `"#rrggbbaa"`
 - a CSS or Matplotlib named color, e.g. `"tab:blue"`, `"crimson"`
@@ -81,6 +81,6 @@ colors to multiple series, or to `plotmux.layer()` children that set no explicit
 
 ## What's Next
 
-- [The Plotting API](api.md): use `color` in `hist`, `line`, and `scatter`
+- [The Plotting API](api.md): use `color` in `hist`, `line`, `scatter`, and `bar`
 - [Layering Charts](layer.md): where `DEFAULT_PALETTE` disambiguates children without an explicit
   color
