@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from plotmux.backends.base import resolve_renderer
+from plotmux.backends.xy.bar import render_bar
 from plotmux.backends.xy.cdf import render_cdf
 from plotmux.backends.xy.histogram import render_histogram
 from plotmux.backends.xy.layer import render_layer
@@ -17,6 +18,7 @@ from plotmux.backends.xy.line import render_line
 from plotmux.backends.xy.scatter import render_scatter
 from plotmux.backends.xy.style import apply_common_style
 from plotmux.specs import (
+    BarSpec,
     BaseSpec,
     CdfSpec,
     HistogramSpec,
@@ -43,6 +45,7 @@ if TYPE_CHECKING:
 # ``GridSpec.__post_init__``).
 _CELL_RENDERERS: dict[type[BaseSpec], Callable[..., xy.Chart]] = {
     HistogramSpec: render_histogram,
+    BarSpec: render_bar,
     CdfSpec: render_cdf,
     LineSpec: render_line,
     ScatterSpec: render_scatter,

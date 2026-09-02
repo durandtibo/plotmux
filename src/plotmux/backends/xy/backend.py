@@ -11,6 +11,7 @@ __all__ = ["XyBackend"]
 from typing import TYPE_CHECKING, ClassVar
 
 from plotmux.backends.base import Backend, check_export_format, make_renderer
+from plotmux.backends.xy.bar import render_bar
 from plotmux.backends.xy.cdf import render_cdf
 from plotmux.backends.xy.grid import XyGrid, render_grid, render_grid_html
 from plotmux.backends.xy.histogram import render_histogram
@@ -20,6 +21,7 @@ from plotmux.backends.xy.scatter import render_scatter
 from plotmux.backends.xy.style import apply_common_style
 from plotmux.exceptions import UnsupportedFormatError
 from plotmux.specs import (
+    BarSpec,
     BaseSpec,
     CdfSpec,
     GridSpec,
@@ -56,6 +58,7 @@ class XyBackend(Backend):
     # helper with the ``altair`` backend rather than defining its own.
     _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., xy.Chart]]] = {
         HistogramSpec: make_renderer(render_histogram, apply_common_style),
+        BarSpec: make_renderer(render_bar, apply_common_style),
         CdfSpec: make_renderer(render_cdf, apply_common_style),
         LineSpec: make_renderer(render_line, apply_common_style),
         ScatterSpec: make_renderer(render_scatter, apply_common_style),

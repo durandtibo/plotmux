@@ -2,7 +2,7 @@ r"""Contain the public plotting API."""
 
 from __future__ import annotations
 
-__all__ = ["cdf", "grid", "hist", "layer", "line", "scatter"]
+__all__ = ["bar", "cdf", "grid", "hist", "layer", "line", "scatter"]
 
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -12,6 +12,7 @@ from plotmux.backends.registry import get_backend
 from plotmux.config import get_default_backend
 from plotmux.figure import Figure
 from plotmux.specs import (
+    BarSpec,
     BaseSpec,
     CdfSpec,
     GridSpec,
@@ -122,6 +123,76 @@ def hist(
         label=label,
         density=density,
         color=color,
+        title=title,
+        xlabel=xlabel,
+        ylabel=ylabel,
+        xscale=xscale,
+        yscale=yscale,
+    )
+    return _render(spec, backend, **kwargs)
+
+
+def bar(
+    x: Sequence[float] | np.ndarray,
+    y: Sequence[float] | np.ndarray,
+    *,
+    label: str | None = None,
+    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
+    width: float = 0.8,
+    title: str | None = None,
+    xlabel: str | None = None,
+    ylabel: str | None = None,
+    xscale: Literal["linear", "log"] = "linear",
+    yscale: Literal["linear", "log"] = "linear",
+    backend: str | None = None,
+    **kwargs: Any,
+) -> Figure:
+    r"""Plot a bar chart.
+
+    Args:
+        x: The array of bar positions.
+        y: The array of bar heights. Must have the same length as
+            ``x``.
+        label: An optional label used e.g. in the legend.
+        color: An optional color for the bars. It can be a hex
+            string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
+            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
+            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
+            backend's default color.
+        width: The width of each bar, in ``x`` data units. Must be a
+            positive number.
+        title: An optional figure title.
+        xlabel: An optional x-axis label.
+        ylabel: An optional y-axis label.
+        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
+        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+        backend: The name of the backend to use to render the
+            figure, or ``None`` to use the current default backend
+            (see ``plotmux.set_backend``).
+        **kwargs: Additional backend-specific keyword arguments,
+            forwarded to the backend's renderer.
+
+    Returns:
+        The rendered figure.
+
+    Raises:
+        ValueError: if ``x`` and ``y`` do not have the same length,
+            ``width`` is not a positive number, or ``color`` is not
+            a valid color.
+
+    Example:
+        ```pycon
+        >>> import plotmux
+        >>> fig = plotmux.bar([1, 2, 3], [4, 5, 6])  # doctest: +SKIP
+
+        ```
+    """
+    spec = BarSpec(
+        x=np.asarray(x),
+        y=np.asarray(y),
+        label=label,
+        color=color,
+        width=width,
         title=title,
         xlabel=xlabel,
         ylabel=ylabel,

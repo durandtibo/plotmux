@@ -3,6 +3,7 @@ r"""Contain backend-agnostic chart specifications."""
 from __future__ import annotations
 
 __all__ = [
+    "BarSpec",
     "BaseSpec",
     "CdfSpec",
     "GridSpec",
@@ -12,6 +13,7 @@ __all__ = [
     "ScatterSpec",
 ]
 
+from plotmux.specs.bar import BarSpec
 from plotmux.specs.base import BaseSpec
 from plotmux.specs.cdf import CdfSpec
 from plotmux.specs.grid import GridSpec
