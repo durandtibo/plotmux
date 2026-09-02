@@ -49,3 +49,24 @@ def test_render_line_forwards_kwargs() -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10))
     chart = render_line(spec, width=5.0)
     assert isinstance(chart, Chart)
+
+
+@xy_available
+def test_render_line_alpha() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), alpha=0.5)
+    chart = render_line(spec)
+    assert chart.children[0].props["opacity"] == 0.5
+
+
+@xy_available
+def test_render_line_linewidth() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), linewidth=3.0)
+    chart = render_line(spec)
+    assert chart.children[0].props["width"] == 3.0
+
+
+@xy_available
+def test_render_line_linestyle() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), linestyle="dashed")
+    chart = render_line(spec)
+    assert chart.children[0].props["dash"] == "dashed"

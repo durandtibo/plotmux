@@ -59,3 +59,10 @@ def test_render_bar_explicit_width_kwarg_not_overridden() -> None:
     # ``render_bar``).
     chart = render_bar(spec, width=0.9)
     assert chart.children[0].props["width"] == 0.9
+
+
+@xy_available
+def test_render_bar_alpha() -> None:
+    spec = BarSpec(x=np.arange(5), y=np.arange(5), alpha=0.5)
+    chart = render_bar(spec)
+    assert chart.children[0].props["opacity"] == 0.5

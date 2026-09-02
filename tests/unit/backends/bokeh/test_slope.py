@@ -53,6 +53,14 @@ def test_render_slope_color_linewidth_linestyle() -> None:
 
 
 @bokeh_available
+def test_render_slope_alpha() -> None:
+    spec = SlopeSpec(gradient=2, intercept=10, alpha=0.5)
+    fig = render_slope(figure(), spec)
+    slope = next(r for r in fig.center if isinstance(r, Slope))
+    assert slope.line_alpha == 0.5
+
+
+@bokeh_available
 def test_render_slope_forwards_kwargs() -> None:
     spec = SlopeSpec(gradient=2, intercept=10)
     fig = render_slope(figure(), spec, line_width=5.0)
