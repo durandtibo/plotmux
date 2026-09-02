@@ -32,11 +32,41 @@ def test_parse_color_hex_fully_transparent() -> None:
     assert parse_color("#ff000000") == (1.0, 0.0, 0.0, 0.0)
 
 
+def test_parse_color_hex_lowercase() -> None:
+    assert parse_color("#00ff00") == (0.0, 1.0, 0.0, 1.0)
+
+
+def test_parse_color_hex_mixed_case() -> None:
+    assert parse_color("#Ff00Aa") == pytest.approx((1.0, 0.0, 170 / 255, 1.0))
+
+
+def test_parse_color_hex_rgba_uppercase() -> None:
+    assert parse_color("#FF000080") == pytest.approx((1.0, 0.0, 0.0, 128 / 255))
+
+
+def test_parse_color_hex_double_hash_prefix() -> None:
+    # `lstrip("#")` strips every leading "#", not just one, so an
+    # extra leading "#" is silently tolerated.
+    assert parse_color("##ff0000") == (1.0, 0.0, 0.0, 1.0)
+
+
 # --- named colors ---
 
 
 def test_parse_color_named() -> None:
     assert parse_color("red") == (1.0, 0.0, 0.0, 1.0)
+
+
+def test_parse_color_named_uppercase() -> None:
+    assert parse_color("RED") == (1.0, 0.0, 0.0, 1.0)
+
+
+def test_parse_color_named_mixed_case() -> None:
+    assert parse_color("Tab:Blue") == parse_color("tab:blue")
+
+
+def test_parse_color_named_base_shorthand() -> None:
+    assert parse_color("k") == (0.0, 0.0, 0.0, 1.0)
 
 
 def test_parse_color_matplotlib_named() -> None:
@@ -94,9 +124,25 @@ def test_parse_color_invalid_type_none() -> None:
         parse_color(None)  # type: ignore[arg-type]
 
 
+def test_parse_color_invalid_type_list() -> None:
+    # A list is not accepted even though it behaves like a tuple.
+    with pytest.raises(ValueError, match="Invalid color"):
+        parse_color([1.0, 0.0, 0.0])  # type: ignore[arg-type]
+
+
 def test_parse_color_invalid_hex_length() -> None:
     with pytest.raises(ValueError, match="Invalid hex color"):
         parse_color("#fff")
+
+
+def test_parse_color_invalid_hex_length_seven() -> None:
+    with pytest.raises(ValueError, match="Invalid hex color"):
+        parse_color("#ffff000")
+
+
+def test_parse_color_invalid_hex_length_single_hash() -> None:
+    with pytest.raises(ValueError, match="Invalid hex color"):
+        parse_color("#")
 
 
 def test_parse_color_invalid_hex_chars() -> None:
@@ -104,14 +150,30 @@ def test_parse_color_invalid_hex_chars() -> None:
         parse_color("#zzzzzz")
 
 
+def test_parse_color_invalid_hex_alpha_chars() -> None:
+    with pytest.raises(ValueError, match="Invalid hex color"):
+        parse_color("#ff0000zz")
+
+
 def test_parse_color_unknown_name() -> None:
     with pytest.raises(ValueError, match="Invalid color"):
+        parse_color("not-a-color")
+
+
+def test_parse_color_unknown_name_error_mentions_color() -> None:
+    with pytest.raises(ValueError, match="not-a-color"):
         parse_color("not-a-color")
 
 
 def test_parse_color_empty_string() -> None:
     with pytest.raises(ValueError, match="Invalid color"):
         parse_color("")
+
+
+def test_parse_color_whitespace_name_not_stripped() -> None:
+    # Named-color lookup does not strip surrounding whitespace.
+    with pytest.raises(ValueError, match="Invalid color"):
+        parse_color(" red")
 
 
 @pytest.mark.parametrize(
