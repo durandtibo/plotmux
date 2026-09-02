@@ -71,7 +71,8 @@ item, and `ncols` must be a positive integer.
 at export time instead of producing a single rasterizable native figure. As a result,
 `fig.save(...)` only accepts an `.html` path for an `xy` grid; every other format `xy` otherwise
 supports (`png`, `svg`, `pdf`, ...) raises a `ValueError` for this one figure shape. Every other
-backend (`matplotlib`, `bokeh`, `altair`) supports its full usual set of formats for `grid()` too.
+backend (`matplotlib`, `bokeh`, `altair`, `plotly`) supports its full usual set of formats for
+`grid()` too.
 See [The Figure Object](figure.md#saving-a-figure) for the full per-backend format table.
 
 ## What's Next

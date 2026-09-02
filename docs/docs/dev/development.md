@@ -202,7 +202,8 @@ plotmux/
    never import a plotting library.
 
 3. **Add a renderer for each backend** (`src/plotmux/backends/matplotlib/`,
-   `src/plotmux/backends/xy/`, `src/plotmux/backends/bokeh/`, `src/plotmux/backends/altair/`), and
+   `src/plotmux/backends/xy/`, `src/plotmux/backends/bokeh/`, `src/plotmux/backends/altair/`,
+   `src/plotmux/backends/plotly/`), and
    register it in that backend's `_RENDERERS` dict.
 
 4. **Export the spec and the public function** from `src/plotmux/specs/__init__.py`,
