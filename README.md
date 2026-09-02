@@ -62,10 +62,10 @@ interactive dashboards or publication-quality output, without touching your plot
 backends is a one-line configuration change.
 
 plotmux currently supports common figure types such as histograms, empirical CDFs, line plots,
-scatter plots, and bar charts, plus layering several charts onto one shared set of axes and laying out charts as
-independent panels in a grid, along with export utilities for saving figures to formats like PNG,
-SVG, and HTML. Additional backends and chart types are added over time, and the API is designed so
-that new backends can be plugged in without breaking existing code.
+scatter plots, and bar charts, plus layering several charts onto one shared set of axes and laying
+out charts as independent panels in a grid, along with export utilities for saving figures to
+formats like PNG, SVG, and HTML. Additional backends and chart types are added over time, and the
+API is designed so that new backends can be plugged in without breaking existing code.
 
 Typical use cases include libraries and applications that want to stay backend-agnostic, teams that
 use different plotting tools across projects, and anyone who wants to avoid rewriting plotting code

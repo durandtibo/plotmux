@@ -13,8 +13,8 @@ adding a new backend or chart type should not require changing existing code.
 
 The unified API targets a small set of generic, broadly-useful chart types and figure-level concerns:
 the ones almost every plotting task needs (histograms, empirical CDFs, line charts, scatter
-plots, layering them together, laying them out in a grid, common axis styling, per-mark color,
-export), not
+plots, bar charts, layering them together, laying them out in a grid, common axis styling,
+per-mark color, export), not
 comprehensive coverage of every chart type a backend can draw. A niche or highly backend-specific
 plot is expected to stay behind the escape hatch (`Figure.to_native()`) rather than becoming a new
 spec.
@@ -52,6 +52,7 @@ src/plotmux/
 │   ├── cdf.py                    # CdfSpec
 │   ├── line.py                   # LineSpec
 │   ├── scatter.py                # ScatterSpec
+│   ├── bar.py                    # BarSpec
 │   ├── layer.py                  # LayerSpec (rejects nesting + empty layers)
 │   └── grid.py                   # GridSpec (rejects nesting + empty cells)
 ├── backends/
@@ -65,12 +66,12 @@ src/plotmux/
 ├── export.py                      # save(figure, path)
 ├── config.py                      # default backend + context manager
 ├── exceptions.py                  # PlotmuxError hierarchy
-├── api.py                         # public hist(), cdf(), line(), scatter(), layer(), grid()
+├── api.py                         # public hist(), cdf(), line(), scatter(), bar(), layer(), grid()
 └── testing/fixtures.py            # pytest fixtures for downstream users
 ```
 
-Every backend (`matplotlib`, `xy`, `bokeh`, `altair`) implements all six specs, including `grid.py`
-and `cdf.py`.
+Every backend (`matplotlib`, `xy`, `bokeh`, `altair`) implements all seven specs, including
+`grid.py` and `cdf.py`.
 
 `specs/<type>.py` plus one `_RENDERERS` entry per backend is the shape a new, similarly generic
 chart type would take. A new backend adds a new `backends/<name>/` subpackage alongside the

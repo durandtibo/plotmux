@@ -5,8 +5,8 @@ how to display, save, or escape to the native figure it wraps.
 
 ## Overview
 
-`plotmux.hist()`, `plotmux.line()`, `plotmux.scatter()`, `plotmux.layer()`, and `plotmux.grid()`
-all return a `Figure`. It keeps three things together:
+`plotmux.hist()`, `plotmux.line()`, `plotmux.scatter()`, `plotmux.bar()`, `plotmux.layer()`, and
+`plotmux.grid()` all return a `Figure`. It keeps three things together:
 
 - `spec`: the backend-agnostic spec that was rendered
 - `backend_name`: the name of the backend that rendered it

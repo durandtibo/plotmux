@@ -1,9 +1,9 @@
 # Plotting API
 
 :book: This page describes `plotmux`'s public plotting functions: `plotmux.hist`, `plotmux.cdf`,
-`plotmux.line`, `plotmux.scatter`, `plotmux.layer`, and `plotmux.grid`. It explains the concepts
-shared by all of them: specs, backends, common style arguments, and the `Figure` object they all
-return.
+`plotmux.line`, `plotmux.scatter`, `plotmux.bar`, `plotmux.layer`, and `plotmux.grid`. It explains
+the concepts shared by all of them: specs, backends, common style arguments, and the `Figure`
+object they all return.
 
 **Prerequisites:** You'll need to know a bit of Python.
 For a refresher, see the [Python tutorial](https://docs.python.org/tutorial/).
@@ -11,12 +11,13 @@ It is helpful to know a bit of [NumPy](https://numpy.org/doc/stable/user/quickst
 
 ## Overview
 
-`plotmux` exposes six top-level plotting functions:
+`plotmux` exposes seven top-level plotting functions:
 
 - `plotmux.hist()`: plot a histogram
 - `plotmux.cdf()`: plot an empirical cumulative distribution function (CDF)
 - `plotmux.line()`: plot a line chart
 - `plotmux.scatter()`: plot a scatter chart
+- `plotmux.bar()`: plot a bar chart
 - `plotmux.layer()`: combine several charts onto one shared set of axes
 - `plotmux.grid()`: lay out several charts as independent panels in a grid
 
@@ -83,9 +84,20 @@ for a dedicated walkthrough.
 
 ```
 
+## Plotting a Bar Chart
+
+```pycon
+>>> import plotmux
+>>> fig = plotmux.bar([1, 2, 3], [4, 9, 1], label="counts")
+>>> fig.save("bar.png")  # doctest: +SKIP
+
+```
+
+`width` controls the width of each bar, in `x` data units (defaults to `0.8`).
+
 ## Common Style Arguments
 
-`hist`, `cdf`, `line`, and `scatter` all accept the same figure-level style arguments:
+`hist`, `cdf`, `line`, `scatter`, and `bar` all accept the same figure-level style arguments:
 
 - `title`: an optional figure title
 - `xlabel` / `ylabel`: optional axis labels
