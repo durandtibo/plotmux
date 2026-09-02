@@ -95,3 +95,8 @@ def test_bar_spec_invalid_width(width: float) -> None:
 def test_bar_spec_invalid_alpha(alpha: float) -> None:
     with pytest.raises(ValueError, match="alpha must be in the range"):
         BarSpec(x=np.arange(10), y=np.arange(10), alpha=alpha)
+
+
+@pytest.mark.parametrize("alpha", [0.0, 1.0])
+def test_bar_spec_alpha_boundary_values(alpha: float) -> None:
+    assert BarSpec(x=np.arange(10), y=np.arange(10), alpha=alpha).alpha == alpha

@@ -73,3 +73,31 @@ def test_grid_spec_nested_grid_among_other_children_raises() -> None:
 def test_grid_spec_non_positive_ncols_raises() -> None:
     with pytest.raises(ValueError, match="ncols must be a positive integer"):
         GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), ncols=0)
+
+
+@pytest.mark.parametrize("ncols", [-1, -10])
+def test_grid_spec_negative_ncols_raises(ncols: int) -> None:
+    with pytest.raises(ValueError, match="ncols must be a positive integer"):
+        GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), ncols=ncols)
+
+
+def test_grid_spec_non_integer_ncols_raises() -> None:
+    with pytest.raises(ValueError, match="ncols must be a positive integer"):
+        GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), ncols=2.5)
+
+
+def test_grid_spec_bool_ncols_raises() -> None:
+    # bool is an Integral subclass, but it must not be accepted as ncols.
+    with pytest.raises(ValueError, match="ncols must be a positive integer"):
+        GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), ncols=True)
+
+
+def test_grid_spec_numpy_integer_ncols_accepted() -> None:
+    spec = GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), ncols=np.int64(3))
+    assert spec.ncols == 3
+
+
+def test_grid_spec_ncols_larger_than_cells_does_not_raise() -> None:
+    spec = GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), ncols=5)
+    assert spec.ncols == 5
+    assert len(spec.cells) == 1

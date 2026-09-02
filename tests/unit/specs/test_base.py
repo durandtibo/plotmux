@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 import numpy as np
 import pytest
@@ -67,12 +68,12 @@ def test_base_spec_custom_style() -> None:
 
 
 @pytest.mark.parametrize("scale", ["linear", "log"])
-def test_base_spec_xscale_values(scale: str) -> None:
+def test_base_spec_xscale_values(scale: Literal["linear", "log"]) -> None:
     assert FakeSpec(xscale=scale).xscale == scale
 
 
 @pytest.mark.parametrize("scale", ["linear", "log"])
-def test_base_spec_yscale_values(scale: str) -> None:
+def test_base_spec_yscale_values(scale: Literal["linear", "log"]) -> None:
     assert FakeSpec(yscale=scale).yscale == scale
 
 
@@ -142,6 +143,30 @@ def test_check_equal_length_non_1d_raises() -> None:
         _check_equal_length(np.zeros((5, 3)), np.arange(5))
 
 
+def test_check_equal_length_y_non_1d_raises() -> None:
+    with pytest.raises(ValueError, match="x and y must be 1-dimensional"):
+        _check_equal_length(np.arange(5), np.zeros((5, 3)))
+
+
+def test_check_equal_length_coerces_lists_to_arrays() -> None:
+    x, y = _check_equal_length([1, 2, 3], [4, 5, 6])
+    assert isinstance(x, np.ndarray)
+    assert isinstance(y, np.ndarray)
+    np.testing.assert_array_equal(x, np.array([1, 2, 3]))
+    np.testing.assert_array_equal(y, np.array([4, 5, 6]))
+
+
+def test_check_equal_length_empty_arrays_do_not_raise() -> None:
+    x, y = _check_equal_length(np.array([]), np.array([]))
+    assert x.shape == (0,)
+    assert y.shape == (0,)
+
+
+def test_check_equal_length_error_message_reports_lengths() -> None:
+    with pytest.raises(ValueError, match="but received 5 and 3"):
+        _check_equal_length(np.arange(5), np.arange(3))
+
+
 ##########################################
 #     Tests for BaseSpec._validate_base     #
 ##########################################
@@ -166,3 +191,26 @@ def test_validate_base_ymin_ymax_ok() -> None:
 def test_validate_base_ymin_greater_than_ymax_raises() -> None:
     with pytest.raises(ValueError, match="ymin must not be greater than ymax"):
         FakeValidatedSpec(ymin=10, ymax=0)
+
+
+def test_validate_base_ymin_equal_ymax_does_not_raise() -> None:
+    spec = FakeValidatedSpec(ymin=5, ymax=5)
+    assert spec.ymin == 5
+    assert spec.ymax == 5
+
+
+def test_validate_base_ymin_only_does_not_raise() -> None:
+    spec = FakeValidatedSpec(ymin=5)
+    assert spec.ymin == 5
+    assert spec.ymax is None
+
+
+def test_validate_base_ymax_only_does_not_raise() -> None:
+    spec = FakeValidatedSpec(ymax=5)
+    assert spec.ymin is None
+    assert spec.ymax == 5
+
+
+def test_validate_base_background_color_none_left_untouched() -> None:
+    spec = FakeValidatedSpec(background_color=None)
+    assert spec.background_color is None

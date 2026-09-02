@@ -111,3 +111,19 @@ def test_line_spec_is_frozen() -> None:
 def test_line_spec_mismatched_length(x: np.ndarray, y: np.ndarray) -> None:
     with pytest.raises(ValueError, match="x and y must have the same length"):
         LineSpec(x=x, y=y)
+
+
+@pytest.mark.parametrize("alpha", [0.0, 1.0])
+def test_line_spec_alpha_boundary_values(alpha: float) -> None:
+    assert LineSpec(x=np.arange(10), y=np.arange(10), alpha=alpha).alpha == alpha
+
+
+@pytest.mark.parametrize("linestyle", ["solid", "dashed", "dotted", "dashdot"])
+def test_line_spec_linestyle_values(linestyle: str) -> None:
+    assert LineSpec(x=np.arange(10), y=np.arange(10), linestyle=linestyle).linestyle == linestyle
+
+
+def test_line_spec_x_y_coerced_from_lists() -> None:
+    spec = LineSpec(x=[1, 2, 3], y=[4, 5, 6])
+    assert isinstance(spec.x, np.ndarray)
+    assert isinstance(spec.y, np.ndarray)

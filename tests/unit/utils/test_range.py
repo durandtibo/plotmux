@@ -30,6 +30,25 @@ def test_find_range_ignores_nan_values() -> None:
     assert find_range(values) == (1.0, 3.0)
 
 
+def test_find_range_all_equal_values() -> None:
+    assert find_range(np.array([7.0, 7.0, 7.0])) == (7.0, 7.0)
+
+
+def test_find_range_negative_values() -> None:
+    assert find_range(np.array([-10.0, -5.0, -1.0])) == (-10.0, -1.0)
+
+
+def test_find_range_single_value_with_quantile_bounds() -> None:
+    assert find_range(np.array([3.0]), xmin="q0.0", xmax="q1.0") == (3.0, 3.0)
+
+
+def test_find_range_inf_values() -> None:
+    values = np.array([1.0, 2.0, np.inf])
+    xmin, xmax = find_range(values)
+    assert xmin == 1.0
+    assert math.isinf(xmax)
+
+
 # --- default / explicit bounds ---
 
 
@@ -84,3 +103,8 @@ def test_find_range_lo_greater_than_hi_raises() -> None:
 def test_find_range_lo_greater_than_hi_quantiles_raises() -> None:
     with pytest.raises(ValueError, match="the resolved lower bound must not be greater than"):
         find_range(np.arange(101), xmin="q0.9", xmax="q0.1")
+
+
+def test_find_range_lo_equal_hi_does_not_raise() -> None:
+    # Equal bounds are a valid (degenerate) range, not an error.
+    assert find_range(np.arange(101), xmin=50, xmax=50) == (50, 50)
