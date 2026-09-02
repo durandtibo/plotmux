@@ -2,7 +2,14 @@ from __future__ import annotations
 
 import numpy as np
 
-from plotmux.specs import BarSpec, CdfSpec, HistogramSpec, LineSpec, ScatterSpec, SlopeSpec
+from plotmux.specs import (
+    BarSpec,
+    CdfSpec,
+    HistogramSpec,
+    LineSpec,
+    ScatterSpec,
+    SlopeSpec,
+)
 from plotmux.utils.slope import resolve_slope_xrange
 
 ##########################################

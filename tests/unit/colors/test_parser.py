@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 
 from plotmux.colors import parse_color
@@ -102,7 +100,7 @@ def test_parse_color_rgba_tuple() -> None:
 def test_parse_color_tuple_boundary_values(
     color: tuple[float, ...], expected: tuple[float, float, float, float]
 ) -> None:
-    assert parse_color(color) == expected  # type: ignore[arg-type]
+    assert parse_color(color) == expected
 
 
 def test_parse_color_tuple_returns_floats() -> None:
@@ -189,7 +187,7 @@ def test_parse_color_whitespace_name_not_stripped() -> None:
 )
 def test_parse_color_invalid_tuple_length(bad_tuple: tuple[float, ...]) -> None:
     with pytest.raises(ValueError, match="Invalid color tuple"):
-        parse_color(bad_tuple)  # type: ignore[arg-type]
+        parse_color(bad_tuple)
 
 
 @pytest.mark.parametrize(
@@ -205,4 +203,4 @@ def test_parse_color_invalid_tuple_length(bad_tuple: tuple[float, ...]) -> None:
 )
 def test_parse_color_out_of_range(bad_tuple: tuple[float, ...]) -> None:
     with pytest.raises(ValueError, match="must be in the range"):
-        parse_color(bad_tuple)  # type: ignore[arg-type]
+        parse_color(bad_tuple)

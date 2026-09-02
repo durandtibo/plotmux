@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 import numpy as np
 import pytest
@@ -42,7 +43,7 @@ def test_base_spec_is_dataclass() -> None:
 def test_base_spec_is_frozen() -> None:
     spec = FakeSpec(value=42)
     with pytest.raises(AttributeError):
-        spec.value = 43  # type: ignore[misc]
+        spec.value = 43
 
 
 def test_base_spec_default_style() -> None:
