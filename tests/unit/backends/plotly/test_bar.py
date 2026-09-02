@@ -43,3 +43,10 @@ def test_render_bar_label_shows_legend() -> None:
     spec = BarSpec(x=np.arange(5), y=np.arange(5), label="my-bar")
     fig = render_bar(go.Figure(), spec)
     assert fig.data[0].name == "my-bar"
+
+
+@plotly_available
+def test_render_bar_alpha() -> None:
+    spec = BarSpec(x=np.arange(5), y=np.arange(5), alpha=0.5)
+    fig = render_bar(go.Figure(), spec)
+    assert fig.data[0].opacity == 0.5

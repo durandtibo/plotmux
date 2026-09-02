@@ -73,3 +73,10 @@ def test_render_scatter_explicit_size_kwarg_not_overridden() -> None:
     # (``kwargs.setdefault("size", spec.size)`` in ``render_scatter``).
     fig = render_scatter(figure(), spec, size=99.0)
     assert isinstance(fig, figure)
+
+
+@bokeh_available
+def test_render_scatter_alpha() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), alpha=0.5)
+    fig = render_scatter(figure(), spec)
+    assert isinstance(fig, figure)

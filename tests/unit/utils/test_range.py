@@ -74,3 +74,13 @@ def test_find_range_invalid_quantile_string_xmax(bound: str) -> None:
 def test_find_range_quantile_out_of_range(quantile: str) -> None:
     with pytest.raises(ValueError, match="quantile must be in the range"):
         find_range(np.arange(101), xmin=quantile)
+
+
+def test_find_range_lo_greater_than_hi_raises() -> None:
+    with pytest.raises(ValueError, match="the resolved lower bound must not be greater than"):
+        find_range(np.arange(101), xmin=50, xmax=10)
+
+
+def test_find_range_lo_greater_than_hi_quantiles_raises() -> None:
+    with pytest.raises(ValueError, match="the resolved lower bound must not be greater than"):
+        find_range(np.arange(101), xmin="q0.9", xmax="q0.1")

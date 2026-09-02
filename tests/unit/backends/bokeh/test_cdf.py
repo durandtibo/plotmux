@@ -79,3 +79,10 @@ def test_render_cdf_forwards_kwargs() -> None:
     spec = CdfSpec(values=np.arange(101), nbins=10)
     fig = render_cdf(figure(), spec, line_alpha=0.5)
     assert isinstance(fig, figure)
+
+
+@bokeh_available
+def test_render_cdf_alpha() -> None:
+    spec = CdfSpec(values=np.arange(101), nbins=10, alpha=0.5)
+    fig = render_cdf(figure(), spec)
+    assert fig.renderers[0].glyph.line_alpha == 0.5

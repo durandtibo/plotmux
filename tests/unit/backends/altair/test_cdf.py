@@ -77,3 +77,10 @@ def test_render_cdf_forwards_kwargs() -> None:
     spec = CdfSpec(values=np.arange(101), nbins=10)
     chart = render_cdf(spec, opacity=0.5)
     assert chart.to_dict()["mark"]["opacity"] == 0.5
+
+
+@altair_available
+def test_render_cdf_alpha() -> None:
+    spec = CdfSpec(values=np.arange(101), nbins=10, alpha=0.5)
+    chart = render_cdf(spec)
+    assert chart.to_dict()["mark"]["opacity"] == 0.5

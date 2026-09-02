@@ -86,3 +86,12 @@ def test_render_scatter_forwards_kwargs() -> None:
     render_scatter(ax, spec, alpha=0.3)
     assert ax.collections[0].get_alpha() == 0.3
     plt.close(fig)
+
+
+@matplotlib_available
+def test_render_scatter_edgecolor() -> None:
+    fig, ax = plt.subplots()
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), edgecolor="blue")
+    render_scatter(ax, spec)
+    assert tuple(ax.collections[0].get_edgecolor()[0]) == (0.0, 0.0, 1.0, 1.0)
+    plt.close(fig)

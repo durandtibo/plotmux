@@ -162,3 +162,39 @@ def test_apply_common_style_no_labels() -> None:
     encoding = out.to_dict()["encoding"]
     assert encoding["x"]["title"] is None
     assert encoding["y"]["title"] is None
+
+
+@altair_available
+def test_apply_common_style_ymin_ymax() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), ymin=0.0, ymax=5.0)
+    chart = render_line(spec)
+    out = apply_common_style(chart, spec)
+    scale = out.to_dict()["encoding"]["y"]["scale"]
+    assert scale["domainMin"] == 0.0
+    assert scale["domainMax"] == 5.0
+
+
+@altair_available
+def test_apply_common_style_no_ymin_ymax() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10))
+    chart = render_line(spec)
+    out = apply_common_style(chart, spec)
+    scale = out.to_dict()["encoding"]["y"]["scale"]
+    assert "domainMin" not in scale
+    assert "domainMax" not in scale
+
+
+@altair_available
+def test_apply_common_style_background_color() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, background_color="red")
+    chart = render_histogram(spec)
+    out = apply_common_style(chart, spec)
+    assert out.to_dict()["background"] == "rgba(255, 0, 0, 1.0)"
+
+
+@altair_available
+def test_apply_common_style_no_background_color() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10)
+    chart = render_histogram(spec)
+    out = apply_common_style(chart, spec)
+    assert "background" not in out.to_dict()

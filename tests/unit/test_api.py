@@ -5,6 +5,7 @@ import pytest
 
 import plotmux
 from plotmux.specs import (
+    BarSpec,
     CdfSpec,
     GridSpec,
     HistogramSpec,
@@ -202,6 +203,53 @@ def test_scatter_mismatched_length_raises() -> None:
 def test_scatter_invalid_size_raises() -> None:
     with pytest.raises(ValueError, match="size must be a positive number"):
         plotmux.scatter(np.arange(10), np.arange(10), size=-1.0)
+
+
+########################
+#     Tests for bar     #
+########################
+
+
+@matplotlib_available
+def test_bar_returns_figure_with_matplotlib_backend() -> None:
+    fig = plotmux.bar(np.arange(10), np.arange(10) ** 2)
+    assert fig.backend_name == "matplotlib"
+    assert isinstance(fig.spec, BarSpec)
+
+
+@xy_available
+def test_bar_explicit_xy_backend() -> None:
+    fig = plotmux.bar(np.arange(10), np.arange(10) ** 2, backend="xy")
+    assert fig.backend_name == "xy"
+
+
+def test_bar_unknown_backend_raises() -> None:
+    with pytest.raises(RuntimeError, match="No backend registered"):
+        plotmux.bar(np.arange(10), np.arange(10), backend="does-not-exist")
+
+
+@matplotlib_available
+def test_bar_mismatched_length_raises() -> None:
+    with pytest.raises(ValueError, match="x and y must have the same length"):
+        plotmux.bar(np.arange(10), np.arange(5))
+
+
+@matplotlib_available
+def test_bar_common_style() -> None:
+    fig = plotmux.bar(
+        np.arange(10),
+        np.arange(10) ** 2,
+        title="t",
+        xlabel="x",
+        ylabel="y",
+        xscale="log",
+        yscale="log",
+    )
+    assert fig.spec.title == "t"
+    assert fig.spec.xlabel == "x"
+    assert fig.spec.ylabel == "y"
+    assert fig.spec.xscale == "log"
+    assert fig.spec.yscale == "log"
 
 
 ###########################

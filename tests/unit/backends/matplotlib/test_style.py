@@ -104,6 +104,44 @@ def test_apply_common_style_yscale(scale: str) -> None:
     plt.close(fig)
 
 
+@matplotlib_available
+def test_apply_common_style_background_color() -> None:
+    fig, ax = plt.subplots()
+    spec = HistogramSpec(values=np.arange(1, 101), bins=10, background_color="red")
+    apply_common_style(ax, spec)
+    assert ax.get_facecolor() == (1.0, 0.0, 0.0, 1.0)
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_apply_common_style_no_background_color() -> None:
+    fig, ax = plt.subplots()
+    spec = HistogramSpec(values=np.arange(1, 101), bins=10)
+    default_facecolor = ax.get_facecolor()
+    apply_common_style(ax, spec)
+    assert ax.get_facecolor() == default_facecolor
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_apply_common_style_ymin_ymax() -> None:
+    fig, ax = plt.subplots()
+    spec = HistogramSpec(values=np.arange(1, 101), bins=10, ymin=0.0, ymax=5.0)
+    apply_common_style(ax, spec)
+    assert ax.get_ylim() == (0.0, 5.0)
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_apply_common_style_no_ymin_ymax() -> None:
+    fig, ax = plt.subplots()
+    spec = HistogramSpec(values=np.arange(1, 101), bins=10)
+    default_ylim = ax.get_ylim()
+    apply_common_style(ax, spec)
+    assert ax.get_ylim() == default_ylim
+    plt.close(fig)
+
+
 #######################################
 #     Tests for attach_repr_png     #
 #######################################

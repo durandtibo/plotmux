@@ -46,3 +46,10 @@ def test_render_line_label_shows_legend() -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10), label="my-line")
     fig = render_line(go.Figure(), spec)
     assert fig.data[0].name == "my-line"
+
+
+@plotly_available
+def test_render_line_alpha() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), alpha=0.5)
+    fig = render_line(go.Figure(), spec)
+    assert fig.data[0].opacity == 0.5

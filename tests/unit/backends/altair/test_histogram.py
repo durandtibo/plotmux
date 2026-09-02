@@ -77,3 +77,10 @@ def test_render_histogram_forwards_kwargs() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10)
     chart = render_histogram(spec, opacity=0.5)
     assert chart.to_dict()["mark"]["opacity"] == 0.5
+
+
+@altair_available
+def test_render_histogram_alpha() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, alpha=0.5)
+    chart = render_histogram(spec)
+    assert chart.to_dict()["mark"]["opacity"] == 0.5

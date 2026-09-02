@@ -78,3 +78,10 @@ def test_render_histogram_forwards_kwargs() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10)
     fig = render_histogram(figure(), spec, fill_alpha=0.5)
     assert isinstance(fig, figure)
+
+
+@bokeh_available
+def test_render_histogram_alpha() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, alpha=0.5)
+    fig = render_histogram(figure(), spec)
+    assert isinstance(fig, figure)

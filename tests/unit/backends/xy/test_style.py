@@ -100,3 +100,19 @@ def test_apply_common_style_preserves_layout() -> None:
     assert out.width == chart.width
     assert out.height == chart.height
     assert out.padding == chart.padding
+
+
+@xy_available
+def test_apply_common_style_background_color() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, background_color="red")
+    chart = render_histogram(spec)
+    out = apply_common_style(chart, spec)
+    assert out.style["backgroundColor"] == "rgba(255, 0, 0, 1.0)"
+
+
+@xy_available
+def test_apply_common_style_no_background_color() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10)
+    chart = render_histogram(spec)
+    out = apply_common_style(chart, spec)
+    assert not out.style

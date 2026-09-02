@@ -87,3 +87,14 @@ def test_render_cdf_forwards_kwargs() -> None:
     render_cdf(ax, spec, alpha=0.3)
     assert ax.patches[0].get_alpha() == 0.3
     plt.close(fig)
+
+
+@matplotlib_available
+def test_render_cdf_constant_values_does_not_set_xlim() -> None:
+    # ``xmin == xmax`` when all values are identical, so ``ax.set_xlim`` is
+    # skipped (a degenerate zero-width limit would otherwise be set).
+    fig, ax = plt.subplots()
+    spec = CdfSpec(values=np.full(10, 5.0), nbins=10)
+    out = render_cdf(ax, spec)
+    assert out is ax
+    plt.close(fig)

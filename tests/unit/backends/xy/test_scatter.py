@@ -65,3 +65,25 @@ def test_render_scatter_explicit_size_kwarg_not_overridden() -> None:
     # (``kwargs.setdefault("size", spec.size)`` in ``render_scatter``).
     chart = render_scatter(spec, size=99.0)
     assert isinstance(chart, Chart)
+
+
+@xy_available
+def test_render_scatter_alpha() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), alpha=0.5)
+    chart = render_scatter(spec)
+    assert chart.children[0].props["opacity"] == 0.5
+
+
+@xy_available
+def test_render_scatter_edgecolor() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), edgecolor="blue")
+    chart = render_scatter(spec)
+    assert chart.children[0].props["stroke"] is not None
+    assert chart.children[0].props["stroke_width"] == 1.0
+
+
+@xy_available
+def test_render_scatter_no_edgecolor() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
+    chart = render_scatter(spec)
+    assert isinstance(chart, Chart)

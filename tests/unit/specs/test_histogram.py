@@ -138,3 +138,9 @@ def test_histogram_spec_xmin_greater_than_xmax_raises_for_numpy_integers() -> No
     # also recognize numpy integer scalars, not just built-in int/float.
     with pytest.raises(ValueError, match="xmin must be strictly less than xmax"):
         HistogramSpec(values=np.arange(101), xmin=np.int64(10), xmax=np.int64(5))
+
+
+@pytest.mark.parametrize("alpha", [2.0, -0.1])
+def test_histogram_spec_invalid_alpha(alpha: float) -> None:
+    with pytest.raises(ValueError, match="alpha must be in the range"):
+        HistogramSpec(values=np.arange(101), alpha=alpha)

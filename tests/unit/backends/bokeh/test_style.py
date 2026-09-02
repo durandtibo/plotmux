@@ -81,3 +81,37 @@ def test_apply_common_style_returns_same_figure() -> None:
     fig = figure()
     out = apply_common_style(fig, spec)
     assert out is fig
+
+
+@bokeh_available
+def test_apply_common_style_background_color() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, background_color="red")
+    fig = figure()
+    out = apply_common_style(fig, spec)
+    assert out.background_fill_color is not None
+
+
+@bokeh_available
+def test_apply_common_style_no_background_color() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10)
+    fig = figure()
+    default_color = fig.background_fill_color
+    out = apply_common_style(fig, spec)
+    assert out.background_fill_color == default_color
+
+
+@bokeh_available
+def test_apply_common_style_ymin_ymax() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, ymin=0.0, ymax=10.0)
+    fig = figure()
+    out = apply_common_style(fig, spec)
+    assert out.y_range.start == 0.0
+    assert out.y_range.end == 10.0
+
+
+@bokeh_available
+def test_apply_common_style_no_ymin_ymax() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10)
+    fig = figure()
+    out = apply_common_style(fig, spec)
+    assert isinstance(out, figure)

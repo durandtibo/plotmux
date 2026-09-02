@@ -82,3 +82,10 @@ def test_render_histogram_forwards_kwargs() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10)
     fig = render_histogram(go.Figure(), spec, opacity=0.5)
     assert fig.data[0].opacity == 0.5
+
+
+@plotly_available
+def test_render_histogram_alpha() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, alpha=0.5)
+    fig = render_histogram(go.Figure(), spec)
+    assert fig.data[0].opacity == 0.5
