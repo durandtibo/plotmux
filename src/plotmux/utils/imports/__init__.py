@@ -1,5 +1,6 @@
 r"""Helpers to detect and validate the optional plotting backend
-dependencies (``altair``, ``bokeh``, ``matplotlib``, ``xy``).
+dependencies (``altair``, ``bokeh``, ``matplotlib``, ``plotly``,
+``xy``).
 
 For each backend, this package re-exports:
 
@@ -20,15 +21,19 @@ __all__ = [
     "check_altair",
     "check_bokeh",
     "check_matplotlib",
+    "check_plotly",
     "check_xy",
     "is_altair_available",
     "is_bokeh_available",
     "is_matplotlib_available",
+    "is_plotly_available",
     "is_xy_available",
     "matplotlib_available",
+    "plotly_available",
     "raise_altair_missing_error",
     "raise_bokeh_missing_error",
     "raise_matplotlib_missing_error",
+    "raise_plotly_missing_error",
     "raise_xy_missing_error",
     "xy_available",
 ]
@@ -50,6 +55,12 @@ from plotmux.utils.imports.matplotlib import (
     is_matplotlib_available,
     matplotlib_available,
     raise_matplotlib_missing_error,
+)
+from plotmux.utils.imports.plotly import (
+    check_plotly,
+    is_plotly_available,
+    plotly_available,
+    raise_plotly_missing_error,
 )
 from plotmux.utils.imports.xy import (
     check_xy,

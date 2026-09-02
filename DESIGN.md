@@ -1,27 +1,32 @@
 # plotmux design
 
 Status: implemented. Core abstraction, eight chart specs (histogram,
-cdf, line, scatter, bar, slope, layer, grid), four backends
-(matplotlib, xy, bokeh, altair), per-mark color, common axis styling,
+cdf, line, scatter, bar, slope, layer, grid), five backends
+(matplotlib, xy, bokeh, altair, plotly), per-mark color, common axis styling,
 layering, grid layout, a `plotmux.exceptions` hierarchy, export, a
 predefined-colors package, lazy per-backend imports, and a
 third-party backend plugin mechanism are all in place. `SlopeSpec` is
 registered as a standalone spec (`plotmux.slope(...)`) only on
 matplotlib and bokeh, the two backends with a native "line by slope,
-independent of data range" primitive; on altair and xy it is
+independent of data range" primitive; on altair, xy, and plotly it is
 supported only as a `layer()` child alongside a data-bound sibling
 (see [8.1](#81-case-study-reproducing-bokehs-slope-example)), since
-those two backends need concrete endpoints, not a slope/intercept
+those three backends need concrete endpoints, not a slope/intercept
 pair, and a standalone `SlopeSpec` has no data of its own to derive
 endpoints from. `plotmux.slope(...)`/a slope-only `layer()` still
-raise `UnsupportedSpecError` on those two backends. All of
+raise `UnsupportedSpecError` on those three backends. All of
 [8.1](#81-case-study-reproducing-bokehs-slope-example)'s gaps (per-mark
 alpha, separate marker edge color, `LineSpec`
 `linewidth`/`linestyle`, figure background color, explicit `ymin`/
 `ymax` axis bounds, and altair/xy support for `SlopeSpec` as a layer
 child) are now closed; bokeh's own slope example is reproducible,
-unchanged, on all four backends (modulo the standalone-vs-layered
-`SlopeSpec` distinction on altair/xy noted above). See
+unchanged, on all five backends (modulo the standalone-vs-layered
+`SlopeSpec` distinction on altair/xy/plotly noted above). A fifth
+backend, plotly, has since been added (see
+[3.2](#32-package-layout)), following the same `layer()`-only
+treatment for `SlopeSpec` as altair/xy, for the same reason: no
+native "line by slope, independent of data range" primitive (see
+`plotmux.backends.plotly.slope`). See
 [7](#7-open-questions) for what's still unresolved and
 [8](#8-candidate-future-work) for what's next.
 Date: 2026-09-01.
@@ -168,18 +173,31 @@ src/plotmux/
 │   │   │                         #   fig.add_layout(bokeh.models.Slope(...))
 │   │   ├── layer.py              # render_layer(fig, spec) -> shared figure
 │   │   └── grid.py               # render_grid(spec) -> bokeh gridplot layout
-│   └── altair/
-│       ├── __init__.py          # registers AltairBackend if available
-│       ├── backend.py           # AltairBackend (renderers wrapped via
-│       │                         #   backends.base.make_renderer)
-│       ├── style.py             # rgba_to_altair(); prepare_color(); apply_common_style(chart, spec)
-│       ├── histogram.py         # render_histogram(spec) -> alt.Chart
-│       ├── cdf.py                 # render_cdf(spec) -> alt.Chart
-│       ├── line.py               # render_line(spec) -> alt.Chart
-│       ├── scatter.py            # render_scatter(spec) -> alt.Chart
-│       ├── bar.py                 # render_bar(spec) -> alt.Chart, via mark_bar()
-│       ├── layer.py              # render_layer(spec) -> alt.LayerChart, via alt.layer(*charts)
-│       └── grid.py               # render_grid(spec) -> alt.ConcatChart, via alt.concat(*charts)
+│   ├── altair/
+│   │   ├── __init__.py          # registers AltairBackend if available
+│   │   ├── backend.py           # AltairBackend (renderers wrapped via
+│   │   │                         #   backends.base.make_renderer)
+│   │   ├── style.py             # rgba_to_altair(); prepare_color(); apply_common_style(chart, spec)
+│   │   ├── histogram.py         # render_histogram(spec) -> alt.Chart
+│   │   ├── cdf.py                 # render_cdf(spec) -> alt.Chart
+│   │   ├── line.py                # render_line(spec) -> alt.Chart
+│   │   ├── scatter.py            # render_scatter(spec) -> alt.Chart
+│   │   ├── bar.py                 # render_bar(spec) -> alt.Chart, via mark_bar()
+│   │   ├── layer.py              # render_layer(spec) -> alt.LayerChart, via alt.layer(*charts)
+│   │   └── grid.py               # render_grid(spec) -> alt.ConcatChart, via alt.concat(*charts)
+│   └── plotly/
+│       ├── __init__.py          # registers PlotlyBackend if available
+│       ├── backend.py           # PlotlyBackend
+│       ├── style.py             # rgba_to_plotly(); DASH_STYLE; apply_common_style(fig, spec)
+│       ├── histogram.py         # render_histogram(fig, spec, row=, col=) -> go.Figure
+│       ├── cdf.py                 # render_cdf(fig, spec, row=, col=) -> go.Figure
+│       ├── line.py               # render_line(fig, spec, row=, col=) -> go.Figure
+│       ├── scatter.py            # render_scatter(fig, spec, row=, col=) -> go.Figure
+│       ├── bar.py                 # render_bar(fig, spec, row=, col=) -> go.Figure, via go.Bar
+│       ├── slope.py               # render_slope(fig, spec, xrange, row=, col=) -> go.Figure;
+│       │                         #   layer()-only, like altair/xy (no native abline primitive)
+│       ├── layer.py              # render_layer(fig, spec, row=, col=) -> shared go.Figure
+│       └── grid.py               # render_grid(spec) -> go.Figure, via plotly.subplots.make_subplots
 ├── figure.py                    # Figure wrapper
 ├── export.py                    # save(figure, path)
 ├── config.py                    # default backend + context manager
@@ -191,48 +209,53 @@ src/plotmux/
 ```
 
 `specs/{cdf,line,scatter,bar,layer,grid}.py` and their matching
-per-backend renderers are implemented across all four backends
-(matplotlib, xy, bokeh, altair), with one deliberate asymmetry: xy's
+per-backend renderers are implemented across all five backends
+(matplotlib, xy, bokeh, altair, plotly), with one deliberate asymmetry: xy's
 grid export is HTML-only (see [4.8a](#48a-grid-layouts)). `BarSpec`
 was the seventh chart type added (see [7](#7-open-questions) for the
 bar chart's own history), on the strength of a bar chart being used
-across every one of the four backends' own plot catalogs, with no
+across every one of the (then four) backends' own plot catalogs, with no
 natural encoding into an existing spec (unlike, say, a step-histogram
 variant, which would just be a `HistogramSpec` option).
 
 `SlopeSpec` was the eighth chart type added, and the first
-implemented on *fewer* than all four backends as a *standalone* spec,
+implemented on *fewer* than all backends as a *standalone* spec,
 by design (see [8.1](#81-case-study-reproducing-bokehs-slope-example)):
 it is registered in `MatplotlibBackend._RENDERERS`/
 `BokehBackend._RENDERERS` (and each backend's own `layer.py`, so it
 can appear as a `layer()` child) directly, since matplotlib's
 `Axes.axline`/bokeh's `bokeh.models.Slope` are both genuine "line by
 slope, independent of data range" primitives. Requesting it
-standalone on `altair`/`xy` raises the same `UnsupportedSpecError` any
-spec with no renderer registered for a backend would (via
+standalone on `altair`/`xy`/`plotly` raises the same `UnsupportedSpecError`
+any spec with no renderer registered for a backend would (via
 `resolve_renderer`, see [4.2](#42-backend)) -- it is simply not
-registered in `AltairBackend._RENDERERS`/`XyBackend._RENDERERS`. As a
-`layer()` child on those two backends, though, `SlopeSpec` *is*
-supported: `plotmux.backends.altair.layer.render_layer`/
-`plotmux.backends.xy.layer.render_layer` compute the x-range spanned
+registered in `AltairBackend._RENDERERS`/`XyBackend._RENDERERS`/
+`PlotlyBackend._RENDERERS`. As a `layer()` child on those three
+backends, though, `SlopeSpec` *is* supported:
+`plotmux.backends.altair.layer.render_layer`/
+`plotmux.backends.xy.layer.render_layer`/
+`plotmux.backends.plotly.layer.render_layer` compute the x-range spanned
 by its data-bound siblings (via
 `plotmux.utils.slope.resolve_slope_xrange`) and hand it to a
 `layer()`-only `render_slope(spec, xrange)` (registered only in each
 backend's own `layer.py` dispatch table, not in the backend's
 top-level `_RENDERERS`), which draws a plain two-point line between
-that range's endpoints -- altair's `mark_line`/xy's `xy.line` have no
-native slope primitive, so this is the closest equivalent, and it is
-exact (not an approximation) because the range comes from the actual
-sibling data, not a guess. A `layer()` call with only `SlopeSpec`
-children (no data-bound sibling to derive a range from) still raises
-`UnsupportedSpecError` on `altair`/`xy`, since there is nothing to
-compute a range from.
+that range's endpoints -- altair's `mark_line`/xy's `xy.line`/plotly's
+`go.Scatter(mode="lines")` have no native slope primitive (plotly's own
+`add_shape`/`add_hline`/`add_vline` annotations either need concrete
+data-space endpoints too or only cover the horizontal/vertical special
+cases), so this is the closest equivalent, and it is exact (not an
+approximation) because the range comes from the actual sibling data,
+not a guess. A `layer()` call with only `SlopeSpec` children (no
+data-bound sibling to derive a range from) still raises
+`UnsupportedSpecError` on `altair`/`xy`/`plotly`, since there is
+nothing to compute a range from.
 Unlike every other spec, `SlopeSpec` is not data-bound: it describes
 a line by `(gradient, intercept)` rather than by `x`/`y` arrays, so it
 draws without owning any data of its own and typically appears as a
 `layer()` child alongside a data-bound spec (see
 [4.8](#48-layering-multiple-specs-on-one-axes)) -- required, rather
-than just typical, for altair/xy per the above.
+than just typical, for altair/xy/plotly per the above.
 
 The layout otherwise leaves room for one more chart type (a new
 `specs/<type>.py` plus one `_RENDERERS` entry per backend) if a
@@ -660,9 +683,9 @@ convenience surface most users touch.
 `slope(gradient, intercept=0.0, *, label=None, color=None,
 linewidth=None, linestyle="solid", ...)` builds a `SlopeSpec` and
 calls `_render` like every other function here -- `_render` itself
-does not know or care that only two of the four backends have a
+does not know or care that only two of the five backends have a
 `SlopeSpec` renderer registered; `get_backend(name).render(spec)`
-raises `UnsupportedSpecError` for `altair`/`xy` the same way it would
+raises `UnsupportedSpecError` for `altair`/`xy`/`plotly` the same way it would
 for any spec/backend combination with no `_RENDERERS` entry (see
 [4.2](#42-backend)), so `slope()` needed no special dispatch logic of
 its own, only its own spec-construction body like `hist`/`line`/etc.
@@ -955,12 +978,12 @@ Multiple series or multiple `LayerSpec` children defaulting to
 *distinct* colors when the user sets no `color` at all (a color
 *cycle*, not an explicit color): matplotlib gets this for free from
 its own default cycle when children share an `Axes` (see
-[4.8](#48-layering-multiple-specs-on-one-axes)), but bokeh/altair/xy do
-not, so `LayerSpec.__post_init__` assigns successive `DEFAULT_PALETTE`
-entries to any child whose own `color` field is `None`
-(`specs/layer.py::_assign_default_colors`, see
+[4.8](#48-layering-multiple-specs-on-one-axes)), but bokeh/altair/xy/
+plotly do not, so `LayerSpec.__post_init__` assigns successive
+`DEFAULT_PALETTE` entries to any child whose own `color` field is
+`None` (`specs/layer.py::_assign_default_colors`, see
 [4.9.1](#491-predefined-colors)), giving every backend matplotlib's
-for-free behavior instead of three of four looking worse by omission.
+for-free behavior instead of four of five looking worse by omission.
 A child with an explicit `color` is left untouched and does not
 consume a palette slot. `GridSpec` deliberately gets no such
 assignment: each cell keeps its own independent axes, so there is no
@@ -1034,8 +1057,8 @@ and only for `LayerSpec`.
   [3.4](#34-lazy-registration-and-third-party-plugins), that guard
   also only runs when a backend name is actually requested, not at
   `import plotmux` time, so a process using one backend never imports
-  the other three (or their underlying libraries) at all.
-  `tests/unit/backends/{matplotlib,xy,bokeh,altair}/test_init.py`
+  the other four (or their underlying libraries) at all.
+  `tests/unit/backends/{matplotlib,xy,bokeh,altair,plotly}/test_init.py`
   cover the "library not installed -> no registration" path.
 - **Testability**: specs are plain dataclasses, cheap to unit test
   without a real plotting library installed (same style as
@@ -1049,29 +1072,32 @@ and only for `LayerSpec`.
 ## 6. Candidate future backends
 
 matplotlib (static), xy (interactive HTML), bokeh (interactive,
-server-callback-oriented), and altair (declarative Vega-Lite) are
-implemented and already anchor several different points in the space
-plotmux needs to cover. Remaining candidates:
+server-callback-oriented), altair (declarative Vega-Lite), and plotly
+(`plotly.graph_objects`, interactive, large existing user base and
+native Jupyter/Dash support) are implemented and already anchor
+several different points in the space plotmux needs to cover. plotly
+turned out to diverge enough from bokeh/altair/xy to earn its keep as
+backend #5 (see [3.2](#32-package-layout)): it is the only backend
+besides matplotlib/bokeh with a genuine subplot-grid primitive
+(`plotly.subplots.make_subplots`, used by
+`plotmux.backends.plotly.grid.render_grid`) rather than composing
+independently-built panels after the fact, even though (like
+altair/xy) it has no native slope-by-itself primitive. It shipped as
+an in-repository `backends/plotly/` subpackage rather than a pure
+entry-point plugin, following the matplotlib/xy/bokeh/altair
+precedent exactly (see [5](#5-why-this-shape)), since the plugin
+mechanism ([3.4](#34-lazy-registration-and-third-party-plugins)) is
+meant for backends maintained *outside* this repository, and there
+was no reason to hold plotly to a different bar. Remaining candidate:
 
-- **plotly** (`plotly.graph_objects`): the other major interactive
-  option; large existing user base, native Jupyter/dash support,
-  export to standalone HTML like xy/altair. Would be the first real
-  test of whether "several interactive backends already covered by
-  xy/bokeh/altair" makes a `Backend` implementation genuinely
-  redundant, or whether plotly diverges enough (API shape, export
-  formats, hover/zoom semantics) to justify one more. Also the first
-  natural candidate to ship as a pure entry-point plugin (see
-  [3.4](#34-lazy-registration-and-third-party-plugins)) rather than a
-  subpackage in this repository, to test that mechanism against a
-  real backend before relying on it for others.
 - **plotnine** (ggplot2-style): matches users coming from R; mostly
   static like matplotlib, so lower priority unless there is specific
   user demand.
 
-Neither is scheduled; each is a `backends/<name>/` subpackage plus a
+Not scheduled; it is a `backends/<name>/` subpackage plus a
 `utils/imports/<name>.py` guard plus one `pyproject.toml` extra (or an
 entirely external package using the entry-point mechanism), following
-the matplotlib/xy/bokeh/altair precedent exactly, see the
+the matplotlib/xy/bokeh/altair/plotly precedent exactly, see the
 backend-agnostic rule in [Section 5](#5-why-this-shape). Picking one
 should be driven by actual user requests, not by this list.
 
@@ -1103,14 +1129,10 @@ should be driven by actual user requests, not by this list.
   deliberately left out of this resolution, so a similar question
   would still apply there if grid cells ever needed coordinated
   default colors.
-- Is `plotly` differentiated enough from the four existing backends
-  (matplotlib, xy, bokeh, altair) to earn its keep as backend #5, and
-  should it ship as an external plugin rather than a backend in this
-  repository (see [3.4](#34-lazy-registration-and-third-party-plugins))?
 - Histogram/cdf/line/scatter/bar/layer/grid were picked as "generic
   and broadly useful" (see [1. Goal](#1-goal)), but that bar isn't
   written down precisely. `BarSpec` cleared it informally (a bar chart
-  is in every one of the four backends' own plot catalogs, and has no
+  is in every one of the (then four) backends' own plot catalogs, and has no
   natural encoding into an existing spec), but a box plot has a
   similarly plausible claim: should the next chart-type addition still
   be decided case by case as demand shows up, or does the project need
@@ -1131,9 +1153,9 @@ should be driven by actual user requests, not by this list.
 None of the following are scheduled; each would become a new step
 once picked up.
 
-- A fifth backend, most likely `plotly`, evaluated per
-  [6](#6-candidate-future-backends) and the corresponding open
-  question in [7](#7-open-questions).
+- A sixth backend, most likely `plotnine`, evaluated per
+  [6](#6-candidate-future-backends). `plotly` was the fifth,
+  already implemented (see [3.2](#32-package-layout)).
 - An eighth chart type (e.g. a box plot), once one clears the "generic
   and broadly useful" bar discussed in [7](#7-open-questions). `BarSpec`
   was the seventh, already implemented (see [3.2](#32-package-layout)).
@@ -1159,11 +1181,12 @@ Checked against
 `alpha=0.8`, plus a dashed blue reference line of gradient 2 and
 y-intercept 10 at `line_width=4`, on a figure with a light-gray
 background and `y_range.start = 0`) to see whether it is reproducible
-through plotmux's unified API, unchanged, on all four backends. It
-**is**, now, on matplotlib and bokeh outright; on altair and xy with
-one caveat (`SlopeSpec` needs a data-bound `layer()` sibling to derive
-endpoints from -- see below), unavoidable given those two backends'
-own primitives. Every gap identified by this case study is closed:
+through plotmux's unified API, unchanged, on all five backends. It
+**is**, now, on matplotlib and bokeh outright; on altair, xy, and
+plotly with one caveat (`SlopeSpec` needs a data-bound `layer()`
+sibling to derive endpoints from -- see below), unavoidable given
+those three backends' own primitives. Every gap identified by this
+case study is closed:
 
 - **Slope/abline annotation.** `specs/slope.py::SlopeSpec(gradient,
   intercept=0.0, color=None, linewidth=None, linestyle="solid",
@@ -1257,8 +1280,8 @@ own primitives. Every gap identified by this case study is closed:
 
 matplotlib and bokeh reproduce the bokeh slope example exactly,
 unchanged, via one `layer()` call combining a styled `ScatterSpec` and
-`SlopeSpec`. altair and xy reproduce it the same way, with the same
-call -- the only difference is architectural, not user-visible: their
-`SlopeSpec` support depends on the `ScatterSpec` sibling being in the
-same `layer()` call to supply a range, which the bokeh example's own
+`SlopeSpec`. altair, xy, and plotly reproduce it the same way, with the
+same call -- the only difference is architectural, not user-visible:
+their `SlopeSpec` support depends on the `ScatterSpec` sibling being in
+the same `layer()` call to supply a range, which the bokeh example's own
 structure (a scatter plus a reference line, layered) already satisfies.
