@@ -2,16 +2,47 @@ r"""Render a ``BarSpec`` onto a bokeh ``figure``."""
 
 from __future__ import annotations
 
-__all__ = ["render_bar"]
+__all__ = ["bar_figure_kwargs", "render_bar"]
 
 from typing import TYPE_CHECKING, Any, cast
 
 from plotmux.backends.bokeh.style import rgba_to_bokeh
+from plotmux.utils.categorical import is_categorical
 
 if TYPE_CHECKING:
     from bokeh.plotting import figure
 
     from plotmux.specs import BarSpec
+    from plotmux.specs.base import BaseSpec
+
+
+def bar_figure_kwargs(spec: BaseSpec) -> dict[str, Any]:
+    r"""Return the extra ``figure()`` constructor kwargs a ``BarSpec``
+    needs for a categorical x-axis.
+
+    bokeh requires a categorical ``FactorRange`` x-range (typically
+    ``figure(x_range=fruits)``) to be set *before* a glyph is drawn
+    with string x-values, or it raises -- unlike matplotlib/plotly,
+    which accept a string ``x`` at draw time with no such
+    construction-time wiring. Passed as
+    ``plotmux.backends.bokeh.backend._make_renderer``'s
+    ``figure_kwargs`` hook so it runs before ``render_bar`` draws the
+    glyph.
+
+    Args:
+        spec: The bar spec to inspect. Not typed as ``BarSpec``
+            directly since ``_make_renderer``'s ``figure_kwargs`` hook
+            is typed generically over ``BaseSpec``.
+
+    Returns:
+        ``{"x_range": list(spec.x)}`` when ``spec.x`` is categorical,
+            an empty dict otherwise (bokeh's own default numeric
+            range applies).
+    """
+    x = cast("BarSpec", spec).x
+    if is_categorical(x):
+        return {"x_range": list(x)}
+    return {}
 
 
 def render_bar(fig: figure, spec: BarSpec, **kwargs: Any) -> figure:

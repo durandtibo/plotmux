@@ -2,7 +2,7 @@ r"""Contain the public plotting API."""
 
 from __future__ import annotations
 
-__all__ = ["bar", "cdf", "grid", "hist", "layer", "line", "scatter", "slope"]
+__all__ = ["bar", "cdf", "grid", "hist", "layer", "line", "scatter", "slope", "stacked_bar"]
 
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -12,6 +12,7 @@ from plotmux.backends.registry import get_backend
 from plotmux.config import get_default_backend
 from plotmux.figure import Figure
 from plotmux.specs import (
+    BarSeries,
     BarSpec,
     BaseSpec,
     CdfSpec,
@@ -21,6 +22,7 @@ from plotmux.specs import (
     LineSpec,
     ScatterSpec,
     SlopeSpec,
+    StackedBarSpec,
 )
 
 if TYPE_CHECKING:
@@ -229,6 +231,102 @@ def bar(
         y=np.asarray(y),
         label=label,
         color=color,
+        width=width,
+        alpha=alpha,
+        title=title,
+        xlabel=xlabel,
+        ylabel=ylabel,
+        xscale=xscale,
+        yscale=yscale,
+        background_color=background_color,
+        ymin=ymin,
+        ymax=ymax,
+    )
+    return _render(spec, backend, **kwargs)
+
+
+def stacked_bar(
+    x: Sequence[float] | Sequence[str] | np.ndarray,
+    series: Sequence[BarSeries],
+    *,
+    width: float = 0.8,
+    alpha: float | None = None,
+    title: str | None = None,
+    xlabel: str | None = None,
+    ylabel: str | None = None,
+    xscale: Literal["linear", "log"] = "linear",
+    yscale: Literal["linear", "log"] = "linear",
+    background_color: (
+        str | tuple[float, float, float] | tuple[float, float, float, float] | None
+    ) = None,
+    ymin: float | None = None,
+    ymax: float | None = None,
+    backend: str | None = None,
+    **kwargs: Any,
+) -> Figure:
+    r"""Plot a stacked bar chart.
+
+    Unlike ``layer()``'s ``BarSpec`` support, which draws several
+    ``BarSpec``s independently onto shared axes (they simply overlap
+    at shared ``x`` positions), this draws ``series`` cumulatively:
+    each series is stacked on top of the running total of the series
+    before it, at each ``x`` position. See ``plotmux.specs.
+    StackedBarSpec``/``plotmux.specs.BarSeries``.
+
+    Args:
+        x: The array of bar positions, shared by every series. Either
+            numeric or an array of strings, drawn as a categorical
+            x-axis (e.g. ``x=["Apples", "Pears", "Nectarines"]``).
+        series: The series to stack, in stacking order (bottom to
+            top). Must be non-empty, and every series' ``y`` must have
+            the same length as ``x``.
+        width: The width of each bar, in ``x`` data units. Must be a
+            positive number.
+        alpha: An optional bar opacity, in ``[0, 1]``, applied to
+            every series. ``None`` uses the backend's default (usually
+            fully opaque).
+        title: An optional figure title.
+        xlabel: An optional x-axis label.
+        ylabel: An optional y-axis label.
+        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
+        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+        background_color: An optional figure background color. Same
+            format as a series' ``color``. ``None`` uses the
+            backend's default.
+        ymin: An optional explicit lower bound for the y-axis.
+            ``None`` leaves the axis autoscaled.
+        ymax: An optional explicit upper bound for the y-axis.
+            ``None`` leaves the axis autoscaled.
+        backend: The name of the backend to use to render the
+            figure, or ``None`` to use the current default backend
+            (see ``plotmux.set_backend``).
+        **kwargs: Additional backend-specific keyword arguments,
+            forwarded to the backend's renderer.
+
+    Returns:
+        The rendered figure.
+
+    Raises:
+        ValueError: if ``series`` is empty, any series' ``y`` does
+            not have the same length as ``x``, ``width`` is not a
+            positive number, ``alpha`` is not in ``[0, 1]``, any
+            series' ``color`` is not a valid color, or
+            ``ymin``/``ymax`` are both set with ``ymin > ymax``.
+
+    Example:
+        ```pycon
+        >>> import plotmux
+        >>> from plotmux.specs import BarSeries
+        >>> fig = plotmux.stacked_bar(
+        ...     ["Apples", "Pears", "Nectarines"],
+        ...     [BarSeries(y=[2, 1, 4], label="2015"), BarSeries(y=[1, 3, 2], label="2016")],
+        ... )  # doctest: +SKIP
+
+        ```
+    """
+    spec = StackedBarSpec(
+        x=np.asarray(x),
+        series=tuple(series),
         width=width,
         alpha=alpha,
         title=title,

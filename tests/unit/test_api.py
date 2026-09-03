@@ -5,6 +5,7 @@ import pytest
 
 import plotmux
 from plotmux.specs import (
+    BarSeries,
     BarSpec,
     CdfSpec,
     GridSpec,
@@ -13,6 +14,7 @@ from plotmux.specs import (
     LineSpec,
     ScatterSpec,
     SlopeSpec,
+    StackedBarSpec,
 )
 from plotmux.testing.fixtures import bokeh_available, matplotlib_available, xy_available
 
@@ -304,6 +306,62 @@ def test_bar_common_style() -> None:
     assert fig.spec.ylabel == "y"
     assert fig.spec.xscale == "log"
     assert fig.spec.yscale == "log"
+
+
+################################
+#     Tests for stacked_bar     #
+################################
+
+
+@matplotlib_available
+def test_stacked_bar_returns_figure_with_matplotlib_backend() -> None:
+    fig = plotmux.stacked_bar(np.arange(3), [BarSeries(y=np.arange(3)), BarSeries(y=np.arange(3))])
+    assert fig.backend_name == "matplotlib"
+    assert isinstance(fig.spec, StackedBarSpec)
+    assert len(fig.spec.series) == 2
+
+
+@matplotlib_available
+def test_stacked_bar_categorical_x() -> None:
+    fig = plotmux.stacked_bar(["Apples", "Pears"], [BarSeries(y=[2, 1])])
+    assert fig.spec.x.tolist() == ["Apples", "Pears"]
+
+
+@xy_available
+def test_stacked_bar_explicit_xy_backend() -> None:
+    fig = plotmux.stacked_bar(np.arange(3), [BarSeries(y=np.arange(3))], backend="xy")
+    assert fig.backend_name == "xy"
+
+
+def test_stacked_bar_unknown_backend_raises() -> None:
+    with pytest.raises(RuntimeError, match="No backend registered"):
+        plotmux.stacked_bar(np.arange(3), [BarSeries(y=np.arange(3))], backend="does-not-exist")
+
+
+@matplotlib_available
+def test_stacked_bar_empty_series_raises() -> None:
+    with pytest.raises(ValueError, match="series must contain at least one BarSeries"):
+        plotmux.stacked_bar(np.arange(3), [])
+
+
+@matplotlib_available
+def test_stacked_bar_invalid_width_raises() -> None:
+    with pytest.raises(ValueError, match="width must be a positive number"):
+        plotmux.stacked_bar(np.arange(3), [BarSeries(y=np.arange(3))], width=0)
+
+
+@matplotlib_available
+def test_stacked_bar_common_style() -> None:
+    fig = plotmux.stacked_bar(
+        np.arange(3),
+        [BarSeries(y=np.arange(3))],
+        title="t",
+        xlabel="x",
+        ylabel="y",
+    )
+    assert fig.spec.title == "t"
+    assert fig.spec.xlabel == "x"
+    assert fig.spec.ylabel == "y"
 
 
 ###########################

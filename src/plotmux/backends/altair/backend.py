@@ -18,6 +18,7 @@ from plotmux.backends.altair.histogram import render_histogram
 from plotmux.backends.altair.layer import render_layer
 from plotmux.backends.altair.line import render_line
 from plotmux.backends.altair.scatter import render_scatter
+from plotmux.backends.altair.stacked_bar import render_stacked_bar
 from plotmux.backends.altair.style import apply_common_style
 from plotmux.backends.base import Backend, check_export_format, make_renderer
 from plotmux.specs import (
@@ -29,6 +30,7 @@ from plotmux.specs import (
     LayerSpec,
     LineSpec,
     ScatterSpec,
+    StackedBarSpec,
 )
 
 if TYPE_CHECKING:
@@ -66,6 +68,7 @@ class AltairBackend(Backend):
     _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., alt.typing.ChartType]]] = {
         HistogramSpec: make_renderer(render_histogram, apply_common_style),
         BarSpec: make_renderer(render_bar, apply_common_style),
+        StackedBarSpec: make_renderer(render_stacked_bar, apply_common_style),
         CdfSpec: make_renderer(render_cdf, apply_common_style),
         LineSpec: make_renderer(render_line, apply_common_style),
         ScatterSpec: make_renderer(render_scatter, apply_common_style),

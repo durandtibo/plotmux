@@ -56,3 +56,17 @@ def test_render_bar_alpha() -> None:
     spec = BarSpec(x=np.arange(5), y=np.arange(5), alpha=0.5)
     chart = render_bar(spec)
     assert chart.to_dict()["mark"]["opacity"] == 0.5
+
+
+@altair_available
+def test_render_bar_categorical_x() -> None:
+    spec = BarSpec(x=np.array(["Apples", "Pears", "Nectarines"]), y=np.array([2, 1, 4]))
+    chart = render_bar(spec)
+    assert chart.to_dict()["encoding"]["x"]["type"] == "nominal"
+
+
+@altair_available
+def test_render_bar_numeric_x() -> None:
+    spec = BarSpec(x=np.arange(5), y=np.arange(5))
+    chart = render_bar(spec)
+    assert chart.to_dict()["encoding"]["x"]["type"] == "quantitative"

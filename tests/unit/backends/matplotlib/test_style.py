@@ -236,6 +236,32 @@ def test_apply_common_style_legend_location_no_legend_is_noop() -> None:
     plt.close(fig)
 
 
+# --- legend_orientation ---
+
+
+@matplotlib_available
+def test_apply_common_style_legend_orientation_horizontal() -> None:
+    fig, ax = plt.subplots()
+    ax.plot([1, 2], [3, 4], label="s1")
+    ax.plot([1, 2], [5, 6], label="s2")
+    ax.legend()
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_orientation="horizontal")
+    apply_common_style(ax, spec)
+    assert ax.get_legend()._ncols == 2
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_apply_common_style_no_legend_orientation() -> None:
+    fig, ax = plt.subplots()
+    ax.plot([1, 2], [3, 4], label="s")
+    ax.legend()
+    spec = HistogramSpec(values=np.arange(101), bins=10)
+    apply_common_style(ax, spec)
+    assert ax.get_legend()._ncols == 1
+    plt.close(fig)
+
+
 #######################################
 #     Tests for attach_repr_png     #
 #######################################

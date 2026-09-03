@@ -162,3 +162,24 @@ def test_apply_common_style_no_legend_location() -> None:
     fig = apply_common_style(go.Figure(), spec)
     assert fig.layout.legend.x is None
     assert fig.layout.legend.y is None
+
+
+@plotly_available
+def test_apply_common_style_legend_orientation_horizontal() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_orientation="horizontal")
+    fig = apply_common_style(go.Figure(), spec)
+    assert fig.layout.legend.orientation == "h"
+
+
+@plotly_available
+def test_apply_common_style_legend_orientation_vertical() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_orientation="vertical")
+    fig = apply_common_style(go.Figure(), spec)
+    assert fig.layout.legend.orientation == "v"
+
+
+@plotly_available
+def test_apply_common_style_no_legend_orientation() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10)
+    fig = apply_common_style(go.Figure(), spec)
+    assert fig.layout.legend.orientation is None

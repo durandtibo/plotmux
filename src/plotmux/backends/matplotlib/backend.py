@@ -22,6 +22,7 @@ from plotmux.backends.matplotlib.layer import render_layer
 from plotmux.backends.matplotlib.line import render_line
 from plotmux.backends.matplotlib.scatter import render_scatter
 from plotmux.backends.matplotlib.slope import render_slope
+from plotmux.backends.matplotlib.stacked_bar import render_stacked_bar
 from plotmux.backends.matplotlib.style import apply_common_style, attach_repr_png
 from plotmux.specs import (
     BarSpec,
@@ -33,6 +34,7 @@ from plotmux.specs import (
     LineSpec,
     ScatterSpec,
     SlopeSpec,
+    StackedBarSpec,
 )
 
 if TYPE_CHECKING:
@@ -101,6 +103,7 @@ class MatplotlibBackend(Backend):
     _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., MplFigure]]] = {
         HistogramSpec: _make_renderer(render_histogram),
         BarSpec: _make_renderer(render_bar),
+        StackedBarSpec: _make_renderer(render_stacked_bar),
         CdfSpec: _make_renderer(render_cdf),
         LineSpec: _make_renderer(render_line),
         ScatterSpec: _make_renderer(render_scatter),

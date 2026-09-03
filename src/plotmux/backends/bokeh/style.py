@@ -63,7 +63,8 @@ def apply_common_style(fig: figure, spec: BaseSpec) -> figure:
     ``figure``.
 
     Applies ``title``/``xlabel``/``ylabel``/``ymin``/``ymax``/
-    ``xmin``/``xmax``/``legend_title``/``legend_location`` from
+    ``xmin``/``xmax``/``legend_title``/``legend_location``/
+    ``legend_orientation`` from
     ``spec`` (defined on ``BaseSpec``, shared by every chart type).
     Called once per backend, right after the chart-specific renderer
     has drawn its glyph, so a new chart type gets title/label support
@@ -140,4 +141,7 @@ def apply_common_style(fig: figure, spec: BaseSpec) -> figure:
         # default position, same as ``legend_location`` unset.
         if spec.legend_location is not None and spec.legend_location != "best":
             fig.legend.location = spec.legend_location
+        if spec.legend_orientation is not None:
+            # bokeh's own vocabulary, matched one-to-one.
+            fig.legend.orientation = spec.legend_orientation
     return fig

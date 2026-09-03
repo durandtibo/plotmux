@@ -46,7 +46,8 @@ def apply_common_style(ax: Axes, spec: BaseSpec) -> Axes:
 
     Applies ``title``/``xlabel``/``ylabel``/``xscale``/``yscale``/
     ``background_color``/``ymin``/``ymax``/``xmin``/``xmax``/
-    ``legend_title``/``legend_location`` from ``spec`` (defined on
+    ``legend_title``/``legend_location``/``legend_orientation`` from
+    ``spec`` (defined on
     ``BaseSpec``, shared by every chart type). Called once per
     backend, right after the chart-specific renderer has drawn its
     mark, so a new chart type gets title/label/scale support for
@@ -86,14 +87,22 @@ def apply_common_style(ax: Axes, spec: BaseSpec) -> Axes:
         ax.set_ylim(bottom=spec.ymin, top=spec.ymax)
     if spec.xmin is not None or spec.xmax is not None:
         ax.set_xlim(left=spec.xmin, right=spec.xmax)
-    if ax.get_legend() is not None and (
-        spec.legend_title is not None or spec.legend_location is not None
+    legend = ax.get_legend()
+    if legend is not None and (
+        spec.legend_title is not None
+        or spec.legend_location is not None
+        or spec.legend_orientation is not None
     ):
         legend_kwargs = {}
         if spec.legend_title is not None:
             legend_kwargs["title"] = spec.legend_title
         if spec.legend_location is not None:
             legend_kwargs["loc"] = LEGEND_LOCATION.get(spec.legend_location, spec.legend_location)
+        if spec.legend_orientation == "horizontal":
+            # matplotlib has no direct orientation flag, only a column
+            # count -- so "horizontal" is approximated as laying out every
+            # handle in one row.
+            legend_kwargs["ncols"] = len(legend.legend_handles)
         ax.legend(**legend_kwargs)
     return ax
 

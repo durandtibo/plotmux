@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, cast
 import altair as alt
 
 from plotmux.backends.altair.style import prepare_color, rgba_to_altair
+from plotmux.utils.categorical import is_categorical
 
 if TYPE_CHECKING:
     from plotmux.specs import BarSpec
@@ -48,7 +49,15 @@ def render_bar(spec: BarSpec, **kwargs: Any) -> alt.Chart:
     if spec.alpha is not None:
         kwargs.setdefault("opacity", spec.alpha)
     data, encoding_color = prepare_color(data, spec.label, color, kwargs)
-    chart = alt.Chart(alt.Data(values=data)).mark_bar(**kwargs).encode(x="x:Q", y="y:Q")
+    # ``x`` is encoded ``:N`` (nominal) for a categorical (string) x-axis
+    # and ``:Q`` (quantitative) otherwise -- unlike ``:Q``, which Vega-Lite
+    # expects numbers under, a hardcoded ``:Q`` would produce invalid
+    # encoded data for a string ``spec.x`` (this is also why the shared
+    # ``apply_common_style`` re-``encode``s ``x``/``y`` with a fixed
+    # ``:Q``-implying ``alt.Scale`` -- see its docstring -- but does not
+    # touch the field-name/type specifier itself, so this stays in effect).
+    x_type = "N" if is_categorical(spec.x) else "Q"
+    chart = alt.Chart(alt.Data(values=data)).mark_bar(**kwargs).encode(x=f"x:{x_type}", y="y:Q")
     if encoding_color is not None:
         chart = chart.encode(color=encoding_color)
     return chart
