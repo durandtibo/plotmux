@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 
-from plotmux.backends.bokeh.style import rgba_to_bokeh
+from plotmux.backends.bokeh.style import ALPHA, LABEL, apply_fields, rgba_to_bokeh
 from plotmux.utils.range import find_range
 
 if TYPE_CHECKING:
@@ -49,17 +49,10 @@ def render_histogram(fig: figure, spec: HistogramSpec, **kwargs: Any) -> figure:
         if spec.color is None
         else rgba_to_bokeh(cast("tuple[float, float, float, float]", spec.color))
     )
-    # bokeh raises ``ValueError`` if ``legend_label`` is passed as ``None``
-    # (unlike matplotlib's ``label=None``, which is a silent no-op), so the
-    # kwarg is only added when a label is actually set.
-    if spec.label is not None:
-        kwargs.setdefault("legend_label", spec.label)
-    # Like ``Slope.line_width`` (see ``plotmux.backends.bokeh.slope``),
-    # bokeh's glyph ``alpha`` property rejects ``None`` outright (unlike
-    # matplotlib's ``alpha=None``, a valid "fully opaque" sentinel), so it
-    # is only added when ``spec.alpha`` is explicitly set.
-    if spec.alpha is not None:
-        kwargs.setdefault("alpha", spec.alpha)
+    # ``LABEL``/``ALPHA`` (see ``plotmux.backends.bokeh.style``): bokeh
+    # raises ``ValueError`` on ``legend_label=None`` and rejects
+    # ``alpha=None`` outright, so both are only added when explicitly set.
+    apply_fields(spec, [LABEL, ALPHA], kwargs)
     fig.quad(
         top=counts,
         bottom=0,

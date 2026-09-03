@@ -6,7 +6,14 @@ __all__ = ["render_line"]
 
 from typing import TYPE_CHECKING, Any, cast
 
-from plotmux.backends.bokeh.style import rgba_to_bokeh
+from plotmux.backends.bokeh.style import (
+    ALPHA,
+    LABEL,
+    LINESTYLE,
+    LINEWIDTH,
+    apply_fields,
+    rgba_to_bokeh,
+)
 
 if TYPE_CHECKING:
     from bokeh.plotting import figure
@@ -33,19 +40,10 @@ def render_line(fig: figure, spec: LineSpec, **kwargs: Any) -> figure:
         if spec.color is None
         else rgba_to_bokeh(cast("tuple[float, float, float, float]", spec.color))
     )
-    # bokeh raises ``ValueError`` if ``legend_label`` is passed as ``None``
-    # (unlike matplotlib's ``label=None``, which is a silent no-op), so the
-    # kwarg is only added when a label is actually set.
-    if spec.label is not None:
-        kwargs.setdefault("legend_label", spec.label)
-    # bokeh's glyph ``alpha``/``line_width`` properties reject ``None``
-    # outright, so they are only added when explicitly set (see
-    # ``plotmux.backends.bokeh.histogram.render_histogram`` and
-    # ``plotmux.backends.bokeh.slope.render_slope``).
-    if spec.alpha is not None:
-        kwargs.setdefault("alpha", spec.alpha)
-    if spec.linewidth is not None:
-        kwargs.setdefault("line_width", spec.linewidth)
-    kwargs.setdefault("line_dash", spec.linestyle)
+    # ``LABEL``/``ALPHA``/``LINEWIDTH``/``LINESTYLE`` (see
+    # ``plotmux.backends.bokeh.style``): bokeh raises ``ValueError`` on
+    # ``legend_label=None`` and rejects ``alpha``/``line_width=None``
+    # outright, so both are only added when explicitly set.
+    apply_fields(spec, [LABEL, ALPHA, LINEWIDTH, LINESTYLE], kwargs)
     fig.line(x=spec.x, y=spec.y, line_color=color, **kwargs)
     return fig

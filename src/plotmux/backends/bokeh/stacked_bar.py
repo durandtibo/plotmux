@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from bokeh.models import ColumnDataSource
 
-from plotmux.backends.bokeh.style import rgba_to_bokeh
+from plotmux.backends.bokeh.style import ALPHA, apply_fields, rgba_to_bokeh
 from plotmux.utils.categorical import is_categorical
 
 if TYPE_CHECKING:
@@ -83,10 +83,9 @@ def render_stacked_bar(fig: figure, spec: StackedBarSpec, **kwargs: Any) -> figu
     # as bokeh's own default for a legend-less renderer.
     if any(s.label is not None for s in spec.series):
         style.setdefault("legend_label", [s.label or "" for s in spec.series])
-    # bokeh's glyph ``alpha`` rejects ``None`` outright (see
-    # ``plotmux.backends.bokeh.bar.render_bar``), so it is only added when
+    # ``ALPHA`` (see ``plotmux.backends.bokeh.style``): bokeh's glyph
+    # ``alpha`` rejects ``None`` outright, so it is only added when
     # ``spec.alpha`` is explicitly set.
-    if spec.alpha is not None:
-        style.setdefault("alpha", spec.alpha)
+    apply_fields(spec, [ALPHA], style)
     fig.vbar_stack(stackers, **style)
     return fig
