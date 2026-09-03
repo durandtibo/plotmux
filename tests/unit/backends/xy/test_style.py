@@ -103,6 +103,42 @@ def test_apply_common_style_preserves_layout() -> None:
 
 
 @xy_available
+def test_apply_common_style_ymin_ymax() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, ymin=0.0, ymax=5.0)
+    chart = render_histogram(spec)
+    out = apply_common_style(chart, spec)
+    y_axis = out.children[2]
+    assert y_axis.domain == (0.0, 5.0)
+
+
+@xy_available
+def test_apply_common_style_single_ybound_ignored() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, ymin=0.0)
+    chart = render_histogram(spec)
+    out = apply_common_style(chart, spec)
+    y_axis = out.children[2]
+    assert y_axis.domain is None
+
+
+@xy_available
+def test_apply_common_style_xmin_xmax() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, xmin=0.0, xmax=5.0)
+    chart = render_histogram(spec)
+    out = apply_common_style(chart, spec)
+    x_axis = out.children[1]
+    assert x_axis.domain == (0.0, 5.0)
+
+
+@xy_available
+def test_apply_common_style_single_xbound_ignored() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, xmin=0.0)
+    chart = render_histogram(spec)
+    out = apply_common_style(chart, spec)
+    x_axis = out.children[1]
+    assert x_axis.domain is None
+
+
+@xy_available
 def test_apply_common_style_background_color() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, background_color="red")
     chart = render_histogram(spec)
@@ -133,3 +169,24 @@ def test_apply_common_style_no_legend_title() -> None:
     chart = render_histogram(spec)
     out = apply_common_style(chart, spec)
     assert len(out.children) == len(chart.children) + 2
+
+
+@xy_available
+def test_apply_common_style_legend_location() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="top_left")
+    chart = render_histogram(spec)
+    out = apply_common_style(chart, spec)
+    assert len(out.children) == len(chart.children) + 3
+    assert out.children[-1].loc == "top_left"
+
+
+@xy_available
+def test_apply_common_style_legend_title_and_location() -> None:
+    spec = HistogramSpec(
+        values=np.arange(101), bins=10, legend_title="Lines", legend_location="top_left"
+    )
+    chart = render_histogram(spec)
+    out = apply_common_style(chart, spec)
+    assert len(out.children) == len(chart.children) + 3
+    assert out.children[-1].title == "Lines"
+    assert out.children[-1].loc == "top_left"

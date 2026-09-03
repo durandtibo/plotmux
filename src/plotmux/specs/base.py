@@ -162,11 +162,7 @@ class BaseSpec:
         # ``isinstance`` guard here (mirroring theirs) keeps this
         # comparison from raising ``TypeError`` on a quantile string that
         # reaches this shared base-class check unresolved.
-        if (
-            isinstance(self.xmin, Real)
-            and isinstance(self.xmax, Real)
-            and self.xmin > self.xmax
-        ):
+        if isinstance(self.xmin, Real) and isinstance(self.xmax, Real) and self.xmin > self.xmax:
             msg = (
                 f"xmin must not be greater than xmax, but received "
                 f"xmin={self.xmin} and xmax={self.xmax}"

@@ -41,10 +41,11 @@ plot example next (see
 [8.3](#83-case-study-reproducing-bokehs-log-plot-example)): mostly
 reproducible unchanged (log y-axis with explicit bounds, figure
 background color, labeled dashed/dotted lines, line+scatter legend
-merges), but three more gaps remain, not yet closed: explicit x-axis
-bounds (`xmin`/`xmax` at the `BaseSpec` level, distinct from
+merges), and three more gaps found there -- explicit x-axis bounds
+(`xmin`/`xmax` at the `BaseSpec` level, distinct from
 `HistogramSpec`/`CdfSpec`'s existing quantile-capable `xmin`/`xmax`),
-legend position, and a portable hollow (no-fill) marker. Checked
+legend position, and a portable hollow (no-fill) marker -- are now
+closed too. Checked
 against bokeh's own stacked bar example next (see
 [8.4](#84-case-study-reproducing-bokehs-stacked-bar-example)): the
 first case study *not* close to reproducible -- no stacking mechanism
@@ -1205,11 +1206,12 @@ once picked up.
   it identified (a `BaseSpec.legend_title` field and a
   `ScatterSpec.marker` shape field) are now closed; see 8.2 for what
   each one turned into.
-- A `BaseSpec`-level `xmin`/`xmax` pair, a `BaseSpec`-level
-  `legend_location` field (to ship together with `legend_title`
-  above), and a tri-state `ScatterSpec.fill` field, per
-  [8.3](#83-case-study-reproducing-bokehs-log-plot-example): the three
-  gaps found reproducing bokeh's log plot example. Not yet closed.
+- Nothing carried over from
+  [8.3](#83-case-study-reproducing-bokehs-log-plot-example): all three
+  gaps it identified (a `BaseSpec.xmin`/`.xmax` pair, a
+  `BaseSpec.legend_location` field shipped together with
+  `legend_title`, and a tri-state `ScatterSpec.fill` field) are now
+  closed; see 8.3 for what each one turned into.
 - A new `StackedBarSpec` chart type, portable categorical (string)
   `x`-axis support for `BarSpec` (currently broken on bokeh, broken on
   altair, unverified on xy), and a `BaseSpec`-level
@@ -1371,10 +1373,10 @@ of it already is:
   `plotmux.backends.bokeh.scatter.render_scatter`) is bokeh's native
   "transparent fill" value; on matplotlib/altair/plotly/xy, `color=None`
   instead falls back to that library's own default *opaque* fill, so
-  the same spec renders filled everywhere but bokeh. This is folded
+  the same spec renders filled everywhere but bokeh. This was folded
   into the "no-fill marker" gap identified in
-  [8.3](#83-case-study-reproducing-bokehs-log-plot-example), not a
-  closed item.
+  [8.3](#83-case-study-reproducing-bokehs-log-plot-example), closed
+  there by `ScatterSpec.fill`.
 - **Two figures side by side.** Already `plotmux.grid(fig1_spec,
   fig2_spec, ncols=2)` (see [4.8a](#48a-grid-layouts)).
 
@@ -1464,89 +1466,103 @@ all five backends. Most of it already is:
   data, same as [8.2](#82-case-study-reproducing-bokehs-legend-example)'s
   scatter+line merge -- no gap.
 
-Three gaps, none raised by
-[8.1](#81-case-study-reproducing-bokehs-slope-example)/[8.2](#82-case-study-reproducing-bokehs-legend-example):
+Three gaps were found, none raised by
+[8.1](#81-case-study-reproducing-bokehs-slope-example)/[8.2](#82-case-study-reproducing-bokehs-legend-example).
+All three are now closed:
 
-- **Explicit x-axis bounds.** Bokeh's `x_range=(0, 5)` has no plotmux
-  equivalent: `BaseSpec` has `ymin`/`ymax` (see
+- **Explicit x-axis bounds.** Bokeh's `x_range=(0, 5)` had no plotmux
+  equivalent: `BaseSpec` had `ymin`/`ymax` (see
   [8.1](#81-case-study-reproducing-bokehs-slope-example)) but no
   `xmin`/`xmax` counterpart at the same figure level -- `xmin`/`xmax`
-  exist today only on `HistogramSpec`/`CdfSpec`, resolved through
+  existed only on `HistogramSpec`/`CdfSpec`, resolved through
   `find_range`'s quantile-or-explicit convention against that spec's
   own single data array (see [4.1](#41-basespec)), which is a
   different feature (a data-driven bound) from a plain axis-range
-  override that applies regardless of chart type. Candidate fix: a
+  override that applies regardless of chart type. Closed by a
   `BaseSpec`-level `xmin: float | None`/`xmax: float | None` pair,
   explicit-value-only like `ymin`/`ymax` (not the quantile-string
   form), applied post-hoc in each backend's `apply_common_style`
   alongside `ymin`/`ymax`: matplotlib `Axes.set_xlim`; bokeh
   `figure.x_range.start`/`.end`; altair
   `alt.Scale(domainMin=..., domainMax=...)` on the x encoding; plotly
-  `fig.update_xaxes(range=[xmin, xmax])`; xy `xy.x_axis(domain=(xmin,
-  xmax))` (xy's `domain` takes both bounds together, same "only both
-  set together are forwarded" caveat `ymin`/`ymax` already documents
-  for xy). This would sit alongside `HistogramSpec.xmin`/`CdfSpec.xmin`
-  without replacing them -- those two remain quantile-capable and
-  data-scoped; the new field is a plain figure-level override open to
-  every chart type, the `xmin`/`xmax` analogue of `ymin`/`ymax`.
-- **Legend position.** Bokeh's `p.legend.location = "top_left"` has no
+  `fig.update_layout(xaxis_range=[xmin, xmax])`, only forwarded when
+  both bounds are set together (plotly's `xaxis.range` takes both at
+  once, same "only both set together are forwarded" caveat `ymin`/
+  `ymax` already documents for plotly/xy); xy
+  `xy.x_axis(domain=(xmin, xmax))`, same both-bounds-together caveat.
+  This sits alongside `HistogramSpec.xmin`/`CdfSpec.xmin` without
+  replacing them -- those two remain quantile-capable and data-scoped
+  (`float | str | None`, kept `kw_only=True` so redeclaring the field
+  name in the subclass does not disturb `BaseSpec.values`'s required-
+  field position in the generated `__init__`); the new field is a
+  plain figure-level override open to every chart type, the
+  `xmin`/`xmax` analogue of `ymin`/`ymax`. `BaseSpec._validate_base`'s
+  `xmin > xmax` check guards with `isinstance(..., Real)` so it never
+  fires on an unresolved quantile string from either subclass.
+- **Legend position.** Bokeh's `p.legend.location = "top_left"` had no
   plotmux equivalent, the same shape of gap as
   [8.2](#82-case-study-reproducing-bokehs-legend-example)'s
-  now-closed `legend_title` gap was before it: `BaseSpec` has
-  `legend_title` (see 8.2) but nothing for legend *position* yet.
-  Candidate fix: a `BaseSpec`-level `legend_location: Literal["best",
-  "top_left", "top_right", "bottom_left", "bottom_right", ...] | None
-  = None` field, naturally proposed *alongside* `legend_title` as one
+  once-open `legend_title` gap: `BaseSpec` had `legend_title` (see
+  8.2) but nothing for legend *position*. Closed by a `BaseSpec`-level
+  `legend_location: Literal["best", "top_left", "top_right",
+  "bottom_left", "bottom_right", "top", "bottom", "left", "right"] |
+  None = None` field, shipped alongside `legend_title` as one
   `legend_title`/`legend_location` pair rather than two unrelated
   additions, since both are set together in the bokeh original
   (`p.legend.title`/`p.legend.location`) and both apply post-hoc in the
-  same `apply_common_style` step: matplotlib `ax.legend(loc=...)`
-  (matplotlib's own location strings, e.g. `"upper left"`, need a small
-  name-mapping table since bokeh spells them
-  `"top_left"`/plotmux would too); bokeh `fig.legend.location = ...`
-  (bokeh's own vocabulary directly, no translation needed since this
-  candidate's names were chosen to match bokeh's); altair
-  `alt.Legend(orient=...)` (altair's `orient` only supports the
-  outer-edge positions -- `"top"`, `"bottom"`, `"left"`, `"right"`, plus
-  the four corners -- not an arbitrary inside-plot corner the way
-  matplotlib's `loc` does, likely another small, permanent per-backend
-  asymmetry, same pattern as the marker-shape gap's altair note in
-  [8.2](#82-case-study-reproducing-bokehs-legend-example)); plotly
-  `fig.update_layout(legend=dict(x=..., y=...))` (plotly has no named
-  corner enum, only `x`/`y` fractional coordinates, so this candidate's
-  name set would need a name-to-`(x, y)` table); xy would need its own
-  equivalent checked against its legend API.
+  same `apply_common_style` step: matplotlib `ax.legend(loc=...)` via a
+  `LEGEND_LOCATION` name-mapping table (matplotlib spells its own
+  locations `"upper left"`-style; `"best"` already matches matplotlib's
+  own name and needs no entry); bokeh `fig.legend.location = ...`,
+  bokeh's own vocabulary directly except `"best"` (bokeh has no
+  auto-placement location, so that one name is left as a no-op,
+  falling back to bokeh's own default); altair
+  `alt.Legend(orient=...)` via its own `LEGEND_LOCATION` table (altair's
+  `orient` supports the four outer edges plus the four corners, all
+  *outside* the plot area -- unlike matplotlib's inside-the-plot `loc`,
+  so a given `legend_location` renders in a visibly different spot on
+  altair, a small, permanent per-backend asymmetry; `"best"` again has
+  no altair equivalent and is left as a no-op); plotly
+  `fig.update_layout(legend=dict(x=..., y=..., xanchor=..., yanchor=
+  ...))` via a name-to-fractional-coordinates table (plotly has no
+  named corner enum, only `x`/`y`; `"best"` again a no-op); xy
+  `xy.legend(loc=...)`, needing no translation table at all -- xy's own
+  `legend_loc` validator underscore/space-tokenizes its input and
+  matches plotmux's own portable names directly, `"best"` included (xy
+  natively supports "best" auto-placement).
 - **Hollow (no-fill) marker as a portable concept.** Distinct from the
   marker-*shape* gap in
   [8.2](#82-case-study-reproducing-bokehs-legend-example): even with a
   circular marker, this example's `p.scatter(x, x**2, fill_color=None,
-  line_color="olivedrab")` has no reliable plotmux equivalent today
-  because `ScatterSpec.color` has no "explicitly transparent" value
-  distinct from "unset, use the backend default" -- `color=None` means
-  the latter, and as the correction above notes, only bokeh's own
-  default for an unset fill happens to be transparent; every other
-  backend's default fill is opaque, so the same spec would render
-  filled markers on matplotlib/altair/plotly/xy and hollow ones only on
-  bokeh. Candidate fix: a tri-state `ScatterSpec.fill: bool | None =
-  None` (`None`/`True` = filled, using `color`, today's behavior;
-  `False` = no fill, drawing only the `edgecolor`/`color` outline),
-  translated per backend: matplotlib `Axes.scatter(facecolors="none")`
-  when `fill is False`; bokeh `fill_color=None` (today's accidental
+  line_color="olivedrab")` had no reliable plotmux equivalent because
+  `ScatterSpec.color` has no "explicitly transparent" value distinct
+  from "unset, use the backend default" -- `color=None` means the
+  latter, and as the correction above notes, only bokeh's own default
+  for an unset fill happens to be transparent; every other backend's
+  default fill is opaque, so the same spec rendered filled markers on
+  matplotlib/altair/plotly/xy and a hollow one only on bokeh. Closed by
+  a tri-state `ScatterSpec.fill: bool | None = None` (`None`/`True` =
+  filled, using `color`, unchanged behavior; `False` = no fill, drawing
+  only the `edgecolor`/`color` outline), translated per backend:
+  matplotlib `Axes.scatter(facecolors="none", edgecolors=<outline>)`
+  when `fill is False` (`color` is popped from the call first --
+  `Axes.scatter` rejects passing both `color` and `facecolors`/
+  `edgecolors` at once); bokeh `fill_color=None` (today's accidental
   bokeh-only path becomes the explicit, intentional one); altair
-  `mark_point(filled=False)`; plotly `go.Scatter(marker_color=
-  "rgba(0,0,0,0)")` with the outline drawn via `marker.line` (already
-  wired for `edgecolor`, see [4.9](#49-specifying-colors-across-backends));
-  xy would need its own equivalent checked against its scatter mark
-  API (likely `color=None` combined with a nonzero `stroke_width`,
-  verified rather than assumed, per xy's own "structure-immutable
-  `Chart`" notes in [4.1.1](#411-axis-labels-title-and-linearlog-scale)).
+  `mark_point(filled=False)`, overriding the `filled=True` the
+  `edgecolor` path sets when both are given; plotly
+  `go.Scatter(marker=dict(color="rgba(0, 0, 0, 0)"))` with the outline
+  drawn via `marker.line` (already wired for `edgecolor`, see
+  [4.9](#49-specifying-colors-across-backends)); xy `xy.scatter(color=
+  "rgba(0, 0, 0, 0)", stroke=<outline>, stroke_width=1.0)` -- xy has no
+  dedicated "no fill" mark property either, so (like plotly) the fill
+  is forced fully transparent and the outline carried by `stroke`.
 
-None of these three are scheduled (see [8](#8-candidate-future-work));
-all three are small, additive `BaseSpec`/`ScatterSpec` fields following
-the same precedent as
-[8.1](#81-case-study-reproducing-bokehs-slope-example)/[8.2](#82-case-study-reproducing-bokehs-legend-example),
-not a new mechanism. `legend_location` is proposed to ship together
-with [8.2](#82-case-study-reproducing-bokehs-legend-example)'s
+All three closed following the same precedent as
+[8.1](#81-case-study-reproducing-bokehs-slope-example)/[8.2](#82-case-study-reproducing-bokehs-legend-example):
+small, additive `BaseSpec`/`ScatterSpec` fields, no new mechanism.
+`legend_location` shipped together with
+[8.2](#82-case-study-reproducing-bokehs-legend-example)'s
 `legend_title` rather than separately, since both describe the same
 `BaseSpec`-level "legend" concept and both are set together in this
 example's own bokeh source.

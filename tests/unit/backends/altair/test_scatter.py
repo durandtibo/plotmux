@@ -112,3 +112,27 @@ def test_render_scatter_marker_x_has_no_altair_equivalent() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), marker="x")
     chart = render_scatter(spec)
     assert "shape" not in chart.to_dict()["mark"]
+
+
+@altair_available
+def test_render_scatter_fill_false_not_filled() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red", fill=False)
+    chart = render_scatter(spec)
+    assert chart.to_dict()["mark"]["filled"] is False
+
+
+@altair_available
+def test_render_scatter_fill_false_overrides_edgecolor_filled() -> None:
+    # ``edgecolor`` alone sets ``filled=True`` (see
+    # ``test_render_scatter_edgecolor``); ``fill=False`` wins when both are
+    # given.
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), edgecolor="blue", fill=False)
+    chart = render_scatter(spec)
+    assert chart.to_dict()["mark"]["filled"] is False
+
+
+@altair_available
+def test_render_scatter_fill_none_or_true_no_filled_override() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red")
+    chart = render_scatter(spec)
+    assert "filled" not in chart.to_dict()["mark"]

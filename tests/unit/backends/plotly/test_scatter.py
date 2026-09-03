@@ -80,3 +80,25 @@ def test_render_scatter_no_marker_uses_backend_default() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
     fig = render_scatter(go.Figure(), spec)
     assert fig.data[0].marker.symbol is None
+
+
+@plotly_available
+def test_render_scatter_fill_false_transparent_fill() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red", fill=False)
+    fig = render_scatter(go.Figure(), spec)
+    assert fig.data[0].marker.color == "rgba(0, 0, 0, 0)"
+
+
+@plotly_available
+def test_render_scatter_fill_false_outline_uses_color() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red", fill=False)
+    fig = render_scatter(go.Figure(), spec)
+    assert fig.data[0].marker.line.color is not None
+    assert fig.data[0].marker.line.color != "rgba(0, 0, 0, 0)"
+
+
+@plotly_available
+def test_render_scatter_fill_none_or_true_uses_color() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red")
+    fig = render_scatter(go.Figure(), spec)
+    assert fig.data[0].marker.color != "rgba(0, 0, 0, 0)"

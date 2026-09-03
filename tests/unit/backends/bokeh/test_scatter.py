@@ -94,3 +94,24 @@ def test_render_scatter_no_marker_uses_backend_default() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
     fig = render_scatter(figure(), spec)
     assert fig.renderers[0].glyph.marker == "circle"
+
+
+@bokeh_available
+def test_render_scatter_fill_false_no_fill_color() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red", fill=False)
+    fig = render_scatter(figure(), spec)
+    assert fig.renderers[0].glyph.fill_color is None
+
+
+@bokeh_available
+def test_render_scatter_fill_false_outline_uses_color() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red", fill=False)
+    fig = render_scatter(figure(), spec)
+    assert fig.renderers[0].glyph.line_color is not None
+
+
+@bokeh_available
+def test_render_scatter_fill_none_or_true_has_fill_color() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red")
+    fig = render_scatter(figure(), spec)
+    assert fig.renderers[0].glyph.fill_color is not None
