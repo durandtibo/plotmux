@@ -6,7 +6,7 @@ from typing import Literal
 import numpy as np
 import pytest
 
-from plotmux.specs.base import BaseSpec, _check_equal_length
+from plotmux.specs.base import BaseSpec, XBoundSpec, _check_equal_length
 
 
 @dataclass(frozen=True)
@@ -24,6 +24,14 @@ class FakeColorSpec(BaseSpec):
 
 @dataclass(frozen=True)
 class FakeValidatedSpec(BaseSpec):
+    value: int = 0
+
+    def __post_init__(self) -> None:
+        self._validate_base()
+
+
+@dataclass(frozen=True)
+class FakeValidatedXBoundSpec(XBoundSpec):
     value: int = 0
 
     def __post_init__(self) -> None:
@@ -56,8 +64,6 @@ def test_base_spec_default_style() -> None:
     assert spec.background_color is None
     assert spec.ymin is None
     assert spec.ymax is None
-    assert spec.xmin is None
-    assert spec.xmax is None
     assert spec.legend_title is None
     assert spec.legend_location is None
 
@@ -231,30 +237,41 @@ def test_validate_base_background_color_none_left_untouched() -> None:
     assert spec.background_color is None
 
 
+##########################################
+#     Tests for XBoundSpec     #
+##########################################
+
+
+def test_xbound_spec_default_style() -> None:
+    spec = FakeValidatedXBoundSpec(value=42)
+    assert spec.xmin is None
+    assert spec.xmax is None
+
+
 def test_validate_base_xmin_xmax_ok() -> None:
-    spec = FakeValidatedSpec(xmin=0, xmax=10)
+    spec = FakeValidatedXBoundSpec(xmin=0, xmax=10)
     assert spec.xmin == 0
     assert spec.xmax == 10
 
 
 def test_validate_base_xmin_greater_than_xmax_raises() -> None:
     with pytest.raises(ValueError, match="xmin must not be greater than xmax"):
-        FakeValidatedSpec(xmin=10, xmax=0)
+        FakeValidatedXBoundSpec(xmin=10, xmax=0)
 
 
 def test_validate_base_xmin_equal_xmax_does_not_raise() -> None:
-    spec = FakeValidatedSpec(xmin=5, xmax=5)
+    spec = FakeValidatedXBoundSpec(xmin=5, xmax=5)
     assert spec.xmin == 5
     assert spec.xmax == 5
 
 
 def test_validate_base_xmin_only_does_not_raise() -> None:
-    spec = FakeValidatedSpec(xmin=5)
+    spec = FakeValidatedXBoundSpec(xmin=5)
     assert spec.xmin == 5
     assert spec.xmax is None
 
 
 def test_validate_base_xmax_only_does_not_raise() -> None:
-    spec = FakeValidatedSpec(xmax=5)
+    spec = FakeValidatedXBoundSpec(xmax=5)
     assert spec.xmin is None
     assert spec.xmax == 5

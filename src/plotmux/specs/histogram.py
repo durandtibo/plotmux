@@ -95,8 +95,12 @@ class HistogramSpec(BaseSpec):
     # quantile-capable and data-scoped, distinct from the plain,
     # explicit-value-only pair every other chart type gets from
     # ``BaseSpec``.
-    xmin: float | str | None = field(default=None, kw_only=True)  # pyright: ignore[reportIncompatibleVariableOverride]
-    xmax: float | str | None = field(default=None, kw_only=True)  # pyright: ignore[reportIncompatibleVariableOverride]
+    xmin: float | str | None = field(  # pyright: ignore[reportIncompatibleVariableOverride]
+        default=None, kw_only=True
+    )
+    xmax: float | str | None = field(  # pyright: ignore[reportIncompatibleVariableOverride]
+        default=None, kw_only=True
+    )
     label: str | None = None
     density: bool = False
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None

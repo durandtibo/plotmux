@@ -13,6 +13,8 @@ from typing import TYPE_CHECKING, cast
 
 from bokeh.colors import RGB
 
+from plotmux.specs import XBoundSpec
+
 if TYPE_CHECKING:
     from bokeh.models import DataRange1d
     from bokeh.plotting import figure
@@ -56,6 +58,32 @@ def rgba_to_bokeh(color: tuple[float, float, float, float]) -> RGB:
     """
     r, g, b, a = color
     return RGB(round(r * 255), round(g * 255), round(b * 255), a)
+
+
+def _apply_xbounds(fig: figure, spec: BaseSpec) -> None:
+    r"""Pin ``fig.x_range``'s ``start``/``end`` from ``spec.xmin``/
+    ``.xmax``, for every spec type that carries a plain, explicit-value-
+    only x-axis bound.
+
+    Split out of ``apply_common_style`` so that function's own branch
+    count stays under the linter's limit; also keeps the ``XBoundSpec``
+    gate (see ``plotmux.specs.base.XBoundSpec``) -- ``HistogramSpec``/
+    ``CdfSpec`` are not ``XBoundSpec``, since their own ``xmin``/``xmax``
+    may hold an unresolved quantile string, resolved and applied by
+    their own renderer instead.
+
+    Args:
+        fig: The bokeh ``figure`` whose ``x_range`` to pin.
+        spec: The spec whose ``xmin``/``xmax`` to apply, if any.
+    """
+    if not isinstance(spec, XBoundSpec):
+        return
+    # Same shape as ``y_range`` in ``apply_common_style``, for the x-axis.
+    x_range = cast("DataRange1d", fig.x_range)
+    if spec.xmin is not None:
+        x_range.start = spec.xmin
+    if spec.xmax is not None:
+        x_range.end = spec.xmax
 
 
 def apply_common_style(fig: figure, spec: BaseSpec) -> figure:
@@ -117,12 +145,13 @@ def apply_common_style(fig: figure, spec: BaseSpec) -> figure:
         y_range.start = spec.ymin
     if spec.ymax is not None:
         y_range.end = spec.ymax
-    # Same shape as ``y_range`` above, for the x-axis.
-    x_range = cast("DataRange1d", fig.x_range)
-    if spec.xmin is not None:
-        x_range.start = spec.xmin
-    if spec.xmax is not None:
-        x_range.end = spec.xmax
+    # Same shape as ``y_range`` above, for the x-axis. Factored into its own
+    # function (rather than inlined like ``y_range`` above) so this
+    # function's own branch count stays under the linter's limit -- gated on
+    # ``XBoundSpec``: ``HistogramSpec``/``CdfSpec`` are not ``XBoundSpec``
+    # (their own ``xmin``/``xmax`` accept a quantile string, resolved and
+    # applied by their own renderer -- see ``plotmux.specs.base.XBoundSpec``).
+    _apply_xbounds(fig, spec)
     # bokeh auto-creates ``fig.legend`` once any glyph carries a
     # ``legend_label``; setting ``fig.legend.title``/``.location`` when none
     # exists prints a "zero legends added" warning, so both are only set

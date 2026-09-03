@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING, Any, cast
 
 import xy
 
+from plotmux.specs import XBoundSpec
+
 if TYPE_CHECKING:
     from plotmux.specs import BaseSpec
 
@@ -96,8 +98,15 @@ def apply_common_style(chart: xy.Chart, spec: BaseSpec) -> xy.Chart:
     # neither being set.
     y_domain = (spec.ymin, spec.ymax) if spec.ymin is not None and spec.ymax is not None else None
     # Same "both bounds together, or neither" shape as ``y_domain`` above,
-    # for the x-axis.
-    x_domain = (spec.xmin, spec.xmax) if spec.xmin is not None and spec.xmax is not None else None
+    # for the x-axis. Gated on ``XBoundSpec``: ``HistogramSpec``/``CdfSpec``
+    # are not ``XBoundSpec`` (their own ``xmin``/``xmax`` accept a quantile
+    # string, resolved and applied by their own renderer -- see
+    # ``plotmux.specs.base.XBoundSpec``).
+    x_domain = (
+        (spec.xmin, spec.xmax)
+        if isinstance(spec, XBoundSpec) and spec.xmin is not None and spec.xmax is not None
+        else None
+    )
     children = (
         *chart.children,
         xy.x_axis(label=spec.xlabel, type_=spec.xscale, domain=x_domain),

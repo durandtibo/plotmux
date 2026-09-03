@@ -8,11 +8,11 @@ from dataclasses import dataclass, replace
 
 from plotmux.colors.palette import DEFAULT_PALETTE
 from plotmux.exceptions import InvalidSpecError
-from plotmux.specs.base import BaseSpec
+from plotmux.specs.base import BaseSpec, XBoundSpec
 
 
 @dataclass(frozen=True)
-class LayerSpec(BaseSpec):
+class LayerSpec(XBoundSpec):
     r"""Define a spec that draws multiple child specs on one shared
     axes.
 

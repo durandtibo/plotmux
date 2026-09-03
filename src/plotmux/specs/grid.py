@@ -8,11 +8,11 @@ from dataclasses import dataclass
 from numbers import Integral
 
 from plotmux.exceptions import InvalidSpecError
-from plotmux.specs.base import BaseSpec
+from plotmux.specs.base import BaseSpec, XBoundSpec
 
 
 @dataclass(frozen=True)
-class GridSpec(BaseSpec):
+class GridSpec(XBoundSpec):
     r"""Define a spec that lays out multiple child specs as independent
     panels in a grid.
 

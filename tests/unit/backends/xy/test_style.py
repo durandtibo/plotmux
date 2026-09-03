@@ -3,12 +3,13 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from plotmux.specs import HistogramSpec
+from plotmux.specs import HistogramSpec, LineSpec
 from plotmux.testing.fixtures import xy_available
 from plotmux.utils.imports import is_xy_available
 
 if is_xy_available():
     from plotmux.backends.xy.histogram import render_histogram
+    from plotmux.backends.xy.line import render_line
     from plotmux.backends.xy.style import apply_common_style, rgba_to_xy
 
 ##################################
@@ -122,8 +123,13 @@ def test_apply_common_style_single_ybound_ignored() -> None:
 
 @xy_available
 def test_apply_common_style_xmin_xmax() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10, xmin=0.0, xmax=5.0)
-    chart = render_histogram(spec)
+    # ``LineSpec`` rather than ``HistogramSpec``: ``HistogramSpec.xmin``/
+    # ``.xmax`` is a different, quantile-capable field (see
+    # ``plotmux.specs.base.XBoundSpec``), resolved and applied by
+    # ``render_histogram`` itself, not the plain, explicit-value-only
+    # ``BaseSpec``-shared ``xmin``/``xmax`` under test here.
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), xmin=0.0, xmax=5.0)
+    chart = render_line(spec)
     out = apply_common_style(chart, spec)
     x_axis = out.children[1]
     assert x_axis.domain == (0.0, 5.0)
@@ -131,7 +137,21 @@ def test_apply_common_style_xmin_xmax() -> None:
 
 @xy_available
 def test_apply_common_style_single_xbound_ignored() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10, xmin=0.0)
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), xmin=0.0)
+    chart = render_line(spec)
+    out = apply_common_style(chart, spec)
+    x_axis = out.children[1]
+    assert x_axis.domain is None
+
+
+@xy_available
+def test_apply_common_style_histogram_xbounds_not_reapplied() -> None:
+    # ``HistogramSpec``/``CdfSpec`` are not ``XBoundSpec`` (see
+    # ``plotmux.specs.base.XBoundSpec``): their own ``xmin``/``xmax`` may
+    # hold an unresolved quantile string, so ``apply_common_style`` must
+    # not read them -- doing so used to crash the moment either bound was
+    # set to a quantile string like ``"q0.1"``.
+    spec = HistogramSpec(values=np.arange(101), bins=10, xmin="q0.1", xmax="q0.9")
     chart = render_histogram(spec)
     out = apply_common_style(chart, spec)
     x_axis = out.children[1]

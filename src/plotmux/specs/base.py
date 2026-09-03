@@ -2,7 +2,7 @@ r"""Contain the base class for backend-agnostic chart specifications."""
 
 from __future__ import annotations
 
-__all__ = ["BaseSpec"]
+__all__ = ["BaseSpec", "XBoundSpec"]
 
 # ``_check_equal_length`` is a module-level helper, not a method on
 # ``BaseSpec``: unlike color, not every spec has an x/y pair (e.g.
@@ -10,7 +10,6 @@ __all__ = ["BaseSpec"]
 # class the way ``_normalize_color`` does.
 
 from dataclasses import dataclass, field
-from numbers import Real
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
@@ -58,15 +57,6 @@ class BaseSpec:
             processing. ``None`` leaves the axis autoscaled.
         ymax: An optional upper bound for the y-axis. Same semantics
             as ``ymin`` but for the upper bound.
-        xmin: An optional lower bound for the x-axis. Like
-            ``ymin``/``ymax``, this is a plain, explicit-value-only
-            figure-level override (not the quantile-string form
-            ``HistogramSpec.xmin``/``CdfSpec.xmin`` accept -- see
-            ``plotmux.utils.range.find_range`` -- those two remain
-            data-scoped and quantile-capable; this field is open to
-            every chart type). ``None`` leaves the axis autoscaled.
-        xmax: An optional upper bound for the x-axis. Same semantics
-            as ``xmin`` but for the upper bound.
         legend_title: An optional heading for the legend box itself,
             independent of ``title`` (the figure/axes title). ``None``
             leaves the legend untitled (every backend's own default).
@@ -99,8 +89,7 @@ class BaseSpec:
 
     Raises:
         ValueError: if ``background_color`` is not a valid color, or
-            ``ymin``/``ymax`` are both set with ``ymin > ymax``, or
-            ``xmin``/``xmax`` are both set with ``xmin > xmax``.
+            ``ymin``/``ymax`` are both set with ``ymin > ymax``.
     """
 
     # ``kw_only=True`` so these figure-level fields (all defaulted) can
@@ -118,8 +107,6 @@ class BaseSpec:
     ) = field(default=None, kw_only=True)
     ymin: float | None = field(default=None, kw_only=True)
     ymax: float | None = field(default=None, kw_only=True)
-    xmin: float | None = field(default=None, kw_only=True)
-    xmax: float | None = field(default=None, kw_only=True)
     legend_title: str | None = field(default=None, kw_only=True)
     legend_location: (
         Literal[
@@ -161,19 +148,6 @@ class BaseSpec:
                 f"ymin={self.ymin} and ymax={self.ymax}"
             )
             raise InvalidSpecError(msg)
-        # ``HistogramSpec``/``CdfSpec`` shadow this field with a
-        # quantile-capable ``float | str | None`` version (see their own
-        # ``xmin``/``xmax`` docstrings) and already range-check it
-        # themselves once the quantile strings are resolved -- an
-        # ``isinstance`` guard here (mirroring theirs) keeps this
-        # comparison from raising ``TypeError`` on a quantile string that
-        # reaches this shared base-class check unresolved.
-        if isinstance(self.xmin, Real) and isinstance(self.xmax, Real) and self.xmin > self.xmax:
-            msg = (
-                f"xmin must not be greater than xmax, but received "
-                f"xmin={self.xmin} and xmax={self.xmax}"
-            )
-            raise InvalidSpecError(msg)
 
     def _normalize_color(self, name: str = "color") -> None:
         r"""Normalize a ``str | tuple | None`` color field to its
@@ -203,6 +177,71 @@ class BaseSpec:
         value = getattr(self, name)
         if value is not None:
             object.__setattr__(self, name, parse_color(value))
+
+
+@dataclass(frozen=True)
+class XBoundSpec(BaseSpec):
+    r"""Add a plain, explicit-value-only ``xmin``/``xmax`` x-axis bound
+    to ``BaseSpec``, for every chart type that does not need the data-
+    scoped, quantile-capable form.
+
+    ``HistogramSpec``/``CdfSpec`` are the only two chart types that
+    need ``xmin``/``xmax`` to also accept a quantile string (e.g.
+    ``"q0.1"``, see ``plotmux.utils.range.find_range``) resolved
+    against their own data; every other chart type only ever needs a
+    plain bound applied to the axis after the mark is drawn (see
+    ``plotmux.backends.matplotlib.style.apply_common_style`` and its
+    per-backend equivalents). Splitting that pair out of ``BaseSpec``
+    into this subclass -- rather than declaring a ``float | None``
+    pair on ``BaseSpec`` and having ``HistogramSpec``/``CdfSpec``
+    redeclare it with a wider ``float | str | None`` type -- keeps
+    every chart type's ``xmin``/``xmax`` an honest, single type: a
+    subclass redeclaring an inherited field with an incompatible type
+    is a real Liskov substitution violation (a caller holding a
+    ``BaseSpec``/``XBoundSpec`` reference could dereference ``xmin``
+    expecting a ``float`` and get a ``str``), not merely a type
+    checker nitpick to silence -- see e.g. the bug this exact
+    shadowing produced, fixed alongside this split: every backend's
+    ``apply_common_style`` used to reapply ``spec.xmin``/``spec.xmax``
+    to the axis unconditionally, which raised at render time for a
+    ``HistogramSpec``/``CdfSpec`` constructed with a quantile-string
+    bound.
+
+    Args:
+        xmin: An optional lower bound for the x-axis. Like
+            ``ymin``/``ymax``, this is a plain, explicit-value-only
+            figure-level override, applied as a plain axis bound
+            after the mark is drawn. ``None`` leaves the axis
+            autoscaled.
+        xmax: An optional upper bound for the x-axis. Same semantics
+            as ``xmin`` but for the upper bound.
+
+    Raises:
+        ValueError: if ``xmin``/``xmax`` are both set with
+            ``xmin > xmax``, on top of every ``ValueError`` ``BaseSpec``
+            itself may raise.
+    """
+
+    xmin: float | None = field(default=None, kw_only=True)
+    xmax: float | None = field(default=None, kw_only=True)
+
+    def _validate_base(self) -> None:
+        r"""Validate/normalize the figure-level fields shared by every
+        ``XBoundSpec``: everything ``BaseSpec._validate_base`` already
+        covers, plus ``xmin``/``xmax``.
+
+        Raises:
+            ValueError: if ``xmin``/``xmax`` are both set with
+                ``xmin > xmax``, on top of every ``ValueError``
+                ``BaseSpec._validate_base`` itself may raise.
+        """
+        super()._validate_base()
+        if self.xmin is not None and self.xmax is not None and self.xmin > self.xmax:
+            msg = (
+                f"xmin must not be greater than xmax, but received "
+                f"xmin={self.xmin} and xmax={self.xmax}"
+            )
+            raise InvalidSpecError(msg)
 
 
 def _check_equal_length(x: ArrayLike, y: ArrayLike) -> tuple[np.ndarray, np.ndarray]:

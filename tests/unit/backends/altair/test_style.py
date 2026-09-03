@@ -206,6 +206,21 @@ def test_apply_common_style_no_xmin_xmax() -> None:
 
 
 @altair_available
+def test_apply_common_style_histogram_xbounds_not_reapplied() -> None:
+    # ``HistogramSpec``/``CdfSpec`` are not ``XBoundSpec`` (see
+    # ``plotmux.specs.base.XBoundSpec``): their own ``xmin``/``xmax`` may
+    # hold an unresolved quantile string, so ``apply_common_style`` must
+    # not read them -- doing so used to crash the moment either bound was
+    # set to a quantile string like ``"q0.1"``.
+    spec = HistogramSpec(values=np.arange(101), bins=10, xmin="q0.1", xmax="q0.9")
+    chart = render_histogram(spec)
+    out = apply_common_style(chart, spec)
+    scale = out.to_dict()["encoding"]["x"]["scale"]
+    assert "domainMin" not in scale
+    assert "domainMax" not in scale
+
+
+@altair_available
 def test_apply_common_style_background_color() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, background_color="red")
     chart = render_histogram(spec)

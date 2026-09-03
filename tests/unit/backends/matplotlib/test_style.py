@@ -150,8 +150,9 @@ def test_apply_common_style_xmin_xmax() -> None:
     fig, ax = plt.subplots()
     # ``ScatterSpec`` rather than ``HistogramSpec``: ``HistogramSpec.xmin``/
     # ``.xmax`` is a different, quantile-capable field (see
-    # ``plotmux.specs.histogram.HistogramSpec``), not the plain
-    # ``BaseSpec.xmin``/``.xmax`` under test here.
+    # ``plotmux.specs.base.XBoundSpec``), resolved and applied by
+    # ``render_histogram`` itself, not the plain, explicit-value-only
+    # ``BaseSpec``-shared ``xmin``/``xmax`` under test here.
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), xmin=0.0, xmax=5.0)
     apply_common_style(ax, spec)
     assert ax.get_xlim() == (0.0, 5.0)
@@ -162,6 +163,21 @@ def test_apply_common_style_xmin_xmax() -> None:
 def test_apply_common_style_no_xmin_xmax() -> None:
     fig, ax = plt.subplots()
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
+    default_xlim = ax.get_xlim()
+    apply_common_style(ax, spec)
+    assert ax.get_xlim() == default_xlim
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_apply_common_style_histogram_xbounds_not_reapplied() -> None:
+    # ``HistogramSpec``/``CdfSpec`` are not ``XBoundSpec`` (see
+    # ``plotmux.specs.base.XBoundSpec``): their own ``xmin``/``xmax`` may
+    # hold an unresolved quantile string, so ``apply_common_style`` must
+    # not read them -- doing so used to crash the moment either bound was
+    # set to a quantile string like ``"q0.1"``.
+    fig, ax = plt.subplots()
+    spec = HistogramSpec(values=np.arange(101), bins=10, xmin="q0.1", xmax="q0.9")
     default_xlim = ax.get_xlim()
     apply_common_style(ax, spec)
     assert ax.get_xlim() == default_xlim

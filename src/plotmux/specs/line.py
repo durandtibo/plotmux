@@ -8,14 +8,14 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
 from plotmux.exceptions import InvalidSpecError
-from plotmux.specs.base import BaseSpec, _check_equal_length
+from plotmux.specs.base import XBoundSpec, _check_equal_length
 
 if TYPE_CHECKING:
     import numpy as np
 
 
 @dataclass(frozen=True)
-class LineSpec(BaseSpec):
+class LineSpec(XBoundSpec):
     r"""Define a backend-agnostic line-chart specification.
 
     Args:
