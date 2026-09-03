@@ -6,12 +6,15 @@ import numpy as np
 import pytest
 
 from plotmux.specs import (
+    BarSeries,
+    BarSpec,
     CdfSpec,
     GridSpec,
     HistogramSpec,
     LayerSpec,
     LineSpec,
     ScatterSpec,
+    StackedBarSpec,
 )
 from plotmux.testing.fixtures import bokeh_available
 from plotmux.utils.imports import is_bokeh_available
@@ -82,6 +85,23 @@ def test_bokeh_backend_render_line(backend: BokehBackend) -> None:
 @bokeh_available
 def test_bokeh_backend_render_scatter(backend: BokehBackend) -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10) ** 2)
+    native = backend.render(spec)
+    assert isinstance(native, figure)
+
+
+@bokeh_available
+def test_bokeh_backend_render_bar(backend: BokehBackend) -> None:
+    spec = BarSpec(x=np.array(["Apples", "Pears"]), y=np.array([2, 1]))
+    native = backend.render(spec)
+    assert isinstance(native, figure)
+
+
+@bokeh_available
+def test_bokeh_backend_render_stacked_bar(backend: BokehBackend) -> None:
+    spec = StackedBarSpec(
+        x=np.array(["Apples", "Pears"]),
+        series=(BarSeries(y=np.array([2, 1])), BarSeries(y=np.array([1, 3]))),
+    )
     native = backend.render(spec)
     assert isinstance(native, figure)
 
