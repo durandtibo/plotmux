@@ -101,3 +101,32 @@ def test_render_scatter_no_marker_uses_backend_default() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
     chart = render_scatter(spec)
     assert chart.children[0].props["symbol"] == "circle"
+
+
+@xy_available
+def test_render_scatter_fill_false_transparent_color() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red", fill=False)
+    chart = render_scatter(spec)
+    assert chart.children[0].props["color"] == "rgba(0, 0, 0, 0)"
+
+
+@xy_available
+def test_render_scatter_fill_false_outline_uses_color() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red", fill=False)
+    chart = render_scatter(spec)
+    assert chart.children[0].props["stroke"] == "rgba(255, 0, 0, 1.0)"
+    assert chart.children[0].props["stroke_width"] == 1.0
+
+
+@xy_available
+def test_render_scatter_fill_false_outline_prefers_edgecolor() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red", edgecolor="blue", fill=False)
+    chart = render_scatter(spec)
+    assert chart.children[0].props["stroke"] == "rgba(0, 0, 255, 1.0)"
+
+
+@xy_available
+def test_render_scatter_fill_none_or_true_keeps_color() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red")
+    chart = render_scatter(spec)
+    assert chart.children[0].props["color"] == "rgba(255, 0, 0, 1.0)"

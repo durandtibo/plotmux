@@ -41,6 +41,26 @@ MARKER_STYLE: dict[str, str] = {
     "x": "x",
 }
 
+#: Maps ``BaseSpec.legend_location``'s portable position name to plotly's
+#: ``layout.legend`` fractional ``x``/``y``/``xanchor``/``yanchor``
+#: coordinates -- plotly has no named corner enum the way bokeh does (see
+#: ``plotmux.backends.bokeh.style``), only free-floating coordinates, so
+#: this candidate's name set is translated to a fixed, near-the-edge
+#: ``(x, y)`` position for each. ``"best"`` has no plotly equivalent
+#: (plotly has no auto-placement legend) and is deliberately absent,
+#: falling back to plotly's own default position, same as
+#: ``legend_location`` unset.
+LEGEND_LOCATION: dict[str, dict[str, Any]] = {
+    "top_left": {"x": 0.01, "y": 0.99, "xanchor": "left", "yanchor": "top"},
+    "top_right": {"x": 0.99, "y": 0.99, "xanchor": "right", "yanchor": "top"},
+    "bottom_left": {"x": 0.01, "y": 0.01, "xanchor": "left", "yanchor": "bottom"},
+    "bottom_right": {"x": 0.99, "y": 0.01, "xanchor": "right", "yanchor": "bottom"},
+    "top": {"x": 0.5, "y": 0.99, "xanchor": "center", "yanchor": "top"},
+    "bottom": {"x": 0.5, "y": 0.01, "xanchor": "center", "yanchor": "bottom"},
+    "left": {"x": 0.01, "y": 0.5, "xanchor": "left", "yanchor": "middle"},
+    "right": {"x": 0.99, "y": 0.5, "xanchor": "right", "yanchor": "middle"},
+}
+
 
 def rgba_to_plotly(color: tuple[float, float, float, float]) -> str:
     r"""Convert a canonical RGBA tuple to plotly's native color type.
@@ -79,8 +99,9 @@ def apply_common_style(fig: Figure, spec: BaseSpec) -> Figure:
     ``Figure``.
 
     Applies ``title``/``xlabel``/``ylabel``/``xscale``/``yscale``/
-    ``background_color``/``ymin``/``ymax``/``legend_title`` from
-    ``spec`` (defined on ``BaseSpec``, shared by every chart type).
+    ``background_color``/``ymin``/``ymax``/``xmin``/``xmax``/
+    ``legend_title``/``legend_location`` from ``spec`` (defined on
+    ``BaseSpec``, shared by every chart type).
     Called once per
     standalone figure or ``LayerSpec``, right after every trace has
     been added, via ``fig.update_layout`` -- unlike bokeh's
@@ -122,7 +143,13 @@ def apply_common_style(fig: Figure, spec: BaseSpec) -> Figure:
     # explicit bounds set together are forwarded.
     if spec.ymin is not None and spec.ymax is not None:
         layout["yaxis_range"] = [spec.ymin, spec.ymax]
+    # Same "both bounds together, or neither" shape as ``yaxis_range`` above,
+    # for the x-axis.
+    if spec.xmin is not None and spec.xmax is not None:
+        layout["xaxis_range"] = [spec.xmin, spec.xmax]
     if spec.legend_title is not None:
         layout["legend_title_text"] = spec.legend_title
+    if spec.legend_location is not None and spec.legend_location in LEGEND_LOCATION:
+        layout["legend"] = LEGEND_LOCATION[spec.legend_location]
     fig.update_layout(**layout)
     return fig

@@ -71,8 +71,15 @@ class CdfSpec(BaseSpec):
 
     values: np.ndarray
     nbins: int | None = None
-    xmin: float | str | None = None
-    xmax: float | str | None = None
+    # ``kw_only=True``: see ``HistogramSpec.xmin``/``.xmax``'s matching
+    # comment -- ``BaseSpec`` also declares a same-named, kw-only, plain
+    # ``xmin``/``xmax`` pair, and without ``kw_only=True`` here too this
+    # quantile-capable redeclaration would keep ``BaseSpec``'s field
+    # position (ahead of ``values``), breaking dataclass field ordering.
+    # The narrower-typed override is silenced, not reshaped, for the same
+    # reason given there.
+    xmin: float | str | None = field(default=None, kw_only=True)  # pyright: ignore[reportIncompatibleVariableOverride]
+    xmax: float | str | None = field(default=None, kw_only=True)  # pyright: ignore[reportIncompatibleVariableOverride]
     label: str | None = None
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
     alpha: float | None = None

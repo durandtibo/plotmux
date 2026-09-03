@@ -185,6 +185,26 @@ def test_apply_common_style_no_ymin_ymax() -> None:
 
 
 @altair_available
+def test_apply_common_style_xmin_xmax() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), xmin=0.0, xmax=5.0)
+    chart = render_line(spec)
+    out = apply_common_style(chart, spec)
+    scale = out.to_dict()["encoding"]["x"]["scale"]
+    assert scale["domainMin"] == 0.0
+    assert scale["domainMax"] == 5.0
+
+
+@altair_available
+def test_apply_common_style_no_xmin_xmax() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10))
+    chart = render_line(spec)
+    out = apply_common_style(chart, spec)
+    scale = out.to_dict()["encoding"]["x"]["scale"]
+    assert "domainMin" not in scale
+    assert "domainMax" not in scale
+
+
+@altair_available
 def test_apply_common_style_background_color() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, background_color="red")
     chart = render_histogram(spec)
@@ -210,6 +230,33 @@ def test_apply_common_style_legend_title() -> None:
 
 @altair_available
 def test_apply_common_style_no_legend_title() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10))
+    chart = render_line(spec)
+    out = apply_common_style(chart, spec)
+    assert "color" not in out.to_dict()["encoding"]
+
+
+@altair_available
+def test_apply_common_style_legend_location() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s", legend_location="top_left")
+    chart = render_line(spec)
+    out = apply_common_style(chart, spec)
+    assert out.to_dict()["encoding"]["color"]["legend"]["orient"] == "top-left"
+
+
+@altair_available
+def test_apply_common_style_legend_location_best_is_noop() -> None:
+    # altair has no "best" auto-placement legend (see ``LEGEND_LOCATION``'s
+    # docstring), so ``legend_location="best"`` falls back to altair's own
+    # default position, leaving no explicit ``orient`` set.
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s", legend_location="best")
+    chart = render_line(spec)
+    out = apply_common_style(chart, spec)
+    assert "orient" not in out.to_dict()["encoding"]["color"]["legend"]
+
+
+@altair_available
+def test_apply_common_style_no_legend_location() -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10))
     chart = render_line(spec)
     out = apply_common_style(chart, spec)

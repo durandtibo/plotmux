@@ -46,6 +46,28 @@ MARKER_STYLE = {
     "cross": "cross",
 }
 
+#: Maps ``BaseSpec.legend_location``'s portable position name to altair's
+#: ``alt.Legend(orient=...)`` value. altair's ``orient`` supports the four
+#: outer edges (``"top"``, ``"bottom"``, ``"left"``, ``"right"``) plus the
+#: four corners, all outside-the-chart placements -- unlike matplotlib's
+#: ``loc``, which places a legend *inside* the plot area at a given corner
+#: (see ``plotmux.backends.matplotlib.style.LEGEND_LOCATION``), so a
+#: ``legend_location`` chosen for parity across backends still renders in a
+#: visibly different spot on altair, a small, permanent per-backend
+#: asymmetry. ``"best"`` has no altair equivalent (altair has no
+#: auto-placement legend) and is deliberately absent, falling back to
+#: altair's own default position, same as ``legend_location`` unset.
+LEGEND_LOCATION = {
+    "top_left": "top-left",
+    "top_right": "top-right",
+    "bottom_left": "bottom-left",
+    "bottom_right": "bottom-right",
+    "top": "top",
+    "bottom": "bottom",
+    "left": "left",
+    "right": "right",
+}
+
 
 def rgba_to_altair(color: tuple[float, float, float, float]) -> str:
     r"""Convert a canonical RGBA tuple to altair's native color string.
@@ -214,14 +236,20 @@ def apply_common_style(chart: alt.typing.ChartType, spec: BaseSpec) -> alt.typin
     # ``alt.Scale``'s ``domainMin``/``domainMax`` use altair's own
     # ``alt.Undefined`` sentinel for "unset" (not ``None``, which altair
     # instead serializes as an explicit ``null`` bound), so ``spec.ymin``/
-    # ``spec.ymax`` are only passed through when actually set.
+    # ``spec.ymax``/``spec.xmin``/``spec.xmax`` are only passed through when
+    # actually set.
+    x_scale_kwargs: dict[str, Any] = {"type": spec.xscale}
+    if spec.xmin is not None:
+        x_scale_kwargs["domainMin"] = spec.xmin
+    if spec.xmax is not None:
+        x_scale_kwargs["domainMax"] = spec.xmax
     y_scale_kwargs: dict[str, Any] = {"type": spec.yscale}
     if spec.ymin is not None:
         y_scale_kwargs["domainMin"] = spec.ymin
     if spec.ymax is not None:
         y_scale_kwargs["domainMax"] = spec.ymax
     chart = chart.encode(
-        x=alt.X("x:Q", title=spec.xlabel, scale=alt.Scale(type=spec.xscale)),
+        x=alt.X("x:Q", title=spec.xlabel, scale=alt.Scale(**x_scale_kwargs)),
         y=alt.Y("y:Q", title=spec.ylabel, scale=alt.Scale(**y_scale_kwargs)),
     )
     if spec.title is not None:
@@ -247,4 +275,15 @@ def apply_common_style(chart: alt.typing.ChartType, spec: BaseSpec) -> alt.typin
         # no ``color`` encoding to override, so this is a no-op then, same
         # as every other backend's "no label -> no legend" behavior.
         chart = chart.encode(color=alt.Color(legend=alt.Legend(title=spec.legend_title)))
+    if spec.legend_location is not None and spec.legend_location in LEGEND_LOCATION:
+        # Same "no labeled mark -> no ``color`` encoding to override -> no-op"
+        # shape as ``legend_title`` above. ``"best"`` has no altair
+        # equivalent (see ``LEGEND_LOCATION``'s docstring) and is excluded
+        # by the membership check, falling back to altair's own default
+        # position.
+        chart = chart.encode(
+            color=alt.Color(
+                legend=alt.Legend(orient=cast("Any", LEGEND_LOCATION[spec.legend_location]))
+            )
+        )
     return chart

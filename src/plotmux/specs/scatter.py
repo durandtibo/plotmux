@@ -49,6 +49,15 @@ class ScatterSpec(BaseSpec):
             ``plotmux.backends.altair.style.MARKER_STYLE``), a small,
             permanent per-backend asymmetry, the same pattern as
             ``BarSpec.width``'s altair gap.
+        fill: An optional tri-state fill toggle. ``None``/``True``
+            draw a filled marker using ``color``, today's behavior.
+            ``False`` draws a hollow marker: only the outline (
+            ``edgecolor`` if set, else ``color``) is drawn, with no
+            fill -- distinct from leaving ``color`` unset, which asks
+            for the backend's own default (opaque) fill color rather
+            than an explicitly transparent one. Every current
+            backend's own default fill is opaque, so ``fill=False``
+            is the only portable way to get a hollow marker.
 
     Raises:
         ValueError: if ``x`` and ``y`` do not have the same length,
@@ -75,6 +84,7 @@ class ScatterSpec(BaseSpec):
     edgecolor: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
     alpha: float | None = None
     marker: Literal["circle", "square", "triangle", "diamond", "cross", "x"] | None = None
+    fill: bool | None = None
 
     def __post_init__(self) -> None:
         x, y = _check_equal_length(self.x, self.y)

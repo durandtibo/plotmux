@@ -10,6 +10,7 @@ __all__ = ["BaseSpec"]
 # class the way ``_normalize_color`` does.
 
 from dataclasses import dataclass, field
+from numbers import Real
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
@@ -57,6 +58,15 @@ class BaseSpec:
             processing. ``None`` leaves the axis autoscaled.
         ymax: An optional upper bound for the y-axis. Same semantics
             as ``ymin`` but for the upper bound.
+        xmin: An optional lower bound for the x-axis. Like
+            ``ymin``/``ymax``, this is a plain, explicit-value-only
+            figure-level override (not the quantile-string form
+            ``HistogramSpec.xmin``/``CdfSpec.xmin`` accept -- see
+            ``plotmux.utils.range.find_range`` -- those two remain
+            data-scoped and quantile-capable; this field is open to
+            every chart type). ``None`` leaves the axis autoscaled.
+        xmax: An optional upper bound for the x-axis. Same semantics
+            as ``xmin`` but for the upper bound.
         legend_title: An optional heading for the legend box itself,
             independent of ``title`` (the figure/axes title). ``None``
             leaves the legend untitled (every backend's own default).
@@ -64,6 +74,13 @@ class BaseSpec:
             ``label`` -- a spec with ``legend_title`` set but no
             labeled mark simply draws no legend at all, same as
             today.
+        legend_location: An optional legend position, one of a small,
+            backend-portable set of named corners/edges (mirroring how
+            ``ScatterSpec.marker`` exposes a portable shape set rather
+            than every backend's native vocabulary). ``None`` leaves
+            the legend at the backend's own default position. Only
+            meaningful when at least one mark carries a ``label``,
+            same caveat as ``legend_title``.
 
     These are figure-level concerns shared by every chart type, so
     they live here rather than being redeclared per chart type. Every
@@ -77,7 +94,8 @@ class BaseSpec:
 
     Raises:
         ValueError: if ``background_color`` is not a valid color, or
-            ``ymin``/``ymax`` are both set with ``ymin > ymax``.
+            ``ymin``/``ymax`` are both set with ``ymin > ymax``, or
+            ``xmin``/``xmax`` are both set with ``xmin > xmax``.
     """
 
     # ``kw_only=True`` so these figure-level fields (all defaulted) can
@@ -95,7 +113,23 @@ class BaseSpec:
     ) = field(default=None, kw_only=True)
     ymin: float | None = field(default=None, kw_only=True)
     ymax: float | None = field(default=None, kw_only=True)
+    xmin: float | None = field(default=None, kw_only=True)
+    xmax: float | None = field(default=None, kw_only=True)
     legend_title: str | None = field(default=None, kw_only=True)
+    legend_location: (
+        Literal[
+            "best",
+            "top_left",
+            "top_right",
+            "bottom_left",
+            "bottom_right",
+            "top",
+            "bottom",
+            "left",
+            "right",
+        ]
+        | None
+    ) = field(default=None, kw_only=True)
 
     def _validate_base(self) -> None:
         r"""Validate/normalize the figure-level fields shared by every
@@ -111,13 +145,27 @@ class BaseSpec:
         Raises:
             ValueError: if ``background_color`` is not a valid color,
                 or ``ymin``/``ymax`` are both set with
-                ``ymin > ymax``.
+                ``ymin > ymax``, or ``xmin``/``xmax`` are both set
+                with ``xmin > xmax``.
         """
         self._normalize_color("background_color")
         if self.ymin is not None and self.ymax is not None and self.ymin > self.ymax:
             msg = (
                 f"ymin must not be greater than ymax, but received "
                 f"ymin={self.ymin} and ymax={self.ymax}"
+            )
+            raise InvalidSpecError(msg)
+        # ``HistogramSpec``/``CdfSpec`` shadow this field with a
+        # quantile-capable ``float | str | None`` version (see their own
+        # ``xmin``/``xmax`` docstrings) and already range-check it
+        # themselves once the quantile strings are resolved -- an
+        # ``isinstance`` guard here (mirroring theirs) keeps this
+        # comparison from raising ``TypeError`` on a quantile string that
+        # reaches this shared base-class check unresolved.
+        if isinstance(self.xmin, Real) and isinstance(self.xmax, Real) and self.xmin > self.xmax:
+            msg = (
+                f"xmin must not be greater than xmax, but received "
+                f"xmin={self.xmin} and xmax={self.xmax}"
             )
             raise InvalidSpecError(msg)
 

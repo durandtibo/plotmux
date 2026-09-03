@@ -18,6 +18,7 @@ def test_scatter_spec_defaults() -> None:
     assert spec.edgecolor is None
     assert spec.alpha is None
     assert spec.marker is None
+    assert spec.fill is None
 
 
 def test_scatter_spec_custom() -> None:
@@ -30,6 +31,7 @@ def test_scatter_spec_custom() -> None:
         edgecolor="#000000",
         alpha=0.5,
         marker="square",
+        fill=False,
     )
     assert spec.label == "my-scatter"
     assert spec.color == (1.0, 0.0, 0.0, 1.0)
@@ -37,6 +39,12 @@ def test_scatter_spec_custom() -> None:
     assert spec.edgecolor == (0.0, 0.0, 0.0, 1.0)
     assert spec.alpha == 0.5
     assert spec.marker == "square"
+    assert spec.fill is False
+
+
+@pytest.mark.parametrize("fill", [None, True, False])
+def test_scatter_spec_fill_values(fill: bool | None) -> None:
+    assert ScatterSpec(x=np.arange(10), y=np.arange(10), fill=fill).fill is fill
 
 
 @pytest.mark.parametrize("alpha", [2.0, -0.1])

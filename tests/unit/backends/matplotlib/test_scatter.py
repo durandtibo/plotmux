@@ -115,3 +115,41 @@ def test_render_scatter_no_marker_uses_backend_default() -> None:
     render_scatter(ax, spec)
     assert len(ax.collections[0].get_paths()[0].vertices) != 5
     plt.close(fig)
+
+
+@matplotlib_available
+def test_render_scatter_fill_false_draws_hollow_marker() -> None:
+    fig, ax = plt.subplots()
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red", fill=False)
+    render_scatter(ax, spec)
+    # ``facecolors="none"`` means no face color at all (an empty array),
+    # not a transparent rgba tuple.
+    assert len(ax.collections[0].get_facecolor()) == 0
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_render_scatter_fill_false_outline_uses_color() -> None:
+    fig, ax = plt.subplots()
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red", fill=False)
+    render_scatter(ax, spec)
+    assert tuple(ax.collections[0].get_edgecolor()[0]) == (1.0, 0.0, 0.0, 1.0)
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_render_scatter_fill_false_outline_prefers_edgecolor() -> None:
+    fig, ax = plt.subplots()
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red", edgecolor="blue", fill=False)
+    render_scatter(ax, spec)
+    assert tuple(ax.collections[0].get_edgecolor()[0]) == (0.0, 0.0, 1.0, 1.0)
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_render_scatter_fill_none_or_true_is_filled() -> None:
+    fig, ax = plt.subplots()
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red")
+    render_scatter(ax, spec)
+    assert tuple(ax.collections[0].get_facecolor()[0]) == (1.0, 0.0, 0.0, 1.0)
+    plt.close(fig)
