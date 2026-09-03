@@ -1221,7 +1221,7 @@ only exercises one feature end to end, not the combinatorics of adding
 it everywhere. None of this contradicts [5](#5-why-this-shape); it is
 about the cost of keeping that shape's promise as the matrix grows.
 
-### 9.1 The per-backend translation table is duplicated by hand, N x M times
+### 9.1 The per-backend translation table is duplicated by hand, N x M times -- partly done
 
 Every mark-level field (`color`, `alpha`, `linewidth`, `linestyle`,
 `edgecolor`, ...) is translated from its canonical form to each
@@ -1256,6 +1256,26 @@ render function pick up the new field" from a question answered by
 grepping five directories into one checkable per-backend list, and
 makes the *pattern* (bokeh omits `None`, altair needs a name table,
 ...) visible and reusable instead of rediscovered per spec type.
+
+**Partly done (2026-09-03).** `plotmux.backends.bokeh.style` now
+defines `FieldRule` (`field`/`kwarg`/`translate`/`omit_if_none`) and
+`apply_fields(spec, rules, kwargs)`, plus named rules for the fields
+bokeh's renderers shared (`ALPHA`, `LABEL`, `LINEWIDTH`, `LINESTYLE`,
+`SIZE`, `MARKER`). Every bokeh `render_<type>.py`
+(`histogram`/`bar`/`cdf`/`line`/`scatter`/`slope`/`stacked_bar`) was
+migrated from its own repeated `if spec.field is not None:
+kwargs["..."] = spec.field` blocks to a single
+`apply_fields(spec, [...], kwargs)` call; `slope.py` also shows a
+field needing its own kwarg name (`line_alpha` instead of `alpha`,
+since `bokeh.models.Slope` is an annotation, not a glyph) as one extra
+`FieldRule`, not a bespoke branch. This is the bokeh backend only --
+altair/matplotlib/plotly/xy's `style.py` still hold their own
+`rgba_to_*`/`STROKE_DASH`/`DASH_STYLE` helpers but not yet the same
+`FieldRule`/`apply_fields` shape, so the N x M translation work itself
+is unchanged; what changed is that bokeh's own M-sized slice of it is
+now one checkable list per renderer instead of a scattered `if`
+per field, and the shape is there to copy into the other four
+backends' `style.py` next.
 
 ### 9.2 `api.py` is ~900 lines of repeated parameter lists and docstrings
 

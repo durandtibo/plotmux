@@ -8,7 +8,19 @@ from typing import TYPE_CHECKING, Any, cast
 
 from bokeh.models import Slope
 
-from plotmux.backends.bokeh.style import rgba_to_bokeh
+from plotmux.backends.bokeh.style import (
+    LINESTYLE,
+    LINEWIDTH,
+    FieldRule,
+    apply_fields,
+    rgba_to_bokeh,
+)
+
+#: Same field/shape as ``plotmux.backends.bokeh.style.ALPHA``, but under
+#: ``Slope``'s own ``line_alpha`` kwarg name -- ``Slope`` is an annotation
+#: (``bokeh.models.Slope``), not a glyph, so it does not share ``figure.line``'s
+#: plain ``alpha`` kwarg.
+_SLOPE_ALPHA = FieldRule("alpha", "line_alpha")
 
 if TYPE_CHECKING:
     from bokeh.plotting import figure
@@ -48,14 +60,13 @@ def render_slope(fig: figure, spec: SlopeSpec, **kwargs: Any) -> figure:
     # default" sentinel), ``Slope``'s ``line_width`` property is typed
     # ``Real`` and rejects ``None`` outright, so an unset field is left out
     # of the constructor call entirely rather than passed through as
-    # ``None``, and bokeh's own default takes over.
-    style: dict[str, Any] = {"line_dash": spec.linestyle}
+    # ``None``, and bokeh's own default takes over -- ``LINEWIDTH``/
+    # ``_SLOPE_ALPHA`` (see ``plotmux.backends.bokeh.style``) both already
+    # omit ``None`` this way.
+    style: dict[str, Any] = {}
+    apply_fields(spec, [LINESTYLE, LINEWIDTH, _SLOPE_ALPHA], style)
     if color is not None:
         style["line_color"] = color
-    if spec.linewidth is not None:
-        style["line_width"] = spec.linewidth
-    if spec.alpha is not None:
-        style["line_alpha"] = spec.alpha
     style.update(kwargs)
     # bokeh's ``Slope`` has no ``label``/legend integration of its own
     # (unlike a glyph's ``legend_label``): it is an annotation, not a

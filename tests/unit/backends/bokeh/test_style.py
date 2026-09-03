@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from plotmux.specs import HistogramSpec, ScatterSpec
+from plotmux.specs import HistogramSpec, LineSpec, ScatterSpec
 from plotmux.testing.fixtures import bokeh_available
 from plotmux.utils.imports import is_bokeh_available
 
@@ -11,7 +11,16 @@ if is_bokeh_available():
     from bokeh.colors import RGB
     from bokeh.plotting import figure
 
-    from plotmux.backends.bokeh.style import apply_common_style, rgba_to_bokeh
+    from plotmux.backends.bokeh.style import (
+        ALPHA,
+        LABEL,
+        LINESTYLE,
+        LINEWIDTH,
+        FieldRule,
+        apply_common_style,
+        apply_fields,
+        rgba_to_bokeh,
+    )
 
 ######################################
 #     Tests for rgba_to_bokeh     #
@@ -225,3 +234,50 @@ def test_apply_common_style_no_legend_orientation() -> None:
     default_orientation = fig.legend[0].orientation
     out = apply_common_style(fig, spec)
     assert out.legend[0].orientation == default_orientation
+
+
+###################################
+#     Tests for apply_fields     #
+###################################
+
+
+@bokeh_available
+def test_apply_fields_sets_translated_values() -> None:
+    spec = LineSpec(x=[0, 1], y=[0, 1], label="s", alpha=0.5, linewidth=2.0)
+    out = apply_fields(spec, [LABEL, ALPHA, LINEWIDTH, LINESTYLE])
+    assert out == {
+        "legend_label": "s",
+        "alpha": 0.5,
+        "line_width": 2.0,
+        "line_dash": "solid",
+    }
+
+
+@bokeh_available
+def test_apply_fields_omits_none_by_default() -> None:
+    spec = LineSpec(x=[0, 1], y=[0, 1])
+    out = apply_fields(spec, [LABEL, ALPHA, LINEWIDTH])
+    assert out == {}
+
+
+@bokeh_available
+def test_apply_fields_keeps_none_when_omit_if_none_is_false() -> None:
+    rule = FieldRule("label", "legend_label", omit_if_none=False)
+    spec = LineSpec(x=[0, 1], y=[0, 1])
+    out = apply_fields(spec, [rule])
+    assert out == {"legend_label": None}
+
+
+@bokeh_available
+def test_apply_fields_does_not_override_existing_kwarg() -> None:
+    spec = LineSpec(x=[0, 1], y=[0, 1], alpha=0.5)
+    out = apply_fields(spec, [ALPHA], {"alpha": 0.9})
+    assert out == {"alpha": 0.9}
+
+
+@bokeh_available
+def test_apply_fields_applies_translate_callable() -> None:
+    rule = FieldRule("alpha", "line_alpha", translate=lambda value: value * 2)
+    spec = LineSpec(x=[0, 1], y=[0, 1], alpha=0.25)
+    out = apply_fields(spec, [rule])
+    assert out == {"line_alpha": 0.5}

@@ -7,15 +7,29 @@ unconditionally.
 
 from __future__ import annotations
 
-__all__ = ["apply_common_style", "rgba_to_bokeh"]
+__all__ = [
+    "ALPHA",
+    "LABEL",
+    "LINESTYLE",
+    "LINEWIDTH",
+    "MARKER",
+    "SIZE",
+    "FieldRule",
+    "apply_common_style",
+    "apply_fields",
+    "rgba_to_bokeh",
+]
 
-from typing import TYPE_CHECKING, cast
+from dataclasses import dataclass, field as dataclass_field
+from typing import TYPE_CHECKING, Any, cast
 
 from bokeh.colors import RGB
 
 from plotmux.specs import XBoundSpec
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from bokeh.models import DataRange1d
     from bokeh.plotting import figure
 
@@ -58,6 +72,112 @@ def rgba_to_bokeh(color: tuple[float, float, float, float]) -> RGB:
     """
     r, g, b, a = color
     return RGB(round(r * 255), round(g * 255), round(b * 255), a)
+
+
+@dataclass(frozen=True)
+class FieldRule:
+    r"""One mark-level field's canonical-to-bokeh translation.
+
+    Named, reusable answer to
+    `DESIGN.md#9.1 <../../../../DESIGN.md#91-the-per-backend-translation-table-is-duplicated-by-hand-n-x-m-times>`_:
+    every ``render_<type>.py`` in this backend used to repeat its own
+    ``if spec.alpha is not None: kwargs["alpha"] = spec.alpha`` block.
+    A ``FieldRule`` names that translation once, so ``apply_fields``
+    can apply the same list of rules from every renderer that shares
+    the field, and a new field is "add one rule, reuse it everywhere
+    this backend draws it" rather than "grep for the last renderer
+    that had a similar field and copy its branch".
+
+    Args:
+        field: The attribute name on the spec (e.g. ``"alpha"``).
+        kwarg: The native bokeh keyword argument name (e.g.
+            ``"alpha"``, or ``"line_width"`` for ``"linewidth"``).
+        translate: Converts the spec's value to bokeh's native
+            representation. Defaults to the identity: most fields
+            (``alpha``, ``linewidth``, portable marker/location names,
+            ...) bokeh accepts as-is (see the module docstring's note
+            on ``legend_location``); only a genuine encoding
+            difference (e.g. color -> ``rgba_to_bokeh``) needs one.
+        omit_if_none: When ``True`` (the default), a ``None`` field
+            value is left out of the kwargs entirely -- bokeh's glyph
+            properties like ``alpha``/``line_width`` reject ``None``
+            outright (see ``render_histogram``). Set to ``False`` for
+            a field bokeh accepts (or wants) as an explicit ``None``.
+    """
+
+    field: str
+    kwarg: str
+    translate: Callable[[Any], Any] = dataclass_field(default=lambda value: value)
+    omit_if_none: bool = True
+
+
+#: ``spec.alpha`` -> ``alpha``, identity translation, omitted when unset --
+#: shared by every mark type that carries an opacity (histogram, bar, cdf,
+#: line, scatter, stacked_bar; ``slope`` uses ``line_alpha`` instead, see
+#: ``plotmux.backends.bokeh.slope.render_slope``).
+ALPHA = FieldRule("alpha", "alpha")
+#: ``spec.label`` -> ``legend_label``, omitted when unset: bokeh raises
+#: ``ValueError`` on ``legend_label=None`` (unlike matplotlib's silent
+#: ``label=None`` no-op).
+LABEL = FieldRule("label", "legend_label")
+#: ``spec.linewidth`` -> ``line_width``, identity translation, omitted when
+#: unset (bokeh's ``line_width`` rejects ``None``, same as ``alpha``).
+LINEWIDTH = FieldRule("linewidth", "line_width")
+#: ``spec.linestyle`` -> ``line_dash``: bokeh's own dash-style vocabulary
+#: (``"solid"``/``"dashed"``/``"dotted"``/``"dashdot"``) matches plotmux's
+#: portable names directly, so no translation table is needed here (unlike
+#: matplotlib's/altair's, see their own ``style.py``). ``linestyle`` always
+#: has a concrete default (never ``None``, see ``LineSpec.linestyle``), so
+#: it is passed through unconditionally.
+LINESTYLE = FieldRule("linestyle", "line_dash", omit_if_none=False)
+#: ``spec.size`` -> ``size``, identity translation, omitted when unset.
+SIZE = FieldRule("size", "size")
+#: ``spec.marker`` -> ``marker``: bokeh's ``figure.scatter(marker=...)``
+#: accepts plotmux's portable shape names directly, unlike matplotlib (see
+#: ``plotmux.backends.matplotlib.scatter.MARKER_STYLE``).
+MARKER = FieldRule("marker", "marker")
+
+
+def apply_fields(
+    spec: BaseSpec, rules: list[FieldRule], kwargs: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    r"""Apply a declarative list of ``FieldRule``\s onto a kwargs dict.
+
+    Reads each ``rule.field`` off ``spec``, translates it, and sets it
+    on ``kwargs`` under ``rule.kwarg`` (via ``setdefault``, so an
+    explicit caller-supplied ``**kwargs`` entry always wins -- same
+    precedence every renderer already gave its own hand-written
+    ``kwargs.setdefault(...)`` calls). A renderer becomes a short list
+    of rules plus whatever is genuinely bespoke to that mark type
+    (e.g. bin computation, categorical x-ranges), instead of one
+    ``if ... is not None`` branch per field.
+
+    Args:
+        spec: The spec to read field values from.
+        rules: The ``FieldRule``\s to apply, in order.
+        kwargs: The dict to update in place and return. A fresh dict
+            is created when omitted.
+
+    Returns:
+        ``kwargs``, updated in place.
+
+    Example:
+        ```pycon
+        >>> from plotmux.backends.bokeh.style import ALPHA, LABEL, apply_fields
+        >>> from plotmux.specs import LineSpec
+        >>> spec = LineSpec(x=[0, 1], y=[0, 1], alpha=0.5)
+        >>> apply_fields(spec, [ALPHA, LABEL])
+        {'alpha': 0.5}
+
+        ```
+    """
+    kwargs = {} if kwargs is None else kwargs
+    for rule in rules:
+        value = getattr(spec, rule.field)
+        if value is None and rule.omit_if_none:
+            continue
+        kwargs.setdefault(rule.kwarg, rule.translate(value))
+    return kwargs
 
 
 def _apply_xbounds(fig: figure, spec: BaseSpec) -> None:

@@ -6,7 +6,7 @@ __all__ = ["render_scatter"]
 
 from typing import TYPE_CHECKING, Any, cast
 
-from plotmux.backends.bokeh.style import rgba_to_bokeh
+from plotmux.backends.bokeh.style import ALPHA, LABEL, MARKER, SIZE, apply_fields, rgba_to_bokeh
 
 if TYPE_CHECKING:
     from bokeh.plotting import figure
@@ -47,24 +47,12 @@ def render_scatter(fig: figure, spec: ScatterSpec, **kwargs: Any) -> figure:
     # ``color``.
     if spec.fill is False:
         color = None
-    # bokeh raises ``ValueError`` if ``legend_label`` is passed as ``None``
-    # (unlike matplotlib's ``label=None``, which is a silent no-op), so the
-    # kwarg is only added when a label is actually set.
-    if spec.label is not None:
-        kwargs.setdefault("legend_label", spec.label)
-    if spec.size is not None:
-        kwargs.setdefault("size", spec.size)
-    # bokeh's glyph ``alpha`` property rejects ``None`` outright, so it is
-    # only added when ``spec.alpha`` is explicitly set (see
-    # ``plotmux.backends.bokeh.histogram.render_histogram``).
-    if spec.alpha is not None:
-        kwargs.setdefault("alpha", spec.alpha)
-    # bokeh's ``figure.scatter(marker=...)`` accepts plotmux's portable
-    # shape names directly (``"circle"``/``"square"``/``"triangle"``/
-    # ``"diamond"``/``"cross"``/``"x"``), unlike matplotlib, so no
-    # translation table is needed here (see
+    # ``LABEL``/``SIZE``/``ALPHA``/``MARKER`` (see
+    # ``plotmux.backends.bokeh.style``): bokeh raises ``ValueError`` on
+    # ``legend_label=None`` and rejects ``alpha=None`` outright, so both are
+    # only added when explicitly set; ``marker`` accepts plotmux's portable
+    # shape names directly, unlike matplotlib (see
     # ``plotmux.backends.matplotlib.scatter.MARKER_STYLE``).
-    if spec.marker is not None:
-        kwargs.setdefault("marker", spec.marker)
+    apply_fields(spec, [LABEL, SIZE, ALPHA, MARKER], kwargs)
     fig.scatter(x=spec.x, y=spec.y, fill_color=color, line_color=edgecolor, **kwargs)
     return fig
