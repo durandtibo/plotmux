@@ -39,6 +39,14 @@ def render_scatter(fig: figure, spec: ScatterSpec, **kwargs: Any) -> figure:
         if spec.edgecolor is None
         else rgba_to_bokeh(cast("tuple[float, float, float, float]", spec.edgecolor))
     )
+    # ``fill_color=None`` is bokeh's own native hollow-marker spelling: an
+    # unset ``fill_color`` already renders transparent on this backend
+    # (unlike every other one, whose default fill is opaque -- see
+    # ``ScatterSpec.fill``'s docstring), so ``spec.fill is False`` simply
+    # forces the fill to ``None`` explicitly rather than leaving it to
+    # ``color``.
+    if spec.fill is False:
+        color = None
     # bokeh raises ``ValueError`` if ``legend_label`` is passed as ``None``
     # (unlike matplotlib's ``label=None``, which is a silent no-op), so the
     # kwarg is only added when a label is actually set.

@@ -46,6 +46,17 @@ def render_scatter(spec: ScatterSpec, **kwargs: Any) -> xy.Chart:
             "stroke", rgba_to_xy(cast("tuple[float, float, float, float]", spec.edgecolor))
         )
         kwargs.setdefault("stroke_width", 1.0)
+    if spec.fill is False:
+        # ``xy.scatter`` has no dedicated "no fill" marker property
+        # (unlike bokeh's ``fill_color=None``/altair's
+        # ``mark_point(filled=False)``, see
+        # ``plotmux.backends.bokeh.scatter.render_scatter``/
+        # ``plotmux.backends.altair.scatter.render_scatter``), so the fill
+        # is forced fully transparent instead; the outline defaults to the
+        # (pre-transparency) ``color`` when ``edgecolor`` was not set above.
+        kwargs.setdefault("stroke", color)
+        kwargs.setdefault("stroke_width", 1.0)
+        color = "rgba(0, 0, 0, 0)"
     # ``xy.scatter``'s ``symbol`` accepts plotmux's portable shape names
     # directly (``"circle"``/``"square"``/``"triangle"``/``"diamond"``/
     # ``"cross"``/``"x"``), unlike matplotlib, so no translation table is

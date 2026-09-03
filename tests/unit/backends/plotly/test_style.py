@@ -91,6 +91,20 @@ def test_apply_common_style_single_ybound_ignored() -> None:
 
 
 @plotly_available
+def test_apply_common_style_both_xbounds() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, xmin=0, xmax=5)
+    fig = apply_common_style(go.Figure(), spec)
+    assert tuple(fig.layout.xaxis.range) == (0, 5)
+
+
+@plotly_available
+def test_apply_common_style_single_xbound_ignored() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, xmin=0)
+    fig = apply_common_style(go.Figure(), spec)
+    assert fig.layout.xaxis.range is None
+
+
+@plotly_available
 def test_apply_common_style_log_scale() -> None:
     spec = HistogramSpec(values=np.arange(1, 101), bins=10, xscale="log", yscale="log")
     fig = apply_common_style(go.Figure(), spec)
@@ -118,3 +132,33 @@ def test_apply_common_style_no_legend_title() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10)
     fig = apply_common_style(go.Figure(), spec)
     assert fig.layout.legend.title.text is None
+
+
+@plotly_available
+def test_apply_common_style_legend_location() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="top_left")
+    fig = apply_common_style(go.Figure(), spec)
+    assert fig.layout.legend.x == 0.01
+    assert fig.layout.legend.y == 0.99
+    assert fig.layout.legend.xanchor == "left"
+    assert fig.layout.legend.yanchor == "top"
+
+
+@plotly_available
+def test_apply_common_style_legend_location_best_is_noop() -> None:
+    # plotly has no "best" auto-placement legend (see
+    # ``LEGEND_LOCATION``'s docstring), so ``legend_location="best"`` falls
+    # back to plotly's own default position, leaving ``layout.legend``
+    # untouched.
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="best")
+    fig = apply_common_style(go.Figure(), spec)
+    assert fig.layout.legend.x is None
+    assert fig.layout.legend.y is None
+
+
+@plotly_available
+def test_apply_common_style_no_legend_location() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10)
+    fig = apply_common_style(go.Figure(), spec)
+    assert fig.layout.legend.x is None
+    assert fig.layout.legend.y is None

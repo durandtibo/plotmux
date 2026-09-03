@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from plotmux.specs import HistogramSpec
+from plotmux.specs import HistogramSpec, ScatterSpec
 from plotmux.testing.fixtures import matplotlib_available
 from plotmux.utils.imports import is_matplotlib_available
 
@@ -142,6 +142,32 @@ def test_apply_common_style_no_ymin_ymax() -> None:
     plt.close(fig)
 
 
+# --- xmin/xmax ---
+
+
+@matplotlib_available
+def test_apply_common_style_xmin_xmax() -> None:
+    fig, ax = plt.subplots()
+    # ``ScatterSpec`` rather than ``HistogramSpec``: ``HistogramSpec.xmin``/
+    # ``.xmax`` is a different, quantile-capable field (see
+    # ``plotmux.specs.histogram.HistogramSpec``), not the plain
+    # ``BaseSpec.xmin``/``.xmax`` under test here.
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), xmin=0.0, xmax=5.0)
+    apply_common_style(ax, spec)
+    assert ax.get_xlim() == (0.0, 5.0)
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_apply_common_style_no_xmin_xmax() -> None:
+    fig, ax = plt.subplots()
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
+    default_xlim = ax.get_xlim()
+    apply_common_style(ax, spec)
+    assert ax.get_xlim() == default_xlim
+    plt.close(fig)
+
+
 # --- legend_title ---
 
 
@@ -171,6 +197,40 @@ def test_apply_common_style_no_legend_title() -> None:
 def test_apply_common_style_legend_title_no_legend_is_noop() -> None:
     fig, ax = plt.subplots()
     spec = HistogramSpec(values=np.arange(101), bins=10, legend_title="Lines")
+    apply_common_style(ax, spec)
+    assert ax.get_legend() is None
+    plt.close(fig)
+
+
+# --- legend_location ---
+
+
+@matplotlib_available
+def test_apply_common_style_legend_location() -> None:
+    fig, ax = plt.subplots()
+    ax.plot([1, 2], [3, 4], label="s")
+    ax.legend()
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="top_left")
+    apply_common_style(ax, spec)
+    assert ax.get_legend()._get_loc() == 2  # "upper left"
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_apply_common_style_legend_location_best_passthrough() -> None:
+    fig, ax = plt.subplots()
+    ax.plot([1, 2], [3, 4], label="s")
+    ax.legend()
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="best")
+    apply_common_style(ax, spec)
+    assert ax.get_legend()._get_loc() == 0  # "best"
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_apply_common_style_legend_location_no_legend_is_noop() -> None:
+    fig, ax = plt.subplots()
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="top_left")
     apply_common_style(ax, spec)
     assert ax.get_legend() is None
     plt.close(fig)

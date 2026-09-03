@@ -57,6 +57,16 @@ def render_scatter(spec: ScatterSpec, **kwargs: Any) -> alt.Chart:
             "stroke",
             rgba_to_altair(cast("tuple[float, float, float, float]", spec.edgecolor)),
         )
+    if spec.fill is False:
+        # ``mark_point(filled=False)`` is altair's own hollow-marker
+        # spelling: the outline is drawn from ``color``/``stroke`` (an
+        # unfilled point's own color acts as its stroke), matching every
+        # other backend's "outline uses edgecolor, else color" fallback
+        # (see ``ScatterSpec.fill``'s docstring). This overrides the
+        # ``filled=True`` set above when ``edgecolor`` was also given --
+        # ``fill=False`` wins, since a hollow marker has no fill to
+        # distinguish from its stroke.
+        kwargs["filled"] = False
     # ``MARKER_STYLE`` has no ``"x"`` entry (altair has no native "x" point
     # shape, see its docstring); ``.get`` leaves ``kwargs["shape"]`` unset
     # then, falling back to altair's own default shape (a circle), same as

@@ -56,7 +56,10 @@ def test_base_spec_default_style() -> None:
     assert spec.background_color is None
     assert spec.ymin is None
     assert spec.ymax is None
+    assert spec.xmin is None
+    assert spec.xmax is None
     assert spec.legend_title is None
+    assert spec.legend_location is None
 
 
 def test_base_spec_custom_style() -> None:
@@ -68,6 +71,7 @@ def test_base_spec_custom_style() -> None:
         xscale="log",
         yscale="log",
         legend_title="Lines",
+        legend_location="top_left",
     )
     assert spec.title == "t"
     assert spec.xlabel == "x"
@@ -75,6 +79,7 @@ def test_base_spec_custom_style() -> None:
     assert spec.xscale == "log"
     assert spec.yscale == "log"
     assert spec.legend_title == "Lines"
+    assert spec.legend_location == "top_left"
 
 
 @pytest.mark.parametrize("scale", ["linear", "log"])
@@ -224,3 +229,32 @@ def test_validate_base_ymax_only_does_not_raise() -> None:
 def test_validate_base_background_color_none_left_untouched() -> None:
     spec = FakeValidatedSpec(background_color=None)
     assert spec.background_color is None
+
+
+def test_validate_base_xmin_xmax_ok() -> None:
+    spec = FakeValidatedSpec(xmin=0, xmax=10)
+    assert spec.xmin == 0
+    assert spec.xmax == 10
+
+
+def test_validate_base_xmin_greater_than_xmax_raises() -> None:
+    with pytest.raises(ValueError, match="xmin must not be greater than xmax"):
+        FakeValidatedSpec(xmin=10, xmax=0)
+
+
+def test_validate_base_xmin_equal_xmax_does_not_raise() -> None:
+    spec = FakeValidatedSpec(xmin=5, xmax=5)
+    assert spec.xmin == 5
+    assert spec.xmax == 5
+
+
+def test_validate_base_xmin_only_does_not_raise() -> None:
+    spec = FakeValidatedSpec(xmin=5)
+    assert spec.xmin == 5
+    assert spec.xmax is None
+
+
+def test_validate_base_xmax_only_does_not_raise() -> None:
+    spec = FakeValidatedSpec(xmax=5)
+    assert spec.xmin is None
+    assert spec.xmax == 5

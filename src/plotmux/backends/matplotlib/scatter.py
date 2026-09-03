@@ -57,6 +57,19 @@ def render_scatter(ax: Axes, spec: ScatterSpec, **kwargs: Any) -> Axes:
     # explicitly set, letting matplotlib's own default take over otherwise.
     if spec.edgecolor is not None:
         style.setdefault("edgecolors", spec.edgecolor)
+    if spec.fill is False:
+        # ``facecolors="none"`` draws a hollow marker: no fill, only the
+        # outline (``edgecolors``, defaulting to ``spec.color`` when
+        # ``spec.edgecolor`` is unset via the ``setdefault`` above --
+        # matplotlib's own default ``edgecolors="face"`` would otherwise
+        # match the (now-transparent) face, drawing nothing at all).
+        # ``Axes.scatter`` rejects passing both ``color`` and
+        # ``facecolors``/``edgecolors`` at once ("Supply a 'c' argument or
+        # a 'color' kwarg but not both"), so ``color`` is popped in favor
+        # of the explicit pair.
+        style.pop("color", None)
+        style["facecolors"] = "none"
+        style.setdefault("edgecolors", spec.color)
     if spec.marker is not None:
         style.setdefault("marker", MARKER_STYLE[spec.marker])
     ax.scatter(spec.x, spec.y, **style)

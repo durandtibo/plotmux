@@ -19,6 +19,14 @@ if TYPE_CHECKING:
 
     from plotmux.specs import BaseSpec
 
+#: ``BaseSpec.legend_location``'s portable position names were chosen to
+#: match bokeh's own ``fig.legend.location`` vocabulary directly (e.g.
+#: ``"top_left"``), so no translation table is needed here -- unlike
+#: matplotlib's (see
+#: ``plotmux.backends.matplotlib.style.LEGEND_LOCATION``). ``"top"``/
+#: ``"bottom"``/``"left"``/``"right"`` also match bokeh's own vocabulary
+#: as-is.
+
 
 def rgba_to_bokeh(color: tuple[float, float, float, float]) -> RGB:
     r"""Convert a canonical RGBA tuple to bokeh's native color type.
@@ -54,7 +62,8 @@ def apply_common_style(fig: figure, spec: BaseSpec) -> figure:
     r"""Apply the common figure-level style fields onto a bokeh
     ``figure``.
 
-    Applies ``title``/``xlabel``/``ylabel``/``legend_title`` from
+    Applies ``title``/``xlabel``/``ylabel``/``ymin``/``ymax``/
+    ``xmin``/``xmax``/``legend_title``/``legend_location`` from
     ``spec`` (defined on ``BaseSpec``, shared by every chart type).
     Called once per backend, right after the chart-specific renderer
     has drawn its glyph, so a new chart type gets title/label support
@@ -107,12 +116,28 @@ def apply_common_style(fig: figure, spec: BaseSpec) -> figure:
         y_range.start = spec.ymin
     if spec.ymax is not None:
         y_range.end = spec.ymax
+    # Same shape as ``y_range`` above, for the x-axis.
+    x_range = cast("DataRange1d", fig.x_range)
+    if spec.xmin is not None:
+        x_range.start = spec.xmin
+    if spec.xmax is not None:
+        x_range.end = spec.xmax
     # bokeh auto-creates ``fig.legend`` once any glyph carries a
-    # ``legend_label``; setting ``fig.legend.title`` when none exists prints
-    # a "zero legends added" warning, so it is only set when a legend
-    # actually exists (``fig.legend`` is an empty splattable list otherwise,
-    # falsy) -- same shape of guard as bokeh's own ``alpha``/``linewidth``
-    # "only set when explicitly given" pattern elsewhere in this backend.
-    if spec.legend_title is not None and fig.legend:
-        fig.legend.title = spec.legend_title
+    # ``legend_label``; setting ``fig.legend.title``/``.location`` when none
+    # exists prints a "zero legends added" warning, so both are only set
+    # when a legend actually exists (``fig.legend`` is an empty splattable
+    # list otherwise, falsy) -- same shape of guard as bokeh's own
+    # ``alpha``/``linewidth`` "only set when explicitly given" pattern
+    # elsewhere in this backend.
+    if fig.legend:
+        if spec.legend_title is not None:
+            fig.legend.title = spec.legend_title
+        # bokeh has no "best" auto-placement location (unlike matplotlib's
+        # ``loc="best"``, see
+        # ``plotmux.backends.matplotlib.style.apply_common_style``); every
+        # other portable name matches bokeh's own vocabulary directly, so
+        # only ``"best"`` is excluded here, falling back to bokeh's own
+        # default position, same as ``legend_location`` unset.
+        if spec.legend_location is not None and spec.legend_location != "best":
+            fig.legend.location = spec.legend_location
     return fig

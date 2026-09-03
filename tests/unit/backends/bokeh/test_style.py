@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from plotmux.specs import HistogramSpec
+from plotmux.specs import HistogramSpec, ScatterSpec
 from plotmux.testing.fixtures import bokeh_available
 from plotmux.utils.imports import is_bokeh_available
 
@@ -118,6 +118,27 @@ def test_apply_common_style_no_ymin_ymax() -> None:
 
 
 @bokeh_available
+def test_apply_common_style_xmin_xmax() -> None:
+    # ``ScatterSpec`` rather than ``HistogramSpec``: ``HistogramSpec.xmin``/
+    # ``.xmax`` is a different, quantile-capable field (see
+    # ``plotmux.specs.histogram.HistogramSpec``), not the plain
+    # ``BaseSpec.xmin``/``.xmax`` under test here.
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), xmin=0.0, xmax=10.0)
+    fig = figure()
+    out = apply_common_style(fig, spec)
+    assert out.x_range.start == 0.0
+    assert out.x_range.end == 10.0
+
+
+@bokeh_available
+def test_apply_common_style_no_xmin_xmax() -> None:
+    spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
+    fig = figure()
+    out = apply_common_style(fig, spec)
+    assert isinstance(out, figure)
+
+
+@bokeh_available
 def test_apply_common_style_legend_title() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, legend_title="Lines")
     fig = figure()
@@ -138,6 +159,36 @@ def test_apply_common_style_no_legend_title() -> None:
 @bokeh_available
 def test_apply_common_style_legend_title_no_legend_is_noop() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, legend_title="Lines")
+    fig = figure()
+    out = apply_common_style(fig, spec)
+    assert len(out.legend) == 0
+
+
+@bokeh_available
+def test_apply_common_style_legend_location() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="top_left")
+    fig = figure()
+    fig.circle([1, 2], [3, 4], legend_label="s")
+    out = apply_common_style(fig, spec)
+    assert out.legend[0].location == "top_left"
+
+
+@bokeh_available
+def test_apply_common_style_legend_location_best_is_noop() -> None:
+    # bokeh has no "best" auto-placement location (see
+    # ``apply_common_style``'s own comment), so ``legend_location="best"``
+    # leaves bokeh's own default location untouched.
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="best")
+    fig = figure()
+    fig.circle([1, 2], [3, 4], legend_label="s")
+    default_location = fig.legend[0].location
+    out = apply_common_style(fig, spec)
+    assert out.legend[0].location == default_location
+
+
+@bokeh_available
+def test_apply_common_style_legend_location_no_legend_is_noop() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="top_left")
     fig = figure()
     out = apply_common_style(fig, spec)
     assert len(out.legend) == 0

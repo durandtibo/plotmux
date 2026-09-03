@@ -4,7 +4,7 @@ from __future__ import annotations
 
 __all__ = ["HistogramSpec"]
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from numbers import Integral, Real
 
 import numpy as np
@@ -72,8 +72,31 @@ class HistogramSpec(BaseSpec):
 
     values: np.ndarray
     bins: int = 30
-    xmin: float | str | None = None
-    xmax: float | str | None = None
+    # ``kw_only=True``: ``BaseSpec`` also declares a plain, explicit-value-
+    # only ``xmin``/``xmax`` pair (kw_only there too, see
+    # ``plotmux.specs.base.BaseSpec``), and a same-named field redeclared
+    # by a subclass keeps the *base* class's position in the dataclass's
+    # generated ``__init__`` signature, not this class's -- without
+    # ``kw_only=True`` here as well, that would reinsert this quantile-
+    # capable ``xmin``/``xmax`` pair ahead of ``values`` (a required,
+    # non-default field), breaking the dataclass's "no non-default field
+    # after a default field" rule the same way ``BaseSpec``'s own kw-only
+    # fields avoid it (see that class's module comment). Every call site
+    # already passes ``xmin``/``xmax`` by keyword (``plotmux.hist(...,
+    # xmin=...)``), so this changes no call site.
+    #
+    # This is a deliberate, narrower-typed shadow of ``BaseSpec.xmin``/
+    # ``.xmax`` (``float | None``), not a Liskov violation in practice:
+    # ``HistogramSpec``/``CdfSpec`` are never treated polymorphically
+    # through a ``BaseSpec``-typed reference that then assigns a plain
+    # ``float`` and reads back a ``str`` -- every reader goes through the
+    # concrete subclass. Silenced rather than reshaped, per
+    # ``DESIGN.md``'s 8.3 case study, which keeps this pair
+    # quantile-capable and data-scoped, distinct from the plain,
+    # explicit-value-only pair every other chart type gets from
+    # ``BaseSpec``.
+    xmin: float | str | None = field(default=None, kw_only=True)  # pyright: ignore[reportIncompatibleVariableOverride]
+    xmax: float | str | None = field(default=None, kw_only=True)  # pyright: ignore[reportIncompatibleVariableOverride]
     label: str | None = None
     density: bool = False
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None

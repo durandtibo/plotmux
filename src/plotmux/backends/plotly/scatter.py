@@ -69,6 +69,16 @@ def render_scatter(
     # ``spec.edgecolor`` is explicitly set.
     if edgecolor is not None:
         marker["line"] = {"color": edgecolor, "width": 1}
+    if spec.fill is False:
+        # plotly has no "no fill" marker property, only an explicit color
+        # (unlike bokeh's ``fill_color=None``/altair's
+        # ``mark_point(filled=False)``, see
+        # ``plotmux.backends.bokeh.scatter.render_scatter``/
+        # ``plotmux.backends.altair.scatter.render_scatter``), so the fill
+        # is forced fully transparent instead; the outline (already set
+        # above from ``edgecolor``, else ``color``) stays visible.
+        marker["color"] = "rgba(0, 0, 0, 0)"
+        marker.setdefault("line", {"color": color, "width": 1})
     if spec.marker is not None:
         marker["symbol"] = MARKER_STYLE[spec.marker]
     kwargs.setdefault("marker", marker)
