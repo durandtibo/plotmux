@@ -21,9 +21,21 @@ jobs:
         run: |
           python -c "import plotmux"
 
-      - name: check plotmux.core
+      - name: check plotmux.backends
         run: |
-          python -c "from plotmux import core"
+          python -c "from plotmux import backends"
+
+      - name: check plotmux.colors
+        run: |
+          python -c "from plotmux import colors"
+
+      - name: check plotmux.specs
+        run: |
+          python -c "from plotmux import specs"
+
+      - name: check plotmux.testing
+        run: |
+          python -c "from plotmux import testing"
 
       - name: check plotmux.utils
         run: |
