@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import altair as alt
 
+from plotmux.specs import XBoundSpec
 from plotmux.utils.categorical import is_categorical
 
 if TYPE_CHECKING:
@@ -253,10 +254,15 @@ def apply_common_style(chart: alt.typing.ChartType, spec: BaseSpec) -> alt.typin
     spec_x = cast("np.ndarray | None", getattr(spec, "x", None))
     categorical_x = spec_x is not None and is_categorical(spec_x)
     x_scale_kwargs: dict[str, Any] = {"type": spec.xscale}
-    if spec.xmin is not None:
-        x_scale_kwargs["domainMin"] = spec.xmin
-    if spec.xmax is not None:
-        x_scale_kwargs["domainMax"] = spec.xmax
+    # Gated on ``XBoundSpec``: ``HistogramSpec``/``CdfSpec`` are not
+    # ``XBoundSpec`` (their own ``xmin``/``xmax`` accept a quantile string,
+    # resolved and applied by their own renderer -- see
+    # ``plotmux.specs.base.XBoundSpec``).
+    if isinstance(spec, XBoundSpec):
+        if spec.xmin is not None:
+            x_scale_kwargs["domainMin"] = spec.xmin
+        if spec.xmax is not None:
+            x_scale_kwargs["domainMax"] = spec.xmax
     y_scale_kwargs: dict[str, Any] = {"type": spec.yscale}
     if spec.ymin is not None:
         y_scale_kwargs["domainMin"] = spec.ymin

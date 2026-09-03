@@ -11,7 +11,7 @@ import numpy as np
 from plotmux.colors import parse_color
 from plotmux.colors.palette import DEFAULT_PALETTE
 from plotmux.exceptions import InvalidSpecError
-from plotmux.specs.base import BaseSpec
+from plotmux.specs.base import XBoundSpec
 
 
 @dataclass(frozen=True)
@@ -45,7 +45,7 @@ class BarSeries:
 
 
 @dataclass(frozen=True)
-class StackedBarSpec(BaseSpec):
+class StackedBarSpec(XBoundSpec):
     r"""Define a backend-agnostic stacked-bar-chart specification.
 
     Unlike ``layer()``'s ``BarSpec`` support (see

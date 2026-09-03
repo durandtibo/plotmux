@@ -15,6 +15,8 @@ from typing import TYPE_CHECKING, cast
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
+from plotmux.specs import XBoundSpec
+
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure as MplFigure
@@ -85,7 +87,7 @@ def apply_common_style(ax: Axes, spec: BaseSpec) -> Axes:
         ax.set_facecolor(cast("tuple[float, float, float, float]", spec.background_color))
     if spec.ymin is not None or spec.ymax is not None:
         ax.set_ylim(bottom=spec.ymin, top=spec.ymax)
-    if spec.xmin is not None or spec.xmax is not None:
+    if isinstance(spec, XBoundSpec) and (spec.xmin is not None or spec.xmax is not None):
         ax.set_xlim(left=spec.xmin, right=spec.xmax)
     legend = ax.get_legend()
     if legend is not None and (

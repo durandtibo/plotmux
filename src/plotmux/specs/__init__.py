@@ -14,10 +14,12 @@ __all__ = [
     "ScatterSpec",
     "SlopeSpec",
     "StackedBarSpec",
+    "XBoundSpec",
+    "check_equal_length",
 ]
 
 from plotmux.specs.bar import BarSpec
-from plotmux.specs.base import BaseSpec
+from plotmux.specs.base import BaseSpec, XBoundSpec, check_equal_length
 from plotmux.specs.cdf import CdfSpec
 from plotmux.specs.grid import GridSpec
 from plotmux.specs.histogram import HistogramSpec

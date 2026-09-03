@@ -121,8 +121,9 @@ def test_apply_common_style_no_ymin_ymax() -> None:
 def test_apply_common_style_xmin_xmax() -> None:
     # ``ScatterSpec`` rather than ``HistogramSpec``: ``HistogramSpec.xmin``/
     # ``.xmax`` is a different, quantile-capable field (see
-    # ``plotmux.specs.histogram.HistogramSpec``), not the plain
-    # ``BaseSpec.xmin``/``.xmax`` under test here.
+    # ``plotmux.specs.base.XBoundSpec``), resolved and applied by
+    # ``render_histogram`` itself, not the plain, explicit-value-only
+    # ``BaseSpec``-shared ``xmin``/``xmax`` under test here.
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), xmin=0.0, xmax=10.0)
     fig = figure()
     out = apply_common_style(fig, spec)
@@ -133,6 +134,19 @@ def test_apply_common_style_xmin_xmax() -> None:
 @bokeh_available
 def test_apply_common_style_no_xmin_xmax() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
+    fig = figure()
+    out = apply_common_style(fig, spec)
+    assert isinstance(out, figure)
+
+
+@bokeh_available
+def test_apply_common_style_histogram_xbounds_not_reapplied() -> None:
+    # ``HistogramSpec``/``CdfSpec`` are not ``XBoundSpec`` (see
+    # ``plotmux.specs.base.XBoundSpec``): their own ``xmin``/``xmax`` may
+    # hold an unresolved quantile string, so ``apply_common_style`` must
+    # not read them -- doing so used to crash the moment either bound was
+    # set to a quantile string like ``"q0.1"``.
+    spec = HistogramSpec(values=np.arange(101), bins=10, xmin="q0.1", xmax="q0.9")
     fig = figure()
     out = apply_common_style(fig, spec)
     assert isinstance(out, figure)

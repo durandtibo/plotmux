@@ -9,11 +9,11 @@ from dataclasses import dataclass
 from typing import Literal
 
 from plotmux.exceptions import InvalidSpecError
-from plotmux.specs.base import BaseSpec
+from plotmux.specs.base import XBoundSpec
 
 
 @dataclass(frozen=True)
-class SlopeSpec(BaseSpec):
+class SlopeSpec(XBoundSpec):
     r"""Define a backend-agnostic slope (a.k.a. abline) annotation
     specification.
 

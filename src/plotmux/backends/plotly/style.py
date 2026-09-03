@@ -11,6 +11,8 @@ __all__ = ["DASH_STYLE", "MARKER_STYLE", "apply_common_style", "rgba_to_plotly"]
 
 from typing import TYPE_CHECKING, Any, cast
 
+from plotmux.specs import XBoundSpec
+
 if TYPE_CHECKING:
     from plotly.graph_objects import Figure
 
@@ -145,8 +147,11 @@ def apply_common_style(fig: Figure, spec: BaseSpec) -> Figure:
     if spec.ymin is not None and spec.ymax is not None:
         layout["yaxis_range"] = [spec.ymin, spec.ymax]
     # Same "both bounds together, or neither" shape as ``yaxis_range`` above,
-    # for the x-axis.
-    if spec.xmin is not None and spec.xmax is not None:
+    # for the x-axis. Gated on ``XBoundSpec``: ``HistogramSpec``/``CdfSpec``
+    # are not ``XBoundSpec`` (their own ``xmin``/``xmax`` accept a quantile
+    # string, resolved and applied by their own renderer -- see
+    # ``plotmux.specs.base.XBoundSpec``).
+    if isinstance(spec, XBoundSpec) and spec.xmin is not None and spec.xmax is not None:
         layout["xaxis_range"] = [spec.xmin, spec.xmax]
     if spec.legend_title is not None:
         layout["legend_title_text"] = spec.legend_title

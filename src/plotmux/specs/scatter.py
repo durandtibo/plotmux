@@ -8,14 +8,14 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
 from plotmux.exceptions import InvalidSpecError
-from plotmux.specs.base import BaseSpec, _check_equal_length
+from plotmux.specs.base import XBoundSpec, check_equal_length
 
 if TYPE_CHECKING:
     import numpy as np
 
 
 @dataclass(frozen=True)
-class ScatterSpec(BaseSpec):
+class ScatterSpec(XBoundSpec):
     r"""Define a backend-agnostic scatter-chart specification.
 
     Args:
@@ -87,7 +87,7 @@ class ScatterSpec(BaseSpec):
     fill: bool | None = None
 
     def __post_init__(self) -> None:
-        x, y = _check_equal_length(self.x, self.y)
+        x, y = check_equal_length(self.x, self.y)
         object.__setattr__(self, "x", x)
         object.__setattr__(self, "y", y)
         if self.size is not None and self.size <= 0:
