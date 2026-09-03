@@ -55,9 +55,19 @@ def test_stacked_bar_spec_empty_series() -> None:
         StackedBarSpec(x=np.arange(3), series=())
 
 
+def test_stacked_bar_spec_x_not_1d() -> None:
+    with pytest.raises(ValueError, match="x must be 1-dimensional"):
+        StackedBarSpec(x=np.ones((3, 2)), series=(BarSeries(y=np.arange(3)),))
+
+
 def test_stacked_bar_spec_mismatched_series_length() -> None:
     with pytest.raises(ValueError, match="each series' y must have the same length as x"):
         StackedBarSpec(x=np.arange(3), series=(BarSeries(y=np.arange(5)),))
+
+
+def test_stacked_bar_spec_series_y_not_1d() -> None:
+    with pytest.raises(ValueError, match="each series' y must have the same length as x"):
+        StackedBarSpec(x=np.arange(3), series=(BarSeries(y=np.ones((3, 2))),))
 
 
 @pytest.mark.parametrize("width", [0, -1, -10.5])
