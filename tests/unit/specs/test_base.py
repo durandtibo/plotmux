@@ -6,7 +6,7 @@ from typing import Literal
 import numpy as np
 import pytest
 
-from plotmux.specs.base import BaseSpec, XBoundSpec, _check_equal_length
+from plotmux.specs.base import BaseSpec, XBoundSpec, check_equal_length
 
 
 @dataclass(frozen=True)
@@ -142,17 +142,17 @@ def test_normalize_color_invalid_color_raises() -> None:
 
 
 ##############################################
-#     Tests for _check_equal_length     #
+#     Tests for check_equal_length     #
 ##############################################
 
 
 def test_check_equal_length_same_length_does_not_raise() -> None:
-    _check_equal_length(np.arange(5), np.arange(5))
+    check_equal_length(np.arange(5), np.arange(5))
 
 
 def test_check_equal_length_different_length_raises() -> None:
     with pytest.raises(ValueError, match="x and y must have the same length"):
-        _check_equal_length(np.arange(5), np.arange(3))
+        check_equal_length(np.arange(5), np.arange(3))
 
 
 def test_check_equal_length_non_1d_raises() -> None:
@@ -161,16 +161,16 @@ def test_check_equal_length_non_1d_raises() -> None:
     # call with a confusing, backend-specific error instead of a clear
     # InvalidSpecError here.
     with pytest.raises(ValueError, match="x and y must be 1-dimensional"):
-        _check_equal_length(np.zeros((5, 3)), np.arange(5))
+        check_equal_length(np.zeros((5, 3)), np.arange(5))
 
 
 def test_check_equal_length_y_non_1d_raises() -> None:
     with pytest.raises(ValueError, match="x and y must be 1-dimensional"):
-        _check_equal_length(np.arange(5), np.zeros((5, 3)))
+        check_equal_length(np.arange(5), np.zeros((5, 3)))
 
 
 def test_check_equal_length_coerces_lists_to_arrays() -> None:
-    x, y = _check_equal_length([1, 2, 3], [4, 5, 6])
+    x, y = check_equal_length([1, 2, 3], [4, 5, 6])
     assert isinstance(x, np.ndarray)
     assert isinstance(y, np.ndarray)
     np.testing.assert_array_equal(x, np.array([1, 2, 3]))
@@ -178,14 +178,14 @@ def test_check_equal_length_coerces_lists_to_arrays() -> None:
 
 
 def test_check_equal_length_empty_arrays_do_not_raise() -> None:
-    x, y = _check_equal_length(np.array([]), np.array([]))
+    x, y = check_equal_length(np.array([]), np.array([]))
     assert x.shape == (0,)
     assert y.shape == (0,)
 
 
 def test_check_equal_length_error_message_reports_lengths() -> None:
     with pytest.raises(ValueError, match="but received 5 and 3"):
-        _check_equal_length(np.arange(5), np.arange(3))
+        check_equal_length(np.arange(5), np.arange(3))
 
 
 ##########################################

@@ -2,12 +2,14 @@ r"""Contain the base class for backend-agnostic chart specifications."""
 
 from __future__ import annotations
 
-__all__ = ["BaseSpec", "XBoundSpec"]
+__all__ = ["BaseSpec", "XBoundSpec", "check_equal_length"]
 
-# ``_check_equal_length`` is a module-level helper, not a method on
+# ``check_equal_length`` is a public, module-level helper, not a method on
 # ``BaseSpec``: unlike color, not every spec has an x/y pair (e.g.
 # ``HistogramSpec`` has neither), so it does not belong on the shared base
-# class the way ``_normalize_color`` does.
+# class the way ``_normalize_color`` does. It is public (unlike
+# ``_normalize_color``) so a third-party spec pairing its own ``x``/``y``
+# arrays can reuse the same check/error message.
 
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Literal
@@ -244,7 +246,7 @@ class XBoundSpec(BaseSpec):
             raise InvalidSpecError(msg)
 
 
-def _check_equal_length(x: ArrayLike, y: ArrayLike) -> tuple[np.ndarray, np.ndarray]:
+def check_equal_length(x: ArrayLike, y: ArrayLike) -> tuple[np.ndarray, np.ndarray]:
     r"""Coerce ``x`` and ``y`` to ``np.ndarray`` and check that they have
     the same length.
 

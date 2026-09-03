@@ -116,7 +116,7 @@ class HistogramSpec(BaseSpec):
         # Coerced with ``np.asarray`` so a spec can be constructed directly
         # (e.g. ``HistogramSpec(values=[1, 2, 3])``) and not only through
         # ``plotmux.hist``, which already converts its input before
-        # construction (see ``plotmux.specs.base._check_equal_length``,
+        # construction (see ``plotmux.specs.base.check_equal_length``,
         # which does the same for ``LineSpec``/``ScatterSpec``).
         values = np.asarray(self.values)
         if values.ndim != 1:
