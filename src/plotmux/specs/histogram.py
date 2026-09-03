@@ -83,24 +83,13 @@ class HistogramSpec(BaseSpec):
     # after a default field" rule the same way ``BaseSpec``'s own kw-only
     # fields avoid it (see that class's module comment). Every call site
     # already passes ``xmin``/``xmax`` by keyword (``plotmux.hist(...,
-    # xmin=...)``), so this changes no call site.
-    #
-    # This is a deliberate, narrower-typed shadow of ``BaseSpec.xmin``/
-    # ``.xmax`` (``float | None``), not a Liskov violation in practice:
-    # ``HistogramSpec``/``CdfSpec`` are never treated polymorphically
-    # through a ``BaseSpec``-typed reference that then assigns a plain
-    # ``float`` and reads back a ``str`` -- every reader goes through the
-    # concrete subclass. Silenced rather than reshaped, per
-    # ``DESIGN.md``'s 8.3 case study, which keeps this pair
-    # quantile-capable and data-scoped, distinct from the plain,
-    # explicit-value-only pair every other chart type gets from
-    # ``BaseSpec``.
-    xmin: float | str | None = field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        default=None, kw_only=True
-    )
-    xmax: float | str | None = field(  # pyright: ignore[reportIncompatibleVariableOverride]
-        default=None, kw_only=True
-    )
+    # xmin=...)``), so this changes no call site. ``HistogramSpec`` inherits
+    # ``BaseSpec`` directly (not ``XBoundSpec``, see
+    # ``plotmux.specs.base.XBoundSpec``), so this is a fresh declaration,
+    # not an override of an inherited, narrower-typed field -- no
+    # ``reportIncompatibleVariableOverride`` to silence.
+    xmin: float | str | None = field(default=None, kw_only=True)
+    xmax: float | str | None = field(default=None, kw_only=True)
     label: str | None = None
     density: bool = False
     color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
