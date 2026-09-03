@@ -190,3 +190,21 @@ def test_apply_common_style_legend_title_and_location() -> None:
     assert len(out.children) == len(chart.children) + 3
     assert out.children[-1].title == "Lines"
     assert out.children[-1].loc == "top_left"
+
+
+@xy_available
+def test_apply_common_style_legend_orientation_horizontal_sets_ncols() -> None:
+    import xy
+
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_orientation="horizontal")
+    chart = xy.bar_chart(xy.bar([1, 2], [3, 4], name="a"), xy.bar([1, 2], [5, 6], name="b"))
+    out = apply_common_style(chart, spec)
+    assert out.children[-1].ncols == 2
+
+
+@xy_available
+def test_apply_common_style_no_legend_orientation_default_ncols() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="top_left")
+    chart = render_histogram(spec)
+    out = apply_common_style(chart, spec)
+    assert out.children[-1].ncols == 1

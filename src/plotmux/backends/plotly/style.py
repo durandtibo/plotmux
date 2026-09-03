@@ -100,7 +100,8 @@ def apply_common_style(fig: Figure, spec: BaseSpec) -> Figure:
 
     Applies ``title``/``xlabel``/``ylabel``/``xscale``/``yscale``/
     ``background_color``/``ymin``/``ymax``/``xmin``/``xmax``/
-    ``legend_title``/``legend_location`` from ``spec`` (defined on
+    ``legend_title``/``legend_location``/``legend_orientation`` from
+    ``spec`` (defined on
     ``BaseSpec``, shared by every chart type).
     Called once per
     standalone figure or ``LayerSpec``, right after every trace has
@@ -149,7 +150,14 @@ def apply_common_style(fig: Figure, spec: BaseSpec) -> Figure:
         layout["xaxis_range"] = [spec.xmin, spec.xmax]
     if spec.legend_title is not None:
         layout["legend_title_text"] = spec.legend_title
+    legend: dict[str, Any] = {}
     if spec.legend_location is not None and spec.legend_location in LEGEND_LOCATION:
-        layout["legend"] = LEGEND_LOCATION[spec.legend_location]
+        legend.update(LEGEND_LOCATION[spec.legend_location])
+    if spec.legend_orientation is not None:
+        # plotly spells orientation ``"h"``/``"v"`` rather than
+        # plotmux's own ``"horizontal"``/``"vertical"``.
+        legend["orientation"] = "h" if spec.legend_orientation == "horizontal" else "v"
+    if legend:
+        layout["legend"] = legend
     fig.update_layout(**layout)
     return fig

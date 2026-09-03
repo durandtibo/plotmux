@@ -21,7 +21,11 @@ from typing import TYPE_CHECKING, Any, cast
 
 import altair as alt
 
+from plotmux.utils.categorical import is_categorical
+
 if TYPE_CHECKING:
+    import numpy as np
+
     from plotmux.specs import BaseSpec
 
 #: Maps a ``linestyle``'s matplotlib-style dash name (``LineSpec.linestyle``/
@@ -238,6 +242,16 @@ def apply_common_style(chart: alt.typing.ChartType, spec: BaseSpec) -> alt.typin
     # instead serializes as an explicit ``null`` bound), so ``spec.ymin``/
     # ``spec.ymax``/``spec.xmin``/``spec.xmax`` are only passed through when
     # actually set.
+    # ``BarSpec``/``StackedBarSpec`` (the only specs whose ``x`` may hold
+    # strings, see ``plotmux.backends.altair.bar.render_bar``) encode ``x``
+    # as ``:N`` (nominal) rather than ``:Q`` (quantitative) for a
+    # categorical x-axis -- unconditionally re-``encode``-ing ``x`` as
+    # ``"x:Q"`` below would clobber that field type back to quantitative,
+    # producing invalid data for a string field. A nominal field also has
+    # no ``xscale``/``xmin``/``xmax`` equivalent (those are quantitative
+    # scale concepts), so it gets no ``alt.Scale`` at all.
+    spec_x = cast("np.ndarray | None", getattr(spec, "x", None))
+    categorical_x = spec_x is not None and is_categorical(spec_x)
     x_scale_kwargs: dict[str, Any] = {"type": spec.xscale}
     if spec.xmin is not None:
         x_scale_kwargs["domainMin"] = spec.xmin
@@ -248,8 +262,13 @@ def apply_common_style(chart: alt.typing.ChartType, spec: BaseSpec) -> alt.typin
         y_scale_kwargs["domainMin"] = spec.ymin
     if spec.ymax is not None:
         y_scale_kwargs["domainMax"] = spec.ymax
+    x_encoding = (
+        alt.X("x:N", title=spec.xlabel)
+        if categorical_x
+        else alt.X("x:Q", title=spec.xlabel, scale=alt.Scale(**x_scale_kwargs))
+    )
     chart = chart.encode(
-        x=alt.X("x:Q", title=spec.xlabel, scale=alt.Scale(**x_scale_kwargs)),
+        x=x_encoding,
         y=alt.Y("y:Q", title=spec.ylabel, scale=alt.Scale(**y_scale_kwargs)),
     )
     if spec.title is not None:
@@ -285,5 +304,11 @@ def apply_common_style(chart: alt.typing.ChartType, spec: BaseSpec) -> alt.typin
             color=alt.Color(
                 legend=alt.Legend(orient=cast("Any", LEGEND_LOCATION[spec.legend_location]))
             )
+        )
+    if spec.legend_orientation is not None:
+        # Same "no labeled mark -> no ``color`` encoding to override -> no-op"
+        # shape as ``legend_title``/``legend_location`` above.
+        chart = chart.encode(
+            color=alt.Color(legend=alt.Legend(direction=cast("Any", spec.legend_orientation)))
         )
     return chart

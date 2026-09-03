@@ -18,6 +18,7 @@ from plotmux.backends.xy.histogram import render_histogram
 from plotmux.backends.xy.layer import render_layer
 from plotmux.backends.xy.line import render_line
 from plotmux.backends.xy.scatter import render_scatter
+from plotmux.backends.xy.stacked_bar import render_stacked_bar
 from plotmux.backends.xy.style import apply_common_style
 from plotmux.exceptions import UnsupportedFormatError
 from plotmux.specs import (
@@ -29,6 +30,7 @@ from plotmux.specs import (
     LayerSpec,
     LineSpec,
     ScatterSpec,
+    StackedBarSpec,
 )
 
 if TYPE_CHECKING:
@@ -59,6 +61,7 @@ class XyBackend(Backend):
     _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., xy.Chart]]] = {
         HistogramSpec: make_renderer(render_histogram, apply_common_style),
         BarSpec: make_renderer(render_bar, apply_common_style),
+        StackedBarSpec: make_renderer(render_stacked_bar, apply_common_style),
         CdfSpec: make_renderer(render_cdf, apply_common_style),
         LineSpec: make_renderer(render_line, apply_common_style),
         ScatterSpec: make_renderer(render_scatter, apply_common_style),

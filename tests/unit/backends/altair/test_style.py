@@ -3,11 +3,12 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from plotmux.specs import HistogramSpec, LineSpec
+from plotmux.specs import BarSpec, HistogramSpec, LineSpec
 from plotmux.testing.fixtures import altair_available
 from plotmux.utils.imports import is_altair_available
 
 if is_altair_available():
+    from plotmux.backends.altair.bar import render_bar
     from plotmux.backends.altair.histogram import render_histogram
     from plotmux.backends.altair.line import render_line
     from plotmux.backends.altair.style import (
@@ -261,3 +262,27 @@ def test_apply_common_style_no_legend_location() -> None:
     chart = render_line(spec)
     out = apply_common_style(chart, spec)
     assert "color" not in out.to_dict()["encoding"]
+
+
+@altair_available
+def test_apply_common_style_legend_orientation() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s", legend_orientation="horizontal")
+    chart = render_line(spec)
+    out = apply_common_style(chart, spec)
+    assert out.to_dict()["encoding"]["color"]["legend"]["direction"] == "horizontal"
+
+
+@altair_available
+def test_apply_common_style_no_legend_orientation() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s")
+    chart = render_line(spec)
+    out = apply_common_style(chart, spec)
+    assert "direction" not in out.to_dict()["encoding"]["color"]["legend"]
+
+
+@altair_available
+def test_apply_common_style_categorical_x_keeps_nominal_type() -> None:
+    spec = BarSpec(x=np.array(["Apples", "Pears", "Nectarines"]), y=np.array([2, 1, 4]))
+    chart = render_bar(spec)
+    out = apply_common_style(chart, spec)
+    assert out.to_dict()["encoding"]["x"]["type"] == "nominal"

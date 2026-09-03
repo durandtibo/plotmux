@@ -81,6 +81,11 @@ class BaseSpec:
             the legend at the backend's own default position. Only
             meaningful when at least one mark carries a ``label``,
             same caveat as ``legend_title``.
+        legend_orientation: An optional legend layout, ``"vertical"``
+            or ``"horizontal"`` (entries side by side in one row).
+            ``None`` leaves the backend's own default (usually
+            ``"vertical"``). Only meaningful when at least one mark
+            carries a ``label``, same caveat as ``legend_title``.
 
     These are figure-level concerns shared by every chart type, so
     they live here rather than being redeclared per chart type. Every
@@ -130,6 +135,7 @@ class BaseSpec:
         ]
         | None
     ) = field(default=None, kw_only=True)
+    legend_orientation: Literal["vertical", "horizontal"] | None = field(default=None, kw_only=True)
 
     def _validate_base(self) -> None:
         r"""Validate/normalize the figure-level fields shared by every

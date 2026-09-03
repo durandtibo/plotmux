@@ -14,11 +14,12 @@ __all__ = [
     "scatter",
     "set_backend",
     "slope",
+    "stacked_bar",
 ]
 
 from importlib.metadata import PackageNotFoundError, version
 
-from plotmux.api import bar, cdf, grid, hist, layer, line, scatter, slope
+from plotmux.api import bar, cdf, grid, hist, layer, line, scatter, slope, stacked_bar
 
 # The four built-in backend submodules (plotmux.backends.{altair,bokeh,
 # matplotlib,xy}) are *not* imported here. Each one eagerly imports its

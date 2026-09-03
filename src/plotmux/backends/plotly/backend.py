@@ -21,6 +21,7 @@ from plotmux.backends.plotly.histogram import render_histogram
 from plotmux.backends.plotly.layer import render_layer
 from plotmux.backends.plotly.line import render_line
 from plotmux.backends.plotly.scatter import render_scatter
+from plotmux.backends.plotly.stacked_bar import render_stacked_bar
 from plotmux.backends.plotly.style import apply_common_style
 from plotmux.specs import (
     BarSpec,
@@ -31,6 +32,7 @@ from plotmux.specs import (
     LayerSpec,
     LineSpec,
     ScatterSpec,
+    StackedBarSpec,
 )
 
 if TYPE_CHECKING:
@@ -109,6 +111,7 @@ class PlotlyBackend(Backend):
     _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., Figure]]] = {
         HistogramSpec: _make_renderer(render_histogram),
         BarSpec: _make_renderer(render_bar),
+        StackedBarSpec: _make_renderer(render_stacked_bar),
         CdfSpec: _make_renderer(render_cdf),
         LineSpec: _make_renderer(render_line),
         ScatterSpec: _make_renderer(render_scatter),

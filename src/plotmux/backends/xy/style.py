@@ -8,7 +8,7 @@ from __future__ import annotations
 
 __all__ = ["apply_common_style", "rgba_to_xy"]
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import xy
 
@@ -103,17 +103,27 @@ def apply_common_style(chart: xy.Chart, spec: BaseSpec) -> xy.Chart:
         xy.x_axis(label=spec.xlabel, type_=spec.xscale, domain=x_domain),
         xy.y_axis(label=spec.ylabel, type_=spec.yscale, domain=y_domain),
     )
-    if spec.legend_title is not None or spec.legend_location is not None:
+    if (
+        spec.legend_title is not None
+        or spec.legend_location is not None
+        or spec.legend_orientation is not None
+    ):
         # ``BaseSpec.legend_location``'s portable names (``"top_left"``,
         # ...) match xy's own ``legend(loc=...)`` vocabulary once
         # underscore-tokenized (xy accepts both `"_"` and `" "` as token
         # separators, see ``xy._validate.legend_loc``), including
         # ``"best"`` (xy's own auto-placement mode) -- so, unlike every
         # other backend, this needs no translation table at all.
-        children = (
-            *children,
-            xy.legend(title=spec.legend_title, loc=spec.legend_location),
-        )
+        legend_kwargs: dict[str, Any] = {"title": spec.legend_title, "loc": spec.legend_location}
+        if spec.legend_orientation == "horizontal":
+            # xy has no direct orientation flag, only a column count (like
+            # matplotlib, see
+            # ``plotmux.backends.matplotlib.style.apply_common_style``) --
+            # so "horizontal" is approximated as laying out every named
+            # series in one row.
+            named = sum(1 for child in chart.children if getattr(child, "name", None) is not None)
+            legend_kwargs["ncols"] = max(named, 1)
+        children = (*children, xy.legend(**legend_kwargs))
     style = dict(chart.style or {})
     if spec.background_color is not None:
         # ``spec.background_color``, once set, is already a canonical RGBA

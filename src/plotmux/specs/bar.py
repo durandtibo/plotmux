@@ -19,7 +19,13 @@ class BarSpec(BaseSpec):
     r"""Define a backend-agnostic bar-chart specification.
 
     Args:
-        x: The array of bar positions.
+        x: The array of bar positions. Either numeric (evenly or
+            unevenly spaced positions) or an array of strings, drawn
+            as a categorical x-axis (e.g. ``x=["Apples", "Pears",
+            "Nectarines"]``). See ``plotmux.utils.categorical.
+            is_categorical``, used by the bokeh/altair renderers to
+            special-case this -- matplotlib/plotly accept a string
+            ``x`` natively and need no such check.
         y: The array of bar heights. Must have the same length as
             ``x``.
         label: An optional label used e.g. in the legend.

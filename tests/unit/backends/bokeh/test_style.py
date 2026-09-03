@@ -192,3 +192,22 @@ def test_apply_common_style_legend_location_no_legend_is_noop() -> None:
     fig = figure()
     out = apply_common_style(fig, spec)
     assert len(out.legend) == 0
+
+
+@bokeh_available
+def test_apply_common_style_legend_orientation() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10, legend_orientation="horizontal")
+    fig = figure()
+    fig.circle([1, 2], [3, 4], legend_label="s")
+    out = apply_common_style(fig, spec)
+    assert out.legend[0].orientation == "horizontal"
+
+
+@bokeh_available
+def test_apply_common_style_no_legend_orientation() -> None:
+    spec = HistogramSpec(values=np.arange(101), bins=10)
+    fig = figure()
+    fig.circle([1, 2], [3, 4], legend_label="s")
+    default_orientation = fig.legend[0].orientation
+    out = apply_common_style(fig, spec)
+    assert out.legend[0].orientation == default_orientation

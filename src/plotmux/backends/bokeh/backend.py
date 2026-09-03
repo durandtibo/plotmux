@@ -17,7 +17,7 @@ from bokeh.plotting import save as bokeh_save
 from bokeh.resources import CDN
 
 from plotmux.backends.base import Backend, check_export_format
-from plotmux.backends.bokeh.bar import render_bar
+from plotmux.backends.bokeh.bar import bar_figure_kwargs, render_bar
 from plotmux.backends.bokeh.cdf import render_cdf
 from plotmux.backends.bokeh.grid import render_grid
 from plotmux.backends.bokeh.histogram import render_histogram
@@ -25,6 +25,10 @@ from plotmux.backends.bokeh.layer import render_layer
 from plotmux.backends.bokeh.line import render_line
 from plotmux.backends.bokeh.scatter import render_scatter
 from plotmux.backends.bokeh.slope import render_slope
+from plotmux.backends.bokeh.stacked_bar import (
+    render_stacked_bar,
+    stacked_bar_figure_kwargs,
+)
 from plotmux.backends.bokeh.style import apply_common_style
 from plotmux.specs import (
     BarSpec,
@@ -36,6 +40,7 @@ from plotmux.specs import (
     LineSpec,
     ScatterSpec,
     SlopeSpec,
+    StackedBarSpec,
 )
 
 if TYPE_CHECKING:
@@ -48,6 +53,7 @@ if TYPE_CHECKING:
 
 def _make_renderer(
     fig_render: Callable[..., Figure],
+    figure_kwargs: Callable[[BaseSpec], dict[str, Any]] | None = None,
 ) -> Callable[..., Figure]:
     r"""Build a ``render(spec, **kwargs) -> Figure`` function from a
     ``fig_render(fig, spec, **kwargs) -> Figure`` function.
@@ -73,6 +79,17 @@ def _make_renderer(
     Args:
         fig_render: The chart-specific ``(fig, spec, **kwargs) ->
             Figure`` renderer to wrap, e.g. ``render_histogram``.
+        figure_kwargs: An optional ``(spec) -> dict`` hook returning
+            extra keyword arguments to pass to the ``figure``
+            constructor, merged after (so able to override)
+            ``x_axis_type``/``y_axis_type``. Every chart type but bar
+            needs none: this exists for ``BarSpec``/
+            ``StackedBarSpec``'s categorical x-axis, which needs a
+            ``figure(x_range=list(spec.x))`` constructed with a
+            ``FactorRange`` *before* any glyph is drawn (bokeh raises
+            otherwise) -- a bar-specific need the generic path above
+            has no reason to carry for every other chart type. See
+            ``plotmux.backends.bokeh.bar.bar_figure_kwargs``.
 
     Returns:
         A ``(spec, **kwargs) -> Figure`` renderer suitable for
@@ -80,7 +97,10 @@ def _make_renderer(
     """
 
     def render(spec: BaseSpec, **kwargs: Any) -> Figure:
-        fig = bokeh_figure(x_axis_type=spec.xscale, y_axis_type=spec.yscale)
+        fig_kwargs: dict[str, Any] = {"x_axis_type": spec.xscale, "y_axis_type": spec.yscale}
+        if figure_kwargs is not None:
+            fig_kwargs.update(figure_kwargs(spec))
+        fig = bokeh_figure(**fig_kwargs)
         fig_render(fig, spec, **kwargs)
         apply_common_style(fig, spec)
         return fig
@@ -109,7 +129,8 @@ class BokehBackend(Backend):
 
     _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., Figure | LayoutDOM]]] = {
         HistogramSpec: _make_renderer(render_histogram),
-        BarSpec: _make_renderer(render_bar),
+        BarSpec: _make_renderer(render_bar, bar_figure_kwargs),
+        StackedBarSpec: _make_renderer(render_stacked_bar, stacked_bar_figure_kwargs),
         CdfSpec: _make_renderer(render_cdf),
         LineSpec: _make_renderer(render_line),
         ScatterSpec: _make_renderer(render_scatter),
