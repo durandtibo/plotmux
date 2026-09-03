@@ -20,7 +20,8 @@ __all__ = [
     "rgba_to_bokeh",
 ]
 
-from dataclasses import dataclass, field as dataclass_field
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
 from typing import TYPE_CHECKING, Any, cast
 
 from bokeh.colors import RGB

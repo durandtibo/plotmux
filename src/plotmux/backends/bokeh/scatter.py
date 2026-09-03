@@ -6,7 +6,14 @@ __all__ = ["render_scatter"]
 
 from typing import TYPE_CHECKING, Any, cast
 
-from plotmux.backends.bokeh.style import ALPHA, LABEL, MARKER, SIZE, apply_fields, rgba_to_bokeh
+from plotmux.backends.bokeh.style import (
+    ALPHA,
+    LABEL,
+    MARKER,
+    SIZE,
+    apply_fields,
+    rgba_to_bokeh,
+)
 
 if TYPE_CHECKING:
     from bokeh.plotting import figure
