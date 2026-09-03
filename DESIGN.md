@@ -1,64 +1,27 @@
 # plotmux design
 
-Status: implemented. Core abstraction, eight chart specs (histogram,
-cdf, line, scatter, bar, slope, layer, grid), five backends
-(matplotlib, xy, bokeh, altair, plotly), per-mark color, common axis styling,
-layering, grid layout, a `plotmux.exceptions` hierarchy, export, a
-predefined-colors package, lazy per-backend imports, and a
-third-party backend plugin mechanism are all in place. `SlopeSpec` is
-registered as a standalone spec (`plotmux.slope(...)`) only on
-matplotlib and bokeh, the two backends with a native "line by slope,
-independent of data range" primitive; on altair, xy, and plotly it is
-supported only as a `layer()` child alongside a data-bound sibling
-(see [8.1](#81-case-study-reproducing-bokehs-slope-example)), since
-those three backends need concrete endpoints, not a slope/intercept
-pair, and a standalone `SlopeSpec` has no data of its own to derive
-endpoints from. `plotmux.slope(...)`/a slope-only `layer()` still
-raise `UnsupportedSpecError` on those three backends. All of
-[8.1](#81-case-study-reproducing-bokehs-slope-example)'s gaps (per-mark
-alpha, separate marker edge color, `LineSpec`
-`linewidth`/`linestyle`, figure background color, explicit `ymin`/
-`ymax` axis bounds, and altair/xy support for `SlopeSpec` as a layer
-child) are now closed; bokeh's own slope example is reproducible,
-unchanged, on all five backends (modulo the standalone-vs-layered
-`SlopeSpec` distinction on altair/xy/plotly noted above). A fifth
-backend, plotly, has since been added (see
-[3.2](#32-package-layout)), following the same `layer()`-only
-treatment for `SlopeSpec` as altair/xy, for the same reason: no
-native "line by slope, independent of data range" primitive (see
-`plotmux.backends.plotly.slope`). Checked against bokeh's own legend
-example (see
-[8.2](#82-case-study-reproducing-bokehs-legend-example)): mostly
-reproducible unchanged (auto-generated legends from `label`, a
-scatter+line pair sharing one label merging into one legend entry,
-dashed-line styling, a two-panel grid), and two gaps found there -- a
-legend title distinct from the figure title, and scatter marker shape
-(e.g. square vs. circle) -- are now closed too (a claimed
-"hollow-vs-filled fill control via `edgecolor`" close from the first
-pass through 8.2 turned out to be bokeh-only behavior, not a real
-cross-backend fix, and was corrected). Checked against bokeh's own log
-plot example next (see
-[8.3](#83-case-study-reproducing-bokehs-log-plot-example)): mostly
-reproducible unchanged (log y-axis with explicit bounds, figure
-background color, labeled dashed/dotted lines, line+scatter legend
-merges), and three more gaps found there -- explicit x-axis bounds
-(`xmin`/`xmax` at the `BaseSpec` level, distinct from
-`HistogramSpec`/`CdfSpec`'s existing quantile-capable `xmin`/`xmax`),
-legend position, and a portable hollow (no-fill) marker -- are now
-closed too. Checked
-against bokeh's own stacked bar example next (see
-[8.4](#84-case-study-reproducing-bokehs-stacked-bar-example)): the
-first case study *not* close to reproducible -- no stacking mechanism
-exists at all (`layer()`'s `BarSpec` support overlaps bars rather than
-stacking them), `BarSpec`'s categorical (string) x-axis support is
-inconsistent across backends (works on matplotlib/plotly, broken on
-bokeh and altair, unverified on xy), and legend orientation is a third
-missing legend-chrome field alongside `legend_title`/`legend_location`;
-hover tooltips and fine-grained chrome cosmetics are deliberately left
-as escape-hatch, non-goal territory rather than gaps. See
-[7](#7-open-questions) for what's still unresolved and
+Status: implemented, current as of 2026-09-02. This document is the
+**current-state architecture reference**: it describes plotmux as it
+exists today, not how it got there. For the chronological log of case
+studies and gap-closing rounds that produced this design, see
+[`docs/docs/dev/design_history.md`](docs/docs/dev/design_history.md).
+
+Core abstraction, nine chart specs (histogram, cdf, line, scatter,
+bar, stacked bar, slope, layer, grid), five backends (matplotlib, xy,
+bokeh, altair, plotly), per-mark color, common axis styling, legend
+chrome (title/location/orientation), layering, grid layout, a
+`plotmux.exceptions` hierarchy, export, a predefined-colors package,
+lazy per-backend imports, and a third-party backend plugin mechanism
+are all in place. `SlopeSpec` is registered as a standalone spec
+(`plotmux.slope(...)`) only on matplotlib and bokeh, the two backends
+with a native "line by slope, independent of data range" primitive;
+on altair, xy, and plotly it is supported only as a `layer()` child
+alongside a data-bound sibling (see
+[8.1](#81-partial-or-asymmetric-backend-support)), since those three
+backends need concrete endpoints, not a slope/intercept pair, and a
+standalone `SlopeSpec` has no data of its own to derive endpoints
+from. See [7](#7-open-questions) for what's still unresolved and
 [8](#8-candidate-future-work) for what's next.
-Date: 2026-09-02.
 
 ## 1. Goal
 
@@ -249,7 +212,7 @@ variant, which would just be a `HistogramSpec` option).
 
 `SlopeSpec` was the eighth chart type added, and the first
 implemented on *fewer* than all backends as a *standalone* spec,
-by design (see [8.1](#81-case-study-reproducing-bokehs-slope-example)):
+by design (see the design history's slope case study):
 it is registered in `MatplotlibBackend._RENDERERS`/
 `BokehBackend._RENDERERS` (and each backend's own `layer.py`, so it
 can appear as a `layer()` child) directly, since matplotlib's
@@ -1195,19 +1158,19 @@ once picked up.
 - `LayerSpec` child-compatibility warnings (e.g. mismatched
   `xscale`), if real usage shows this is a common mistake worth
   surfacing early rather than a silent axis-level override.
-- Nothing carried over from [8.1](#81-case-study-reproducing-bokehs-slope-example):
+- Nothing carried over from the design history's slope case study:
   every gap it identified (per-mark `alpha`, a separate marker edge
   color, `linewidth`/`linestyle` on `LineSpec`, a figure background
   color, explicit `ymin`/`ymax` axis bounds, and altair/xy support for
   `SlopeSpec` as a `layer()` child) is now closed; see 8.1 for what
   each one turned into.
 - Nothing carried over from
-  [8.2](#82-case-study-reproducing-bokehs-legend-example): both gaps
+  the design history's legend case study: both gaps
   it identified (a `BaseSpec.legend_title` field and a
   `ScatterSpec.marker` shape field) are now closed; see 8.2 for what
   each one turned into.
 - Nothing carried over from
-  [8.3](#83-case-study-reproducing-bokehs-log-plot-example): all three
+  the design history's log-plot case study: all three
   gaps it identified (a `BaseSpec.xmin`/`.xmax` pair, a
   `BaseSpec.legend_location` field shipped together with
   `legend_title`, and a tri-state `ScatterSpec.fill` field) are now
@@ -1217,7 +1180,7 @@ once picked up.
   altair, unverified on xy), and a `BaseSpec`-level
   `legend_orientation` field (to ship together with `legend_title`/
   `legend_location` above), per
-  [8.4](#84-case-study-reproducing-bokehs-stacked-bar-example): the
+  the design history's stacked-bar case study: the
   gaps found reproducing bokeh's stacked bar example. The most
   significant of the four case studies so far -- stacking needs a new
   spec type, not just a new field. Not yet closed.
@@ -1361,11 +1324,11 @@ of it already is:
   shared `name` behave the same way -- no gap, no extra mechanism
   needed.
 - **Dashed line, line width.** Already closed by
-  [8.1](#81-case-study-reproducing-bokehs-slope-example)'s
+  the design history's slope case study's
   `LineSpec.linewidth`/`linestyle`.
 - **Hollow (no-fill) marker via `ScatterSpec.edgecolor`.** Partially
   wrong when first checked here: `edgecolor` (see
-  [8.1](#81-case-study-reproducing-bokehs-slope-example)) only adds a
+  the design history's slope case study) only adds a
   *second*, separate edge color on top of whatever fills the marker --
   it does not make the fill transparent. `spec.color=None` +
   `edgecolor=<green>` happens to *look* hollow on bokeh only, because
@@ -1375,13 +1338,13 @@ of it already is:
   instead falls back to that library's own default *opaque* fill, so
   the same spec renders filled everywhere but bokeh. This was folded
   into the "no-fill marker" gap identified in
-  [8.3](#83-case-study-reproducing-bokehs-log-plot-example), closed
+  the design history's log-plot case study, closed
   there by `ScatterSpec.fill`.
 - **Two figures side by side.** Already `plotmux.grid(fig1_spec,
   fig2_spec, ncols=2)` (see [4.8a](#48a-grid-layouts)).
 
 Two gaps were found, both new (not raised by
-[8.1](#81-case-study-reproducing-bokehs-slope-example)). Both are now
+the design history's slope case study). Both are now
 closed:
 
 - **Legend title.** Bokeh's `p.legend.title = "Markers"` sets a
@@ -1439,7 +1402,7 @@ closed:
   which -- like bokeh -- accepts plotmux's own names directly.
 
 Both gaps closed following precedent already established by
-[8.1](#81-case-study-reproducing-bokehs-slope-example): small,
+the design history's slope case study: small,
 additive `BaseSpec`/`ScatterSpec` fields, no new mechanism.
 
 ### 8.3 Case study: reproducing bokeh's log plot example
@@ -1457,22 +1420,22 @@ all five backends. Most of it already is:
 - **Log y-axis, explicit y bounds spanning many orders of magnitude,
   figure background color.** Already `yscale="log"`, `ymin=0.001`,
   `ymax=10.0**22`, `background_color="#fafafa"` -- all closed by
-  [8.1](#81-case-study-reproducing-bokehs-slope-example) (see
+  the design history's slope case study (see
   `BaseSpec.yscale`/`ymin`/`ymax`/`background_color`).
 - **Labeled lines and line+scatter pairs sharing one legend entry,
   dashed/dotted line styles, per-line color and width.** Already
   `LineSpec.label`/`color`/`linewidth`/`linestyle` plus a `layer()`
   call per curve that needs both a line and a scatter on the same
-  data, same as [8.2](#82-case-study-reproducing-bokehs-legend-example)'s
+  data, same as the design history's legend case study's
   scatter+line merge -- no gap.
 
 Three gaps were found, none raised by
-[8.1](#81-case-study-reproducing-bokehs-slope-example)/[8.2](#82-case-study-reproducing-bokehs-legend-example).
+the design history's slope case study/the design history's legend case study.
 All three are now closed:
 
 - **Explicit x-axis bounds.** Bokeh's `x_range=(0, 5)` had no plotmux
   equivalent: `BaseSpec` had `ymin`/`ymax` (see
-  [8.1](#81-case-study-reproducing-bokehs-slope-example)) but no
+  the design history's slope case study) but no
   `xmin`/`xmax` counterpart at the same figure level -- `xmin`/`xmax`
   existed only on `HistogramSpec`/`CdfSpec`, resolved through
   `find_range`'s quantile-or-explicit convention against that spec's
@@ -1501,7 +1464,7 @@ All three are now closed:
   fires on an unresolved quantile string from either subclass.
 - **Legend position.** Bokeh's `p.legend.location = "top_left"` had no
   plotmux equivalent, the same shape of gap as
-  [8.2](#82-case-study-reproducing-bokehs-legend-example)'s
+  the design history's legend case study's
   once-open `legend_title` gap: `BaseSpec` had `legend_title` (see
   8.2) but nothing for legend *position*. Closed by a `BaseSpec`-level
   `legend_location: Literal["best", "top_left", "top_right",
@@ -1532,7 +1495,7 @@ All three are now closed:
   natively supports "best" auto-placement).
 - **Hollow (no-fill) marker as a portable concept.** Distinct from the
   marker-*shape* gap in
-  [8.2](#82-case-study-reproducing-bokehs-legend-example): even with a
+  the design history's legend case study: even with a
   circular marker, this example's `p.scatter(x, x**2, fill_color=None,
   line_color="olivedrab")` had no reliable plotmux equivalent because
   `ScatterSpec.color` has no "explicitly transparent" value distinct
@@ -1559,10 +1522,10 @@ All three are now closed:
   is forced fully transparent and the outline carried by `stroke`.
 
 All three closed following the same precedent as
-[8.1](#81-case-study-reproducing-bokehs-slope-example)/[8.2](#82-case-study-reproducing-bokehs-legend-example):
+the design history's slope case study/the design history's legend case study:
 small, additive `BaseSpec`/`ScatterSpec` fields, no new mechanism.
 `legend_location` shipped together with
-[8.2](#82-case-study-reproducing-bokehs-legend-example)'s
+the design history's legend case study's
 `legend_title` rather than separately, since both describe the same
 `BaseSpec`-level "legend" concept and both are set together in this
 example's own bokeh source.
@@ -1577,7 +1540,7 @@ horizontal legend pinned top-left, hover tooltips, and assorted
 chrome removal -- no gridlines, no minor ticks, no plot outline) to
 see whether it is reproducible through plotmux's unified API,
 unchanged, on all five backends. Unlike
-[8.1](#81-case-study-reproducing-bokehs-slope-example)/[8.2](#82-case-study-reproducing-bokehs-legend-example)/[8.3](#83-case-study-reproducing-bokehs-log-plot-example),
+the design history's slope case study/the design history's legend case study/the design history's log-plot case study,
 this is not close to reproducible: it needs one significant new
 capability, hits a portability gap in an existing one, and legitimately
 sits in [1](#1-goal)'s stated non-goal territory for the rest.
@@ -1644,7 +1607,7 @@ sits in [1](#1-goal)'s stated non-goal territory for the rest.
 
   So a categorical x-axis is not a portable `BarSpec` feature today,
   only an accident of which backend happens to be selected -- the same
-  shape of problem as [8.3](#83-case-study-reproducing-bokehs-log-plot-example)'s
+  shape of problem as the design history's log-plot case study's
   hollow-marker finding (works on one backend by that backend's own
   default, breaks or misbehaves on the others). Candidate fix: detect
   a non-numeric `spec.x` (e.g. `spec.x.dtype.kind in "US"`) in
@@ -1662,8 +1625,8 @@ sits in [1](#1-goal)'s stated non-goal territory for the rest.
   question.
 - **Legend orientation** (`p.legend.orientation = "horizontal"`). A
   third legend-chrome field, alongside
-  [8.2](#82-case-study-reproducing-bokehs-legend-example)'s
-  `legend_title` and [8.3](#83-case-study-reproducing-bokehs-log-plot-example)'s
+  the design history's legend case study's
+  `legend_title` and the design history's log-plot case study's
   `legend_location`, that plotmux has no equivalent for. Natural to add
   as a third field in the same batch: `legend_orientation:
   Literal["vertical", "horizontal"] | None = None`, applied in
@@ -1718,7 +1681,7 @@ Every mark-level field (`color`, `alpha`, `linewidth`, `linestyle`,
 `edgecolor`, ...) is translated from its canonical form to each
 backend's native call independently, in that backend's own
 `render_<type>.py` (see [4.9](#49-specifying-colors-across-backends)
-and [8.1](#81-case-study-reproducing-bokehs-slope-example)). With 5
+and the design history's slope case study). With 5
 backends x 9 spec types, a new common field (the last four case
 studies added `alpha`, `linewidth`/`linestyle`, `background_color`,
 `ymin`/`ymax`, `legend_title`, `legend_location`,
@@ -1842,7 +1805,7 @@ At 1700+ lines, DESIGN.md now mixes two different kinds of content:
 (a) the current-state architecture reference ([1](#1-goal)-[6](#6-candidate-future-backends)),
 which a new contributor needs to read once, and (b) a chronological
 log of case studies, closed gaps, and "nothing carried over from
-8.x" bookkeeping ([8.1](#81-case-study-reproducing-bokehs-slope-example)-[8.4](#84-case-study-reproducing-bokehs-stacked-bar-example)),
+8.x" bookkeeping (the design history's slope case study-the design history's stacked-bar case study),
 which is valuable as a *history* of why each field exists but is not
 something a reader needs re-derive every time. The status paragraph at
 the top of the file (lines 3-61) has itself grown into a dense,
@@ -1850,7 +1813,7 @@ run-on changelog that is hard to skim precisely because it is trying
 to stay a single accurate sentence-per-fact across nine cumulative
 rounds of edits.
 
-Proposal: split the case-study log (current [8.1](#81-case-study-reproducing-bokehs-slope-example)-[8.4](#84-case-study-reproducing-bokehs-stacked-bar-example))
+Proposal: split the case-study log (current the design history's slope case study-the design history's stacked-bar case study)
 and the top status paragraph's history into a separate
 `docs/docs/dev/design_history.md` (or `CHANGELOG.md`-style file),
 leaving DESIGN.md itself as the current-state reference plus
