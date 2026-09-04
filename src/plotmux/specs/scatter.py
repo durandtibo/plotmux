@@ -13,6 +13,8 @@ from plotmux.specs.base import XBoundSpec, check_equal_length
 if TYPE_CHECKING:
     import numpy as np
 
+    from plotmux.colors import Color
+
 
 @dataclass(frozen=True)
 class ScatterSpec(XBoundSpec):
@@ -79,9 +81,9 @@ class ScatterSpec(XBoundSpec):
     x: np.ndarray
     y: np.ndarray
     label: str | None = None
-    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
+    color: Color = None
     size: float | None = None
-    edgecolor: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
+    edgecolor: Color = None
     alpha: float | None = None
     marker: Literal["circle", "square", "triangle", "diamond", "cross", "x"] | None = None
     fill: bool | None = None

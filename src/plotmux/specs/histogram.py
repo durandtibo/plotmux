@@ -6,11 +6,15 @@ __all__ = ["HistogramSpec"]
 
 from dataclasses import dataclass, field
 from numbers import Integral, Real
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import BaseSpec
+
+if TYPE_CHECKING:
+    from plotmux.colors import Color
 
 
 @dataclass(frozen=True)
@@ -92,7 +96,7 @@ class HistogramSpec(BaseSpec):
     xmax: float | str | None = field(default=None, kw_only=True)
     label: str | None = None
     density: bool = False
-    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
+    color: Color = None
     alpha: float | None = None
 
     def __post_init__(self) -> None:

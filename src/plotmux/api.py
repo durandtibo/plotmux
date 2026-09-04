@@ -26,7 +26,49 @@ from plotmux.specs import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
+
+    from plotmux.colors import Color
+
+
+# The ``BaseSpec``-level ``Args:`` lines shared, word for word, by every
+# public plotting function that also declares a ``color`` parameter (``hist``,
+# ``bar``, ``line``, ``scatter``, ``slope``). Written once here and spliced
+# into each function's docstring via ``str.format`` (see the ``{_COMMON_STYLE_ARGS}``
+# placeholder below) instead of being hand-copied five times, so a wording
+# change is a one-site edit rather than a five-site one to keep in sync (see
+# DESIGN.md, section 9.2). ``cdf`` (a different ``ymin`` note),
+# ``stacked_bar``/``layer`` (a different ``background_color`` note, no
+# ``color`` to refer back to) and ``grid`` (none of these fields) keep their
+# own text rather than reusing this constant.
+_COMMON_STYLE_ARGS = """title: An optional figure title.
+    xlabel: An optional x-axis label.
+    ylabel: An optional y-axis label.
+    xscale: The x-axis scale, ``"linear"`` or ``"log"``.
+    yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+    background_color: An optional figure background color. Same
+        format as ``color``. ``None`` uses the backend's default.
+    ymin: An optional explicit lower bound for the y-axis.
+        ``None`` leaves the axis autoscaled.
+    ymax: An optional explicit upper bound for the y-axis.
+        ``None`` leaves the axis autoscaled.
+    backend: The name of the backend to use to render the
+        figure, or ``None`` to use the current default backend
+        (see ``plotmux.set_backend``)."""
+
+
+def _with_common_style_args(fn: Callable[..., Figure]) -> Callable[..., Figure]:
+    r"""Splice ``_COMMON_STYLE_ARGS`` into a function's ``{_COMMON_STYLE_ARGS}``
+    docstring placeholder.
+
+    A decorator rather than a plain ``.format()`` call after every ``def``
+    so the substitution reads the same way at each of the five call sites
+    (see ``_COMMON_STYLE_ARGS`` above) and a sixth function adopting the
+    shared block is a one-line addition.
+    """
+    assert fn.__doc__ is not None  # noqa: S101 every decorated function below has one
+    fn.__doc__ = fn.__doc__.format(_COMMON_STYLE_ARGS=_COMMON_STYLE_ARGS)
+    return fn
 
 
 def _render(spec: BaseSpec, backend: str | None, **kwargs: Any) -> Figure:
@@ -53,7 +95,8 @@ def _render(spec: BaseSpec, backend: str | None, **kwargs: Any) -> Figure:
     return Figure(spec=spec, backend_name=backend_name, native=native)
 
 
-def hist(
+@_with_common_style_args
+def hist(  # noqa: D417 the common Args entries are spliced in by _with_common_style_args
     values: Sequence[float] | np.ndarray,
     *,
     bins: int = 30,
@@ -61,16 +104,14 @@ def hist(
     xmax: float | str | None = None,
     label: str | None = None,
     density: bool = False,
-    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
+    color: Color = None,
     alpha: float | None = None,
     title: str | None = None,
     xlabel: str | None = None,
     ylabel: str | None = None,
     xscale: Literal["linear", "log"] = "linear",
     yscale: Literal["linear", "log"] = "linear",
-    background_color: (
-        str | tuple[float, float, float] | tuple[float, float, float, float] | None
-    ) = None,
+    background_color: Color = None,
     ymin: float | None = None,
     ymax: float | None = None,
     backend: str | None = None,
@@ -100,20 +141,7 @@ def hist(
             backend's default color.
         alpha: An optional bar opacity, in ``[0, 1]``. ``None`` uses
             the backend's default (usually fully opaque).
-        title: An optional figure title.
-        xlabel: An optional x-axis label.
-        ylabel: An optional y-axis label.
-        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
-        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
-        background_color: An optional figure background color. Same
-            format as ``color``. ``None`` uses the backend's default.
-        ymin: An optional explicit lower bound for the y-axis.
-            ``None`` leaves the axis autoscaled.
-        ymax: An optional explicit upper bound for the y-axis.
-            ``None`` leaves the axis autoscaled.
-        backend: The name of the backend to use to render the
-            figure, or ``None`` to use the current default backend
-            (see ``plotmux.set_backend``).
+        {_COMMON_STYLE_ARGS}
         **kwargs: Additional backend-specific keyword arguments,
             forwarded to the backend's renderer.
 
@@ -155,12 +183,13 @@ def hist(
     return _render(spec, backend, **kwargs)
 
 
-def bar(
+@_with_common_style_args
+def bar(  # noqa: D417 the common Args entries are spliced in by _with_common_style_args
     x: Sequence[float] | np.ndarray,
     y: Sequence[float] | np.ndarray,
     *,
     label: str | None = None,
-    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
+    color: Color = None,
     width: float = 0.8,
     alpha: float | None = None,
     title: str | None = None,
@@ -168,9 +197,7 @@ def bar(
     ylabel: str | None = None,
     xscale: Literal["linear", "log"] = "linear",
     yscale: Literal["linear", "log"] = "linear",
-    background_color: (
-        str | tuple[float, float, float] | tuple[float, float, float, float] | None
-    ) = None,
+    background_color: Color = None,
     ymin: float | None = None,
     ymax: float | None = None,
     backend: str | None = None,
@@ -192,20 +219,7 @@ def bar(
             positive number.
         alpha: An optional bar opacity, in ``[0, 1]``. ``None`` uses
             the backend's default (usually fully opaque).
-        title: An optional figure title.
-        xlabel: An optional x-axis label.
-        ylabel: An optional y-axis label.
-        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
-        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
-        background_color: An optional figure background color. Same
-            format as ``color``. ``None`` uses the backend's default.
-        ymin: An optional explicit lower bound for the y-axis.
-            ``None`` leaves the axis autoscaled.
-        ymax: An optional explicit upper bound for the y-axis.
-            ``None`` leaves the axis autoscaled.
-        backend: The name of the backend to use to render the
-            figure, or ``None`` to use the current default backend
-            (see ``plotmux.set_backend``).
+        {_COMMON_STYLE_ARGS}
         **kwargs: Additional backend-specific keyword arguments,
             forwarded to the backend's renderer.
 
@@ -256,9 +270,7 @@ def stacked_bar(
     ylabel: str | None = None,
     xscale: Literal["linear", "log"] = "linear",
     yscale: Literal["linear", "log"] = "linear",
-    background_color: (
-        str | tuple[float, float, float] | tuple[float, float, float, float] | None
-    ) = None,
+    background_color: Color = None,
     ymin: float | None = None,
     ymax: float | None = None,
     backend: str | None = None,
@@ -348,16 +360,14 @@ def cdf(
     xmin: float | str | None = None,
     xmax: float | str | None = None,
     label: str | None = None,
-    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
+    color: Color = None,
     alpha: float | None = None,
     title: str | None = None,
     xlabel: str | None = None,
     ylabel: str | None = "cumulative probability",
     xscale: Literal["linear", "log"] = "linear",
     yscale: Literal["linear", "log"] = "linear",
-    background_color: (
-        str | tuple[float, float, float] | tuple[float, float, float, float] | None
-    ) = None,
+    background_color: Color = None,
     ymin: float | None = None,
     ymax: float | None = None,
     backend: str | None = None,
@@ -443,12 +453,13 @@ def cdf(
     return _render(spec, backend, **kwargs)
 
 
-def line(
+@_with_common_style_args
+def line(  # noqa: D417 the common Args entries are spliced in by _with_common_style_args
     x: Sequence[float] | np.ndarray,
     y: Sequence[float] | np.ndarray,
     *,
     label: str | None = None,
-    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
+    color: Color = None,
     alpha: float | None = None,
     linewidth: float | None = None,
     linestyle: Literal["solid", "dashed", "dotted", "dashdot"] = "solid",
@@ -457,9 +468,7 @@ def line(
     ylabel: str | None = None,
     xscale: Literal["linear", "log"] = "linear",
     yscale: Literal["linear", "log"] = "linear",
-    background_color: (
-        str | tuple[float, float, float] | tuple[float, float, float, float] | None
-    ) = None,
+    background_color: Color = None,
     ymin: float | None = None,
     ymax: float | None = None,
     backend: str | None = None,
@@ -482,20 +491,7 @@ def line(
         linewidth: An optional line width. ``None`` uses the
             backend's default width.
         linestyle: The line's dash style.
-        title: An optional figure title.
-        xlabel: An optional x-axis label.
-        ylabel: An optional y-axis label.
-        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
-        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
-        background_color: An optional figure background color. Same
-            format as ``color``. ``None`` uses the backend's default.
-        ymin: An optional explicit lower bound for the y-axis.
-            ``None`` leaves the axis autoscaled.
-        ymax: An optional explicit upper bound for the y-axis.
-            ``None`` leaves the axis autoscaled.
-        backend: The name of the backend to use to render the
-            figure, or ``None`` to use the current default backend
-            (see ``plotmux.set_backend``).
+        {_COMMON_STYLE_ARGS}
         **kwargs: Additional backend-specific keyword arguments,
             forwarded to the backend's renderer.
 
@@ -535,23 +531,22 @@ def line(
     return _render(spec, backend, **kwargs)
 
 
-def scatter(
+@_with_common_style_args
+def scatter(  # noqa: D417 the common Args entries are spliced in by _with_common_style_args
     x: Sequence[float] | np.ndarray,
     y: Sequence[float] | np.ndarray,
     *,
     label: str | None = None,
-    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
+    color: Color = None,
     size: float | None = None,
-    edgecolor: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
+    edgecolor: Color = None,
     alpha: float | None = None,
     title: str | None = None,
     xlabel: str | None = None,
     ylabel: str | None = None,
     xscale: Literal["linear", "log"] = "linear",
     yscale: Literal["linear", "log"] = "linear",
-    background_color: (
-        str | tuple[float, float, float] | tuple[float, float, float, float] | None
-    ) = None,
+    background_color: Color = None,
     ymin: float | None = None,
     ymax: float | None = None,
     backend: str | None = None,
@@ -576,20 +571,7 @@ def scatter(
             edge too.
         alpha: An optional marker opacity, in ``[0, 1]``. ``None``
             uses the backend's default (usually fully opaque).
-        title: An optional figure title.
-        xlabel: An optional x-axis label.
-        ylabel: An optional y-axis label.
-        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
-        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
-        background_color: An optional figure background color. Same
-            format as ``color``. ``None`` uses the backend's default.
-        ymin: An optional explicit lower bound for the y-axis.
-            ``None`` leaves the axis autoscaled.
-        ymax: An optional explicit upper bound for the y-axis.
-            ``None`` leaves the axis autoscaled.
-        backend: The name of the backend to use to render the
-            figure, or ``None`` to use the current default backend
-            (see ``plotmux.set_backend``).
+        {_COMMON_STYLE_ARGS}
         **kwargs: Additional backend-specific keyword arguments,
             forwarded to the backend's renderer.
 
@@ -631,12 +613,13 @@ def scatter(
     return _render(spec, backend, **kwargs)
 
 
-def slope(
+@_with_common_style_args
+def slope(  # noqa: D417 the common Args entries are spliced in by _with_common_style_args
     gradient: float,
     intercept: float = 0.0,
     *,
     label: str | None = None,
-    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None,
+    color: Color = None,
     linewidth: float | None = None,
     linestyle: Literal["solid", "dashed", "dotted", "dashdot"] = "solid",
     alpha: float | None = None,
@@ -645,9 +628,7 @@ def slope(
     ylabel: str | None = None,
     xscale: Literal["linear", "log"] = "linear",
     yscale: Literal["linear", "log"] = "linear",
-    background_color: (
-        str | tuple[float, float, float] | tuple[float, float, float, float] | None
-    ) = None,
+    background_color: Color = None,
     ymin: float | None = None,
     ymax: float | None = None,
     backend: str | None = None,
@@ -681,20 +662,7 @@ def slope(
         linestyle: The line's dash style.
         alpha: An optional line opacity, in ``[0, 1]``. ``None`` uses
             the backend's default (usually fully opaque).
-        title: An optional figure title.
-        xlabel: An optional x-axis label.
-        ylabel: An optional y-axis label.
-        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
-        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
-        background_color: An optional figure background color. Same
-            format as ``color``. ``None`` uses the backend's default.
-        ymin: An optional explicit lower bound for the y-axis.
-            ``None`` leaves the axis autoscaled.
-        ymax: An optional explicit upper bound for the y-axis.
-            ``None`` leaves the axis autoscaled.
-        backend: The name of the backend to use to render the
-            figure, or ``None`` to use the current default backend
-            (see ``plotmux.set_backend``).
+        {_COMMON_STYLE_ARGS}
         **kwargs: Additional backend-specific keyword arguments,
             forwarded to the backend's renderer.
 
@@ -745,9 +713,7 @@ def layer(
     ylabel: str | None = None,
     xscale: Literal["linear", "log"] = "linear",
     yscale: Literal["linear", "log"] = "linear",
-    background_color: (
-        str | tuple[float, float, float] | tuple[float, float, float, float] | None
-    ) = None,
+    background_color: Color = None,
     ymin: float | None = None,
     ymax: float | None = None,
     backend: str | None = None,

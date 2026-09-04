@@ -6,10 +6,13 @@ from __future__ import annotations
 __all__ = ["SlopeSpec"]
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import XBoundSpec
+
+if TYPE_CHECKING:
+    from plotmux.colors import Color
 
 
 @dataclass(frozen=True)
@@ -62,7 +65,7 @@ class SlopeSpec(XBoundSpec):
     gradient: float
     intercept: float = 0.0
     label: str | None = None
-    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
+    color: Color = None
     linewidth: float | None = None
     linestyle: Literal["solid", "dashed", "dotted", "dashdot"] = "solid"
     alpha: float | None = None

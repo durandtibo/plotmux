@@ -8,7 +8,7 @@ from dataclasses import dataclass, replace
 
 import numpy as np
 
-from plotmux.colors import parse_color
+from plotmux.colors import Color, parse_color
 from plotmux.colors.palette import DEFAULT_PALETTE
 from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import XBoundSpec
@@ -41,7 +41,7 @@ class BarSeries:
 
     y: np.ndarray
     label: str | None = None
-    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
+    color: Color = None
 
 
 @dataclass(frozen=True)
