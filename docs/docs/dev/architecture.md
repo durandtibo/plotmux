@@ -13,8 +13,8 @@ adding a new backend or chart type should not require changing existing code.
 
 The unified API targets a small set of generic, broadly-useful chart types and figure-level concerns:
 the ones almost every plotting task needs (histograms, empirical CDFs, line charts, scatter
-plots, bar charts, layering them together, laying them out in a grid, common axis styling,
-per-mark color, export), not
+plots, bar charts (plain and stacked), slope/abline annotations, layering them together, laying
+them out in a grid, common axis styling, per-mark color, export), not
 comprehensive coverage of every chart type a backend can draw. A niche or highly backend-specific
 plot is expected to stay behind the escape hatch (`Figure.to_native()`) rather than becoming a new
 spec.
@@ -39,6 +39,8 @@ src/plotmux/
 ├── utils/
 │   ├── range.py                  # find_range(): quantile-or-explicit axis bounds
 │   ├── cdf.py                    # compute_cdf_steps(): binned empirical CDF step vertices
+│   ├── categorical.py            # is_categorical(): string-vs-numeric x-axis check
+│   ├── slope.py                  # resolve_slope_xrange(): x-range for a layer()ed SlopeSpec
 │   └── imports/                  # one module per optional backend dependency
 │                                  # (is_matplotlib_available(), is_xy_available(),
 │                                  #  is_bokeh_available(), is_altair_available(),
@@ -48,16 +50,21 @@ src/plotmux/
 │   ├── palette.py                # PRIMARY/SECONDARY/TERTIARY, DEFAULT_PALETTE
 │   └── named.py                  # static CSS/matplotlib named-color table
 ├── specs/
-│   ├── base.py                   # BaseSpec (title/xlabel/ylabel/xscale/yscale)
+│   ├── base.py                   # BaseSpec (title/xlabel/ylabel/xscale/yscale/background_color/
+│                                  #   ymin/ymax/legend_title/legend_location/legend_orientation)
+│                                  #   + XBoundSpec (adds plain xmin/xmax)
 │   ├── histogram.py              # HistogramSpec
 │   ├── cdf.py                    # CdfSpec
 │   ├── line.py                   # LineSpec
 │   ├── scatter.py                # ScatterSpec
 │   ├── bar.py                    # BarSpec
+│   ├── stacked_bar.py            # StackedBarSpec, BarSeries
+│   ├── slope.py                  # SlopeSpec (gradient/intercept, not data-bound;
+│                                  #   standalone on matplotlib+bokeh only)
 │   ├── layer.py                  # LayerSpec (rejects nesting + empty layers)
 │   └── grid.py                   # GridSpec (rejects nesting + empty cells)
 ├── backends/
-│   ├── base.py                   # Backend ABC + dispatch helpers
+│   ├── base.py                   # Backend ABC + dispatch helpers + BackendCapabilities
 │   ├── registry.py                # register_backend() / get_backend() / entry points
 │   ├── matplotlib/                # MatplotlibBackend
 │   ├── xy/                        # XyBackend
@@ -68,12 +75,17 @@ src/plotmux/
 ├── export.py                      # save(figure, path)
 ├── config.py                      # default backend + context manager
 ├── exceptions.py                  # PlotmuxError hierarchy
-├── api.py                         # public hist(), cdf(), line(), scatter(), bar(), layer(), grid()
+├── api.py                         # public hist(), bar(), stacked_bar(), cdf(), line(),
+│                                   #   scatter(), slope(), layer(), grid()
 └── testing/fixtures.py            # pytest fixtures for downstream users
 ```
 
-Every backend (`matplotlib`, `xy`, `bokeh`, `altair`, `plotly`) implements all seven specs, including
-`grid.py` and `cdf.py`.
+Every backend (`matplotlib`, `xy`, `bokeh`, `altair`, `plotly`) implements `StackedBarSpec` and the
+seven other data-bound/composition specs. `SlopeSpec` is the one exception: it is registered as a
+*standalone* spec only on `matplotlib`/`bokeh` (the two backends with a native "line by slope,
+independent of data range" primitive); on `altair`/`xy`/`plotly` it is only supported as a
+`layer()` child alongside a data-bound sibling, since those three need concrete endpoints, not a
+slope/intercept pair (see [Layering and Grid Layouts](#layering-and-grid-layouts)).
 
 `specs/<type>.py` plus one `_RENDERERS` entry per backend is the shape a new, similarly generic
 chart type would take. A new backend adds a new `backends/<name>/` subpackage alongside the
@@ -138,16 +150,27 @@ same import laziness was introduced to avoid.
 ### `BaseSpec`
 
 Holds the figure-level fields every chart type inherits (`title`, `xlabel`, `ylabel`, `xscale`,
-`yscale`) so they are defined once instead of being redeclared per chart type, and gives
-`Backend.render`/the `_RENDERERS` dicts a common type to dispatch on. These fields are
+`yscale`, `background_color`, `ymin`, `ymax`, `legend_title`, `legend_location`,
+`legend_orientation`) so they are defined once instead of being redeclared per chart type, and
+gives `Backend.render`/the `_RENDERERS` dicts a common type to dispatch on. These fields are
 `kw_only=True` so they (all defaulted) can precede a subclass's own required fields
 (e.g. `HistogramSpec.values`) without violating the dataclass "no non-default field after a
-default field" rule. It also owns two small helpers a concrete spec's own `__post_init__` calls
-instead of reimplementing: `_normalize_color(name="color")` parses a `str | tuple | None` color
-field via `parse_color` and writes the canonical RGBA value back in place (`object.__setattr__`,
-since specs are frozen), and the module-level `_check_equal_length(x, y)` coerces `x`/`y` to
+default field" rule. It also owns two things a concrete spec's own `__post_init__` calls instead of
+reimplementing: `_normalize_color(name="color")` parses a `str | tuple | None` color field via
+`parse_color` and writes the canonical RGBA value back in place (`object.__setattr__`, since specs
+are frozen), and `_validate_base()` normalizes `background_color` and checks `ymin <= ymax`. The
+module-level `check_equal_length(x, y)` (public, unlike the fields above) coerces `x`/`y` to
 `np.ndarray` and raises `InvalidSpecError` if their lengths differ (shared by `LineSpec` and
 `ScatterSpec`).
+
+A plain, explicit-value-only `xmin`/`xmax` pair lives one level down, on `XBoundSpec(BaseSpec)`
+(`BarSpec`, `StackedBarSpec`, `LineSpec`, `ScatterSpec` inherit it), not on `BaseSpec` itself:
+`HistogramSpec`/`CdfSpec` need a *wider* `float | str | None` type for their own `xmin`/`xmax` (to
+also accept a quantile string), and redeclaring an inherited field with an incompatible type would
+be a real Liskov substitution violation, not just a type-checker nitpick — a caller holding an
+`XBoundSpec` reference could dereference `xmin` expecting a `float` and get a `str`. So
+`HistogramSpec`/`CdfSpec` declare their own `xmin`/`xmax` directly against `BaseSpec` instead of
+inheriting `XBoundSpec`.
 
 ### Color Parsing
 
@@ -175,6 +198,14 @@ by every backend, so a backend only owns its dict of renderers, not the dispatch
 it. `backends/registry.py` maps a backend name to its registered instance, and raises a
 `BackendNotFoundError` (also a `RuntimeError`) listing available backends when an unregistered name
 is requested, typically because its underlying plotting library is not installed.
+
+`Backend.capabilities()` (and the module-level `plotmux.backends.capabilities(name)`) returns a
+`BackendCapabilities(backend_name, spec_types, caveats)`: `spec_types` is simply
+`frozenset(cls._RENDERERS)`, no new bookkeeping, and `caveats` is a short, per-backend tuple of
+known partial-support gaps (e.g. `SlopeSpec` being layer-only on that backend, or `BarSpec.width`
+being ignored) that `spec_types` membership alone can't express. This is purely additive and
+read-only: it lets a caller check "does this backend support X" ahead of a render/export call
+instead of only discovering it via an exception.
 
 ### `plotmux.exceptions`
 
@@ -216,6 +247,30 @@ each cell's standalone HTML document in its own sandboxed `<iframe srcdoc=...>` 
 with CSS grid, which makes `grid(..., backend="xy")` `"html"`-only — every other format raises
 `UnsupportedFormatError` for an `XyGrid`, even though a bare (non-grid) `xy.Chart` supports the
 full `supported_formats` set.
+
+### `StackedBarSpec`
+
+`StackedBarSpec` (`x`, `series: tuple[BarSeries, ...]`, `width`, `alpha`) is a concrete, data-bound
+spec, not a composition wrapper: unlike a `layer()` of several `BarSpec`s (which draws each one
+independently, so bars at the same `x` simply overlap), its `series` are drawn cumulatively, each
+stacked on the running total of the series before it, at each `x` position — bokeh's own
+`vbar_stack`, matplotlib's `bottom=running_total` idiom. Any `BarSeries` left with `color=None`
+gets a distinct `DEFAULT_PALETTE` entry, cycling in series order, the same pattern `LayerSpec` uses
+(see above), applied in `StackedBarSpec.__post_init__` instead since the unit needing coordinated
+colors here is `series`, not sibling top-level specs. Implemented on all five backends.
+
+### `SlopeSpec`
+
+`SlopeSpec` (`gradient`, `intercept`) describes a reference/trend line, `y = gradient * x +
+intercept`, with no data of its own — unlike every other spec, it owns no `x`/`y` array. It is
+registered as a *standalone* top-level spec only on `matplotlib` (`Axes.axline`) and `bokeh`
+(`bokeh.models.Slope`), the two backends with a native "line by slope, independent of data range"
+primitive. `altair`, `xy`, and `plotly` instead support it only as a `layer()` child: each
+backend's own `layer.py` computes the x-range spanned by `SlopeSpec`'s data-bound siblings
+(`plotmux.utils.slope.resolve_slope_xrange`) and hands it to a `layer()`-only `render_slope(spec,
+xrange)` that draws a plain two-point line between those endpoints. Requesting `SlopeSpec`
+standalone on those three backends, or inside a `layer()` with no data-bound sibling to derive a
+range from, raises `UnsupportedSpecError`.
 
 ### `Figure`
 

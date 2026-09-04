@@ -28,8 +28,31 @@ since two independent native figures can't be merged after the fact in either ba
 ## Style Arguments
 
 Like `hist`, `line`, and `scatter`, `layer` accepts `title`, `xlabel`, `ylabel`, `xscale`, `yscale`,
-and `backend`. These describe the combined axes, not any individual child: a child's own `title` (if
-it has one) is ignored when it is drawn as part of a layer.
+`background_color`, `ymin`, `ymax`, and `backend` (see [The Plotting API](api.md)).
+These describe the combined axes, not any individual child: a child's own `title` (if it has one) is
+ignored when it is drawn as part of a layer.
+
+## Layering a Slope with a Data-Bound Chart
+
+`plotmux.slope()` (a reference/trend line with no data of its own, see [The Plotting
+API](api.md)) is the one spec type that is standalone-supported on only
+two of the five backends (matplotlib, bokeh). Layering it alongside a data-bound sibling makes it
+work on the other three (altair, `xy`, plotly) too: the sibling's x-range supplies the concrete
+endpoints `SlopeSpec` itself has none of.
+
+```pycon
+>>> import plotmux
+>>> fig = plotmux.layer(
+...     plotmux.scatter([1, 2, 3, 4], [1.1, 2.0, 2.9, 4.2]),
+...     plotmux.slope(1, 0),
+...     backend="altair",
+... )
+>>> fig.save("scatter_with_trend.html")  # doctest: +SKIP
+
+```
+
+A `layer()` with only `SlopeSpec` children (no data-bound sibling to derive a range from) still
+raises `NotImplementedError` on altair/`xy`/plotly, since there is nothing to compute a range from.
 
 ## Colors in a Layer
 

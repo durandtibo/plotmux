@@ -103,16 +103,18 @@ See the [user guide](uguide/api.md) for detailed examples.
 
 ### 🎨 **Unified Plotting API**
 
-Plot histograms, empirical CDFs, line charts, scatter plots, and bar charts with one API,
-regardless of the backend that renders them:
+Plot histograms, empirical CDFs, line charts, scatter plots, bar charts (plain and stacked), and
+slope/abline reference lines with one API, regardless of the backend that renders them:
 
 - `plotmux.hist()` for histograms, with optional binning, density, and quantile-based axis ranges
 - `plotmux.cdf()` for empirical cumulative distribution functions
 - `plotmux.line()` for line charts
 - `plotmux.scatter()` for scatter charts
 - `plotmux.bar()` for bar charts
-- Common figure-level styling (`title`, `xlabel`, `ylabel`, `xscale`, `yscale`) shared by every
-  chart type
+- `plotmux.stacked_bar()` for stacked bar charts
+- `plotmux.slope()` for slope/abline reference lines
+- Common figure-level styling (`title`, `xlabel`, `ylabel`, `xscale`, `yscale`, `background_color`,
+  `ymin`, `ymax`) shared by every chart type
 
 [Learn more →](uguide/api.md)
 
@@ -125,7 +127,10 @@ Choose the rendering backend at runtime, and swap it with a one-line change:
 - Built-in [Bokeh](https://bokeh.org/) backend for interactive, standalone HTML charts
 - Built-in [Altair](https://altair-viz.github.io/) (Vega-Lite) backend for declarative,
   standalone HTML charts
+- Built-in [Plotly](https://plotly.com/python/) backend for interactive charts and dashboards
 - Third-party backends can plug in via a Python entry point, no changes to `plotmux` required
+- `plotmux.backends.capabilities()` reports what a backend supports (spec types, known caveats)
+  ahead of a render or export call
 
 [Learn more →](uguide/backends.md)
 
