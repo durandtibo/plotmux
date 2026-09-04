@@ -5,8 +5,9 @@ how to display, save, or escape to the native figure it wraps.
 
 ## Overview
 
-`plotmux.hist()`, `plotmux.line()`, `plotmux.scatter()`, `plotmux.bar()`, `plotmux.layer()`, and
-`plotmux.grid()` all return a `Figure`. It keeps three things together:
+`plotmux.hist()`, `plotmux.cdf()`, `plotmux.line()`, `plotmux.scatter()`, `plotmux.bar()`,
+`plotmux.stacked_bar()`, `plotmux.slope()`, `plotmux.layer()`, and `plotmux.grid()` all return a
+`Figure`. It keeps three things together:
 
 - `spec`: the backend-agnostic spec that was rendered
 - `backend_name`: the name of the backend that rendered it
@@ -55,6 +56,7 @@ formats depend on the backend:
 | `xy`           | `png`, `jpg`, `jpeg`, `webp`, `svg`, `pdf`, `html`  |
 | `bokeh`        | `html`                                             |
 | `altair`       | `html`, `json`                                     |
+| `plotly`       | `html`, `json`                                     |
 
 One exception to this table: a `plotmux.grid(..., backend="xy")` figure only supports `"html"`,
 even though the `xy` backend otherwise supports the full row above. `xy` has no primitive for
@@ -99,6 +101,27 @@ backend-specific functionality not exposed by the unified API:
 
 Use this when you need a backend-specific feature that `plotmux`'s unified API does not cover,
 rather than growing the common API to the union of every backend.
+
+## Checking What a Backend Supports Ahead of Time
+
+Not every backend supports every spec type or field identically (e.g. `plotmux.slope()` is
+matplotlib/bokeh-only standalone, see [The Plotting API](api.md)). `plotmux.backends.capabilities()`
+answers this without triggering the failure:
+
+```pycon
+>>> import plotmux
+>>> caps = plotmux.backends.capabilities("altair")
+>>> caps.backend_name
+'altair'
+>>> caps.caveats  # doctest: +SKIP
+(...)
+
+```
+
+`caps.spec_types` is the set of spec types the backend has a top-level renderer for, and
+`caps.caveats` is a short, human-readable list of known partial-support gaps (e.g. `BarSpec.width`
+being ignored, or `SlopeSpec` only being supported as a `layer()` child) that aren't otherwise
+expressible from `spec_types` alone.
 
 ## What's Next
 

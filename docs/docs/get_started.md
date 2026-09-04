@@ -20,6 +20,7 @@ uv pip install plotmux[matplotlib]
 uv pip install plotmux[xy]
 uv pip install plotmux[bokeh]
 uv pip install plotmux[altair]
+uv pip install plotmux[plotly]
 ```
 
 **Install with all optional dependencies:**
@@ -101,6 +102,7 @@ no plotting library installed. Only the backend you actually use needs to be ins
 | `xy`           | [`xy`](https://github.com/durandtibo/xy)      | Python 3.11+                 |
 | `bokeh`        | [Bokeh](https://bokeh.org/)                   | Python 3.10+                 |
 | `altair`       | [Altair](https://altair-viz.github.io/)       | Python 3.10+                 |
+| `plotly`       | [Plotly](https://plotly.com/python/)          | Python 3.10+                 |
 
 ## Quick check
 

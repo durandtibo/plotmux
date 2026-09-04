@@ -41,9 +41,12 @@ back to the min/max of `values`:
 ## Style Arguments
 
 `cdf` accepts the same style arguments as `hist`, `line`, and `scatter`: `title`, `xlabel`,
-`ylabel`, `xscale`, `yscale`, `color`, `label`, and `backend`. The one difference is `ylabel`,
-which defaults to `"cumulative probability"` instead of `None`, since a CDF's y-axis always
-represents that same quantity unless you override it:
+`ylabel`, `xscale`, `yscale`, `color`, `alpha`, `label`, `background_color`, `ymin`, `ymax`, and
+`backend` (see [Common Style Arguments](api.md)). The one difference is `ylabel`, which defaults to
+`"cumulative probability"` instead of `None`, since a CDF's y-axis always represents that same
+quantity unless you override it. `ymin`/`ymax` are also worth calling out here specifically: bokeh's
+CDF renderer otherwise hardcodes its own `0`/`1` y-axis bounds, and an explicit `ymin`/`ymax`
+overrides that:
 
 ```pycon
 >>> import plotmux
