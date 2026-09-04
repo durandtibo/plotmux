@@ -413,8 +413,12 @@ class BaseSpec:
     ymin: float | None = field(default=None, kw_only=True)
     ymax: float | None = field(default=None, kw_only=True)
     legend_title: str | None = field(default=None, kw_only=True)
-    legend_location: Literal["best", "top_left", ...] | None = field(default=None, kw_only=True)
-    legend_orientation: Literal["vertical", "horizontal"] | None = field(default=None, kw_only=True)
+    legend_location: Literal["best", "top_left", ...] | None = field(
+        default=None, kw_only=True
+    )
+    legend_orientation: Literal["vertical", "horizontal"] | None = field(
+        default=None, kw_only=True
+    )
 
 
 @dataclass(frozen=True)
