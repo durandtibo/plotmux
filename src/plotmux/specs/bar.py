@@ -13,6 +13,8 @@ from plotmux.specs.base import XBoundSpec, check_equal_length
 if TYPE_CHECKING:
     import numpy as np
 
+    from plotmux.colors import Color
+
 
 @dataclass(frozen=True)
 class BarSpec(XBoundSpec):
@@ -59,7 +61,7 @@ class BarSpec(XBoundSpec):
     x: np.ndarray
     y: np.ndarray
     label: str | None = None
-    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
+    color: Color = None
     width: float = 0.8
     alpha: float | None = None
 

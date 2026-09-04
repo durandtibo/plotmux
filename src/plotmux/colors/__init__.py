@@ -19,8 +19,9 @@ __all__ = [
     "PRIMARY",
     "SECONDARY",
     "TERTIARY",
+    "Color",
     "parse_color",
 ]
 
 from plotmux.colors.palette import DEFAULT_PALETTE, PRIMARY, SECONDARY, TERTIARY
-from plotmux.colors.parser import parse_color
+from plotmux.colors.parser import Color, parse_color

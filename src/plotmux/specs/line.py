@@ -13,6 +13,8 @@ from plotmux.specs.base import XBoundSpec, check_equal_length
 if TYPE_CHECKING:
     import numpy as np
 
+    from plotmux.colors import Color
+
 
 @dataclass(frozen=True)
 class LineSpec(XBoundSpec):
@@ -56,7 +58,7 @@ class LineSpec(XBoundSpec):
     x: np.ndarray
     y: np.ndarray
     label: str | None = None
-    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
+    color: Color = None
     alpha: float | None = None
     linewidth: float | None = None
     linestyle: Literal["solid", "dashed", "dotted", "dashdot"] = "solid"

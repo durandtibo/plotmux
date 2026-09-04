@@ -6,11 +6,15 @@ __all__ = ["CdfSpec"]
 
 from dataclasses import dataclass, field
 from numbers import Integral, Real
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import BaseSpec
+
+if TYPE_CHECKING:
+    from plotmux.colors import Color
 
 
 @dataclass(frozen=True)
@@ -81,7 +85,7 @@ class CdfSpec(BaseSpec):
     xmin: float | str | None = field(default=None, kw_only=True)
     xmax: float | str | None = field(default=None, kw_only=True)
     label: str | None = None
-    color: str | tuple[float, float, float] | tuple[float, float, float, float] | None = None
+    color: Color = None
     alpha: float | None = None
     ylabel: str | None = field(default="cumulative probability", kw_only=True)
 

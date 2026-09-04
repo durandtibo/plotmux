@@ -10,10 +10,18 @@ expects (see ``plotmux.backends.matplotlib.style`` and
 
 from __future__ import annotations
 
-__all__ = ["parse_color"]
+__all__ = ["Color", "parse_color"]
 
 from plotmux.colors.named import NAMED_COLORS
 from plotmux.exceptions import InvalidColorError
+
+# A single source of truth for the color type accepted throughout plotmux's
+# public API and specs: a hex/named string, an RGB(A) float tuple, or ``None``
+# to mean "use the backend's default". Before this alias, the same union was
+# spelled out inline at every color-carrying field/parameter (see DESIGN.md,
+# section 9.2), which meant nine-plus near-identical unions to keep in sync
+# by hand any time the accepted color shapes changed.
+Color = str | tuple[float, float, float] | tuple[float, float, float, float] | None
 
 
 def parse_color(

@@ -1277,7 +1277,7 @@ now one checkable list per renderer instead of a scattered `if`
 per field, and the shape is there to copy into the other four
 backends' `style.py` next.
 
-### 9.2 `api.py` is ~900 lines of repeated parameter lists and docstrings
+### 9.2 `api.py` is ~900 lines of repeated parameter lists and docstrings -- partly done
 
 Every public function (`hist`, `bar`, `stacked_bar`, `cdf`, `line`,
 `scatter`, `slope`, `layer`) redeclares the same seven
@@ -1308,6 +1308,27 @@ edit in `api.py` into a 1-site edit, without changing any call site's
 signature (`plotmux.hist(..., title=...)` keeps working identically
 either way) or losing the current strength of dedicated,
 autocompletable keyword arguments.
+
+Done (the conservative half): `plotmux.colors.Color` is now the one
+place the `str | tuple[float, float, float] | tuple[float, float,
+float, float] | None` union is spelled out -- every `color`,
+`edgecolor`, and `background_color` field/parameter across `specs/`
+and `api.py` (23 sites) now reads `Color` instead of repeating the
+union inline. And `api.py`'s `_COMMON_STYLE_ARGS` constant holds the
+`title`/`xlabel`/`ylabel`/`xscale`/`yscale`/`background_color`/
+`ymin`/`ymax`/`backend` `Args:` block, word for word, once; the
+`_with_common_style_args` decorator splices it into `hist`, `bar`,
+`line`, `scatter`, and `slope`'s docstrings (the five functions whose
+copies were identical) via `str.format`, the same "generate, don't
+hand-copy" move as `dev/generate_versions.py`. `cdf` (a different
+`ymin` note), `stacked_bar`/`layer` (a different `background_color`
+note, no `color` to refer back to), and `grid` (none of these fields)
+keep their own text since theirs already wasn't identical. Explicit
+signatures are untouched, so call sites and autocompletion are
+unaffected. Not done: the parameter *lists* themselves (as opposed to
+their docstrings) are still redeclared per function -- the
+`TypedDict`/`Unpack` half of the proposal, which would collapse the
+9-site signature edit itself, remains open.
 
 ### 9.3 Unsupported combinations surface only at render time, never queryable ahead of it
 

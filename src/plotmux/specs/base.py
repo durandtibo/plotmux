@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 
-from plotmux.colors import parse_color
+from plotmux.colors import Color, parse_color
 from plotmux.exceptions import InvalidSpecError
 
 if TYPE_CHECKING:
@@ -104,9 +104,7 @@ class BaseSpec:
     ylabel: str | None = field(default=None, kw_only=True)
     xscale: Literal["linear", "log"] = field(default="linear", kw_only=True)
     yscale: Literal["linear", "log"] = field(default="linear", kw_only=True)
-    background_color: (
-        str | tuple[float, float, float] | tuple[float, float, float, float] | None
-    ) = field(default=None, kw_only=True)
+    background_color: Color = field(default=None, kw_only=True)
     ymin: float | None = field(default=None, kw_only=True)
     ymax: float | None = field(default=None, kw_only=True)
     legend_title: str | None = field(default=None, kw_only=True)
