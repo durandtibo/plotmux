@@ -1,6 +1,6 @@
 # plotmux design
 
-Status: implemented, current as of 2026-09-02. This document is the
+Status: implemented, current as of 2026-09-04. This document is the
 **current-state architecture reference**: it describes plotmux as it
 exists today, not how it got there. For the chronological log of case
 studies and gap-closing rounds that produced this design, see
@@ -100,6 +100,10 @@ src/plotmux/
 │   ├── range.py                 # find_range()
 │   ├── cdf.py                    # compute_cdf_steps() -- shared step-curve
 │   │                             #   vertices for bokeh/altair/xy's render_cdf
+│   ├── categorical.py            # is_categorical() -- shared string-vs-numeric
+│   │                             #   x-axis check for BarSpec/StackedBarSpec
+│   ├── slope.py                   # resolve_slope_xrange() (see 3.2's SlopeSpec
+│   │                             #   discussion below)
 │   └── imports/                 # one module per optional backend dep
 │                                 # (matplotlib.py, xy.py, bokeh.py, altair.py)
 ├── colors/                      # package (see 4.9.1)
@@ -108,13 +112,18 @@ src/plotmux/
 │   ├── palette.py                # PRIMARY/SECONDARY/TERTIARY, DEFAULT_PALETTE
 │   └── named.py                  # static CSS/matplotlib named-color table
 ├── specs/
-│   ├── base.py                  # BaseSpec (title/xlabel/ylabel/xscale/yscale,
-│                                 #   _normalize_color()) + _check_equal_length()
+│   ├── base.py                  # BaseSpec (title/xlabel/ylabel/xscale/yscale/
+│                                 #   background_color/ymin/ymax/legend_title/
+│                                 #   legend_location/legend_orientation,
+│                                 #   _normalize_color(), _validate_base()) +
+│                                 #   XBoundSpec (adds plain xmin/xmax) +
+│                                 #   check_equal_length()
 │   ├── histogram.py             # HistogramSpec
 │   ├── cdf.py                    # CdfSpec
 │   ├── line.py                  # LineSpec
 │   ├── scatter.py                # ScatterSpec
 │   ├── bar.py                     # BarSpec
+│   ├── stacked_bar.py             # StackedBarSpec, BarSeries (see 4.8b)
 │   ├── slope.py                   # SlopeSpec (gradient/intercept annotation,
 │   │                             #   not data-bound; matplotlib+bokeh only)
 │   ├── layer.py                  # LayerSpec (rejects nesting + empty layers)
@@ -134,6 +143,7 @@ src/plotmux/
 │   │   ├── line.py               # render_line(ax, spec) -> Axes
 │   │   ├── scatter.py            # render_scatter(ax, spec) -> Axes
 │   │   ├── bar.py                 # render_bar(ax, spec) -> Axes
+│   │   ├── stacked_bar.py         # render_stacked_bar(ax, spec) -> Axes
 │   │   ├── slope.py               # render_slope(ax, spec) -> Axes, via Axes.axline
 │   │   ├── layer.py              # render_layer(ax, spec) -> shared Axes
 │   │   └── grid.py               # render_grid(fig, spec) -> Figure with subplots
@@ -147,6 +157,7 @@ src/plotmux/
 │   │   ├── line.py               # render_line(spec) -> xy.Chart
 │   │   ├── scatter.py            # render_scatter(spec) -> xy.Chart
 │   │   ├── bar.py                 # render_bar(spec) -> xy.Chart, via xy.bar_chart
+│   │   ├── stacked_bar.py         # render_stacked_bar(spec) -> xy.Chart
 │   │   ├── layer.py              # render_layer(spec) -> composed xy.Chart
 │   │   └── grid.py               # render_grid(spec) -> XyGrid; render_grid_html()
 │   │                             #   composes it to one HTML page at export time
@@ -162,6 +173,7 @@ src/plotmux/
 │   │   ├── line.py               # render_line(fig, spec) -> figure
 │   │   ├── scatter.py            # render_scatter(fig, spec) -> figure
 │   │   ├── bar.py                 # render_bar(fig, spec) -> figure, via figure.vbar
+│   │   ├── stacked_bar.py         # render_stacked_bar(fig, spec) -> figure, via figure.vbar_stack
 │   │   ├── slope.py               # render_slope(fig, spec) -> figure, via
 │   │   │                         #   fig.add_layout(bokeh.models.Slope(...))
 │   │   ├── layer.py              # render_layer(fig, spec) -> shared figure
@@ -176,6 +188,7 @@ src/plotmux/
 │   │   ├── line.py                # render_line(spec) -> alt.Chart
 │   │   ├── scatter.py            # render_scatter(spec) -> alt.Chart
 │   │   ├── bar.py                 # render_bar(spec) -> alt.Chart, via mark_bar()
+│   │   ├── stacked_bar.py         # render_stacked_bar(spec) -> alt.Chart
 │   │   ├── layer.py              # render_layer(spec) -> alt.LayerChart, via alt.layer(*charts)
 │   │   └── grid.py               # render_grid(spec) -> alt.ConcatChart, via alt.concat(*charts)
 │   └── plotly/
@@ -187,6 +200,7 @@ src/plotmux/
 │       ├── line.py               # render_line(fig, spec, row=, col=) -> go.Figure
 │       ├── scatter.py            # render_scatter(fig, spec, row=, col=) -> go.Figure
 │       ├── bar.py                 # render_bar(fig, spec, row=, col=) -> go.Figure, via go.Bar
+│       ├── stacked_bar.py         # render_stacked_bar(fig, spec, row=, col=) -> go.Figure
 │       ├── slope.py               # render_slope(fig, spec, xrange, row=, col=) -> go.Figure;
 │       │                         #   layer()-only, like altair/xy (no native abline primitive)
 │       ├── layer.py              # render_layer(fig, spec, row=, col=) -> shared go.Figure
@@ -250,6 +264,14 @@ draws without owning any data of its own and typically appears as a
 `layer()` child alongside a data-bound spec (see
 [4.8](#48-layering-multiple-specs-on-one-axes)) -- required, rather
 than just typical, for altair/xy/plotly per the above.
+
+`StackedBarSpec` was the ninth chart type added, implemented on all
+five backends like `BarSpec` (see [4.8b](#48b-stacked-bar-charts)):
+unlike `layer()`'s `BarSpec` support, which draws several independent
+bars that simply overlap at shared `x` positions, `StackedBarSpec`
+composes a tuple of `BarSeries` cumulatively, each one stacked on the
+running total of the series before it, matching bokeh's
+`vbar_stack`/matplotlib's own `bottom=running_total` idiom.
 
 The layout otherwise leaves room for one more chart type (a new
 `specs/<type>.py` plus one `_RENDERERS` entry per backend) if a
@@ -329,22 +351,55 @@ packages instead of requiring a PR into this repository.
 ### 4.1 `BaseSpec`
 
 `BaseSpec` holds the common figure-level fields every chart type
-inherits (`title`, `xlabel`, `ylabel`, `xscale`, `yscale`) so they
-are defined once instead of being redeclared per chart type, and
-gives `Backend.render` / the `_RENDERERS` dicts a common type to
-dispatch on. It also owns two small helpers shared by concrete specs'
-own `__post_init__`, so the same few lines aren't repeated in every
-spec:
+inherits so they are defined once instead of being redeclared per
+chart type, and gives `Backend.render` / the `_RENDERERS` dicts a
+common type to dispatch on. Beyond the original `title`/`xlabel`/
+`ylabel`/`xscale`/`yscale`, four case studies (see
+[9](#9-proposed-improvements-external-design-review-2026-09-02) and
+[`docs/docs/dev/design_history.md`](docs/docs/dev/design_history.md))
+added `background_color` (a figure-level `Color`, applied after the
+mark is drawn), `ymin`/`ymax` (a plain, explicit-value-only y-axis
+bound — unlike `HistogramSpec.xmin`/`CdfSpec.xmin`, there is no
+data array to resolve a quantile string against at this level), and
+`legend_title`/`legend_location`/`legend_orientation` (all `None` by
+default, meaningful only when at least one mark carries a `label`).
+It also owns two things shared by concrete specs' own
+`__post_init__`, so the same few lines aren't repeated in every spec:
 
 - `_normalize_color(name="color")`: parses a `str | tuple | None`
   color field via `parse_color` and writes the canonical RGBA value
   back in place (via `object.__setattr__`, since specs are frozen).
   Every color-carrying spec's `__post_init__` calls
   `self._normalize_color()` instead of reimplementing parse-and-write.
-- `_check_equal_length(x, y)`: a module-level function (not a method,
-  since not every spec has an x/y pair) that coerces `x`/`y` to
-  `np.ndarray` and raises `InvalidSpecError` if their lengths differ;
-  shared by `LineSpec` and `ScatterSpec`.
+- `_validate_base()`: normalizes `background_color` and checks
+  `ymin <= ymax`. Dataclasses don't chain subclass/base
+  `__post_init__` automatically, so this is not itself a
+  `__post_init__`; every concrete spec's own `__post_init__` calls it
+  once, alongside its usual `self._normalize_color()` call.
+
+`check_equal_length(x, y)` is a public, module-level function in the
+same file (not a method, since not every spec has an x/y pair, and
+public rather than the earlier private `_check_equal_length` so a
+third-party spec pairing its own `x`/`y` arrays can reuse it): it
+coerces `x`/`y` to `np.ndarray` and raises `InvalidSpecError` if their
+lengths differ; shared by `LineSpec` and `ScatterSpec`.
+
+A plain, explicit-value-only `xmin`/`xmax` pair is *not* on `BaseSpec`
+itself: it lives one level down, on `XBoundSpec(BaseSpec)`, which
+`BarSpec`, `StackedBarSpec`, `LineSpec`, and `ScatterSpec` inherit
+instead. `HistogramSpec`/`CdfSpec` are the only two chart types that
+need `xmin`/`xmax` to *also* accept a quantile string (e.g. `"q0.1"`,
+resolved via `find_range`), so they declare their own
+`float | str | None` pair directly rather than inheriting
+`XBoundSpec`'s narrower `float | None` type — redeclaring an inherited
+field with an incompatible type would be a real Liskov substitution
+violation, not just a type-checker nitpick: a caller holding an
+`XBoundSpec` reference could dereference `xmin` expecting a `float`
+and get a `str`. (This exact shadowing produced a real bug, fixed
+alongside the `XBoundSpec` split: every backend's `apply_common_style`
+used to reapply `spec.xmin`/`spec.xmax` to the axis unconditionally,
+which raised at render time for a `HistogramSpec`/`CdfSpec`
+constructed with a quantile-string bound.)
 
 ```python
 @dataclass(frozen=True)
@@ -354,6 +409,22 @@ class BaseSpec:
     ylabel: str | None = field(default=None, kw_only=True)
     xscale: Literal["linear", "log"] = field(default="linear", kw_only=True)
     yscale: Literal["linear", "log"] = field(default="linear", kw_only=True)
+    background_color: Color = field(default=None, kw_only=True)
+    ymin: float | None = field(default=None, kw_only=True)
+    ymax: float | None = field(default=None, kw_only=True)
+    legend_title: str | None = field(default=None, kw_only=True)
+    legend_location: Literal["best", "top_left", ...] | None = field(
+        default=None, kw_only=True
+    )
+    legend_orientation: Literal["vertical", "horizontal"] | None = field(
+        default=None, kw_only=True
+    )
+
+
+@dataclass(frozen=True)
+class XBoundSpec(BaseSpec):
+    xmin: float | None = field(default=None, kw_only=True)
+    xmax: float | None = field(default=None, kw_only=True)
 
 
 @dataclass(frozen=True)
@@ -374,12 +445,12 @@ non-default field cannot follow a default one; callers already pass
 them by keyword (`plotmux.hist(..., title=...)`), so this changes no
 call site.
 
-`xmin`/`xmax` are resolved through the existing `find_range` so the
-quantile-string convention (`"q0.1"`) is defined once, in `utils/`,
-and reused by every spec and every backend. Validation (`bins > 0`)
-happens in `__post_init__`, raising `InvalidSpecError` (see
-[4.2.1](#421-plotmuxexceptions)), so an invalid spec fails before any
-backend is touched.
+`HistogramSpec`/`CdfSpec`'s own `xmin`/`xmax` are resolved through the
+existing `find_range` so the quantile-string convention (`"q0.1"`) is
+defined once, in `utils/`, and reused by every spec and every backend.
+Validation (`bins > 0`) happens in `__post_init__`, raising
+`InvalidSpecError` (see [4.2.1](#421-plotmuxexceptions)), so an
+invalid spec fails before any backend is touched.
 
 #### 4.1.1 Axis labels, title, and linear/log scale
 
@@ -610,7 +681,7 @@ narrower gap, since checking registration would require the eager
 import laziness was introduced to avoid (see
 [3.4](#34-lazy-registration-and-third-party-plugins)).
 
-### 4.6 Public API (`api.py`): `hist()`, `cdf()`, `line()`, `scatter()`, `bar()`, `slope()`, `layer()`, `grid()`
+### 4.6 Public API (`api.py`): `hist()`, `bar()`, `stacked_bar()`, `cdf()`, `line()`, `scatter()`, `slope()`, `layer()`, `grid()`
 
 ```python
 def _render(spec: BaseSpec, backend: str | None, **kwargs: Any) -> Figure:
@@ -673,6 +744,12 @@ rule that fields which don't apply to every chart type live on that
 chart type's own spec, not on `BaseSpec`. Specs and backends remain
 directly importable for advanced use; `api.py` is only the
 convenience surface most users touch.
+
+`stacked_bar(x, series, *, width=0.8, alpha=None, ...)` follows the
+same shape but takes a `series: Sequence[BarSeries]` instead of a
+single `y` array: it builds a `StackedBarSpec` (see
+[4.8b](#48b-stacked-bar-charts)) and calls `_render` like every other
+function here.
 
 `slope(gradient, intercept=0.0, *, label=None, color=None,
 linewidth=None, linestyle="solid", ...)` builds a `SlopeSpec` and
@@ -902,6 +979,65 @@ style. `grid()` in `api.py` reflects this: unlike `hist`/`cdf`/`line`/
   a bare `xy.Chart`, which still supports the full `supported_formats`
   set). This is a deliberate, permanent asymmetry between xy and the
   other three backends' grid support.
+
+### 4.8b Stacked bar charts
+
+`StackedBarSpec` (`specs/stacked_bar.py`) is the ninth chart type (see
+[3.2](#32-package-layout)) and, unlike `LayerSpec`/`GridSpec`, is a
+concrete, data-bound spec, not a composition wrapper around other
+specs:
+
+```python
+@dataclass(frozen=True)
+class BarSeries:
+    r"""One series of a StackedBarSpec: (y, label, color)."""
+
+    y: np.ndarray
+    label: str | None = None
+    color: Color = None
+
+
+@dataclass(frozen=True)
+class StackedBarSpec(XBoundSpec):
+    x: np.ndarray
+    series: tuple[BarSeries, ...]
+    width: float = 0.8
+    alpha: float | None = None
+```
+
+`series` is stacked in the order given (bottom to top): each series'
+bars are drawn on top of the running total of the series before it, at
+each `x` position — matching bokeh's `vbar_stack`/matplotlib's own
+`bottom=running_total` idiom for a stacked bar. This is deliberately
+different from what `layer()` does with several `BarSpec` children
+(see [4.8](#48-layering-multiple-specs-on-one-axes)): a `layer()` of
+bars draws each one independently onto shared axes with no
+coordination, so several bars at the same `x` position simply overlap;
+`StackedBarSpec` is its own spec precisely because "stack cumulatively"
+needs the full set of series available together, in order, which a
+flat `layer()` pass over independently-drawn children cannot express.
+
+Any `BarSeries` left with `color=None` gets a distinct color from
+`DEFAULT_PALETTE`, cycling in series order — the same default-color-
+cycle pattern `LayerSpec` uses (see
+[4.9.1](#491-predefined-colors)), applied here in `StackedBarSpec.
+__post_init__` instead, since the unit needing coordinated colors is
+`series`, not sibling top-level specs. `x` follows the same
+categorical-or-numeric convention as `BarSpec.x` (`utils/categorical.py
+::is_categorical`), and inherits its plain (non-quantile) `xmin`/`xmax`
+from `XBoundSpec` (see [4.1](#41-basespec)) rather than `BaseSpec`
+directly.
+
+**Backend side:** one more `_RENDERERS` entry per backend,
+`StackedBarSpec -> render_stacked_bar`, implemented on all five
+backends (unlike `SlopeSpec`, there is no missing native primitive
+here: every backend that has a bar mark can stack it). bokeh's
+`render_stacked_bar` is the direct analog of the `vbar_stack` idiom
+named above; matplotlib, xy, altair, and plotly each accumulate a
+running per-`x` total across `series` themselves and draw one segment
+per series at the appropriate `bottom`/base offset, since none of
+those four backends' underlying libraries expose a `vbar_stack`-style
+helper directly usable from a `Chart`/`go.Figure` renderer function.
 
 ### 4.9 Specifying colors across backends
 
