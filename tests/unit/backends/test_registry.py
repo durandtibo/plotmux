@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 from unittest.mock import Mock, patch
 
 import pytest
@@ -10,6 +10,7 @@ from plotmux.backends.registry import (
     _BUILTIN_BACKEND_MODULES,
     _REGISTRY,
     ENTRY_POINT_GROUP,
+    capabilities,
     get_backend,
     known_backend_names,
     load_entry_point_backends,
@@ -70,6 +71,30 @@ def test_register_backend_under_own_name() -> None:
 
     register_backend(OtherNameBackend())
     assert "other" in _REGISTRY
+
+
+####################################
+#     Tests for capabilities     #
+####################################
+
+
+def test_capabilities_delegates_to_backend() -> None:
+    class RenderersBackend(Backend):
+        name = "renderers"
+        _RENDERERS: ClassVar[Any] = {int: str}
+
+        def save(self, native: Any, path: Path, fmt: str) -> None:
+            del native, path, fmt
+
+    register_backend(RenderersBackend())
+    caps = capabilities("renderers")
+    assert caps.backend_name == "renderers"
+    assert caps.spec_types == frozenset({int})
+
+
+def test_capabilities_missing_backend() -> None:
+    with pytest.raises(RuntimeError, match="No backend registered"):
+        capabilities("does-not-exist")
 
 
 ##################################

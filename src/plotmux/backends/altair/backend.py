@@ -60,6 +60,20 @@ class AltairBackend(Backend):
     # useful for embedding in another Vega-Lite-aware tool.
     supported_formats: ClassVar[frozenset[str]] = frozenset({"html", "json"})
 
+    # See ``Backend._CAVEATS``/``capabilities()``. ``SlopeSpec`` has no
+    # entry in ``_RENDERERS`` below -- it renders only nested inside a
+    # ``LayerSpec`` (see ``plotmux.backends.altair.layer``/``.slope``),
+    # not standalone -- and ``BarSpec.width`` has no direct altair
+    # equivalent (see ``plotmux.backends.altair.bar``), so it is silently
+    # ignored rather than sized from.
+    _CAVEATS: ClassVar[tuple[str, ...]] = (
+        "SlopeSpec is only supported nested inside a LayerSpec, not standalone.",
+        (
+            "BarSpec.width is ignored: Vega-Lite derives a bar's rendered "
+            "width from its scale, not a data-unit width."
+        ),
+    )
+
     # ``make_renderer`` (``plotmux.backends.base``) wraps a chart-specific
     # ``(spec, **kwargs) -> Chart`` renderer with ``apply_common_style``.
     # Altair has no separate figure/axes object to construct first (unlike

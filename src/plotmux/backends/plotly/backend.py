@@ -108,6 +108,13 @@ class PlotlyBackend(Backend):
     # (``Figure.write_json``), same rationale as altair's ``json`` format.
     supported_formats: ClassVar[frozenset[str]] = frozenset({"html", "json"})
 
+    # See ``Backend._CAVEATS``/``capabilities()``. Documents in
+    # machine-readable form the ``SlopeSpec``-absence rationale already
+    # given in this class's docstring above.
+    _CAVEATS: ClassVar[tuple[str, ...]] = (
+        "SlopeSpec is only supported nested inside a LayerSpec, not standalone.",
+    )
+
     _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., Figure]]] = {
         HistogramSpec: _make_renderer(render_histogram),
         BarSpec: _make_renderer(render_bar),

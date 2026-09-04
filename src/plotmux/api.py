@@ -58,13 +58,13 @@ _COMMON_STYLE_ARGS = """title: An optional figure title.
 
 
 def _with_common_style_args(fn: Callable[..., Figure]) -> Callable[..., Figure]:
-    r"""Splice ``_COMMON_STYLE_ARGS`` into a function's ``{_COMMON_STYLE_ARGS}``
-    docstring placeholder.
+    r"""Splice ``_COMMON_STYLE_ARGS`` into a function's
+    ``{_COMMON_STYLE_ARGS}`` docstring placeholder.
 
-    A decorator rather than a plain ``.format()`` call after every ``def``
-    so the substitution reads the same way at each of the five call sites
-    (see ``_COMMON_STYLE_ARGS`` above) and a sixth function adopting the
-    shared block is a one-line addition.
+    A decorator rather than a plain ``.format()`` call after every
+    ``def`` so the substitution reads the same way at each of the five
+    call sites (see ``_COMMON_STYLE_ARGS`` above) and a sixth function
+    adopting the shared block is a one-line addition.
     """
     assert fn.__doc__ is not None  # noqa: S101 every decorated function below has one
     fn.__doc__ = fn.__doc__.format(_COMMON_STYLE_ARGS=_COMMON_STYLE_ARGS)

@@ -1330,7 +1330,23 @@ their docstrings) are still redeclared per function -- the
 `TypedDict`/`Unpack` half of the proposal, which would collapse the
 9-site signature edit itself, remains open.
 
-### 9.3 Unsupported combinations surface only at render time, never queryable ahead of it
+### 9.3 Unsupported combinations surface only at render time, never queryable ahead of it -- done
+
+**Done (2026-09-04).** Added `Backend.capabilities()` (instance and
+classmethod) returning a `BackendCapabilities(backend_name, spec_types,
+caveats)`, plus a module-level `plotmux.backends.capabilities(name)`
+convenience wrapping `get_backend(name).capabilities()`. `spec_types`
+is `frozenset(cls._RENDERERS)` -- no new bookkeeping. `caveats` is a
+new `Backend._CAVEATS: ClassVar[tuple[str, ...]]` (empty by default)
+that each backend overrides where a known partial-support caveat
+exists: altair and xy both record `SlopeSpec`-is-layer-only-support
+and their own respective caveat (`BarSpec.width` ignored for altair;
+`GridSpec` export HTML-only for xy), and plotly records the
+`SlopeSpec` caveat. matplotlib and bokeh have none. This is purely
+additive and read-only -- it does not change any render-time or
+export-time behavior -- and is covered by tests per backend (see
+`tests/unit/backends/*/test_backend.py::test_*_backend_capabilities`
+and `tests/unit/backends/test_base.py`/`test_registry.py`).
 
 `resolve_renderer` (see [4.2](#42-backend)) raises
 `UnsupportedSpecError` the moment an unsupported spec/backend

@@ -195,3 +195,13 @@ def test_matplotlib_backend_save_grid(backend: MatplotlibBackend, tmp_path: Path
     path = tmp_path / "grid.png"
     backend.save(native, path, "png")
     assert path.is_file()
+
+
+@matplotlib_available
+def test_matplotlib_backend_capabilities(backend: MatplotlibBackend) -> None:
+    from plotmux.specs import SlopeSpec
+
+    caps = backend.capabilities()
+    assert caps.backend_name == "matplotlib"
+    assert SlopeSpec in caps.spec_types
+    assert caps.caveats == ()

@@ -165,3 +165,15 @@ def test_altair_backend_save_grid(backend: AltairBackend, tmp_path: Path) -> Non
     backend.save(native, path, "html")
     assert path.is_file()
     assert path.stat().st_size > 0
+
+
+@altair_available
+def test_altair_backend_capabilities(backend: AltairBackend) -> None:
+    caps = backend.capabilities()
+    assert caps.backend_name == "altair"
+    assert HistogramSpec in caps.spec_types
+    from plotmux.specs import SlopeSpec
+
+    assert SlopeSpec not in caps.spec_types
+    assert any("SlopeSpec" in caveat for caveat in caps.caveats)
+    assert any("BarSpec.width" in caveat for caveat in caps.caveats)
