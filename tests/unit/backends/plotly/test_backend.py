@@ -182,3 +182,12 @@ def test_plotly_backend_save_supported_formats(
     backend.save(native, path, fmt)
     assert path.is_file()
     assert path.stat().st_size > 0
+
+
+@plotly_available
+def test_plotly_backend_capabilities(backend: PlotlyBackend) -> None:
+    caps = backend.capabilities()
+    assert caps.backend_name == "plotly"
+    assert HistogramSpec in caps.spec_types
+    assert SlopeSpec not in caps.spec_types
+    assert any("SlopeSpec" in caveat for caveat in caps.caveats)

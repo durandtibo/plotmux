@@ -53,6 +53,22 @@ class XyBackend(Backend):
         {"png", "jpg", "jpeg", "webp", "svg", "pdf", "html"}
     )
 
+    # See ``Backend._CAVEATS``/``capabilities()``. ``SlopeSpec`` has no
+    # entry in ``_RENDERERS`` below -- it renders only nested inside a
+    # ``LayerSpec`` (see ``plotmux.backends.xy.layer``/``.slope``), not
+    # standalone. The ``GridSpec`` export restriction is also
+    # ``supported_formats``-discoverable per-format, but not as a
+    # "html-only, and only for a grid" statement -- see ``save``'s
+    # docstring and ``XyGrid``.
+    _CAVEATS: ClassVar[tuple[str, ...]] = (
+        "SlopeSpec is only supported nested inside a LayerSpec, not standalone.",
+        (
+            "GridSpec export supports 'html' only, unlike every other spec "
+            "type on this backend: xy has no chart-composition primitive "
+            "for arranging independent panels into one PNG/SVG/PDF."
+        ),
+    )
+
     # ``make_renderer`` (``plotmux.backends.base``) wraps a chart-specific
     # ``(spec, **kwargs) -> Chart`` renderer with ``apply_common_style``. xy
     # has no separate figure/axes object to construct first (unlike

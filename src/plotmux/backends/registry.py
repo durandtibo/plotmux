@@ -4,6 +4,7 @@ from __future__ import annotations
 
 __all__ = [
     "ENTRY_POINT_GROUP",
+    "capabilities",
     "get_backend",
     "known_backend_names",
     "load_entry_point_backends",
@@ -20,7 +21,7 @@ from plotmux.exceptions import BackendNotFoundError
 if TYPE_CHECKING:
     from importlib.metadata import EntryPoint
 
-    from plotmux.backends.base import Backend
+    from plotmux.backends.base import Backend, BackendCapabilities
 
 _REGISTRY: dict[str, Backend] = {}
 
@@ -103,6 +104,26 @@ def get_backend(name: str) -> Backend:
             f"Available backends: {available}"
         )
         raise BackendNotFoundError(msg) from err
+
+
+def capabilities(name: str) -> BackendCapabilities:
+    r"""Get a registered backend's capabilities by name.
+
+    A thin convenience wrapper around ``get_backend(name).capabilities()``
+    for a caller that wants to check spec-type/caveat support without
+    otherwise needing the backend instance itself.
+
+    Args:
+        name: The name of the backend to query.
+
+    Returns:
+        The backend's ``BackendCapabilities``.
+
+    Raises:
+        BackendNotFoundError: if no backend is registered under
+            ``name`` (see ``get_backend``).
+    """
+    return get_backend(name).capabilities()
 
 
 def known_backend_names() -> frozenset[str]:

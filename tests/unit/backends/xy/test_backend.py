@@ -163,3 +163,15 @@ def test_xy_backend_save_grid_unsupported_format(backend: XyBackend, tmp_path: P
     native = backend.render(spec)
     with pytest.raises(ValueError, match="Unsupported export format 'png' for an xy grid"):
         backend.save(native, tmp_path / "fig.png", "png")
+
+
+@xy_available
+def test_xy_backend_capabilities(backend: XyBackend) -> None:
+    caps = backend.capabilities()
+    assert caps.backend_name == "xy"
+    assert HistogramSpec in caps.spec_types
+    from plotmux.specs import SlopeSpec
+
+    assert SlopeSpec not in caps.spec_types
+    assert any("SlopeSpec" in caveat for caveat in caps.caveats)
+    assert any("GridSpec" in caveat for caveat in caps.caveats)

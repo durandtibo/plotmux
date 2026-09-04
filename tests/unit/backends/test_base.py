@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pytest
 
@@ -69,6 +69,48 @@ def test_backend_is_abstract() -> None:
 def test_backend_supported_formats() -> None:
     backend = FakeBackend()
     assert backend.supported_formats == frozenset({"png"})
+
+
+def test_backend_capabilities_default_caveats() -> None:
+    class RenderersBackend(Backend):
+        name = "renderers"
+        _RENDERERS: ClassVar[Any] = {int: str, float: str}
+
+        def save(self, native: Any, path: Path, fmt: str) -> None:
+            del native, path, fmt
+
+    caps = RenderersBackend.capabilities()
+    assert caps.backend_name == "renderers"
+    assert caps.spec_types == frozenset({int, float})
+    assert caps.caveats == ()
+
+
+def test_backend_capabilities_with_caveats() -> None:
+    class CaveatBackend(Backend):
+        name = "caveat"
+        _RENDERERS: ClassVar[Any] = {int: str}
+        _CAVEATS: ClassVar[Any] = (
+            "int is only supported nested inside a LayerSpec, not standalone.",
+        )
+
+        def save(self, native: Any, path: Path, fmt: str) -> None:
+            del native, path, fmt
+
+    caps = CaveatBackend.capabilities()
+    assert caps.spec_types == frozenset({int})
+    assert caps.caveats == ("int is only supported nested inside a LayerSpec, not standalone.",)
+
+
+def test_backend_capabilities_is_instance_method_too() -> None:
+    class RenderersBackend(Backend):
+        name = "renderers"
+        _RENDERERS: ClassVar[Any] = {int: str}
+
+        def save(self, native: Any, path: Path, fmt: str) -> None:
+            del native, path, fmt
+
+    backend = RenderersBackend()
+    assert backend.capabilities() == RenderersBackend.capabilities()
 
 
 ####################################

@@ -10,8 +10,15 @@ mechanics around it.
 
 from __future__ import annotations
 
-__all__ = ["Backend", "check_export_format", "make_renderer", "resolve_renderer"]
+__all__ = [
+    "Backend",
+    "BackendCapabilities",
+    "check_export_format",
+    "make_renderer",
+    "resolve_renderer",
+]
 
+import dataclasses
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
@@ -115,6 +122,37 @@ def make_renderer(
     return render
 
 
+@dataclasses.dataclass(frozen=True)
+class BackendCapabilities:
+    r"""Report what a backend supports, for querying ahead of a render or
+    export call instead of discovering it via an exception.
+
+    ``spec_types`` answers "does this backend support ``X`` as a
+    top-level spec" (e.g. standalone, not just nested in a
+    ``LayerSpec``) with no new bookkeeping -- it is exactly
+    ``Backend._RENDERERS.keys()``. ``caveats`` covers the partial
+    support that a spec-type membership test alone can't express (a
+    spec type only supported inside a layer, a field silently
+    ignored, an export restriction) -- see ``Backend._CAVEATS``.
+
+    This is descriptive only: nothing here changes render-time or
+    export-time behavior, and a caveat not listed here does not mean
+    "definitely fully supported," only "no known caveat is on
+    record."
+
+    Args:
+        backend_name: The backend's ``name`` (e.g. ``"matplotlib"``).
+        spec_types: The spec types with a registered top-level
+            renderer in this backend.
+        caveats: Short, human-readable notes about known partial
+            support not implied by ``spec_types`` alone.
+    """
+
+    backend_name: str
+    spec_types: frozenset[type[BaseSpec]]
+    caveats: tuple[str, ...] = ()
+
+
 class Backend(ABC):
     r"""Define the interface implemented by a rendering backend.
 
@@ -138,6 +176,36 @@ class Backend(ABC):
     #: around it -- every backend used to hand-write an identical
     #: ``render`` body doing exactly that lookup-then-call.
     _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., Any]]]
+
+    #: Short, explicit notes about partial support this backend has
+    #: that membership in ``_RENDERERS`` alone can't express -- e.g. a
+    #: spec type only supported nested inside a ``LayerSpec``, or a
+    #: spec field the backend silently ignores. Empty by default; a
+    #: concrete backend overrides this only where such a caveat is
+    #: known. See ``capabilities()``.
+    _CAVEATS: ClassVar[tuple[str, ...]] = ()
+
+    @classmethod
+    def capabilities(cls) -> BackendCapabilities:
+        r"""Report this backend's supported spec types and known partial-
+        support caveats.
+
+        Purely additive and read-only: it changes no render-time or
+        export-time behavior, it only exposes what ``_RENDERERS`` and
+        ``_CAVEATS`` already record. Lets a caller ask "does this
+        backend support ``SlopeSpec`` standalone?" programmatically
+        instead of hitting ``UnsupportedSpecError`` or searching
+        DESIGN.md. See also ``supported_formats`` for export-format
+        support.
+
+        Returns:
+            This backend's ``BackendCapabilities``.
+        """
+        return BackendCapabilities(
+            backend_name=cls.name,
+            spec_types=frozenset(cls._RENDERERS),
+            caveats=cls._CAVEATS,
+        )
 
     def render(self, spec: BaseSpec, **kwargs: Any) -> Any:
         r"""Render a spec into the backend's native figure object.
