@@ -1,0 +1,1821 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://durandtibo.github.io/plotmux/main/dev/design_history/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>plotmux design history - plotmux</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#plotmux-design-history" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+          <aside class="md-banner md-banner--warning">
+            <div class="md-banner__inner md-grid md-typeset">
+              
+  You're not viewing the latest version.
+  <a href="../../..">
+    <strong>Click here to go to latest.</strong>
+  </a>
+
+            </div>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),base=new URL("../.."),outdated=__md_get("__outdated",sessionStorage,base);!0===outdated&&el&&(el.hidden=!1)</script>
+          </aside>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="plotmux" class="md-header__button md-logo" aria-label="plotmux" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            plotmux
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              plotmux design history
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/durandtibo/plotmux" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    durandtibo/plotmux
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../get_started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Get Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../uguide/api/" class="md-tabs__link">
+          
+  
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../development/" class="md-tabs__link">
+          
+  
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../refs/api/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://github.com/durandtibo/plotmux" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GitHub
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="plotmux" class="md-nav__button md-logo" aria-label="plotmux" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    plotmux
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/durandtibo/plotmux" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    durandtibo/plotmux
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plotting API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/cdf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plotting a CDF
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/backends/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choosing a Backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/colors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Colors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/figure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Figure Object
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/layer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Layering Charts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/grid/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grid Layouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Developer Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Api
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/backends/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backends
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/colors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Colors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/exceptions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exceptions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/export/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/figure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Figure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/specs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utils
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/durandtibo/plotmux" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#cumulative-status-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cumulative status log
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#case-study-reproducing-bokehs-slope-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Case study: reproducing bokeh's slope example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#case-study-reproducing-bokehs-legend-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Case study: reproducing bokeh's legend example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#case-study-reproducing-bokehs-log-plot-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Case study: reproducing bokeh's log plot example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#case-study-reproducing-bokehs-stacked-bar-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Case study: reproducing bokeh's stacked bar example
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="plotmux-design-history">plotmux design history<a class="headerlink" href="#plotmux-design-history" title="Permanent link">&para;</a></h1>
+<p>This file is the historical companion to
+<a href="../../../DESIGN.md"><code>DESIGN.md</code></a> (repo root): <code>DESIGN.md</code> is kept as
+the current-state architecture reference (see its own §9.5 for why),
+while this file keeps the chronological record of how it got there --
+the case studies that drove each round of gap-closing, and the
+cumulative status log each one produced. Nothing here describes
+open work; every gap below is closed unless the entry says otherwise.
+For what's still open, see <code>DESIGN.md</code>'s own "Open questions" and
+"Candidate future work" sections.</p>
+<h2 id="cumulative-status-log">Cumulative status log<a class="headerlink" href="#cumulative-status-log" title="Permanent link">&para;</a></h2>
+<p>Core abstraction, eight chart specs (histogram, cdf, line, scatter,
+bar, slope, layer, grid), five backends (matplotlib, xy, bokeh,
+altair, plotly), per-mark color, common axis styling, layering, grid
+layout, a <code>plotmux.exceptions</code> hierarchy, export, a predefined-colors
+package, lazy per-backend imports, and a third-party backend plugin
+mechanism are all in place. <code>SlopeSpec</code> is registered as a standalone
+spec (<code>plotmux.slope(...)</code>) only on matplotlib and bokeh, the two
+backends with a native "line by slope, independent of data range"
+primitive; on altair, xy, and plotly it is supported only as a
+<code>layer()</code> child alongside a data-bound sibling (see
+<a href="#case-study-reproducing-bokehs-slope-example">Case study: reproducing bokeh's slope example</a>),
+since those three backends need concrete endpoints, not a
+slope/intercept pair, and a standalone <code>SlopeSpec</code> has no data of its
+own to derive endpoints from. <code>plotmux.slope(...)</code>/a slope-only
+<code>layer()</code> still raise <code>UnsupportedSpecError</code> on those three backends.
+All of the slope case study's gaps (per-mark alpha, separate marker
+edge color, <code>LineSpec</code> <code>linewidth</code>/<code>linestyle</code>, figure background
+color, explicit <code>ymin</code>/<code>ymax</code> axis bounds, and altair/xy support for
+<code>SlopeSpec</code> as a layer child) are now closed; bokeh's own slope
+example is reproducible, unchanged, on all five backends (modulo the
+standalone-vs-layered <code>SlopeSpec</code> distinction on altair/xy/plotly
+noted above). A fifth backend, plotly, has since been added, following
+the same <code>layer()</code>-only treatment for <code>SlopeSpec</code> as altair/xy, for
+the same reason: no native "line by slope, independent of data range"
+primitive (see <code>plotmux.backends.plotly.slope</code>). Checked against
+bokeh's own legend example (see
+<a href="#case-study-reproducing-bokehs-legend-example">Case study: reproducing bokeh's legend example</a>):
+mostly reproducible unchanged (auto-generated legends from <code>label</code>, a
+scatter+line pair sharing one label merging into one legend entry,
+dashed-line styling, a two-panel grid), and two gaps found there -- a
+legend title distinct from the figure title, and scatter marker shape
+(e.g. square vs. circle) -- are now closed too (a claimed
+"hollow-vs-filled fill control via <code>edgecolor</code>" close from the first
+pass through that case study turned out to be bokeh-only behavior, not
+a real cross-backend fix, and was corrected). Checked against bokeh's
+own log plot example next (see
+<a href="#case-study-reproducing-bokehs-log-plot-example">Case study: reproducing bokeh's log plot example</a>):
+mostly reproducible unchanged (log y-axis with explicit bounds, figure
+background color, labeled dashed/dotted lines, line+scatter legend
+merges), and three more gaps found there -- explicit x-axis bounds
+(<code>xmin</code>/<code>xmax</code> at the <code>BaseSpec</code> level, distinct from
+<code>HistogramSpec</code>/<code>CdfSpec</code>'s existing quantile-capable <code>xmin</code>/<code>xmax</code>),
+legend position, and a portable hollow (no-fill) marker -- are now
+closed too. Checked against bokeh's own stacked bar example next (see
+<a href="#case-study-reproducing-bokehs-stacked-bar-example">Case study: reproducing bokeh's stacked bar example</a>):
+the first case study <em>not</em> close to reproducible -- no stacking
+mechanism exists at all (<code>layer()</code>'s <code>BarSpec</code> support overlaps bars
+rather than stacking them), <code>BarSpec</code>'s categorical (string) x-axis
+support is inconsistent across backends (works on matplotlib/plotly,
+broken on bokeh and altair, unverified on xy), and legend orientation
+is a third missing legend-chrome field alongside
+<code>legend_title</code>/<code>legend_location</code>; hover tooltips and fine-grained
+chrome cosmetics are deliberately left as escape-hatch, non-goal
+territory rather than gaps.</p>
+<h2 id="case-study-reproducing-bokehs-slope-example">Case study: reproducing bokeh's slope example<a class="headerlink" href="#case-study-reproducing-bokehs-slope-example" title="Permanent link">&para;</a></h2>
+<p>Checked against
+<a href="https://docs.bokeh.org/en/latest/docs/examples/basic/annotations/slope.html">bokeh's <code>slope</code> annotation example</a>
+(scatter markers with a separate yellow fill / black edge, drawn with
+<code>alpha=0.8</code>, plus a dashed blue reference line of gradient 2 and
+y-intercept 10 at <code>line_width=4</code>, on a figure with a light-gray
+background and <code>y_range.start = 0</code>) to see whether it is reproducible
+through plotmux's unified API, unchanged, on all five backends. It
+<strong>is</strong>, now, on matplotlib and bokeh outright; on altair, xy, and
+plotly with one caveat (<code>SlopeSpec</code> needs a data-bound <code>layer()</code>
+sibling to derive endpoints from -- see below), unavoidable given
+those three backends' own primitives. Every gap identified by this
+case study is closed:</p>
+<ul>
+<li><strong>Slope/abline annotation.</strong> <code>specs/slope.py::SlopeSpec(gradient,
+  intercept=0.0, color=None, linewidth=None, linestyle="solid",
+  alpha=None)</code>. Standalone (<code>plotmux.slope(...)</code>), it is matplotlib
+  (<code>Axes.axline</code>) and bokeh (<code>fig.add_layout(bokeh.models.Slope(...))</code>)
+  only, each with a native "line by slope, independent of data range"
+  primitive matched almost one-to-one by <code>SlopeSpec</code>'s fields. altair
+  and xy have neither: a standalone <code>SlopeSpec</code> has no data of its own
+  to derive concrete endpoints from, and drawing between two arbitrary
+  far-apart points would blow out altair's own default autoscale (xy
+  has the same problem, plus no way to read back whatever range it
+  picked). As a <code>layer()</code> child on those two backends, though,
+  <code>SlopeSpec</code> <em>is</em> supported:
+  <code>plotmux.backends.altair.layer.render_layer</code>/
+  <code>plotmux.backends.xy.layer.render_layer</code> compute the x-range spanned
+  by the <code>SlopeSpec</code>'s data-bound siblings
+  (<code>plotmux.utils.slope.resolve_slope_xrange</code>, reading each sibling's
+  <code>x</code> array, or a <code>HistogramSpec</code>/<code>CdfSpec</code>'s <code>find_range</code>-resolved
+  bound) and pass it to a <code>layer()</code>-only <code>render_slope(spec, xrange)</code>
+  (registered in each backend's own <code>layer.py</code>, not the backend's
+  top-level <code>_RENDERERS</code>), which draws a plain two-point line spanning
+  exactly that range -- exact, not an approximation, since the range
+  comes from the real sibling data. A <code>layer()</code> call with no data-bound
+  sibling (e.g. two <code>SlopeSpec</code>s alone) still raises
+  <code>UnsupportedSpecError</code> on altair/xy, since there is nothing to derive
+  a range from; this is the one respect in which <code>SlopeSpec</code> support
+  is narrower on altair/xy than on matplotlib/bokeh, an unavoidable
+  consequence of those two backends having no slope-by-itself
+  primitive at all, not a remaining gap.</li>
+<li><strong>Separate marker fill/edge color.</strong> <code>ScatterSpec.edgecolor</code>, an
+  optional second color field normalized through the same
+  <code>_normalize_color</code> machinery as <code>color</code>; <code>None</code> (the default) uses
+  <code>color</code> for the edge too, so every existing single-color
+  <code>ScatterSpec</code> renders unchanged. matplotlib: <code>Axes.scatter</code>'s
+  <code>edgecolors</code>; bokeh: <code>figure.scatter</code>'s <code>line_color</code>, kept separate
+  from <code>fill_color</code> (both used to be set to the same <code>color</code>); altair:
+  <code>mark_point(filled=True, stroke=...)</code> (a constant mark property, not
+  a field-based encoding -- altair has no legend channel for a mark's
+  stroke, matching every other backend's edge color never getting its
+  own legend entry either); xy: <code>xy.scatter</code>'s <code>stroke</code>/<code>stroke_width</code>.</li>
+<li><strong><code>alpha</code>.</strong> An <code>alpha: float | None</code> field on every color-carrying
+  spec (<code>HistogramSpec</code>, <code>CdfSpec</code>, <code>LineSpec</code>, <code>ScatterSpec</code>,
+  <code>BarSpec</code>, <code>SlopeSpec</code>) -- placed per spec rather than on
+  <code>BaseSpec</code>, mirroring how <code>color</code> itself is placed per spec, since
+  <code>alpha</code> is a mark-level concern that has no meaning on
+  <code>LayerSpec</code>/<code>GridSpec</code>. matplotlib: <code>alpha</code> passthrough (<code>None</code> is
+  matplotlib's own "fully opaque" default, so it needs no
+  special-casing); bokeh: each glyph's <code>alpha</code> (sets both
+  <code>fill_alpha</code>/<code>line_alpha</code>) -- unlike matplotlib, bokeh's <code>alpha</code>
+  property rejects <code>None</code> outright, so it is only added to the call
+  when explicitly set (same pattern <code>SlopeSpec.linewidth</code> already
+  used, see <code>plotmux.backends.bokeh.slope</code>); altair: <code>opacity</code>; xy:
+  <code>opacity</code>.</li>
+<li><strong><code>LineSpec</code> line width and dash style.</strong> The same
+  <code>linewidth: float | None</code> / <code>linestyle: Literal["solid", "dashed",
+  "dotted", "dashdot"]</code> fields <code>SlopeSpec</code> already had, added to
+  <code>LineSpec</code> too, translated per backend the same way <code>xscale</code>/
+  <code>yscale</code> are: matplotlib <code>linewidth</code>/<code>linestyle</code> passthrough; bokeh
+  <code>line_width</code>/<code>line_dash</code>; altair <code>strokeWidth</code>/<code>strokeDash</code> (a
+  <code>STROKE_DASH</code> name-to-pixel-list map in
+  <code>plotmux.backends.altair.style</code>, shared with <code>SlopeSpec</code>'s own
+  altair renderer); xy <code>width</code>/<code>dash</code> (<code>xy.line</code> accepts the same
+  matplotlib-style dash names directly, no translation table needed).</li>
+<li><strong>Figure background color.</strong> <code>BaseSpec.background_color</code>, a
+  <code>BaseSpec</code>-level, figure-wide field (like <code>title</code>) rather than
+  per-mark, applied once in each backend's <code>apply_common_style</code>
+  alongside title/labels/scale/<code>ymin</code>/<code>ymax</code>: matplotlib
+  <code>Axes.set_facecolor</code>; bokeh <code>figure.background_fill_color</code>; altair
+  <code>Chart.properties(background=...)</code>; xy a <code>style={"backgroundColor":
+  ...}</code> entry on the <code>Chart</code> (xy's CSS-style-dict escape hatch, the
+  closest xy has to a background-color constructor argument).</li>
+<li><strong>Explicit y-axis bounds.</strong> <code>BaseSpec.ymin</code>/<code>ymax</code>: unlike
+  <code>HistogramSpec.xmin</code>/<code>xmax</code> (<code>float | str | None</code>, resolved via
+  <code>find_range</code>'s quantile-or-explicit convention), these are
+  <code>float | None</code> only -- an explicit value, no quantile-string form --
+  since they are figure-level (every chart type has a y-axis; not
+  every chart type has one data array to resolve a quantile against
+  the way <code>HistogramSpec</code>/<code>CdfSpec</code> do). Applied post-hoc in
+  <code>apply_common_style</code>, after the mark is drawn: matplotlib
+  <code>Axes.set_ylim</code>; bokeh <code>figure.y_range.start</code>/<code>.end</code> (pinned
+  individually on the default auto-fitting <code>DataRange1d</code>, so setting
+  just one bound leaves the other autoscaled -- this is also what
+  makes bokeh's <code>CdfSpec</code> renderer's own hardcoded <code>y_range =
+  Range1d(0, 1)</code>, set before <code>apply_common_style</code> runs, correctly
+  overridable by an explicit <code>ymin</code>/<code>ymax</code>); altair
+  <code>alt.Scale(domainMin=..., domainMax=...)</code>; xy <code>xy.y_axis(domain=
+  (ymin, ymax))</code> -- xy's <code>domain</code> takes both bounds together, no
+  partial-bound form, so (unlike matplotlib/bokeh) only both explicit
+  bounds set together are forwarded; either alone is left autoscaled.</li>
+</ul>
+<p>matplotlib and bokeh reproduce the bokeh slope example exactly,
+unchanged, via one <code>layer()</code> call combining a styled <code>ScatterSpec</code> and
+<code>SlopeSpec</code>. altair, xy, and plotly reproduce it the same way, with the
+same call -- the only difference is architectural, not user-visible:
+their <code>SlopeSpec</code> support depends on the <code>ScatterSpec</code> sibling being in
+the same <code>layer()</code> call to supply a range, which the bokeh example's
+own structure (a scatter plus a reference line, layered) already
+satisfies.</p>
+<h2 id="case-study-reproducing-bokehs-legend-example">Case study: reproducing bokeh's legend example<a class="headerlink" href="#case-study-reproducing-bokehs-legend-example" title="Permanent link">&para;</a></h2>
+<p>Checked against
+<a href="https://docs.bokeh.org/en/latest/docs/examples/basic/annotations/legend.html">bokeh's <code>legend</code> annotation example</a>
+(two side-by-side figures in a <code>gridplot</code>: the left one three labeled
+scatter series in default/orange/green; the right one a labeled
+scatter+line pair sharing the label <code>"sin(x)"</code> -- meant to merge into
+one legend entry -- plus a dashed orange line and a hollow green
+square marker paired with a green line, each figure's legend given its
+own title, <code>"Markers"</code>/<code>"Lines"</code>) to see whether it is reproducible
+through plotmux's unified API, unchanged, on all five backends. Most
+of it already is:</p>
+<ul>
+<li><strong>Auto-generated legends from <code>label</code>.</strong> Every color-carrying spec's
+  <code>label</code> field already maps onto bokeh's <code>legend_label</code>, matplotlib's
+  <code>ax.legend()</code>-collected artist label, altair's <code>label:N</code> color
+  encoding, and plotly's <code>showlegend=True</code> -- no gap.</li>
+<li><strong>A scatter and a line sharing one label merging into a single
+  legend entry.</strong> Already correct on every backend once both children
+  are drawn via one <code>layer()</code> call: matplotlib's <code>Axes.legend()</code>
+  dedupes by artist label the same way bokeh's own <code>legend_label</code>
+  matching does; altair's shared <code>label:N</code> encoding and plotly's
+  shared <code>name</code> behave the same way -- no gap, no extra mechanism
+  needed.</li>
+<li><strong>Dashed line, line width.</strong> Already closed by the slope case
+  study's <code>LineSpec.linewidth</code>/<code>linestyle</code>.</li>
+<li><strong>Hollow (no-fill) marker via <code>ScatterSpec.edgecolor</code>.</strong> Partially
+  wrong when first checked here: <code>edgecolor</code> only adds a <em>second</em>,
+  separate edge color on top of whatever fills the marker -- it does
+  not make the fill transparent. <code>spec.color=None</code> +
+  <code>edgecolor=&lt;green&gt;</code> happens to <em>look</em> hollow on bokeh only, because
+  bokeh's own <code>fill_color=None</code> (what <code>color=None</code> forwards to, see
+  <code>plotmux.backends.bokeh.scatter.render_scatter</code>) is bokeh's native
+  "transparent fill" value; on matplotlib/altair/plotly/xy, <code>color=None</code>
+  instead falls back to that library's own default <em>opaque</em> fill, so
+  the same spec renders filled everywhere but bokeh. This was folded
+  into the "no-fill marker" gap identified in the log plot case study,
+  closed there by <code>ScatterSpec.fill</code>.</li>
+<li><strong>Two figures side by side.</strong> Already <code>plotmux.grid(fig1_spec,
+  fig2_spec, ncols=2)</code>.</li>
+</ul>
+<p>Two gaps were found, both new (not raised by the slope case study).
+Both are now closed:</p>
+<ul>
+<li><strong>Legend title.</strong> Bokeh's <code>p.legend.title = "Markers"</code> sets a
+  heading on the legend box itself, independent of the figure title.
+  plotmux had no equivalent field anywhere: <code>BaseSpec</code> has <code>title</code>
+  (the figure/axes title) but nothing for the legend specifically, so
+  there was no way to reproduce <code>p1.legend.title = 'Markers'</code>/
+  <code>p2.legend.title = 'Lines'</code>. Closed by a <code>BaseSpec</code>-level
+  <code>legend_title: str | None</code> field (figure-level, like
+  <code>title</code>/<code>background_color</code>, since a legend belongs to the axes as a
+  whole, not to any one mark), applied once in each backend's
+  <code>apply_common_style</code>: matplotlib <code>ax.legend(title=...)</code>, re-issued
+  only when a legend already exists (i.e. some mark set a <code>label</code> and
+  its own renderer already called the label-less <code>ax.legend()</code>) to
+  avoid a spurious "no artists with labels found" warning otherwise;
+  bokeh <code>fig.legend.title = ...</code>, guarded the same way (<code>if
+  fig.legend:</code>) since bokeh warns when setting a legend property with
+  no legend yet added; altair re-<code>encode</code>s <code>color</code> with
+  <code>alt.Legend(title=...)</code>, replacing the hardcoded
+  <code>legend=alt.Legend(title=None)</code> <code>color_encoding</code> sets on a labeled
+  mark -- Vega-Lite's shared top-level encoding on a <code>LayerSpec</code> makes
+  this a no-op when no mark carries a label, same as every other
+  backend; plotly <code>fig.update_layout(legend_title_text=...)</code>; xy
+  appends an <code>xy.legend(title=...)</code> chrome child alongside the
+  <code>x_axis</code>/<code>y_axis</code> pair <code>apply_common_style</code> already adds, needing no
+  guard since an unlabeled <code>xy.legend()</code> simply draws nothing.
+  <code>GridSpec</code>/<code>LayerSpec</code> themselves needed no change: <code>legend_title</code>
+  is a <code>BaseSpec</code> field like <code>title</code>, so a <code>layer()</code> call already
+  exposes it the same way <code>title</code> is exposed.</li>
+<li><strong>Marker shape.</strong> Bokeh's <code>marker="square"</code> (vs. the implicit
+  default circle) had no <code>ScatterSpec</code> equivalent: <code>ScatterSpec</code> had
+  <code>color</code>, <code>size</code>, <code>edgecolor</code>, and <code>alpha</code>, but no shape field, so
+  every plotmux scatter series rendered as whatever each backend's own
+  default marker shape is, with no way to request a square, triangle,
+  cross, etc. Closed by <code>ScatterSpec.marker: Literal["circle", "square",
+  "triangle", "diamond", "cross", "x"] | None = None</code> (a small,
+  backend-portable set rather than passing through each backend's full
+  native marker vocabulary, mirroring how <code>LineSpec.linestyle</code> exposes
+  four portable names rather than every backend's native dash
+  vocabulary), translated per backend: matplotlib
+  <code>Axes.scatter(marker=...)</code> via a <code>MARKER_STYLE</code> table
+  (<code>plotmux.backends.matplotlib.scatter.MARKER_STYLE</code>, mapping to
+  <code>"o"</code>/<code>"s"</code>/<code>"^"</code>/<code>"D"</code>/<code>"+"</code>/<code>"x"</code>); bokeh <code>figure.scatter(marker=
+  ...)</code>, which accepts plotmux's own names directly, no table needed;
+  altair <code>mark_point(shape=...)</code> via
+  <code>plotmux.backends.altair.style.MARKER_STYLE</code> (<code>"circle"</code>/<code>"square"</code>/
+  <code>"triangle-up"</code>/<code>"diamond"</code>/<code>"cross"</code> -- no <code>"x"</code> entry, altair's
+  only asymmetry in this set, same pattern as <code>BarSpec.width</code>'s altair
+  gap; <code>marker="x"</code> silently falls back to altair's own default shape
+  rather than raising); plotly <code>go.Scatter(marker_symbol=...)</code> via
+  <code>plotmux.backends.plotly.style.MARKER_STYLE</code> (every one of the six
+  names has a direct plotly equivalent); xy <code>xy.scatter(symbol=...)</code>,
+  which -- like bokeh -- accepts plotmux's own names directly.</li>
+</ul>
+<p>Both gaps closed following the same precedent as the slope case study:
+small, additive <code>BaseSpec</code>/<code>ScatterSpec</code> fields, no new mechanism.</p>
+<h2 id="case-study-reproducing-bokehs-log-plot-example">Case study: reproducing bokeh's log plot example<a class="headerlink" href="#case-study-reproducing-bokehs-log-plot-example" title="Permanent link">&para;</a></h2>
+<p>Checked against
+<a href="https://docs.bokeh.org/en/latest/docs/examples/basic/annotations/logplot.html">bokeh's <code>logplot</code> annotation example</a>
+(one figure, log y-axis spanning <code>0.001</code> to <code>10**22</code>, explicit
+<code>x_range=(0, 5)</code>, a light-gray figure background, six labeled <code>y=...</code>
+curves -- most drawn as a plain line, two paired with a scatter on the
+same data, one scatter left hollow (<code>fill_color=None</code>) -- using dashed,
+dotted, and dotdash line styles, a legend positioned <code>top_left</code>) to see
+whether it is reproducible through plotmux's unified API, unchanged, on
+all five backends. Most of it already is:</p>
+<ul>
+<li><strong>Log y-axis, explicit y bounds spanning many orders of magnitude,
+  figure background color.</strong> Already <code>yscale="log"</code>, <code>ymin=0.001</code>,
+  <code>ymax=10.0**22</code>, <code>background_color="#fafafa"</code> -- all closed by the
+  slope case study (see <code>BaseSpec.yscale</code>/<code>ymin</code>/<code>ymax</code>/
+  <code>background_color</code>).</li>
+<li><strong>Labeled lines and line+scatter pairs sharing one legend entry,
+  dashed/dotted line styles, per-line color and width.</strong> Already
+  <code>LineSpec.label</code>/<code>color</code>/<code>linewidth</code>/<code>linestyle</code> plus a <code>layer()</code>
+  call per curve that needs both a line and a scatter on the same
+  data, same as the legend case study's scatter+line merge -- no gap.</li>
+</ul>
+<p>Three gaps were found, none raised by the slope or legend case
+studies. All three are now closed:</p>
+<ul>
+<li><strong>Explicit x-axis bounds.</strong> Bokeh's <code>x_range=(0, 5)</code> had no plotmux
+  equivalent: <code>BaseSpec</code> had <code>ymin</code>/<code>ymax</code> (see the slope case study)
+  but no <code>xmin</code>/<code>xmax</code> counterpart at the same figure level --
+  <code>xmin</code>/<code>xmax</code> existed only on <code>HistogramSpec</code>/<code>CdfSpec</code>, resolved
+  through <code>find_range</code>'s quantile-or-explicit convention against that
+  spec's own single data array, which is a different feature (a
+  data-driven bound) from a plain axis-range override that applies
+  regardless of chart type. Closed by a <code>BaseSpec</code>-level
+  <code>xmin: float | None</code>/<code>xmax: float | None</code> pair, explicit-value-only
+  like <code>ymin</code>/<code>ymax</code> (not the quantile-string form), applied post-hoc
+  in each backend's <code>apply_common_style</code> alongside <code>ymin</code>/<code>ymax</code>:
+  matplotlib <code>Axes.set_xlim</code>; bokeh <code>figure.x_range.start</code>/<code>.end</code>;
+  altair <code>alt.Scale(domainMin=..., domainMax=...)</code> on the x encoding;
+  plotly <code>fig.update_layout(xaxis_range=[xmin, xmax])</code>, only forwarded
+  when both bounds are set together (plotly's <code>xaxis.range</code> takes both
+  at once, same "only both set together are forwarded" caveat
+  <code>ymin</code>/<code>ymax</code> already documents for plotly/xy); xy
+  <code>xy.x_axis(domain=(xmin, xmax))</code>, same both-bounds-together caveat.
+  This sits alongside <code>HistogramSpec.xmin</code>/<code>CdfSpec.xmin</code> without
+  replacing them -- those two remain quantile-capable and data-scoped
+  (<code>float | str | None</code>, kept <code>kw_only=True</code> so redeclaring the field
+  name in the subclass does not disturb <code>BaseSpec.values</code>'s
+  required-field position in the generated <code>__init__</code>); the new field
+  is a plain figure-level override open to every chart type, the
+  <code>xmin</code>/<code>xmax</code> analogue of <code>ymin</code>/<code>ymax</code>. <code>BaseSpec._validate_base</code>'s
+  <code>xmin &gt; xmax</code> check guards with <code>isinstance(..., Real)</code> so it never
+  fires on an unresolved quantile string from either subclass.</li>
+<li><strong>Legend position.</strong> Bokeh's <code>p.legend.location = "top_left"</code> had no
+  plotmux equivalent, the same shape of gap as the legend case study's
+  once-open <code>legend_title</code> gap: <code>BaseSpec</code> had <code>legend_title</code> but
+  nothing for legend <em>position</em>. Closed by a <code>BaseSpec</code>-level
+  <code>legend_location: Literal["best", "top_left", "top_right",
+  "bottom_left", "bottom_right", "top", "bottom", "left", "right"] |
+  None = None</code> field, shipped alongside <code>legend_title</code> as one
+  <code>legend_title</code>/<code>legend_location</code> pair rather than two unrelated
+  additions, since both are set together in the bokeh original
+  (<code>p.legend.title</code>/<code>p.legend.location</code>) and both apply post-hoc in the
+  same <code>apply_common_style</code> step: matplotlib <code>ax.legend(loc=...)</code> via a
+  <code>LEGEND_LOCATION</code> name-mapping table (matplotlib spells its own
+  locations <code>"upper left"</code>-style; <code>"best"</code> already matches matplotlib's
+  own name and needs no entry); bokeh <code>fig.legend.location = ...</code>,
+  bokeh's own vocabulary directly except <code>"best"</code> (bokeh has no
+  auto-placement location, so that one name is left as a no-op,
+  falling back to bokeh's own default); altair
+  <code>alt.Legend(orient=...)</code> via its own <code>LEGEND_LOCATION</code> table (altair's
+  <code>orient</code> supports the four outer edges plus the four corners, all
+  <em>outside</em> the plot area -- unlike matplotlib's inside-the-plot <code>loc</code>,
+  so a given <code>legend_location</code> renders in a visibly different spot on
+  altair, a small, permanent per-backend asymmetry; <code>"best"</code> again has
+  no altair equivalent and is left as a no-op); plotly
+  <code>fig.update_layout(legend=dict(x=..., y=..., xanchor=..., yanchor=
+  ...))</code> via a name-to-fractional-coordinates table (plotly has no
+  named corner enum, only <code>x</code>/<code>y</code>; <code>"best"</code> again a no-op); xy
+  <code>xy.legend(loc=...)</code>, needing no translation table at all -- xy's own
+  <code>legend_loc</code> validator underscore/space-tokenizes its input and
+  matches plotmux's own portable names directly, <code>"best"</code> included (xy
+  natively supports "best" auto-placement).</li>
+<li><strong>Hollow (no-fill) marker as a portable concept.</strong> Distinct from the
+  marker-<em>shape</em> gap in the legend case study: even with a circular
+  marker, this example's <code>p.scatter(x, x**2, fill_color=None,
+  line_color="olivedrab")</code> had no reliable plotmux equivalent because
+  <code>ScatterSpec.color</code> has no "explicitly transparent" value distinct
+  from "unset, use the backend default" -- <code>color=None</code> means the
+  latter, and as the correction above notes, only bokeh's own default
+  for an unset fill happens to be transparent; every other backend's
+  default fill is opaque, so the same spec rendered filled markers on
+  matplotlib/altair/plotly/xy and a hollow one only on bokeh. Closed by
+  a tri-state <code>ScatterSpec.fill: bool | None = None</code> (<code>None</code>/<code>True</code> =
+  filled, using <code>color</code>, unchanged behavior; <code>False</code> = no fill, drawing
+  only the <code>edgecolor</code>/<code>color</code> outline), translated per backend:
+  matplotlib <code>Axes.scatter(facecolors="none", edgecolors=&lt;outline&gt;)</code>
+  when <code>fill is False</code> (<code>color</code> is popped from the call first --
+  <code>Axes.scatter</code> rejects passing both <code>color</code> and <code>facecolors</code>/
+  <code>edgecolors</code> at once); bokeh <code>fill_color=None</code> (today's accidental
+  bokeh-only path becomes the explicit, intentional one); altair
+  <code>mark_point(filled=False)</code>, overriding the <code>filled=True</code> the
+  <code>edgecolor</code> path sets when both are given; plotly
+  <code>go.Scatter(marker=dict(color="rgba(0, 0, 0, 0)"))</code> with the outline
+  drawn via <code>marker.line</code> (already wired for <code>edgecolor</code>); xy
+  <code>xy.scatter(color="rgba(0, 0, 0, 0)", stroke=&lt;outline&gt;,
+  stroke_width=1.0)</code> -- xy has no dedicated "no fill" mark property
+  either, so (like plotly) the fill is forced fully transparent and
+  the outline carried by <code>stroke</code>.</li>
+</ul>
+<p>All three closed following the same precedent as the slope and legend
+case studies: small, additive <code>BaseSpec</code>/<code>ScatterSpec</code> fields, no new
+mechanism. <code>legend_location</code> shipped together with the legend case
+study's <code>legend_title</code> rather than separately, since both describe the
+same <code>BaseSpec</code>-level "legend" concept and both are set together in
+this example's own bokeh source.</p>
+<h2 id="case-study-reproducing-bokehs-stacked-bar-example">Case study: reproducing bokeh's stacked bar example<a class="headerlink" href="#case-study-reproducing-bokehs-stacked-bar-example" title="Permanent link">&para;</a></h2>
+<p>Checked against
+<a href="https://docs.bokeh.org/en/latest/docs/examples/basic/bars/stacked.html">bokeh's <code>stacked</code> bar chart example</a>
+(one <code>vbar_stack</code> call stacking three year-series on top of each other
+per fruit, a categorical (string) x-axis, a fixed 3-color palette, a
+horizontal legend pinned top-left, hover tooltips, and assorted chrome
+removal -- no gridlines, no minor ticks, no plot outline) to see
+whether it is reproducible through plotmux's unified API, unchanged,
+on all five backends. Unlike the slope/legend/log-plot case studies,
+this was not close to reproducible: it needed one significant new
+capability, hit a portability gap in an existing one, and legitimately
+sits in the goal's stated non-goal territory for the rest.</p>
+<ul>
+<li><strong>Stacking.</strong> No plotmux equivalent at all: <code>BarSpec</code> is a single
+  series, and <code>layer()</code>'s <code>BarSpec</code> support draws each child's bars
+  independently onto the shared axes with no coordination between
+  them -- several <code>BarSpec</code>s at the same <code>x</code> positions simply overlap
+  (each fully drawn, the last child on top), they do not stack into
+  cumulative segments the way <code>vbar_stack</code> does. Closed by a new chart
+  type, <code>StackedBarSpec(x, series: tuple[BarSeries, ...])</code> (a small
+  per-series <code>(y, label, color)</code> tuple, mirroring how
+  <code>LayerSpec.layers</code> holds a tuple of children) rather than overloading
+  <code>layer()</code> -- stacking is a different composition rule from layering
+  (cumulative y-offset vs. shared axes), so it earned its own spec and
+  its own <code>_RENDERERS</code> entry per backend, the same reasoning that gave
+  <code>BarSpec</code> itself its own spec rather than folding it into
+  <code>HistogramSpec</code>: matplotlib <code>Axes.bar(..., bottom=running_total)</code>,
+  incrementing <code>running_total</code> per series (matplotlib's own idiom for
+  a stacked bar, no native stacking primitive); bokeh
+  <code>figure.vbar_stack(names, x=..., source=...)</code> directly (bokeh's own
+  primitive, matched almost one-to-one); altair
+  <code>mark_bar().encode(x=..., y=..., color=...)</code> with the data reshaped
+  long-form (one row per <code>(x, series)</code> pair) -- Vega-Lite stacks a bar
+  mark automatically whenever <code>y</code> is quantitative and <code>color</code> is a
+  discrete encoding, no explicit stacking argument needed; plotly
+  <code>go.Bar</code> per series plus <code>fig.update_layout(barmode="stack")</code>; xy
+  its own equivalent, checked against <code>xy.bar_chart</code>'s own API.</li>
+<li><strong>Categorical (string) x-axis.</strong> <code>BarSpec.x</code> was typed and documented
+  as an array of positions, and every renderer reflected that
+  assumption inconsistently across backends when <code>x</code> actually held
+  strings (e.g. <code>fruits = ["Apples", "Pears", ...]</code>, this example's
+  own <code>x</code>): it worked, unchanged, on matplotlib and plotly (both
+  accept a string <code>x</code> natively), but was broken on bokeh (needs a
+  categorical <code>FactorRange</code> x_range constructed up front) and altair
+  (hardcoded a quantitative <code>:Q</code> x encoding rather than a categorical
+  <code>:N</code> one), and was unverified on xy. Closed by detecting a
+  non-numeric <code>spec.x</code> and having bokeh's renderer construct its
+  <code>figure</code> with a categorical <code>x_range</code> and altair's <code>render_bar</code>
+  encode <code>x="x:N"</code> instead of <code>x="x:Q"</code> in that case, landed together
+  with the stacking fix above since <code>StackedBarSpec</code>'s own <code>x</code> has
+  exactly the same categorical-vs-numeric question.</li>
+<li><strong>Legend orientation</strong> (<code>p.legend.orientation = "horizontal"</code>). A
+  third legend-chrome field, alongside the legend case study's
+  <code>legend_title</code> and the log-plot case study's <code>legend_location</code>, that
+  plotmux had no equivalent for. Closed as a third field in the same
+  batch: <code>legend_orientation: Literal["vertical", "horizontal"] | None
+  = None</code>, applied in <code>apply_common_style</code>: matplotlib
+  <code>ax.legend(ncols=len(handles))</code> when <code>"horizontal"</code> (matplotlib has
+  no direct orientation flag, only a column count, so horizontal is
+  approximated as one row); bokeh <code>fig.legend.orientation = ...</code>
+  directly (bokeh's own vocabulary, matched one-to-one); altair
+  <code>alt.Legend(direction=...)</code>; plotly
+  <code>fig.update_layout(legend=dict(orientation="h" if ... else "v"))</code>;
+  xy its own equivalent, checked against its legend API.</li>
+</ul>
+<p>Deliberately <strong>not</strong> treated as gaps, matching the project goal's
+stated non-goals:</p>
+<ul>
+<li><strong>Hover tooltips</strong> (<code>tools="hover", tooltips="$name @fruits:
+  @$name"</code>). An interactive, backend-specific power feature with no
+  meaning on matplotlib (a static image) and no obvious common
+  vocabulary across bokeh/plotly's very different tooltip-templating
+  systems and altair's own <code>tooltip</code> encoding channel; reachable per
+  backend via <code>Figure.to_native()</code>, the documented escape hatch for
+  exactly this kind of niche, backend-specific feature, not a
+  candidate for the unified API.</li>
+<li><strong>Gridline/minor-tick/outline removal, <code>toolbar_location=None</code>,
+  <code>x_range.range_padding</code>.</strong> Fine-grained chrome cosmetics with no
+  existing common-style precedent (unlike <code>background_color</code>, which
+  <em>is</em> on <code>BaseSpec</code> because every backend has an equally central
+  notion of "figure background"); same escape-hatch treatment as
+  above.</li>
+</ul>
+<p>Stacking was the first of these four case studies to require a
+genuinely new spec type rather than a new field on an existing one;
+the categorical-x-axis fix was a prerequisite for stacking to be
+usable with string categories (this example's own case) even though it
+is independently useful for plain <code>BarSpec</code> too.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 - present Thibaut Durand
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.expand", "content.code.copy", "content.code.select", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"method": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
