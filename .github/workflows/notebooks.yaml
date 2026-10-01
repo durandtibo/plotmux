@@ -21,7 +21,7 @@ jobs:
       # Install dependencies including Jupyter and all optional extras used
       # by the notebooks (e.g. matplotlib, xy).
       - name: Setup python environment
-        uses: durandtibo/setup-venv-uv-action@v0.1.0
+        uses: durandtibo/setup-venv-uv-action@v0.2.0
         with:
           install-args: '--jupyter-deps'
 
