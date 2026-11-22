@@ -178,34 +178,53 @@ class GridSpec(Spec):                        # independent panels
 
 ```python
 @dataclass(frozen=True)
-class Bars:        # histogram, bar, stacked bar (one Bars per series)
-    x: np.ndarray                    # centers (float) or categories (str)
+class Bars:  # histogram, bar, stacked bar (one Bars per series)
+    x: np.ndarray  # centers (float) or categories (str)
     height: np.ndarray
-    base: np.ndarray                 # zeros, or the running total of a stacked bar
-    width: float | np.ndarray        # data units; a fraction of the band when x is categorical
-    color: RGBA; alpha: float | None; label: str | None
+    base: np.ndarray  # zeros, or the running total of a stacked bar
+    width: float | np.ndarray  # data units; a fraction of the band when x is categorical
+    color: RGBA
+    alpha: float | None
+    label: str | None
+
 
 @dataclass(frozen=True)
-class Line:        # line, CDF steps, slope (two endpoints)
-    x: np.ndarray; y: np.ndarray
-    color: RGBA; alpha: float | None; linewidth: float | None; linestyle: str; label: str | None
+class Line:  # line, CDF steps, slope (two endpoints)
+    x: np.ndarray
+    y: np.ndarray
+    color: RGBA
+    alpha: float | None
+    linewidth: float | None
+    linestyle: str
+    label: str | None
+
 
 @dataclass(frozen=True)
-class Points:      # scatter
-    x: np.ndarray; y: np.ndarray
-    color: RGBA; alpha: float | None; size: float | None
-    marker: str | None; fill: bool | None; edgecolor: RGBA | None; label: str | None
+class Points:  # scatter
+    x: np.ndarray
+    y: np.ndarray
+    color: RGBA
+    alpha: float | None
+    size: float | None
+    marker: str | None
+    fill: bool | None
+    edgecolor: RGBA | None
+    label: str | None
+
 
 @dataclass(frozen=True)
 class AxesScene:
     primitives: tuple[Bars | Line | Points, ...]
     title, xlabel, ylabel, xscale, yscale, xlim, ylim, background_color
-    legend: LegendStyle | None       # None when no primitive has a label
+    legend: LegendStyle | None  # None when no primitive has a label
     categories: tuple[str, ...] | None
+
 
 @dataclass(frozen=True)
 class GridScene:
-    panels: tuple[AxesScene, ...]; ncols: int; title: str | None
+    panels: tuple[AxesScene, ...]
+    ncols: int
+    title: str | None
 ```
 
 `build_scene(spec)` is a pure function of the spec:
@@ -259,16 +278,16 @@ class Backend(ABC):
     name: ClassVar[str]
 
     @abstractmethod
-    def capabilities(self) -> BackendCapabilities: ...        # formats, legend locations, markers
+    def capabilities(self) -> BackendCapabilities: ...  # formats, legend locations, markers
     @abstractmethod
     def draw(self, scene: AxesScene | GridScene) -> Any: ...  # the native figure
     @abstractmethod
     def save(self, native: Any, path: Path, fmt: str) -> None: ...
-    def show(self, native: Any) -> None: ...                   # default: NotImplementedError
+    def show(self, native: Any) -> None: ...  # default: NotImplementedError
     def mimebundle(self, native: Any) -> dict[str, Any] | None: ...  # default: native's own repr
 
-    def render(self, spec: FigureSpec) -> Any:                 # concrete, not overridden
-        capabilities.check(spec)                               # UnsupportedSpecError, before drawing
+    def render(self, spec: FigureSpec) -> Any:  # concrete, not overridden
+        capabilities.check(spec)  # UnsupportedSpecError, before drawing
         return self.draw(build_scene(spec))
 ```
 
@@ -282,9 +301,9 @@ class Backend(ABC):
   @dataclass(frozen=True)
   class BackendCapabilities:
       name: str
-      formats: frozenset[str]                  # panels
-      grid_formats: frozenset[str]             # {"html"} on xy
-      legend_locations: frozenset[str]         # the portable set, minus what the library lacks
+      formats: frozenset[str]  # panels
+      grid_formats: frozenset[str]  # {"html"} on xy
+      legend_locations: frozenset[str]  # the portable set, minus what the library lacks
       markers: frozenset[str]
   ```
 
@@ -345,21 +364,48 @@ plotmux` reads **no** entry point (F8): `known_backend_names()` reads their name
 
 ```python
 class PanelOptions(TypedDict, total=False):
-    title: str | None; xlabel: str | None; ylabel: str | None
-    xscale: Literal["linear", "log"]; yscale: Literal["linear", "log"]
-    ymin: float | None; ymax: float | None
+    title: str | None
+    xlabel: str | None
+    ylabel: str | None
+    xscale: Literal["linear", "log"]
+    yscale: Literal["linear", "log"]
+    ymin: float | None
+    ymax: float | None
     background_color: Color
-    legend_title: str | None; legend_location: LegendLocation | None
+    legend_title: str | None
+    legend_location: LegendLocation | None
     legend_orientation: Literal["vertical", "horizontal"] | None
     backend: str | None
 
-class BoundedPanelOptions(PanelOptions, total=False):    # adds the axis limits
-    xmin: float | None; xmax: float | None
 
-def hist(values, *, bins=30, xmin=None, xmax=None, density=False,
-         label=None, color=None, alpha=None, **panel: Unpack[PanelOptions]) -> Figure: ...
-def line(x, y, *, label=None, color=None, alpha=None, linewidth=None, linestyle="solid",
-         **panel: Unpack[BoundedPanelOptions]) -> Figure: ...
+class BoundedPanelOptions(PanelOptions, total=False):  # adds the axis limits
+    xmin: float | None
+    xmax: float | None
+
+
+def hist(
+    values,
+    *,
+    bins=30,
+    xmin=None,
+    xmax=None,
+    density=False,
+    label=None,
+    color=None,
+    alpha=None,
+    **panel: Unpack[PanelOptions],
+) -> Figure: ...
+def line(
+    x,
+    y,
+    *,
+    label=None,
+    color=None,
+    alpha=None,
+    linewidth=None,
+    linestyle="solid",
+    **panel: Unpack[BoundedPanelOptions],
+) -> Figure: ...
 ```
 
 `hist`/`cdf` take `PanelOptions` (their `xmin`/`xmax` are the data range, 3.1); the other charts
@@ -380,12 +426,22 @@ signature, whatever the backend.
 
 ```python
 # plotmux
-hist, bar, stacked_bar, cdf, line, scatter, slope, layer, grid     # (see 3.7)
+hist, bar, stacked_bar, cdf, line, scatter, slope, layer, grid  # (see 3.7)
 set_backend, backend, __version__
 
 # plotmux.specs
-MarkSpec, HistogramSpec, CdfSpec, BarSpec, StackedBarSpec, BarSeries, LineSpec, ScatterSpec, SlopeSpec
-PanelSpec, GridSpec                                                # LayerSpec, BaseSpec, XBoundSpec removed
+(
+    MarkSpec,
+    HistogramSpec,
+    CdfSpec,
+    BarSpec,
+    StackedBarSpec,
+    BarSeries,
+    LineSpec,
+    ScatterSpec,
+    SlopeSpec,
+)
+PanelSpec, GridSpec  # LayerSpec, BaseSpec, XBoundSpec removed
 
 # plotmux.scene
 build_scene, AxesScene, GridScene, Bars, Line, Points
@@ -394,7 +450,7 @@ build_scene, AxesScene, GridScene, Bars, Line, Points
 Backend, BackendCapabilities, get_backend, register_backend, capabilities, available_backends
 
 # plotmux.figure, plotmux.export, plotmux.config, plotmux.exceptions, plotmux.colors, plotmux.utils
-Figure, save, ...                                                  # unchanged unless listed in 3
+Figure, save, ...  # unchanged unless listed in 3
 ```
 
 Removed: `LayerSpec`, `BaseSpec` (the figure fields), `XBoundSpec`, `check_equal_length` (replaced
