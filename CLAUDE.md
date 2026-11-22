@@ -1,0 +1,188 @@
+# Instructions for coding agents
+
+## Environment
+
+- Use the virtual environment in `.venv`: `.venv/bin/python`, `.venv/bin/pytest`, `.venv/bin/ruff`.
+  There is no `python` on the `PATH`.
+- Lint before committing with `.venv/bin/ruff check src tests`, and format with
+  `.venv/bin/black src tests` (the repository uses black, not `ruff format`; `inv check-lint`,
+  `inv check-format` and `inv docformat` run the same checks as CI). Fix the issues raised by ruff.
+  Ignoring an issue (`noqa`, a changed rule set) is not fixing it.
+- Type check with `.venv/bin/pyright` (`inv check-types`, configured in `pyproject.toml`, it checks `src`). Fix the
+  issues raised by pyright. Ignoring an issue (`type: ignore`, `pyright: ignore`, a cast that
+  hides the problem) is not fixing it.
+- Run the unit tests of the packages you changed (for example
+  `.venv/bin/pytest tests/unit/specs -q`). Some tests fail on `main`; check with `git stash`
+  before blaming your change.
+- Run the doctests of the code you changed (`.venv/bin/inv doctest-src`, which is what the
+  `doctest` workflow runs).
+- `make lint` and `make format` check and format the non-Python files (YAML, Makefile, shell,
+  TOML, Markdown, GitHub Actions workflows). Run them when you change such files. `make help`
+  lists all the targets.
+
+## Workflow
+
+- One branch and one pull request per logical change (one feature, one bug fix, one refactor).
+  Branch from an up to date `main`.
+- Name the branch `<type>/<short-description>` in lowercase kebab-case, for example
+  `feat/add-cache-option` or `bugfix/handle-empty-input`. Use one of these types:
+  `feat` (new feature), `bugfix` (bug fix), `hotfix` (urgent fix), `docs` (documentation),
+  `refactor` (no behaviour change), `perf` (performance), `test` (tests only),
+  `chore` (maintenance, dependencies, tooling), `ci` (CI configuration).
+- Do not commit or push to `main`.
+- When working on several sequential PRs where one depends on the previous one, use stacked PRs:
+  branch each PR from the branch of the previous one (not from `main`) and open it with the
+  previous branch as its base. Keep each PR small and reviewable on its own. Once a PR of the stack
+  is merged, retarget the next PR to `main` and merge `origin/main` into it.
+- Write commit messages and PR titles as a short imperative sentence starting with a verb such as
+  `Add`, `Fix`, `Update`, `Remove` or `Improve`. Do not use conventional-commit prefixes like
+  `docs:` or `feat:` (the type prefix is only for branch names). The squash-merge appends the PR
+  number, so do not add one.
+- In the PR description, say what was changed, what was deliberately not changed, and any
+  behaviour change (for example a changed output, or a breaking change of the signature).
+- Do not escape special characters such as the backtick (`` ` ``) in the PR title or description
+  (no `\``): the backslash is not rendered well. Write the characters as is.
+- When a PR conflicts with `main`, merge `origin/main` into the branch and resolve the conflicts
+  (do not rebase and force-push). Most conflicts are two PRs appending tests at the end of the
+  same test file: keep both. Check what `main` already contains before choosing a side.
+- Update any tracking document affected by the change (`DESIGN.md`, the documentation in
+  `docs/docs/`, the notebooks in `notebooks/`, an issue), with the PR number when it tracks
+  changes. There is no changelog file: the release notes are the GitHub releases.
+
+## Code
+
+- Match the surrounding code: comment density, naming, docstring style (Google style with
+  `Args:`, `Returns:`, `Raises:` and a `pycon` example that runs as a doctest).
+- Follow the current style of the repository in everything you add (source, tests, docs, commit
+  messages, PR descriptions). Look at a few neighbouring files first, and do not introduce a new
+  convention or reformat code you do not otherwise change.
+- Every module starts with an `r"""..."""` docstring, then `from __future__ import annotations`,
+  then `__all__`. Imports used only for type annotations go under `if TYPE_CHECKING:`.
+- Shared helpers belong in `plotmux.utils` as public functions (no leading underscore) with their
+  own tests, not as private functions imported across modules.
+- Raise the exceptions of `plotmux.exceptions` (for example `BackendNotFoundError`, and the
+  spec validation error) rather than a bare `ValueError`/`RuntimeError` when one fits.
+- Keep new options keyword-only (`*`).
+- The core package depends only on `coola` and `numpy`. Optional libraries (matplotlib, bokeh,
+  altair, plotly, xy) are imported lazily; do not import them at module level in `src`. Use the
+  helpers in `plotmux.utils.imports` to check whether a library is available, and keep each
+  backend inside `plotmux.backends.<name>`.
+- A new chart type is a spec in `plotmux.specs`, with a renderer in every backend that supports
+  it and an entry in the backend capabilities. A new backend is registered through
+  `plotmux.backends.registry`. Read `DESIGN.md` before changing the architecture, and update it
+  when the architecture changes.
+- Every function, public or private (leading underscore), needs a docstring and its own unit
+  tests. Private functions are not exempt. An override that adds nothing to the docstring of the
+  method it overrides (same behaviour, arguments and exceptions) has no docstring: it inherits the
+  parent's. Document an override only when it adds something (for example a `Raises:` section).
+- Document the constructor arguments (`Args:`, `Raises:`) in the class docstring, not in a
+  docstring of `__init__`, as the existing classes do. Do not add a docstring to `__init__`
+  or to the other dunder methods (`__repr__`, `__str__`, `__eq__`, ...).
+- Keep docstrings and documentation up to date and comprehensive: update them whenever the
+  behaviour, signature or options of the code change.
+- Target Python 3.10 and above: do not use syntax or standard-library features that are newer.
+
+## Tests
+
+- Always write tests for the code in `src/`, including every private function. Unit tests must be
+  fast and efficient; move big or slow tests to `tests/integration/` if needed.
+- Unit tests mirror the source tree (`tests/unit/<package>/test_<module>.py`). Tests that render
+  with a real backend library go in `tests/integration/backends/<name>/`.
+- Do not use local imports inside tests (for example `import matplotlib` in a test body). Import
+  at the top of the module; use the `*_available` markers from `plotmux.testing.fixtures` for
+  optional libraries.
+- One behaviour per test: a test has one `assert` or one `pytest.raises`. Split a test that checks
+  several things (equal, different, negative, ...) into several tests.
+- Keep the unit tests simple and fast: no sleeps, no large data, no real network or heavy I/O,
+  and no logic (loops, branches) in the test body. Anything slow belongs in
+  `tests/integration/`.
+- Add the missing tests to get 100% coverage of the code you add or change
+  (`.venv/bin/pytest <tests> --cov=plotmux --cov-report=term-missing`). Do not use
+  `# pragma: no cover` to skip a line that can be tested.
+- Use `pytest.mark.parametrize` for the same check on several values.
+- Every `pytest.raises` (and `pytest.warns`) must define `match` with a regular expression for the
+  message (raw string if it has metacharacters), so a test does not pass on an unrelated error of
+  the same type. An exception raised by a patched stand-in needs an explicit message for the same
+  reason (`side_effect=KeyboardInterrupt("interrupted")`, not `side_effect=KeyboardInterrupt`).
+- Add a regression test for every bug fixed, and check that it fails without the fix (revert the
+  `src` change with `git stash push src` and run it).
+- Do not add tests for the exports of `__all__` or other trivial structure.
+- Section headers in the tests have three lines. The second line is `#`, 5 spaces, the name,
+  5 spaces and `#`. The first and third lines repeat `#` to match the length of the second line:
+
+  ```python
+  ###########################
+  #     Tests for Fixed     #
+  ###########################
+  ```
+
+- Seed random data (`default_rng(0)`); no unseeded randomness in tests.
+- Patching (`monkeypatch`, `unittest.mock.patch`) is fine in unit tests: it keeps them fast and
+  simple and isolates the logic under test. But a patched test only proves the logic works against
+  the patched stand-in, which may not match the real collaborator (signature, return type,
+  behaviour). A passing patched unit test does not mean the feature works. Every patched behaviour
+  needs an integration test in `tests/integration/` that exercises the real thing without patching.
+  The two kinds of test have different purposes; do not drop one because the other exists.
+
+### Test assertions
+
+- When asserting an expected value, write the final computed number, not the arithmetic
+  expression that produces it (for example `0.6666666666666666`, not `1.0 * 0.4 + 0.0 * 0.2`).
+  If the derivation is not obvious, keep the expression as a comment above the assertion.
+- When a function returns a composite value (a dict, a list, ...), include at least one test that
+  asserts the entire output against a fully-specified literal, not only individual keys or fields.
+  This catches unexpected extra or missing entries that per-field assertions miss:
+
+  ```python
+  result = compute(...)
+  assert result == {...}
+  ```
+
+### Test coverage
+
+When implementing or modifying a function, write comprehensive unit tests, not just a happy-path
+check. Cover, where applicable:
+
+- Typical inputs.
+- Edge cases: empty inputs, single-element inputs, duplicate inputs.
+- Boundary values (0, negative numbers, min/max of a valid range).
+- Error conditions: inputs that should raise, with the right exception type and message
+  (including errors raised by collaborators the function calls).
+- Interactions between parameters, for example a cross-product of two input lists, or the order
+  of output keys or entries.
+- Side effects: the function does not mutate its inputs, is deterministic across repeated calls,
+  and does not leak state when given reused or stateful collaborators.
+- Backend behaviour: when a spec or option is added, test it on every backend that supports it
+  and test the error raised on the backends that do not.
+
+Prefer many small, precisely named tests (one behavior per test) over a few broad ones, so a
+failure points at the specific behavior that broke.
+
+## GitHub Actions workflows
+
+The workflows are in `.github/workflows/`.
+
+- `ci.yaml` is the single entry point of the checks (pull request, push to `main`). The
+  checks (`test`, `coverage`, `doctest`, `format`, `type-checking`, `cyclic-imports`,
+  `pre-commit`, `notebooks`, `build`, ...) are reusable workflows (`workflow_call`, plus
+  `workflow_dispatch` to run one alone) called from `ci.yaml`. To add a check, create a
+  reusable workflow and add a job in `ci.yaml`.
+- The other workflows are standalone: scheduled automation that opens pull requests
+  (`update-deps.yaml`, `pre-commit-autoupdate.yaml`, `generate-package-versions.yaml`), the
+  nightly tests of the published package (`nightly-*.yaml`), the documentation (`docs*.yaml`),
+  the release to PyPI (`pypi.yaml`) and the dependency review.
+- Conventions: a header comment that says what the workflow does and when it runs; minimal
+  `permissions` (`contents: read` at the workflow level, more only on the job that needs it);
+  follow the existing workflows for the setup of the environment and the use of `inv` tasks.
+- `verify-workflows.yaml` lints the workflows: check your changes with `actionlint` (`make
+  lint-actions`) when available.
+
+## Releases
+
+- Releases are immutable exact version tags (`v0.0.2`, ...). Do not create or move floating tags
+  (`v0`, `latest`) and do not document them as an option.
+
+## Reporting
+
+- Report faithfully: say which tests were run, which were not, and that CI was not awaited.
+- Mention test failures that already exist on `main` instead of hiding them.
