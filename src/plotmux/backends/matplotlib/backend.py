@@ -9,8 +9,11 @@ from __future__ import annotations
 
 __all__ = ["MatplotlibBackend"]
 
+import base64
+import io
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from matplotlib import pyplot
 from matplotlib.figure import Figure as MplFigure
 
 from plotmux.backends.base import Backend, check_export_format
@@ -23,7 +26,7 @@ from plotmux.backends.matplotlib.line import render_line
 from plotmux.backends.matplotlib.scatter import render_scatter
 from plotmux.backends.matplotlib.slope import render_slope
 from plotmux.backends.matplotlib.stacked_bar import render_stacked_bar
-from plotmux.backends.matplotlib.style import apply_common_style, attach_repr_png
+from plotmux.backends.matplotlib.style import apply_common_style
 from plotmux.specs import (
     BarSpec,
     BaseSpec,
@@ -83,7 +86,6 @@ def _make_renderer(
         ax = fig.subplots()
         ax_render(ax, spec, **kwargs)
         apply_common_style(ax, spec)
-        attach_repr_png(fig)
         return fig
 
     return render
@@ -120,6 +122,40 @@ class MatplotlibBackend(Backend):
     # ``render`` is inherited from ``Backend``: it dispatches on
     # ``type(spec)`` against ``_RENDERERS`` above, so this backend does not
     # need its own copy of that dispatch body.
+
+    def show(self, native: MplFigure) -> None:
+        r"""Display a matplotlib ``Figure`` in a window.
+
+        The figure is built without pyplot (see ``_make_renderer``), so
+        it has no figure manager and ``Figure.show`` raises. This gives
+        it the manager of a new pyplot figure, then calls
+        ``pyplot.show``, which blocks in a script until the window is
+        closed. With a non-interactive matplotlib backend (e.g.
+        ``Agg``), matplotlib only emits a ``UserWarning``.
+
+        Args:
+            native: The matplotlib ``Figure`` to display.
+        """
+        canvas = pyplot.figure().canvas
+        canvas.figure = native
+        native.set_canvas(canvas)
+        pyplot.show()
+
+    def mimebundle(self, native: MplFigure) -> dict[str, Any] | None:
+        r"""Return the PNG of a matplotlib ``Figure`` for Jupyter.
+
+        ``Figure.savefig`` works on a figure built without pyplot, so
+        no canvas is attached to the figure.
+
+        Args:
+            native: The matplotlib ``Figure`` to display.
+
+        Returns:
+            A dict with the base64 encoded PNG as ``"image/png"``.
+        """
+        buffer = io.BytesIO()
+        native.savefig(buffer, format="png")
+        return {"image/png": base64.b64encode(buffer.getvalue()).decode("ascii")}
 
     def save(self, native: MplFigure, path: Path, fmt: str) -> None:
         r"""Export a matplotlib ``Figure`` to a file.

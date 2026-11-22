@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
@@ -203,3 +204,44 @@ def test_matplotlib_backend_capabilities(backend: MatplotlibBackend) -> None:
     assert caps.backend_name == "matplotlib"
     assert SlopeSpec in caps.spec_types
     assert caps.caveats == ()
+
+
+@matplotlib_available
+def test_matplotlib_backend_show_non_interactive_warns(backend: MatplotlibBackend) -> None:
+    # Regression test: ``Figure.show`` raised ``AttributeError`` on a figure
+    # built without pyplot.
+    native = backend.render(HistogramSpec(values=np.arange(101), bins=10))
+    with pytest.warns(UserWarning, match="non-interactive"):
+        backend.show(native)
+    plt.close("all")
+
+
+@matplotlib_available
+def test_matplotlib_backend_show_keeps_the_figure_saveable(
+    backend: MatplotlibBackend, tmp_path: Path
+) -> None:
+    native = backend.render(HistogramSpec(values=np.arange(101), bins=10))
+    with pytest.warns(UserWarning, match="non-interactive"):
+        backend.show(native)
+    backend.save(native, tmp_path / "out.png", "png")
+    plt.close("all")
+    assert (tmp_path / "out.png").exists()
+
+
+@matplotlib_available
+def test_matplotlib_backend_mimebundle_keys(backend: MatplotlibBackend) -> None:
+    native = backend.render(HistogramSpec(values=np.arange(101), bins=10))
+    assert list(cast("dict[str, Any]", backend.mimebundle(native))) == ["image/png"]
+
+
+@matplotlib_available
+def test_matplotlib_backend_mimebundle_is_base64_png(backend: MatplotlibBackend) -> None:
+    native = backend.render(HistogramSpec(values=np.arange(101), bins=10))
+    png = base64.b64decode(cast("dict[str, Any]", backend.mimebundle(native))["image/png"])
+    assert png.startswith(b"\x89PNG\r\n\x1a\n")
+
+
+@matplotlib_available
+def test_matplotlib_backend_mimebundle_grid(backend: MatplotlibBackend) -> None:
+    native = backend.render(GridSpec(cells=(HistogramSpec(values=np.arange(101)),)))
+    assert list(cast("dict[str, Any]", backend.mimebundle(native))) == ["image/png"]

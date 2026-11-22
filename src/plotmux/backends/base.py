@@ -32,6 +32,14 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 
+# The rich-display methods a native figure may define, by mime type.
+_REPR_METHODS = {
+    "text/html": "_repr_html_",
+    "image/svg+xml": "_repr_svg_",
+    "image/png": "_repr_png_",
+    "image/jpeg": "_repr_jpeg_",
+}
+
 
 def resolve_renderer(
     registry: dict[type[BaseSpec], Callable[..., T]], spec: BaseSpec, backend_name: str
@@ -225,6 +233,53 @@ class Backend(ABC):
         """
         renderer = resolve_renderer(self._RENDERERS, spec, self.name)
         return renderer(spec, **kwargs)
+
+    def show(self, native: Any) -> None:
+        r"""Display a native figure object with the library's own viewer.
+
+        The default implementation raises. A backend overrides it with
+        the way its library displays a figure (a window, a browser tab).
+
+        Args:
+            native: The native figure object, as returned by
+                ``render``.
+
+        Raises:
+            NotImplementedError: if the backend does not support
+                ``show``.
+        """
+        msg = f"The {self.name} backend does not support 'show'"
+        raise NotImplementedError(msg)
+
+    def mimebundle(self, native: Any) -> dict[str, Any] | None:
+        r"""Return the rich display representation of a native figure.
+
+        Jupyter calls this through ``Figure._repr_mimebundle_`` to
+        display a figure as the last expression of a cell. The default
+        implementation uses the representation of the native object
+        itself: its ``_repr_mimebundle_`` if it has one, else the
+        ``_repr_html_``, ``_repr_svg_``, ``_repr_png_`` and
+        ``_repr_jpeg_`` methods it defines. A backend overrides it when
+        the native object has none of them (e.g. matplotlib).
+
+        Args:
+            native: The native figure object, as returned by
+                ``render``.
+
+        Returns:
+            A ``{mime type: data}`` dict, or ``None`` if the native
+                object has no rich representation.
+        """
+        method = getattr(native, "_repr_mimebundle_", None)
+        if method is not None:
+            return method()
+        bundle: dict[str, Any] = {}
+        for mime_type, name in _REPR_METHODS.items():
+            method = getattr(native, name, None)
+            data = method() if method is not None else None
+            if data is not None:
+                bundle[mime_type] = data
+        return bundle or None
 
     @abstractmethod
     def save(self, native: Any, path: Path, fmt: str) -> None:

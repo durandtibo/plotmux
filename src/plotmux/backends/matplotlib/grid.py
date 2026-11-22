@@ -17,7 +17,7 @@ from plotmux.backends.matplotlib.histogram import render_histogram
 from plotmux.backends.matplotlib.layer import render_layer
 from plotmux.backends.matplotlib.line import render_line
 from plotmux.backends.matplotlib.scatter import render_scatter
-from plotmux.backends.matplotlib.style import apply_common_style, attach_repr_png
+from plotmux.backends.matplotlib.style import apply_common_style
 from plotmux.specs import (
     BarSpec,
     BaseSpec,
@@ -93,5 +93,4 @@ def render_grid(spec: GridSpec, **kwargs: Any) -> MplFigure:
         ax.set_visible(False)
     if spec.title is not None:
         fig.suptitle(spec.title)
-    attach_repr_png(fig)
     return fig

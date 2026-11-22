@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, cast
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
@@ -176,3 +177,10 @@ def test_altair_backend_capabilities(backend: AltairBackend) -> None:
     assert SlopeSpec not in caps.spec_types
     assert any("SlopeSpec" in caveat for caveat in caps.caveats)
     assert any("BarSpec.width" in caveat for caveat in caps.caveats)
+
+
+@altair_available
+def test_altair_backend_show_calls_chart_show(backend: AltairBackend) -> None:
+    native = Mock()
+    backend.show(native)
+    native.show.assert_called_once_with()
