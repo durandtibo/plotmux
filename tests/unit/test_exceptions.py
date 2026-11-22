@@ -16,6 +16,8 @@ from plotmux.exceptions import (
     UnsupportedFormatError,
     UnsupportedSpecError,
 )
+from plotmux.export import save
+from plotmux.figure import Figure
 from plotmux.testing.fixtures import matplotlib_available
 
 ######################################
@@ -99,9 +101,6 @@ def test_hist_invalid_bins_raises_plotmux_error() -> None:
 
 
 def test_export_no_suffix_raises_plotmux_error() -> None:
-    from plotmux.export import save
-    from plotmux.figure import Figure
-
     fig = Figure(spec=None, backend_name="does-not-matter", native=None)
     with pytest.raises(PlotmuxError):
         save(fig, "no-suffix")

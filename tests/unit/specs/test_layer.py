@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from plotmux.colors.palette import DEFAULT_PALETTE
-from plotmux.specs import HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.specs import GridSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
 
 ################################
 #     Tests for LayerSpec     #
@@ -53,8 +53,6 @@ def test_layer_spec_grid_child_without_color_field_is_left_untouched() -> None:
     # GridSpec has no ``color`` field: ``getattr(child, "color", "unset")``
     # falls back to "unset" (not None), so it must not be treated as a
     # color-carrying child needing a palette slot.
-    from plotmux.specs import GridSpec
-
     grid_child = GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),))
     line_spec = LineSpec(x=np.arange(10), y=np.arange(10))
     spec = LayerSpec(layers=(grid_child, line_spec))

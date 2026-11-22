@@ -12,6 +12,7 @@ if is_altair_available():
     from plotmux.backends.altair.histogram import render_histogram
     from plotmux.backends.altair.line import render_line
     from plotmux.backends.altair.style import (
+        _apply_legend_style,
         apply_common_style,
         color_encoding,
         prepare_color,
@@ -301,3 +302,43 @@ def test_apply_common_style_categorical_x_keeps_nominal_type() -> None:
     chart = render_bar(spec)
     out = apply_common_style(chart, spec)
     assert out.to_dict()["encoding"]["x"]["type"] == "nominal"
+
+
+###########################################
+#     Tests for _apply_legend_style     #
+###########################################
+
+
+@altair_available
+def test_apply_legend_style_title() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s", legend_title="Lines")
+    out = _apply_legend_style(render_line(spec), spec)
+    assert out.to_dict()["encoding"]["color"]["legend"]["title"] == "Lines"
+
+
+@altair_available
+def test_apply_legend_style_location() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s", legend_location="top_left")
+    out = _apply_legend_style(render_line(spec), spec)
+    assert out.to_dict()["encoding"]["color"]["legend"]["orient"] == "top-left"
+
+
+@altair_available
+def test_apply_legend_style_location_best_is_noop() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s", legend_location="best")
+    out = _apply_legend_style(render_line(spec), spec)
+    assert "orient" not in out.to_dict()["encoding"]["color"]["legend"]
+
+
+@altair_available
+def test_apply_legend_style_orientation() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s", legend_orientation="horizontal")
+    out = _apply_legend_style(render_line(spec), spec)
+    assert out.to_dict()["encoding"]["color"]["legend"]["direction"] == "horizontal"
+
+
+@altair_available
+def test_apply_legend_style_no_field_returns_chart_unchanged() -> None:
+    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s")
+    chart = render_line(spec)
+    assert _apply_legend_style(chart, spec) is chart

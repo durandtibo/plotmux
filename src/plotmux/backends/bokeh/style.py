@@ -271,18 +271,34 @@ def apply_common_style(fig: figure, spec: BaseSpec) -> figure:
     # list otherwise, falsy) -- same shape of guard as bokeh's own
     # ``alpha``/``linewidth`` "only set when explicitly given" pattern
     # elsewhere in this backend.
-    if fig.legend:
-        if spec.legend_title is not None:
-            fig.legend.title = spec.legend_title
-        # bokeh has no "best" auto-placement location (unlike matplotlib's
-        # ``loc="best"``, see
-        # ``plotmux.backends.matplotlib.style.apply_common_style``); every
-        # other portable name matches bokeh's own vocabulary directly, so
-        # only ``"best"`` is excluded here, falling back to bokeh's own
-        # default position, same as ``legend_location`` unset.
-        if spec.legend_location is not None and spec.legend_location != "best":
-            fig.legend.location = spec.legend_location
-        if spec.legend_orientation is not None:
-            # bokeh's own vocabulary, matched one-to-one.
-            fig.legend.orientation = spec.legend_orientation
+    _apply_legend_style(fig, spec)
     return fig
+
+
+def _apply_legend_style(fig: figure, spec: BaseSpec) -> None:
+    r"""Apply the legend style fields of ``spec`` onto a bokeh
+    ``figure``.
+
+    Nothing is set when the figure has no legend. Factored out of
+    ``apply_common_style`` to keep its complexity under the linter's
+    limit.
+
+    Args:
+        fig: The bokeh ``figure`` whose legend to style.
+        spec: The spec whose legend style fields to apply.
+    """
+    if not fig.legend:
+        return
+    if spec.legend_title is not None:
+        fig.legend.title = spec.legend_title
+    # bokeh has no "best" auto-placement location (unlike matplotlib's
+    # ``loc="best"``, see
+    # ``plotmux.backends.matplotlib.style.apply_common_style``); every
+    # other portable name matches bokeh's own vocabulary directly, so
+    # only ``"best"`` is excluded here, falling back to bokeh's own
+    # default position, same as ``legend_location`` unset.
+    if spec.legend_location is not None and spec.legend_location != "best":
+        fig.legend.location = spec.legend_location
+    if spec.legend_orientation is not None:
+        # bokeh's own vocabulary, matched one-to-one.
+        fig.legend.orientation = spec.legend_orientation

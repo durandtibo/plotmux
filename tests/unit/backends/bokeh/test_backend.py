@@ -14,6 +14,7 @@ from plotmux.specs import (
     LayerSpec,
     LineSpec,
     ScatterSpec,
+    SlopeSpec,
     StackedBarSpec,
 )
 from plotmux.testing.fixtures import bokeh_available
@@ -195,8 +196,6 @@ def test_bokeh_backend_save_grid_with_title(backend: BokehBackend, tmp_path: Pat
 
 @bokeh_available
 def test_bokeh_backend_capabilities(backend: BokehBackend) -> None:
-    from plotmux.specs import SlopeSpec
-
     caps = backend.capabilities()
     assert caps.backend_name == "bokeh"
     assert SlopeSpec in caps.spec_types

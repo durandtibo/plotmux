@@ -11,7 +11,11 @@ if is_matplotlib_available():
     import matplotlib.pyplot as plt
     from matplotlib.figure import Figure as MplFigure
 
-    from plotmux.backends.matplotlib.style import apply_common_style, attach_repr_png
+    from plotmux.backends.matplotlib.style import (
+        _apply_legend_style,
+        apply_common_style,
+        attach_repr_png,
+    )
 
 #########################################
 #     Tests for apply_common_style     #
@@ -302,3 +306,68 @@ def test_attach_repr_png_bare_figure_canvas_has_no_print_png() -> None:
     # fixes (see its own docstring).
     fig = MplFigure()
     assert not hasattr(fig.canvas, "print_png")
+
+
+###########################################
+#     Tests for _apply_legend_style     #
+###########################################
+
+
+@matplotlib_available
+def test_apply_legend_style_title() -> None:
+    fig, ax = plt.subplots()
+    ax.plot([1, 2], [3, 4], label="s")
+    ax.legend()
+    _apply_legend_style(ax, HistogramSpec(values=np.arange(101), legend_title="Lines"))
+    assert ax.get_legend().get_title().get_text() == "Lines"
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_apply_legend_style_location() -> None:
+    fig, ax = plt.subplots()
+    ax.plot([1, 2], [3, 4], label="s")
+    ax.legend()
+    _apply_legend_style(ax, HistogramSpec(values=np.arange(101), legend_location="top_left"))
+    assert ax.get_legend()._get_loc() == 2  # "upper left"
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_apply_legend_style_horizontal_orientation() -> None:
+    fig, ax = plt.subplots()
+    ax.plot([1, 2], [3, 4], label="s1")
+    ax.plot([1, 2], [5, 6], label="s2")
+    ax.legend()
+    _apply_legend_style(ax, HistogramSpec(values=np.arange(101), legend_orientation="horizontal"))
+    assert ax.get_legend()._ncols == 2
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_apply_legend_style_vertical_orientation_keeps_one_column() -> None:
+    fig, ax = plt.subplots()
+    ax.plot([1, 2], [3, 4], label="s1")
+    ax.plot([1, 2], [5, 6], label="s2")
+    ax.legend()
+    _apply_legend_style(ax, HistogramSpec(values=np.arange(101), legend_orientation="vertical"))
+    assert ax.get_legend()._ncols == 1
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_apply_legend_style_no_legend_is_noop() -> None:
+    fig, ax = plt.subplots()
+    _apply_legend_style(ax, HistogramSpec(values=np.arange(101), legend_title="Lines"))
+    assert ax.get_legend() is None
+    plt.close(fig)
+
+
+@matplotlib_available
+def test_apply_legend_style_no_field_keeps_legend_title() -> None:
+    fig, ax = plt.subplots()
+    ax.plot([1, 2], [3, 4], label="s")
+    ax.legend(title="Original")
+    _apply_legend_style(ax, HistogramSpec(values=np.arange(101)))
+    assert ax.get_legend().get_title().get_text() == "Original"
+    plt.close(fig)

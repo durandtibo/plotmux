@@ -12,6 +12,7 @@ from plotmux.specs import (
     LayerSpec,
     LineSpec,
     ScatterSpec,
+    SlopeSpec,
 )
 from plotmux.testing.fixtures import xy_available
 from plotmux.utils.imports import is_xy_available
@@ -23,6 +24,7 @@ if is_xy_available():
     from xy import Chart
 
     from plotmux.backends.xy.backend import XyBackend
+    from plotmux.backends.xy.grid import XyGrid
 
 
 @pytest.fixture
@@ -107,8 +109,6 @@ def test_xy_backend_render_applies_common_style(backend: XyBackend) -> None:
 
 @xy_available
 def test_xy_backend_render_grid(backend: XyBackend) -> None:
-    from plotmux.backends.xy.grid import XyGrid
-
     spec = GridSpec(
         cells=(
             LineSpec(x=np.arange(10), y=np.arange(10) ** 2),
@@ -170,8 +170,6 @@ def test_xy_backend_capabilities(backend: XyBackend) -> None:
     caps = backend.capabilities()
     assert caps.backend_name == "xy"
     assert HistogramSpec in caps.spec_types
-    from plotmux.specs import SlopeSpec
-
     assert SlopeSpec not in caps.spec_types
     assert any("SlopeSpec" in caveat for caveat in caps.caveats)
     assert any("GridSpec" in caveat for caveat in caps.caveats)

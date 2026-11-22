@@ -155,6 +155,27 @@ def apply_common_style(fig: Figure, spec: BaseSpec) -> Figure:
         layout["xaxis_range"] = [spec.xmin, spec.xmax]
     if spec.legend_title is not None:
         layout["legend_title_text"] = spec.legend_title
+    legend = _legend_layout(spec)
+    if legend:
+        layout["legend"] = legend
+    fig.update_layout(**layout)
+    return fig
+
+
+def _legend_layout(spec: BaseSpec) -> dict[str, Any]:
+    r"""Build the ``legend`` layout dict from the legend style fields.
+
+    Factored out of ``apply_common_style`` to keep its complexity under
+    the linter's limit.
+
+    Args:
+        spec: The spec whose ``legend_location``/``legend_orientation``
+            to translate.
+
+    Returns:
+        The plotly ``legend`` layout entries, empty when neither field
+        is set (or when the location has no plotly equivalent).
+    """
     legend: dict[str, Any] = {}
     if spec.legend_location is not None and spec.legend_location in LEGEND_LOCATION:
         legend.update(LEGEND_LOCATION[spec.legend_location])
@@ -162,7 +183,4 @@ def apply_common_style(fig: Figure, spec: BaseSpec) -> Figure:
         # plotly spells orientation ``"h"``/``"v"`` rather than
         # plotmux's own ``"horizontal"``/``"vertical"``.
         legend["orientation"] = "h" if spec.legend_orientation == "horizontal" else "v"
-    if legend:
-        layout["legend"] = legend
-    fig.update_layout(**layout)
-    return fig
+    return legend
