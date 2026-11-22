@@ -8,6 +8,8 @@ from plotmux.testing.fixtures import xy_available
 from plotmux.utils.imports import is_xy_available
 
 if is_xy_available():
+    import xy
+
     from plotmux.backends.xy.histogram import render_histogram
     from plotmux.backends.xy.line import render_line
     from plotmux.backends.xy.style import apply_common_style, rgba_to_xy
@@ -214,8 +216,6 @@ def test_apply_common_style_legend_title_and_location() -> None:
 
 @xy_available
 def test_apply_common_style_legend_orientation_horizontal_sets_ncols() -> None:
-    import xy
-
     spec = HistogramSpec(values=np.arange(101), bins=10, legend_orientation="horizontal")
     chart = xy.bar_chart(xy.bar([1, 2], [3, 4], name="a"), xy.bar([1, 2], [5, 6], name="b"))
     out = apply_common_style(chart, spec)

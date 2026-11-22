@@ -16,6 +16,7 @@ if is_bokeh_available():
         LINESTYLE,
         LINEWIDTH,
         FieldRule,
+        _apply_legend_style,
         apply_common_style,
         apply_fields,
         rgba_to_bokeh,
@@ -281,3 +282,55 @@ def test_apply_fields_applies_translate_callable() -> None:
     spec = LineSpec(x=[0, 1], y=[0, 1], alpha=0.25)
     out = apply_fields(spec, [rule])
     assert out == {"line_alpha": 0.5}
+
+
+###########################################
+#     Tests for _apply_legend_style     #
+###########################################
+
+
+@bokeh_available
+def test_apply_legend_style_title() -> None:
+    fig = figure()
+    fig.circle([1, 2], [3, 4], legend_label="s")
+    _apply_legend_style(fig, HistogramSpec(values=np.arange(101), legend_title="Lines"))
+    assert fig.legend[0].title == "Lines"
+
+
+@bokeh_available
+def test_apply_legend_style_location() -> None:
+    fig = figure()
+    fig.circle([1, 2], [3, 4], legend_label="s")
+    _apply_legend_style(fig, HistogramSpec(values=np.arange(101), legend_location="top_left"))
+    assert fig.legend[0].location == "top_left"
+
+
+@bokeh_available
+def test_apply_legend_style_location_best_keeps_default() -> None:
+    fig = figure()
+    fig.circle([1, 2], [3, 4], legend_label="s")
+    _apply_legend_style(fig, HistogramSpec(values=np.arange(101), legend_location="best"))
+    assert fig.legend[0].location == "top_right"
+
+
+@bokeh_available
+def test_apply_legend_style_orientation() -> None:
+    fig = figure()
+    fig.circle([1, 2], [3, 4], legend_label="s")
+    _apply_legend_style(fig, HistogramSpec(values=np.arange(101), legend_orientation="horizontal"))
+    assert fig.legend[0].orientation == "horizontal"
+
+
+@bokeh_available
+def test_apply_legend_style_no_field_keeps_defaults() -> None:
+    fig = figure()
+    fig.circle([1, 2], [3, 4], legend_label="s")
+    _apply_legend_style(fig, HistogramSpec(values=np.arange(101)))
+    assert fig.legend[0].title is None
+
+
+@bokeh_available
+def test_apply_legend_style_no_legend_is_noop() -> None:
+    fig = figure()
+    _apply_legend_style(fig, HistogramSpec(values=np.arange(101), legend_title="Lines"))
+    assert len(fig.legend) == 0

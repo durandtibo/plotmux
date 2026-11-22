@@ -12,6 +12,7 @@ from plotmux.specs import (
     LayerSpec,
     LineSpec,
     ScatterSpec,
+    SlopeSpec,
 )
 from plotmux.testing.fixtures import matplotlib_available
 from plotmux.utils.imports import is_matplotlib_available
@@ -20,6 +21,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 if is_matplotlib_available():
+    import matplotlib.pyplot as plt
     from matplotlib.figure import Figure
 
     from plotmux.backends.matplotlib.backend import MatplotlibBackend
@@ -150,8 +152,6 @@ def test_matplotlib_backend_render_does_not_register_with_pyplot(
     # keeps it alive (a leak) until ``plt.close()`` is called explicitly.
     # Building the figure directly via the ``Figure`` constructor avoids
     # that registration entirely, so ``pyplot`` should never see it.
-    import matplotlib.pyplot as plt
-
     before = set(plt.get_fignums())
     spec = LineSpec(x=np.arange(10), y=np.arange(10))
     backend.render(spec)
@@ -199,8 +199,6 @@ def test_matplotlib_backend_save_grid(backend: MatplotlibBackend, tmp_path: Path
 
 @matplotlib_available
 def test_matplotlib_backend_capabilities(backend: MatplotlibBackend) -> None:
-    from plotmux.specs import SlopeSpec
-
     caps = backend.capabilities()
     assert caps.backend_name == "matplotlib"
     assert SlopeSpec in caps.spec_types

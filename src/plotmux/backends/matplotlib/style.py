@@ -89,24 +89,41 @@ def apply_common_style(ax: Axes, spec: BaseSpec) -> Axes:
         ax.set_ylim(bottom=spec.ymin, top=spec.ymax)
     if isinstance(spec, XBoundSpec) and (spec.xmin is not None or spec.xmax is not None):
         ax.set_xlim(left=spec.xmin, right=spec.xmax)
-    legend = ax.get_legend()
-    if legend is not None and (
-        spec.legend_title is not None
-        or spec.legend_location is not None
-        or spec.legend_orientation is not None
-    ):
-        legend_kwargs = {}
-        if spec.legend_title is not None:
-            legend_kwargs["title"] = spec.legend_title
-        if spec.legend_location is not None:
-            legend_kwargs["loc"] = LEGEND_LOCATION.get(spec.legend_location, spec.legend_location)
-        if spec.legend_orientation == "horizontal":
-            # matplotlib has no direct orientation flag, only a column
-            # count -- so "horizontal" is approximated as laying out every
-            # handle in one row.
-            legend_kwargs["ncols"] = len(legend.legend_handles)
-        ax.legend(**legend_kwargs)
+    _apply_legend_style(ax, spec)
     return ax
+
+
+def _apply_legend_style(ax: Axes, spec: BaseSpec) -> None:
+    r"""Apply the legend style fields of ``spec`` onto an ``Axes``.
+
+    The legend is only re-issued (``ax.legend(...)``) when one already
+    exists and at least one of ``legend_title``/``legend_location``/
+    ``legend_orientation`` is set. Factored out of
+    ``apply_common_style`` to keep its complexity under the linter's
+    limit.
+
+    Args:
+        ax: The matplotlib ``Axes`` whose legend to style.
+        spec: The spec whose legend style fields to apply.
+    """
+    legend = ax.get_legend()
+    if legend is None or (
+        spec.legend_title is None
+        and spec.legend_location is None
+        and spec.legend_orientation is None
+    ):
+        return
+    legend_kwargs = {}
+    if spec.legend_title is not None:
+        legend_kwargs["title"] = spec.legend_title
+    if spec.legend_location is not None:
+        legend_kwargs["loc"] = LEGEND_LOCATION.get(spec.legend_location, spec.legend_location)
+    if spec.legend_orientation == "horizontal":
+        # matplotlib has no direct orientation flag, only a column
+        # count -- so "horizontal" is approximated as laying out every
+        # handle in one row.
+        legend_kwargs["ncols"] = len(legend.legend_handles)
+    ax.legend(**legend_kwargs)
 
 
 def attach_repr_png(fig: MplFigure) -> None:

@@ -12,6 +12,7 @@ from plotmux.specs import (
     LayerSpec,
     LineSpec,
     ScatterSpec,
+    SlopeSpec,
 )
 from plotmux.testing.fixtures import altair_available
 from plotmux.utils.imports import is_altair_available
@@ -172,8 +173,6 @@ def test_altair_backend_capabilities(backend: AltairBackend) -> None:
     caps = backend.capabilities()
     assert caps.backend_name == "altair"
     assert HistogramSpec in caps.spec_types
-    from plotmux.specs import SlopeSpec
-
     assert SlopeSpec not in caps.spec_types
     assert any("SlopeSpec" in caveat for caveat in caps.caveats)
     assert any("BarSpec.width" in caveat for caveat in caps.caveats)

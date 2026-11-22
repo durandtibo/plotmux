@@ -5,6 +5,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from plotmux.backends.base import Backend
+from plotmux.backends.registry import _REGISTRY, known_backend_names, register_backend
 from plotmux.config import backend, get_default_backend, set_backend
 
 if TYPE_CHECKING:
@@ -22,9 +24,6 @@ def test_get_default_backend_initial() -> None:
 
 @pytest.fixture
 def _registered_fake_backend() -> Iterator[None]:
-    from plotmux.backends.base import Backend
-    from plotmux.backends.registry import _REGISTRY, register_backend
-
     class FakeBackend(Backend):
         name = "fake"
 
@@ -84,8 +83,6 @@ def test_set_backend_unknown_name_lists_known_backends() -> None:
 def test_set_backend_unknown_name_lists_sorted_backends() -> None:
     with pytest.raises(RuntimeError) as exc_info:
         set_backend("not_a_backend")
-    from plotmux.backends.registry import known_backend_names
-
     available = sorted(known_backend_names())
     assert str(exc_info.value) == f"Unknown backend 'not_a_backend'. Known backends: {available}"
 

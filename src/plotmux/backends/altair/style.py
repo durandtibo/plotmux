@@ -291,6 +291,22 @@ def apply_common_style(chart: alt.typing.ChartType, spec: BaseSpec) -> alt.typin
                 cast("tuple[float, float, float, float]", spec.background_color)
             )
         )
+    return _apply_legend_style(chart, spec)
+
+
+def _apply_legend_style(chart: alt.typing.ChartType, spec: BaseSpec) -> alt.typing.ChartType:
+    r"""Apply the legend style fields of ``spec`` onto an altair chart.
+
+    Factored out of ``apply_common_style`` to keep its complexity under
+    the linter's limit.
+
+    Args:
+        chart: The altair ``Chart`` (or ``LayerChart``) to style.
+        spec: The spec whose legend style fields to apply.
+
+    Returns:
+        The styled chart.
+    """
     if spec.legend_title is not None:
         # ``color_encoding`` (see above) hardcodes ``alt.Legend(title=None)``
         # on every labeled mark's ``color`` encoding, hiding the redundant

@@ -10,7 +10,11 @@ from plotmux.utils.imports import is_plotly_available
 if is_plotly_available():
     import plotly.graph_objects as go
 
-    from plotmux.backends.plotly.style import apply_common_style, rgba_to_plotly
+    from plotmux.backends.plotly.style import (
+        _legend_layout,
+        apply_common_style,
+        rgba_to_plotly,
+    )
 
 ########################################
 #     Tests for rgba_to_plotly     #
@@ -200,3 +204,50 @@ def test_apply_common_style_no_legend_orientation() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10)
     fig = apply_common_style(go.Figure(), spec)
     assert fig.layout.legend.orientation is None
+
+
+######################################
+#     Tests for _legend_layout     #
+######################################
+
+
+@plotly_available
+def test_legend_layout_empty_by_default() -> None:
+    assert _legend_layout(HistogramSpec(values=np.arange(101))) == {}
+
+
+@plotly_available
+def test_legend_layout_location() -> None:
+    spec = HistogramSpec(values=np.arange(101), legend_location="top_left")
+    assert _legend_layout(spec) == {"x": 0.01, "y": 0.99, "xanchor": "left", "yanchor": "top"}
+
+
+@plotly_available
+def test_legend_layout_location_best_is_empty() -> None:
+    assert _legend_layout(HistogramSpec(values=np.arange(101), legend_location="best")) == {}
+
+
+@plotly_available
+def test_legend_layout_horizontal_orientation() -> None:
+    spec = HistogramSpec(values=np.arange(101), legend_orientation="horizontal")
+    assert _legend_layout(spec) == {"orientation": "h"}
+
+
+@plotly_available
+def test_legend_layout_vertical_orientation() -> None:
+    spec = HistogramSpec(values=np.arange(101), legend_orientation="vertical")
+    assert _legend_layout(spec) == {"orientation": "v"}
+
+
+@plotly_available
+def test_legend_layout_location_and_orientation() -> None:
+    spec = HistogramSpec(
+        values=np.arange(101), legend_location="top_left", legend_orientation="horizontal"
+    )
+    assert _legend_layout(spec) == {
+        "x": 0.01,
+        "y": 0.99,
+        "xanchor": "left",
+        "yanchor": "top",
+        "orientation": "h",
+    }
