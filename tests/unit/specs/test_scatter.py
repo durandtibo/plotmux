@@ -142,3 +142,46 @@ def test_scatter_spec_edgecolor_defaults_independent_of_color() -> None:
 def test_scatter_spec_edgecolor_rgba_tuple() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), edgecolor=(0.1, 0.2, 0.3, 0.4))
     assert spec.edgecolor == (0.1, 0.2, 0.3, 0.4)
+
+
+def test_scatter_spec_does_not_alias_the_input_x() -> None:
+    x = np.arange(5, dtype=float)
+    spec = ScatterSpec(x=x, y=np.arange(5))
+    x[0] = 99
+    assert spec.x[0] == 0.0
+
+
+def test_scatter_spec_does_not_alias_the_input_y() -> None:
+    y = np.arange(5, dtype=float)
+    spec = ScatterSpec(x=np.arange(5), y=y)
+    y[0] = 99
+    assert spec.y[0] == 0.0
+
+
+def test_scatter_spec_x_is_read_only() -> None:
+    spec = ScatterSpec(x=np.arange(5), y=np.arange(5))
+    with pytest.raises(ValueError, match="read-only"):
+        spec.x[0] = 1
+
+
+def test_scatter_spec_y_is_read_only() -> None:
+    spec = ScatterSpec(x=np.arange(5), y=np.arange(5))
+    with pytest.raises(ValueError, match="read-only"):
+        spec.y[0] = 1
+
+
+def test_scatter_spec_equal() -> None:
+    assert ScatterSpec(x=np.arange(5), y=np.arange(5)) == ScatterSpec(
+        x=np.arange(5), y=np.arange(5)
+    )
+
+
+def test_scatter_spec_not_equal_with_different_y() -> None:
+    assert ScatterSpec(x=np.arange(5), y=np.arange(5)) != ScatterSpec(
+        x=np.arange(5), y=np.arange(1, 6)
+    )
+
+
+def test_scatter_spec_hash_raises() -> None:
+    with pytest.raises(TypeError, match="unhashable type: 'ScatterSpec'"):
+        hash(ScatterSpec(x=np.arange(5), y=np.arange(5)))

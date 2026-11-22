@@ -5,17 +5,20 @@ from __future__ import annotations
 __all__ = ["BarSeries", "StackedBarSpec"]
 
 from dataclasses import dataclass, replace
-
-import numpy as np
+from typing import TYPE_CHECKING
 
 from plotmux.colors import Color, parse_color
 from plotmux.colors.palette import DEFAULT_PALETTE
 from plotmux.exceptions import InvalidSpecError
-from plotmux.specs.base import XBoundSpec
+from plotmux.specs.base import Spec, XBoundSpec
+from plotmux.utils.array import to_readonly_array
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
-@dataclass(frozen=True)
-class BarSeries:
+@dataclass(frozen=True, eq=False)
+class BarSeries(Spec):
     r"""Define one series of a ``StackedBarSpec``.
 
     A small ``(y, label, color)`` tuple, mirroring how
@@ -44,7 +47,7 @@ class BarSeries:
     color: Color = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class StackedBarSpec(XBoundSpec):
     r"""Define a backend-agnostic stacked-bar-chart specification.
 
@@ -102,7 +105,7 @@ class StackedBarSpec(XBoundSpec):
     alpha: float | None = None
 
     def __post_init__(self) -> None:
-        x = np.asarray(self.x)
+        x = to_readonly_array(self.x)
         if x.ndim != 1:
             msg = f"x must be 1-dimensional, but received shape {x.shape}"
             raise InvalidSpecError(msg)
@@ -113,7 +116,7 @@ class StackedBarSpec(XBoundSpec):
         normalized = []
         i = 0
         for s in self.series:
-            y = np.asarray(s.y)
+            y = to_readonly_array(s.y)
             if y.ndim != 1 or y.shape[0] != x.shape[0]:
                 msg = (
                     f"each series' y must have the same length as x, but received "

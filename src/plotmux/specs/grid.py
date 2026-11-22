@@ -11,7 +11,7 @@ from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import BaseSpec, XBoundSpec
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class GridSpec(XBoundSpec):
     r"""Define a spec that lays out multiple child specs as independent
     panels in a grid.

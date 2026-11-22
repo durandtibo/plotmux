@@ -8,16 +8,17 @@ from dataclasses import dataclass, field
 from numbers import Integral, Real
 from typing import TYPE_CHECKING
 
-import numpy as np
-
 from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import BaseSpec
+from plotmux.utils.array import to_readonly_array
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from plotmux.colors import Color
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class CdfSpec(BaseSpec):
     r"""Define a backend-agnostic empirical cumulative distribution
     function (CDF) specification.
@@ -102,7 +103,7 @@ class CdfSpec(BaseSpec):
         # (e.g. ``CdfSpec(values=[1, 2, 3])``) and not only through
         # ``plotmux.cdf``, which already converts its input before
         # construction. Mirrors ``HistogramSpec.__post_init__``.
-        values = np.asarray(self.values)
+        values = to_readonly_array(self.values)
         if values.ndim != 1:
             msg = f"values must be 1-dimensional, but received shape {values.shape}"
             raise InvalidSpecError(msg)

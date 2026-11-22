@@ -8,16 +8,17 @@ from dataclasses import dataclass, field
 from numbers import Integral, Real
 from typing import TYPE_CHECKING
 
-import numpy as np
-
 from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import BaseSpec
+from plotmux.utils.array import to_readonly_array
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from plotmux.colors import Color
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class HistogramSpec(BaseSpec):
     r"""Define a backend-agnostic histogram specification.
 
@@ -111,7 +112,7 @@ class HistogramSpec(BaseSpec):
         # ``plotmux.hist``, which already converts its input before
         # construction (see ``plotmux.specs.base.check_equal_length``,
         # which does the same for ``LineSpec``/``ScatterSpec``).
-        values = np.asarray(self.values)
+        values = to_readonly_array(self.values)
         if values.ndim != 1:
             msg = f"values must be 1-dimensional, but received shape {values.shape}"
             raise InvalidSpecError(msg)
