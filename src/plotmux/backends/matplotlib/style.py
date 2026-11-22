@@ -8,18 +8,14 @@ unconditionally.
 
 from __future__ import annotations
 
-__all__ = ["apply_common_style", "attach_repr_png"]
+__all__ = ["apply_common_style"]
 
-import io
 from typing import TYPE_CHECKING, cast
-
-from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 from plotmux.specs import XBoundSpec
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
-    from matplotlib.figure import Figure as MplFigure
 
     from plotmux.specs import BaseSpec
 
@@ -124,50 +120,3 @@ def _apply_legend_style(ax: Axes, spec: BaseSpec) -> None:
         # handle in one row.
         legend_kwargs["ncols"] = len(legend.legend_handles)
     ax.legend(**legend_kwargs)
-
-
-def attach_repr_png(fig: MplFigure) -> None:
-    r"""Attach a working ``_repr_png_`` to a bare ``Figure``.
-
-    A ``Figure`` built via the constructor directly (rather than
-    ``pyplot.subplots()``, see ``plotmux.backends.matplotlib.backend``'s
-    module docstring for why) gets a plain ``FigureCanvasBase``, which
-    has no ``print_png``: only a concrete backend canvas (e.g. Agg)
-    does. Jupyter, though, displays the last expression of a cell via
-    ``_repr_png_``/``_repr_html_``/etc looked up on the object itself
-    -- and outside ``%matplotlib inline`` (which patches things at
-    the pyplot level, not on individual ``Figure`` instances),
-    ``Figure`` defines neither. Attaching a bound ``_repr_png_`` here,
-    once, right after a figure is fully drawn and styled, is what lets
-    ``plotmux.Figure._repr_png_`` (see ``plotmux.figure``) simply
-    forward to it and get a real PNG in any notebook, with no
-    ``%matplotlib inline`` required.
-
-    Called from both ``backend.py`` (one chart's ``Figure``) and
-    ``grid.py`` (a ``GridSpec``'s combined ``Figure``) right before
-    each returns, so every matplotlib-backed ``Figure`` gets this for
-    free regardless of which spec type produced it.
-
-    Swapping in an ``Agg`` canvas is safe even for a figure that will
-    also be shown interactively later (e.g. via ``Figure.show()``):
-    matplotlib canvases are freely replaceable on a ``Figure``, and
-    Agg is a raster backend with no GUI event loop of its own to
-    conflict with one.
-
-    Args:
-        fig: The matplotlib ``Figure`` to attach ``_repr_png_`` to.
-    """
-    canvas = FigureCanvasAgg(fig)
-
-    def _repr_png_() -> bytes:
-        buffer = io.BytesIO()
-        canvas.print_png(buffer)
-        return buffer.getvalue()
-
-    # ``setattr`` rather than ``fig._repr_png_ = ...``: matplotlib's
-    # ``Figure`` declares no ``_repr_png_`` attribute, so a direct
-    # assignment is a static type error even though it is perfectly legal
-    # at runtime (``Figure`` has no ``__slots__``); going through
-    # ``setattr`` sets the exact same instance attribute without a type
-    # checker treating it as an assignment to a known, incompatible slot.
-    setattr(fig, "_repr_png_", _repr_png_)  # noqa: B010

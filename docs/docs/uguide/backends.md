@@ -131,6 +131,13 @@ class MyBackend(Backend):
 
     def save(self, native, path, fmt): ...
 
+    # Optional: how `Figure.show()` displays the native figure (the default raises
+    # `NotImplementedError`), and the rich display of Jupyter (the default uses the
+    # `_repr_mimebundle_` or `_repr_html_`/`_repr_svg_`/`_repr_png_`/`_repr_jpeg_` of `native`).
+    def show(self, native): ...
+
+    def mimebundle(self, native): ...
+
 
 register_backend(MyBackend())
 ```

@@ -134,3 +134,49 @@ def test_make_renderer_draws_then_styles() -> None:
 
     assert result == "native-styled"
     assert calls == [("draw", "spec", {"alpha": 0.5}), ("style", "native", "spec")]
+
+
+##################################
+#     Tests for Backend.show     #
+##################################
+
+
+def test_backend_show_raises_by_default() -> None:
+    with pytest.raises(NotImplementedError, match="The fake backend does not support 'show'"):
+        FakeBackend().show("native")
+
+
+########################################
+#     Tests for Backend.mimebundle     #
+########################################
+
+
+class NativeWithMimebundle:
+    def _repr_mimebundle_(self) -> dict[str, Any]:
+        return {"text/plain": "bundle"}
+
+
+class NativeWithReprs:
+    def _repr_html_(self) -> str:
+        return "<b>html</b>"
+
+    def _repr_png_(self) -> bytes:
+        return b"png"
+
+    def _repr_svg_(self) -> None:
+        return None
+
+
+def test_backend_mimebundle_uses_native_mimebundle() -> None:
+    assert FakeBackend().mimebundle(NativeWithMimebundle()) == {"text/plain": "bundle"}
+
+
+def test_backend_mimebundle_uses_native_repr_methods() -> None:
+    assert FakeBackend().mimebundle(NativeWithReprs()) == {
+        "text/html": "<b>html</b>",
+        "image/png": b"png",
+    }
+
+
+def test_backend_mimebundle_none_without_representation() -> None:
+    assert FakeBackend().mimebundle(object()) is None

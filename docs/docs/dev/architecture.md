@@ -275,9 +275,10 @@ range from, raises `UnsupportedSpecError`.
 ### `Figure`
 
 The object returned to the user by every public plotting function. It is a thin wrapper holding
-`spec`, `backend_name`, and `native`, plus three convenience methods: `show()`, `save(path)`
-(delegating to `plotmux.export.save`), and `to_native()`, the escape hatch to backend-specific
-functionality not exposed by the unified API.
+`spec`, `backend_name`, and `native`, plus three convenience methods: `show()` (delegating to
+`Backend.show`), `save(path)` (delegating to `plotmux.export.save`), and `to_native()`, the escape
+hatch to backend-specific functionality not exposed by the unified API. Its Jupyter display
+(`_repr_mimebundle_`) delegates to `Backend.mimebundle`.
 
 ### `config`
 

@@ -200,3 +200,14 @@ def test_bokeh_backend_capabilities(backend: BokehBackend) -> None:
     assert caps.backend_name == "bokeh"
     assert SlopeSpec in caps.spec_types
     assert caps.caveats == ()
+
+
+@bokeh_available
+def test_bokeh_backend_show_calls_bokeh_show(
+    backend: BokehBackend, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    shown: list[Any] = []
+    monkeypatch.setattr("plotmux.backends.bokeh.backend.bokeh_show", shown.append)
+    native = backend.render(HistogramSpec(values=np.arange(101), bins=10))
+    backend.show(native)
+    assert shown == [native]

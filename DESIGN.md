@@ -589,8 +589,11 @@ color parsing, backend dispatch, and export.
 
 Thin wrapper returned to the user: `(spec, backend_name, native)`.
 
-- `.show()`: calls `native.show()` if the native object exposes it,
-  otherwise raises `NotImplementedError`.
+- `.show()`: calls `Backend.show(native)` of the backend that rendered
+  the figure (`bokeh.io.show` for bokeh, the figure's own `show()` for
+  altair and plotly, a pyplot window for matplotlib, a browser tab for
+  xy). A backend that does not override `Backend.show` raises
+  `NotImplementedError`.
 - `.save(path)`: delegates to `export.save`, which infers the format
   from the file suffix and calls `backend.save(native, path, fmt)`.
 - `.supported_formats`: a property delegating to
@@ -605,20 +608,16 @@ Thin wrapper returned to the user: `(spec, backend_name, native)`.
 small without trapping users who need one backend-specific feature.
 
 `Figure` also makes itself display automatically as the last
-expression of a Jupyter cell, without every backend having to
-reimplement its own rich-display wrapper: `__getattr__` forwards a
-fixed, closed set of IPython/Jupyter dunder methods (`_repr_html_`,
-`_repr_mimebundle_`, `_repr_svg_`, `_repr_jpeg_`) to `native`: closed
-rather than forwarding arbitrary attribute access, so a typo like
-`fig.sav(...)` still raises a clear `AttributeError` instead of
-silently forwarding to `native`. `_repr_png_` gets its own method
-instead of living in that forwarded set: it tries `native._repr_png_`
-first, then falls back to a duck-typed `native.canvas.print_png` (the
-shape `MatplotlibBackend` attaches to every `Figure` it builds, since
-matplotlib's own `Figure` has no `_repr_png_` of its own outside
-`%matplotlib inline`), without `figure.py` importing matplotlib
-itself, which would break the "a backend module is only imported when
-its library is installed" rule every other backend follows.
+expression of a Jupyter cell: `Figure._repr_mimebundle_(include,
+exclude)` returns `Backend.mimebundle(native)` of the backend that
+rendered it, filtered by `include`/`exclude`. The default
+`Backend.mimebundle` uses the `_repr_mimebundle_` of the native object
+or its `_repr_html_`/`_repr_svg_`/`_repr_png_`/`_repr_jpeg_` methods;
+`MatplotlibBackend` overrides it to return a base64 PNG made by
+`savefig` (which works on a `Figure` built without pyplot), and
+`XyBackend` overrides it to also cover `XyGrid`. `Figure` forwards no
+other attribute to `native`, so a typo like `fig.sav(...)` raises a
+plain `AttributeError`.
 
 ### 4.4 Backend registry
 

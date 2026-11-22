@@ -135,6 +135,14 @@ class PlotlyBackend(Backend):
     # ``type(spec)`` against ``_RENDERERS`` above, so this backend does not
     # need its own copy of that dispatch body.
 
+    def show(self, native: Figure) -> None:
+        r"""Display a plotly ``Figure`` with ``Figure.show``.
+
+        Args:
+            native: The plotly ``Figure`` to display.
+        """
+        native.show()
+
     def save(self, native: Figure, path: Path, fmt: str) -> None:
         r"""Export a plotly ``Figure`` to a file.
 

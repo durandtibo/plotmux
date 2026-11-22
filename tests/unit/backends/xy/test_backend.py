@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from pathlib import Path
+from typing import Any, cast
 
 import numpy as np
 import pytest
@@ -16,9 +17,6 @@ from plotmux.specs import (
 )
 from plotmux.testing.fixtures import xy_available
 from plotmux.utils.imports import is_xy_available
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 if is_xy_available():
     from xy import Chart
@@ -173,3 +171,36 @@ def test_xy_backend_capabilities(backend: XyBackend) -> None:
     assert SlopeSpec not in caps.spec_types
     assert any("SlopeSpec" in caveat for caveat in caps.caveats)
     assert any("GridSpec" in caveat for caveat in caps.caveats)
+
+
+@xy_available
+def test_xy_backend_show_opens_the_html_in_the_browser(
+    backend: XyBackend, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    opened: list[str] = []
+    monkeypatch.setattr("webbrowser.open", lambda url: opened.append(url) or True)
+    backend.show(backend.render(HistogramSpec(values=np.arange(101), bins=10)))
+    assert opened[0].startswith("file://")
+    assert opened[0].endswith(".html")
+
+
+@xy_available
+def test_xy_backend_show_writes_the_html_of_a_grid(
+    backend: XyBackend, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    opened: list[str] = []
+    monkeypatch.setattr("webbrowser.open", lambda url: opened.append(url) or True)
+    backend.show(backend.render(GridSpec(cells=(HistogramSpec(values=np.arange(101)),))))
+    assert "<html" in Path(opened[0].removeprefix("file://")).read_text(encoding="utf-8")
+
+
+@xy_available
+def test_xy_backend_mimebundle_chart(backend: XyBackend) -> None:
+    native = backend.render(HistogramSpec(values=np.arange(101), bins=10))
+    assert list(cast("dict[str, Any]", backend.mimebundle(native))) == ["text/html"]
+
+
+@xy_available
+def test_xy_backend_mimebundle_grid(backend: XyBackend) -> None:
+    native = backend.render(GridSpec(cells=(HistogramSpec(values=np.arange(101)),)))
+    assert "<html" in cast("dict[str, Any]", backend.mimebundle(native))["text/html"]
