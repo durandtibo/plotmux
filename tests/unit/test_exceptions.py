@@ -11,6 +11,7 @@ from plotmux.backends.registry import get_backend
 from plotmux.colors import parse_color
 from plotmux.exceptions import (
     BackendNotFoundError,
+    BackendRegistrationError,
     ExportError,
     InvalidColorError,
     InvalidSpecError,
@@ -31,6 +32,7 @@ from plotmux.testing.fixtures import matplotlib_available
     "exc_type",
     [
         BackendNotFoundError,
+        BackendRegistrationError,
         UnsupportedSpecError,
         UnsupportedFormatError,
         InvalidColorError,
@@ -44,6 +46,10 @@ def test_every_exception_is_a_plotmux_error(exc_type: type[Exception]) -> None:
 
 def test_backend_not_found_error_is_also_runtime_error() -> None:
     assert issubclass(BackendNotFoundError, RuntimeError)
+
+
+def test_backend_registration_error_is_also_value_error() -> None:
+    assert issubclass(BackendRegistrationError, ValueError)
 
 
 def test_unsupported_spec_error_is_also_not_implemented_error() -> None:

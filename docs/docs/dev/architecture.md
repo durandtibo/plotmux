@@ -115,35 +115,35 @@ figure.py           Figure(spec, backend_name, native)
 user code           fig.show() / fig.save("out.png") / fig.to_native()
 ```
 
-Backend registration is lazy, not eager: `plotmux/__init__.py` does _not_ import any of the five
-built-in backend subpackages (`matplotlib`, `xy`, `bokeh`, `altair`, `plotly`) at `import plotmux`
-time. Instead, `backends/registry.py` holds a `{name: module path}` map, and `get_backend(name)`
-imports the matching submodule the first time that name is actually requested (e.g. via
-`backend="matplotlib"`, or the first `plotmux.hist(...)` call after `plotmux.set_backend("xy")`);
-each subpackage's `__init__.py` still calls `register_backend(...)` as an import-time side effect,
-guarded by that library's `is_*_available()` check, only now triggered later. This means a process
-that only ever renders with `matplotlib` never imports `xy`, `bokeh`, `altair`, or `plotly` (or
-their underlying libraries) even if all four happen to be installed alongside it.
+Backend loading is lazy, not eager: `import plotmux` imports no backend module, no plotting library
+and no plugin. `backends/registry.py` finds a backend by name, in this order: an instance given to
+`register_backend(backend, *, replace=False)`, the built-in table (`{name: "module:Class"}` for
+`matplotlib`, `xy`, `bokeh`, `altair` and `plotly`), then the `plotmux.backends` entry-point group.
+`get_backend(name)` imports only the module of that name the first time it is requested (e.g. via
+`backend="matplotlib"`, or the first `plotmux.hist(...)` call after `plotmux.set_backend("xy")`),
+instantiates the class once and caches the instance. A process that only ever renders with
+`matplotlib` never imports `xy`, `bokeh`, `altair`, or `plotly` (or their underlying libraries) even
+if all four are installed. The `plotmux.backends.<name>` subpackages register nothing at import time.
 
-`plotmux/__init__.py` additionally calls `plotmux.backends.registry.load_entry_point_backends()`
-once, at import time: this imports every third-party backend advertised via the `plotmux.backends`
-entry-point group (see
-[Adding a Third-Party Backend](../uguide/backends.md#adding-a-third-party-backend)). Since none of
-the five built-ins are imported yet at that point either, a third-party plugin can freely register
-under any name, built-in or not — whichever registers last for a given name wins. A plugin module
-that fails to import because its own underlying library isn't installed is silently skipped
-(`ImportError`); any other exception it raises while loading is caught and turned into a
-`RuntimeWarning` instead of propagating, so a broken third-party plugin can only fail to register
-itself, never crash `import plotmux` for every user.
+A third-party backend is a `Backend` subclass advertised by an entry point whose value is
+`package.module:BackendClass` (see
+[Adding a Third-Party Backend](../uguide/backends.md#adding-a-third-party-backend)). The registry
+reads the entry-point _names_ from the installed metadata (nothing is imported) and loads the plugin
+on its first use. A plugin cannot take over a built-in name by being installed: `register_backend`
+raises `BackendRegistrationError` for a name already registered or built in, unless
+`replace=True`. A backend whose library cannot be imported raises `BackendNotFoundError` naming the
+extra to install (`pip install "plotmux[matplotlib]"`), with the `ImportError` as its cause.
+`available_backends()` lists the registered backends, the built-in backends whose library is
+installed and the names advertised by plugins, without importing anything.
 
-`api.py` never triggers registration itself: it only calls `get_backend(name)`, which is what
-actually imports a built-in submodule lazily, or raises `BackendNotFoundError` if `name` isn't
-registered (typically because its library isn't installed). `config.set_backend()`/`backend()`
+`api.py` never loads a backend itself: it only calls `get_backend(name)`, which is what actually
+imports a backend lazily, or raises `BackendNotFoundError` if `name` isn't known or its library isn't
+installed. `config.set_backend()`/`backend()`
 additionally reject a name that isn't even _known_ — neither a built-in name, an
 entry-point-advertised name, nor already registered — immediately, at the call site, without
 importing anything (`backends/registry.py::known_backend_names()`); a name that is known but not
-yet registered still only fails later, at render time, since validating that would require the
-same import laziness was introduced to avoid.
+yet loaded still only fails later, at render time, since validating that would require the import
+laziness was introduced to avoid (`available_backends()` tells which libraries are installed).
 
 ## Key Components
 
@@ -195,9 +195,9 @@ other specs, `CdfSpec.ylabel` defaults to `"cumulative probability"` instead of 
 `resolve_renderer()` and `check_export_format()` in `backends/base.py` factor out the
 lookup-or-raise dispatch logic (`{spec_type: renderer}` lookup, `{format}` membership check) shared
 by every backend, so a backend only owns its dict of renderers, not the dispatch mechanics around
-it. `backends/registry.py` maps a backend name to its registered instance, and raises a
-`BackendNotFoundError` (also a `RuntimeError`) listing available backends when an unregistered name
-is requested, typically because its underlying plotting library is not installed.
+it. `backends/registry.py` maps a backend name to its instance, and raises a `BackendNotFoundError`
+(also a `RuntimeError`) listing the known backends when an unknown name is requested, or naming the
+extra to install when its underlying plotting library is not installed.
 
 `Backend.capabilities()` (and the module-level `plotmux.backends.capabilities(name)`) returns a
 `BackendCapabilities(backend_name, spec_types, caveats)`: `spec_types` is simply
