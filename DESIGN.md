@@ -55,9 +55,9 @@ the common API to the union of all backends.
 ## 2. Constraints from the existing codebase
 
 - `coola` is already a dependency and its optional-dependency pattern
-  (`is_*_available`, `*_available`, `raise_*_missing_error`) is
-  reused as-is by `src/plotmux/utils/imports/{matplotlib,xy,bokeh,
-altair}.py`. New backends follow the same pattern instead of
+  (`is_*_available` cached with `availability_cache`, `check_*` raising
+  `MissingPackageError`) is reused by
+  `src/plotmux/utils/imports/optional.py`. New backends follow the same pattern instead of
   introducing a new one.
 - `matplotlib`, `xy`, `bokeh`, and `altair` are declared as optional
   extras in `pyproject.toml`. Only `numpy` and
@@ -103,8 +103,8 @@ src/plotmux/
 │   │                             #   x-axis check for BarSpec/StackedBarSpec
 │   ├── slope.py                   # resolve_slope_xrange() (see 3.2's SlopeSpec
 │   │                             #   discussion below)
-│   └── imports/                 # one module per optional backend dep
-│                                 # (matplotlib.py, xy.py, bokeh.py, altair.py)
+│   └── imports/                 # optional.py: is_*_available / check_* of
+│                                 # each optional backend dep
 ├── colors/                      # package (see 4.9.1)
 │   ├── __init__.py              # re-exports parse_color, palette names
 │   ├── parser.py                # parse_color()
@@ -627,7 +627,7 @@ its library is installed" rule every other backend follows.
 `name -> module path` mapping for the four built-in backends. Each
 backend subpackage's `__init__.py` registers its own instance at
 import time, guarded by that library's `is_*_available()` check (same
-pattern as `utils/imports/matplotlib.py`); `get_backend(name)` imports
+pattern as `utils/imports/optional.py`); `get_backend(name)` imports
 the matching built-in submodule lazily, the first time that name is
 requested, rather than `plotmux/__init__.py` importing all four up
 front (see [3.4](#34-lazy-registration-and-third-party-plugins)).
