@@ -6,9 +6,14 @@ __all__ = ["LayerSpec"]
 
 from dataclasses import dataclass, replace
 
+import numpy as np
+
 from plotmux.colors.palette import DEFAULT_PALETTE
 from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import BaseSpec, XBoundSpec
+from plotmux.specs.cdf import CdfSpec
+from plotmux.specs.histogram import HistogramSpec
+from plotmux.utils.categorical import is_categorical
 
 
 @dataclass(frozen=True, eq=False)
@@ -27,8 +32,10 @@ class LayerSpec(XBoundSpec):
             on recursive dispatch.
 
     Raises:
-        ValueError: if ``layers`` is empty or contains a
-            ``LayerSpec``.
+        ValueError: if ``layers`` is empty, contains a
+            ``LayerSpec``, or mixes a categorical x (strings, e.g.
+            ``BarSpec``) with a numeric x (e.g. ``LineSpec``,
+            ``HistogramSpec``) on the same axes.
 
     Example:
         ```pycon
@@ -55,8 +62,36 @@ class LayerSpec(XBoundSpec):
         if any(isinstance(child, LayerSpec) for child in self.layers):
             msg = "layers must not contain a LayerSpec (nesting is not supported)"
             raise InvalidSpecError(msg)
+        kinds = {_is_categorical_x(child) for child in self.layers} - {None}
+        if len(kinds) > 1:
+            msg = (
+                "layers must not mix a categorical x (strings) with a numeric x on the "
+                "same axes, but received both"
+            )
+            raise InvalidSpecError(msg)
         object.__setattr__(self, "layers", tuple(_assign_default_colors(self.layers)))
         self._validate_base()
+
+
+def _is_categorical_x(child: BaseSpec) -> bool | None:
+    r"""Tell whether a child spec draws on a categorical x-axis.
+
+    Args:
+        child: The child spec to inspect.
+
+    Returns:
+        ``True`` if the child has a categorical (string) ``x``,
+            ``False`` if it has a numeric ``x`` or bins numeric
+            values (``HistogramSpec``, ``CdfSpec``), and ``None`` if
+            it has no data on the x-axis of its own (e.g.
+            ``SlopeSpec``).
+    """
+    x = getattr(child, "x", None)
+    if isinstance(x, np.ndarray):
+        return is_categorical(x)
+    if isinstance(child, HistogramSpec | CdfSpec):
+        return False
+    return None
 
 
 def _assign_default_colors(layers: tuple[BaseSpec, ...]) -> tuple[BaseSpec, ...]:

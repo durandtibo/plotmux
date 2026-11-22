@@ -5,7 +5,9 @@ from typing import Any, cast
 import numpy as np
 import pytest
 
+from plotmux.exceptions import InvalidSpecError
 from plotmux.specs import CdfSpec
+from plotmux.utils import find_range
 
 ##############################
 #     Tests for CdfSpec     #
@@ -182,3 +184,87 @@ def test_cdf_spec_not_equal_with_different_values() -> None:
 def test_cdf_spec_hash_raises() -> None:
     with pytest.raises(TypeError, match="unhashable type: 'CdfSpec'"):
         hash(CdfSpec(values=np.arange(5)))
+
+
+######################################
+#     Tests for the input policy     #
+######################################
+
+
+def test_cdf_spec_nan_is_dropped() -> None:
+    with pytest.warns(UserWarning, match="NaN or inf"):
+        spec = CdfSpec(values=np.array([1.0, np.nan, 3.0]))
+    assert np.array_equal(spec.values, np.array([1.0, 3.0]))
+
+
+def test_cdf_spec_inf_is_dropped() -> None:
+    with pytest.warns(UserWarning, match="NaN or inf"):
+        spec = CdfSpec(values=np.array([1.0, np.inf, 3.0]))
+    assert np.array_equal(spec.values, np.array([1.0, 3.0]))
+
+
+def test_cdf_spec_negative_inf_is_dropped() -> None:
+    with pytest.warns(UserWarning, match="NaN or inf"):
+        spec = CdfSpec(values=np.array([-np.inf, 2.0, 3.0]))
+    assert np.array_equal(spec.values, np.array([2.0, 3.0]))
+
+
+def test_cdf_spec_warns_with_the_count() -> None:
+    with pytest.warns(
+        UserWarning,
+        match=r"CdfSpec: 3 non-finite value\(s\) \(NaN or inf\) detected in values and filtered out",
+    ):
+        CdfSpec(values=np.array([1.0, np.nan, np.inf, -np.inf, 2.0]))
+
+
+def test_cdf_spec_warns_once_per_construction() -> None:
+    with pytest.warns(UserWarning, match="NaN or inf") as record:
+        CdfSpec(values=np.array([1.0, np.nan, np.nan, 2.0]))
+    assert len(record) == 1
+
+
+def test_cdf_spec_warning_points_at_the_caller() -> None:
+    with pytest.warns(UserWarning, match="NaN or inf") as record:
+        CdfSpec(values=np.array([1.0, np.nan, 2.0]))
+    assert record[0].filename == __file__
+
+
+def test_cdf_spec_finite_values_do_not_warn(recwarn: pytest.WarningsRecorder) -> None:
+    CdfSpec(values=np.array([1.0, 2.0, 3.0]))
+    assert len(recwarn) == 0
+
+
+def test_cdf_spec_all_non_finite_raises() -> None:
+    with pytest.raises(InvalidSpecError, match="values must contain at least one finite value"):
+        CdfSpec(values=np.array([np.nan, np.inf]))
+
+
+def test_cdf_spec_non_numeric_raises() -> None:
+    with pytest.raises(InvalidSpecError, match="values must be numeric"):
+        CdfSpec(values=np.array(["a", "b"]))
+
+
+def test_cdf_spec_dropped_values_are_read_only() -> None:
+    with pytest.warns(UserWarning, match="NaN or inf"):
+        spec = CdfSpec(values=np.array([1.0, np.nan, 3.0]))
+    with pytest.raises(ValueError, match="read-only"):
+        spec.values[0] = 1.0
+
+
+def test_cdf_spec_input_array_is_not_changed() -> None:
+    values = np.array([1.0, np.nan, 3.0])
+    with pytest.warns(UserWarning, match="NaN or inf"):
+        CdfSpec(values=values)
+    assert np.array_equal(values, np.array([1.0, np.nan, 3.0]), equal_nan=True)
+
+
+def test_cdf_spec_quantile_range_uses_the_finite_values() -> None:
+    with pytest.warns(UserWarning, match="NaN or inf"):
+        spec = CdfSpec(values=np.array([0.0, 10.0, np.inf, np.nan, 5.0]))
+    assert find_range(spec.values, "q0.0", "q1.0") == (0.0, 10.0)
+
+
+def test_cdf_spec_equal_after_filtering() -> None:
+    with pytest.warns(UserWarning, match="NaN or inf"):
+        a = CdfSpec(values=np.array([1.0, np.nan, 3.0]))
+    assert a == CdfSpec(values=np.array([1.0, 3.0]))

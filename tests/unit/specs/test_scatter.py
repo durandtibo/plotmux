@@ -5,6 +5,7 @@ from typing import Any, cast
 import numpy as np
 import pytest
 
+from plotmux.exceptions import InvalidSpecError
 from plotmux.specs import ScatterSpec
 
 ##################################
@@ -185,3 +186,35 @@ def test_scatter_spec_not_equal_with_different_y() -> None:
 def test_scatter_spec_hash_raises() -> None:
     with pytest.raises(TypeError, match="unhashable type: 'ScatterSpec'"):
         hash(ScatterSpec(x=np.arange(5), y=np.arange(5)))
+
+
+######################################
+#     Tests for the input policy     #
+######################################
+
+
+def test_scatter_spec_nan_in_y_is_kept() -> None:
+    spec = ScatterSpec(x=np.arange(3), y=np.array([1.0, np.nan, 3.0]))
+    assert np.array_equal(spec.y, np.array([1.0, np.nan, 3.0]), equal_nan=True)
+
+
+def test_scatter_spec_nan_in_x_is_kept() -> None:
+    spec = ScatterSpec(x=np.array([1.0, np.nan, 3.0]), y=np.arange(3))
+    assert np.array_equal(spec.x, np.array([1.0, np.nan, 3.0]), equal_nan=True)
+
+
+def test_scatter_spec_nan_does_not_warn(recwarn: pytest.WarningsRecorder) -> None:
+    ScatterSpec(x=np.arange(3), y=np.array([1.0, np.nan, 3.0]))
+    assert len(recwarn) == 0
+
+
+@pytest.mark.parametrize("value", [np.inf, -np.inf])
+def test_scatter_spec_inf_in_y_raises(value: float) -> None:
+    with pytest.raises(InvalidSpecError, match=r"ScatterSpec: y must not contain inf"):
+        ScatterSpec(x=np.arange(3), y=np.array([1.0, value, 3.0]))
+
+
+@pytest.mark.parametrize("value", [np.inf, -np.inf])
+def test_scatter_spec_inf_in_x_raises(value: float) -> None:
+    with pytest.raises(InvalidSpecError, match=r"ScatterSpec: x must not contain inf"):
+        ScatterSpec(x=np.array([1.0, value, 3.0]), y=np.arange(3))

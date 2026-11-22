@@ -158,6 +158,37 @@ endpoints. A standalone `plotmux.slope(..., backend="altair")` (no data-bound si
 `NotImplementedError`. See [Choosing a Backend](backends.md) and `plotmux.backends.capabilities()`
 (in [The Figure Object](figure.md)) to check this ahead of time.
 
+## Non-finite Values (`NaN` and `inf`)
+
+The same input gives the same figure on every backend, so `plotmux` checks `NaN` and `inf` when the
+spec is built, not in the plotting library:
+
+| Input                                              | Result                                                               |
+| -------------------------------------------------- | -------------------------------------------------------------------- |
+| `hist`/`cdf`: `NaN` or `inf` among the values      | Dropped, with a `UserWarning` that gives the count (once per figure) |
+| `hist`/`cdf`: no finite value left                 | `InvalidSpecError`                                                   |
+| `hist`/`cdf`: non-numeric values                   | `InvalidSpecError`                                                   |
+| `hist`/`cdf`: a quantile bound (`xmin="q0.1"`)     | Computed on the finite values                                        |
+| `line`/`scatter`: `NaN` in `x` or `y`              | Kept: a gap in the line, no point                                    |
+| `line`/`scatter`: `inf` or `-inf` in `x` or `y`    | `InvalidSpecError`                                                   |
+| `layer`: a categorical `x` mixed with a numeric `x` | `InvalidSpecError`                                                   |
+
+```pycon
+>>> import warnings
+>>> import plotmux
+>>> with warnings.catch_warnings(record=True) as caught:
+...     warnings.simplefilter("always")
+...     fig = plotmux.hist([1.0, 2.0, float("nan"), 3.0], bins=3)
+...
+>>> str(caught[0].message)
+'HistogramSpec: 1 non-finite value(s) (NaN or inf) detected in values and filtered out'
+>>> fig.spec.values
+array([1., 2., 3.])
+
+```
+
+`InvalidSpecError` is also a `ValueError`.
+
 ## Common Style Arguments
 
 `hist`, `bar`, `stacked_bar`, `cdf`, `line`, `scatter`, `slope`, and `layer` all accept the same

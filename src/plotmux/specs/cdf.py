@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import BaseSpec
 from plotmux.utils.array import to_readonly_array
+from plotmux.utils.finite import drop_non_finite
 
 if TYPE_CHECKING:
     import numpy as np
@@ -57,10 +58,15 @@ class CdfSpec(BaseSpec):
         yscale: The y-axis scale, ``"linear"`` or ``"log"``.
             Inherited from ``BaseSpec``.
 
+    ``NaN`` and ``inf`` values of ``values`` are dropped, and a
+    ``UserWarning`` with their count is emitted once, when the spec is
+    built. The quantile bounds (``xmin``/``xmax``) are computed on the
+    finite values.
+
     Raises:
         ValueError: if ``nbins`` is set and is not a positive
-            integer, ``values`` is not 1-dimensional or is empty,
-            ``color`` is not a valid color, or ``xmin`` and ``xmax``
+            integer, ``values`` is not 1-dimensional, is empty, is not
+            numeric or has no finite value, ``color`` is not a valid color, or ``xmin`` and ``xmax``
             are both explicit numeric values with ``xmin >= xmax``.
 
     Example:
@@ -110,6 +116,8 @@ class CdfSpec(BaseSpec):
         if values.size == 0:
             msg = "values must not be empty"
             raise InvalidSpecError(msg)
+        values = drop_non_finite(values, owner="CdfSpec")
+        values.flags.writeable = False
         object.__setattr__(self, "values", values)
         # Only checked when both bounds are already explicit numbers: a
         # quantile string (e.g. "q0.1") or ``None`` is resolved against the
