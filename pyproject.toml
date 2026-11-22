@@ -15,41 +15,33 @@ name = "plotmux"
 version = "0.0.1a0"
 description = "A unified plotting API that lets you switch between backends without changing your code"
 readme = "README.md"
-authors = [
-    { name = "Thibaut Durand", email = "durand.tibo+gh@gmail.com" },
-]
-keywords = [
-    "numpy",
-    "plot",
-]
+authors = [{ name = "Thibaut Durand", email = "durand.tibo+gh@gmail.com" }]
+keywords = ["numpy", "plot"]
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
 
 dynamic = ["maintainers"]
 
 classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: BSD License",
-    "Operating System :: POSIX :: Linux",
-    "Operating System :: MacOS",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-    "Topic :: Scientific/Engineering",
-    "Topic :: Software Development :: Libraries",
-    "Topic :: Software Development :: Testing",
-    "Typing :: Typed",
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Software Development :: Testing",
+  "Typing :: Typed",
 ]
 
 requires-python = ">=3.10"
-dependencies = [
-    "coola >=1.1,<2.0",
-    "numpy>=2.0,<3.0",
-]
+dependencies = ["coola >=1.1,<2.0", "numpy>=2.0,<3.0"]
 
 [project.optional-dependencies]
 altair = ["altair>=6.0,<7.0"]
@@ -60,34 +52,34 @@ xy = ["xy>=0.0.6,<1.0 ; python_version >= '3.11'"]
 
 [dependency-groups]
 dev = [
-    "codespell>=2.4,<3.0",
-    "coverage[toml]>=7.15,<8.0",
-    "docformatter>=1.7.8,<2.0",
-    "feu[all]>=0.8.3,<1.0",
-    "import-linter>=2.0,<3.0 ; python_version >= '3.11'",
-    "invoke-tasklib>=0.1.0a0,<1.0 ; python_version >= '3.11'",
-    "invoke>=3.0,<4.0",
-    "pre-commit>=4.6,<5.0",
-    "pygments>=2.20,<3.0",
-    "pyright>=1.1.411,<2.0",
-    "pytest-cov>=7.1,<8.0",
-    "pytest-timeout>=2.4,<3.0",
-    "pytest>=9.1,<10.0",
-    "ruff>=0.16,<1.0",
-    "xdoctest>=1.3,<2.0",
+  "codespell>=2.4,<3.0",
+  "coverage[toml]>=7.15,<8.0",
+  "docformatter>=1.7.8,<2.0",
+  "feu[all]>=0.8.3,<1.0",
+  "import-linter>=2.0,<3.0 ; python_version >= '3.11'",
+  "invoke-tasklib>=0.1.0a0,<1.0 ; python_version >= '3.11'",
+  "invoke>=3.0,<4.0",
+  "pre-commit>=4.6,<5.0",
+  "pygments>=2.20,<3.0",
+  "pyright>=1.1.411,<2.0",
+  "pytest-cov>=7.1,<8.0",
+  "pytest-timeout>=2.4,<3.0",
+  "pytest>=9.1,<10.0",
+  "ruff>=0.16,<1.0",
+  "xdoctest>=1.3,<2.0",
 ]
 
 docs = [
-    "mike >=2.2,<3.0",
-    "mkdocs-material >=9.7,<10.0",
-    "mkdocstrings[python]>=1.0,<2.0",
-    "mkdocs-include-markdown-plugin >=7.3,<8.0",
+  "mike >=2.2,<3.0",
+  "mkdocs-material >=9.7,<10.0",
+  "mkdocstrings[python]>=1.0,<2.0",
+  "mkdocs-include-markdown-plugin >=7.3,<8.0",
 ]
 
 jupyter = [
-    "ipykernel>=7.0,<8.0",
-    "jupyterlab >=4.5,<5.0",
-    "nbstripout >=0.9,<1.0",
+  "ipykernel>=7.0,<8.0",
+  "jupyterlab >=4.5,<5.0",
+  "nbstripout >=0.9,<1.0",
 ]
 
 [project.urls]
@@ -111,10 +103,10 @@ source = ["plotmux"]
 [tool.coverage.report]
 show_missing = true
 exclude_lines = [
-    "pragma: no cover",
-    "if TYPE_CHECKING:",
-    "^\\s*\\.\\.\\.$",
-    "\\)( -> .+)?: \\.\\.\\.$",
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "^\\s*\\.\\.\\.$",
+  "\\)( -> .+)?: \\.\\.\\.$",
 ]
 
 [tool.pytest.ini_options]
@@ -123,16 +115,17 @@ pythonpath = ["src"]
 testpaths = ["tests/"]
 log_format = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 addopts = [
-    "--color",
-    "yes",
-    "--durations",
-    "10",
-    "-rf",
-    "--strict-markers",
-    "--strict-config",
+  "--color",
+  "yes",
+  "--durations",
+  "10",
+  "-rf",
+  "--strict-markers",
+  "--strict-config",
 ]
 xfail_strict = true
 timeout = 300
+filterwarnings = ["error"]
 # Configuration of the short test summary info
 # https://docs.pytest.org/en/stable/usage.html#detailed-summary-report
 
@@ -145,65 +138,65 @@ syntax = "google"
 [tool.ruff]
 # List of rules: https://docs.astral.sh/ruff/rules/
 lint.select = [
-    "A", # builtins
-    "ANN", # annotations
-    "ARG", # flake8-unused-arguments
-    "B", # bugbear
-    "BLE", # flake8-blind-except
-    "C4", # flake8-comprehensions
-    "D", # pydocstyle
-    "DTZ", # flake8-datetimez
-    "E", # pycodestyle (Error)
-    "EM", # flake8-errmsg
-    "EXE", # flake8-executable
-    "F", # pyflakes
-    "FA", # flake8-future-annotations
-    "FURB", # refurb
-    "G", # flake8-logging-format
-    "I", # isort
-    "ICN", # flake8-import-conventions
-    "INP", # flake8-no-pep420
-    "ISC", # flake8-implicit-str-concat
-    "LOG", # logging
-    "N", # naming
-    "NPY", # NumPy-specific rules
-    "PD", # pandas-vet
-    "PERF", # Perflint
-    "PGH", # pygrep-hooks
-    "PIE", # flake8-pie
-    "PL", # Pylint
-    "PT", # flake8-pytest-style
-    "PTH", # pathlib
-    "PYI", # flake8-pyi
-    "Q", # flake8-quotes
-    "RET", # flake8-return
-    "RSE", # flake8-raise
-    "RUF", # Ruff-specific rules
-    "S", # flake8-bandit
-    "SIM", # flake8-simplify
-    "T20", # flake8-print
-    "TC", # flake8-type-checking
-    "TD", # flake8-todos
-    "TID", # flake8-tidy-imports
-    "TRY", # tryceratops
-    "UP", # pyupgrade
-    "W", # pycodestyle (Warning)
+  "A",    # builtins
+  "ANN",  # annotations
+  "ARG",  # flake8-unused-arguments
+  "B",    # bugbear
+  "BLE",  # flake8-blind-except
+  "C4",   # flake8-comprehensions
+  "D",    # pydocstyle
+  "DTZ",  # flake8-datetimez
+  "E",    # pycodestyle (Error)
+  "EM",   # flake8-errmsg
+  "EXE",  # flake8-executable
+  "F",    # pyflakes
+  "FA",   # flake8-future-annotations
+  "FURB", # refurb
+  "G",    # flake8-logging-format
+  "I",    # isort
+  "ICN",  # flake8-import-conventions
+  "INP",  # flake8-no-pep420
+  "ISC",  # flake8-implicit-str-concat
+  "LOG",  # logging
+  "N",    # naming
+  "NPY",  # NumPy-specific rules
+  "PD",   # pandas-vet
+  "PERF", # Perflint
+  "PGH",  # pygrep-hooks
+  "PIE",  # flake8-pie
+  "PL",   # Pylint
+  "PT",   # flake8-pytest-style
+  "PTH",  # pathlib
+  "PYI",  # flake8-pyi
+  "Q",    # flake8-quotes
+  "RET",  # flake8-return
+  "RSE",  # flake8-raise
+  "RUF",  # Ruff-specific rules
+  "S",    # flake8-bandit
+  "SIM",  # flake8-simplify
+  "T20",  # flake8-print
+  "TC",   # flake8-type-checking
+  "TD",   # flake8-todos
+  "TID",  # flake8-tidy-imports
+  "TRY",  # tryceratops
+  "UP",   # pyupgrade
+  "W",    # pycodestyle (Warning)
 ]
 lint.ignore = [
-    "A003", # Class attribute `{name}` is shadowing a python builtin
-    "ANN401", # Dynamically typed expressions (typing.Any) are disallowed.
-    "B905", # `zip()` without an explicit strict= parameter set. The `strict=` argument was added in Python 3.10
-    "E501", # Line lengths are recommended to be no greater than 79 characters.
-    "W505", # Doc line too long
-    "PLR0913", # Too many arguments in function definition (8 > 5)
-    "PLR2004", # Magic value used in comparison, consider replacing 0.0 with a constant variable
+  "A003",    # Class attribute `{name}` is shadowing a python builtin
+  "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed.
+  "B905",    # `zip()` without an explicit strict= parameter set. The `strict=` argument was added in Python 3.10
+  "E501",    # Line lengths are recommended to be no greater than 79 characters.
+  "W505",    # Doc line too long
+  "PLR0913", # Too many arguments in function definition (8 > 5)
+  "PLR2004", # Magic value used in comparison, consider replacing 0.0 with a constant variable
 
-    # The following rules are ignored because they conflict with another library like docformatter.
-    "D102", # Missing docstring in public method
-    "D105", # Missing docstring in magic method
-    "D107", # Missing docstring in `__init__`
-    "D205", # 1 blank line required between summary line and description
-    "D209", # Multi-line docstring closing quotes should be on a separate line
+  # The following rules are ignored because they conflict with another library like docformatter.
+  "D102", # Missing docstring in public method
+  "D105", # Missing docstring in magic method
+  "D107", # Missing docstring in `__init__`
+  "D205", # 1 blank line required between summary line and description
+  "D209", # Multi-line docstring closing quotes should be on a separate line
 ]
 
 # Enable on top of the Google convention.
@@ -216,9 +209,9 @@ src = ["src"]
 [tool.ruff.lint.per-file-ignores]
 # Ignore all directories named `tests`.
 "tests/**" = [
-    "D", # pydocstyle
-    "PL", # Pylint
-    "S101", # flake8-bandit: assert
+  "D",    # pydocstyle
+  "PL",   # Pylint
+  "S101", # flake8-bandit: assert
 ]
 
 [tool.ruff.lint.mccabe]
