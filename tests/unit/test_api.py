@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 import plotmux
-from plotmux.api import _as_panel, _merge_axes_options
+from plotmux.api import _as_panel, _check_options, _merge_axes_options
 from plotmux.backends.registry import _REGISTRY, register_backend
 from plotmux.exceptions import InvalidSpecError
 from plotmux.scene import build_scene
@@ -608,3 +608,66 @@ def test_merge_axes_options_conflict_raises() -> None:
 
 def test_merge_axes_options_does_not_merge_the_marks() -> None:
     assert "marks" not in _merge_axes_options([PanelSpec(marks=(LINE,), title="t")], {})
+
+
+#################################
+#     Tests for _check_options  #
+#################################
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        pytest.param(lambda: plotmux.hist([1, 2, 3], histtype="step"), id="hist"),
+        pytest.param(lambda: plotmux.bar([1, 2], [1, 2], histtype="step"), id="bar"),
+        pytest.param(
+            lambda: plotmux.stacked_bar([1, 2], [BarSeries(y=np.arange(2))], histtype="step"),
+            id="stacked_bar",
+        ),
+        pytest.param(lambda: plotmux.cdf([1, 2, 3], histtype="step"), id="cdf"),
+        pytest.param(lambda: plotmux.line([1, 2], [1, 2], histtype="step"), id="line"),
+        pytest.param(lambda: plotmux.scatter([1, 2], [1, 2], histtype="step"), id="scatter"),
+        pytest.param(lambda: plotmux.slope(1, xmin=0, xmax=1, histtype="step"), id="slope"),
+        pytest.param(lambda: plotmux.layer(LINE, histtype="step"), id="layer"),
+    ],
+)
+def test_unknown_keyword_is_a_type_error_of_the_function(call: Any) -> None:
+    with pytest.raises(TypeError, match=r"\(\) got an unexpected keyword argument 'histtype'"):
+        call()
+
+
+def test_unknown_keyword_names_the_function_called() -> None:
+    with pytest.raises(TypeError, match=r"^cdf\(\) got an unexpected"):
+        cast("Any", plotmux.cdf)([1, 2, 3], colour="red")
+
+
+def test_unknown_keyword_lists_the_axes_options() -> None:
+    with pytest.raises(TypeError, match=r"The axes options are: backend, background_color"):
+        cast("Any", plotmux.hist)([1, 2, 3], colour="red")
+
+
+def test_unknown_keyword_is_checked_before_the_marks_are_built() -> None:
+    with pytest.raises(TypeError, match="unexpected keyword argument"):
+        cast("Any", plotmux.hist)([1, 2, 3], bins=0, colour="red")
+
+
+@pytest.mark.parametrize("function", [plotmux.hist, plotmux.cdf])
+def test_hist_and_cdf_do_not_accept_the_axis_limits(function: Any) -> None:
+    with pytest.raises(TypeError, match="unexpected keyword argument 'ymin_'"):
+        function([1, 2, 3], ymin_=0)
+
+
+def test_check_options_accepts_the_allowed_options() -> None:
+    _check_options("f", {"a": 1}, frozenset({"a", "b"}))
+
+
+def test_check_options_accepts_no_option() -> None:
+    _check_options("f", {}, frozenset())
+
+
+def test_check_options_unknown_option_raises() -> None:
+    with pytest.raises(
+        TypeError,
+        match=r"^f\(\) got an unexpected keyword argument 'c'\. The axes options are: a, b$",
+    ):
+        _check_options("f", {"c": 1}, frozenset({"b", "a"}))

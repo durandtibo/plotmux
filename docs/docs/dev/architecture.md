@@ -1,95 +1,98 @@
 # Architecture
 
-This page describes `plotmux`'s internal architecture: how it is organized, and why. See
-[DESIGN.md](https://github.com/durandtibo/plotmux/blob/main/DESIGN.md) in the repository for the
-full, up-to-date design document.
+This page describes `plotmux`'s internal architecture: how it is organized, and why. It is a short
+summary of [DESIGN.md](https://github.com/durandtibo/plotmux/blob/main/DESIGN.md) in the
+repository, the current-state design reference.
 
 ## Goal
 
 `plotmux` is a lightweight abstraction layer over Python's plotting libraries: users write plotting
 code once against `plotmux`'s unified API and choose the rendering backend (`matplotlib`, `xy`,
-`bokeh`, `altair`, `plotly`, ...) at runtime. Swapping backends should be a one-line configuration
-change, and adding a new backend or chart type should not require changing existing code.
+`bokeh`, `altair`, `plotly`, ...) at runtime. Swapping backends is a one-line configuration change,
+and adding a new backend or chart type does not require changing existing code.
 
-The unified API targets a small set of generic, broadly-useful chart types and figure-level concerns:
-the ones almost every plotting task needs (histograms, empirical CDFs, line charts, scatter
-plots, bar charts (plain and stacked), slope/abline annotations, layering them together, laying
-them out in a grid, common axis styling, per-mark color, export), not
-comprehensive coverage of every chart type a backend can draw. A niche or highly backend-specific
-plot is expected to stay behind the escape hatch (`Figure.to_native()`) rather than becoming a new
-spec.
+The unified API targets a small set of generic, broadly useful chart types and figure-level
+concerns: histograms, empirical CDFs, line charts, scatter plots, bar charts (plain and stacked),
+slope/abline lines, layering them together, laying them out in a grid, common axes styling,
+per-mark color, export. A niche or highly backend-specific plot stays behind the escape hatch
+(`Figure.to_native()`) rather than becoming a new spec.
 
-## Principle: Separate Spec From Render
+## Principle: Specs Are Plain Data, the Core Lowers Them, a Backend Draws Primitives
 
-Two layers:
+```text
+plotmux.hist(values, bins=30, title="t")             plotmux/api.py            builds specs, no logic
+        |
+        v
+PanelSpec(marks=(HistogramSpec(...),), title="t")    plotmux/specs/            pure data, validated
+        |   one panel = one axes; GridSpec = several panels
+        v
+build_scene(spec) -> AxesScene | GridScene            plotmux/scene.py          numpy only
+        |   ranges, statistics, default colors, legend, categories,
+        |   lowering of every mark to Bars | Line | Points
+        v
+Backend.draw(scene) -> native figure                  plotmux/backends/<name>/  3 draw functions,
+        |   draws primitives, applies the axes style       1 style function, grid, save
+        v
+Figure(spec, backend_name, native)                    plotmux/figure.py         show / save / to_native
+```
 
-1. **Chart specs** (`plotmux.specs`): plain, backend-agnostic frozen dataclasses describing _what_
-   to plot (data + encoding + style). They never import a plotting library.
-2. **Backends** (`plotmux.backends`): one package per plotting library, responsible for turning a
-   spec into that library's native figure object and for exporting it to a file.
+The core owns every decision that changes the numbers on the screen: the range and the bins of a
+histogram, the steps of a CDF, the stacking of a bar chart, the default colors, the x extent of a
+panel. A backend owns only the translation of three primitives and of the axes style into one
+library. So the same spec draws the same numbers on every backend, and a backend cannot draw a
+different histogram.
 
-This mirrors the Vega-Lite/Altair split, and is what makes "swap backend in one line" true:
-because a spec cannot hold a Matplotlib `Axes` or an `xy.Chart`, switching backends can never leak
-library-specific state back into user code.
+Rules that follow:
+
+- A spec never holds a plotting-library object, and importing `plotmux.specs` imports no plotting
+  library.
+- Backends are optional and lazy: `import plotmux` imports no backend, no plotting library and no
+  plugin. The core depends only on `coola` and `numpy`.
+- Nothing outside a `backends/<name>/` subpackage special-cases a backend by name.
 
 ## Package Layout
 
 ```text
 src/plotmux/
 ├── utils/
-│   ├── range.py                  # find_range(): quantile-or-explicit axis bounds
-│   ├── cdf.py                    # compute_cdf_steps(): binned empirical CDF step vertices
+│   ├── range.py                  # find_range(), check_range_bounds(): quantile-or-explicit ranges
+│   ├── cdf.py                    # cdf_steps(): exact (or binned) empirical CDF step vertices
 │   ├── categorical.py            # is_categorical(): string-vs-numeric x-axis check
-│   ├── slope.py                  # resolve_slope_xrange(): x-range for a layer()ed SlopeSpec
+│   ├── array.py                  # to_readonly_array(), to_paired_arrays()
+│   ├── extent.py                 # finite_extent()
+│   ├── finite.py                 # the NaN/inf policy: drop_non_finite(), check_no_inf()
+│   ├── equality.py               # ValueObject: value equality for the frozen dataclasses
 │   └── imports/                  # one module per optional backend dependency
-│                                  # (is_matplotlib_available(), is_xy_available(),
-│                                  #  is_bokeh_available(), is_altair_available(),
-│                                  #  is_plotly_available())
 ├── colors/
-│   ├── parser.py                 # parse_color(): canonical RGBA normalization
+│   ├── parser.py                 # parse_color(), parse_optional_color(): canonical RGBA
 │   ├── palette.py                # PRIMARY/SECONDARY/TERTIARY, DEFAULT_PALETTE
 │   └── named.py                  # static CSS/matplotlib named-color table
 ├── specs/
-│   ├── base.py                   # BaseSpec (title/xlabel/ylabel/xscale/yscale/background_color/
-│                                  #   ymin/ymax/legend_title/legend_location/legend_orientation)
-│                                  #   + XBoundSpec (adds plain xmin/xmax)
-│   ├── histogram.py              # HistogramSpec
-│   ├── cdf.py                    # CdfSpec
-│   ├── line.py                   # LineSpec
-│   ├── scatter.py                # ScatterSpec
-│   ├── bar.py                    # BarSpec
-│   ├── stacked_bar.py            # StackedBarSpec, BarSeries
-│   ├── slope.py                  # SlopeSpec (gradient/intercept, not data-bound;
-│                                  #   standalone on matplotlib+bokeh only)
-│   ├── layer.py                  # LayerSpec (rejects nesting + empty layers)
-│   └── grid.py                   # GridSpec (rejects nesting + empty cells)
+│   ├── base.py                   # Spec (immutable value object), MarkSpec (label/color/alpha,
+│   │                             #   x_extent(), to_primitives())
+│   ├── panel.py                  # PanelSpec: marks + axes style (title, labels, scales, limits,
+│   │                             #   background, legend)
+│   ├── grid.py                   # GridSpec: independent panels
+│   ├── histogram.py cdf.py bar.py stacked_bar.py line.py scatter.py slope.py   # the marks
+├── primitives.py                 # Bars, Line, Points
+├── scene.py                      # build_scene(), AxesScene, GridScene, LegendStyle
 ├── backends/
-│   ├── base.py                   # Backend ABC + dispatch helpers + BackendCapabilities
-│   ├── registry.py                # register_backend() / get_backend() / entry points
-│   ├── matplotlib/                # MatplotlibBackend
-│   ├── xy/                        # XyBackend
-│   ├── bokeh/                     # BokehBackend
-│   ├── altair/                    # AltairBackend
-│   └── plotly/                    # PlotlyBackend
+│   ├── base.py                   # Backend ABC + BackendCapabilities
+│   ├── registry.py               # register_backend() / get_backend() / entry points
+│   └── <name>/                   # matplotlib, xy, bokeh, altair, plotly:
+│       ├── backend.py            #   the Backend, draw_bars/draw_line/draw_points, the grid, save
+│       └── style.py              #   the axes style and the translation tables
 ├── figure.py                     # Figure wrapper
-├── export.py                      # save(figure, path)
-├── config.py                      # default backend + context manager
-├── exceptions.py                  # PlotmuxError hierarchy
-├── api.py                         # public hist(), bar(), stacked_bar(), cdf(), line(),
-│                                   #   scatter(), slope(), layer(), grid()
-└── testing/fixtures.py            # pytest fixtures for downstream users
+├── export.py                     # save(figure, path)
+├── config.py                     # default backend (a ContextVar) + context manager
+├── exceptions.py                 # PlotmuxError hierarchy
+├── api.py                        # hist(), bar(), stacked_bar(), cdf(), line(), scatter(),
+│                                 #   slope(), layer(), grid(); PanelOptions
+└── testing/fixtures.py           # pytest markers for downstream users
 ```
 
-Every backend (`matplotlib`, `xy`, `bokeh`, `altair`, `plotly`) implements `StackedBarSpec` and the
-seven other data-bound/composition specs. `SlopeSpec` is the one exception: it is registered as a
-_standalone_ spec only on `matplotlib`/`bokeh` (the two backends with a native "line by slope,
-independent of data range" primitive); on `altair`/`xy`/`plotly` it is only supported as a
-`layer()` child alongside a data-bound sibling, since those three need concrete endpoints, not a
-slope/intercept pair (see [Layering and Grid Layouts](#layering-and-grid-layouts)).
-
-`specs/<type>.py` plus one `_RENDERERS` entry per backend is the shape a new, similarly generic
-chart type would take. A new backend adds a new `backends/<name>/` subpackage alongside the
-existing ones.
+A new backend adds a `backends/<name>/` subpackage with two modules. A new chart type is one
+`MarkSpec` subclass (see the [developer guide](development.md)).
 
 ## Data Flow
 
@@ -97,218 +100,83 @@ existing ones.
 user code
    │  plotmux.hist(values, bins=30, xmin="q0.1")
    ▼
-api.py             builds a HistogramSpec, resolves the active backend
-   │
+api.py             checks the keywords, builds a HistogramSpec, wraps it in a PanelSpec,
+                   resolves the active backend (explicit `backend=` > the default of config.py)
    ▼
-specs               HistogramSpec (frozen dataclass, no plotting import)
-   │
+backends.get_backend(name)   imports the module of that backend on the first use
    ▼
-backends/registry   get_backend("matplotlib") -> MatplotlibBackend
-   │
+Backend.render(spec)         build_scene(spec) -> capabilities().check(scene) -> draw(scene)
    ▼
-backends/matplotlib.backend.render(spec)  ->  native matplotlib Figure
-   │
-   ▼
-figure.py           Figure(spec, backend_name, native)
-   │
-   ▼
-user code           fig.show() / fig.save("out.png") / fig.to_native()
+Figure(spec, backend_name, native)
 ```
 
-Backend loading is lazy, not eager: `import plotmux` imports no backend module, no plotting library
-and no plugin. `backends/registry.py` finds a backend by name, in this order: an instance given to
-`register_backend(backend, *, replace=False)`, the built-in table (`{name: "module:Class"}` for
-`matplotlib`, `xy`, `bokeh`, `altair` and `plotly`), then the `plotmux.backends` entry-point group.
-`get_backend(name)` imports only the module of that name the first time it is requested (e.g. via
-`backend="matplotlib"`, or the first `plotmux.hist(...)` call after `plotmux.set_backend("xy")`),
-instantiates the class once and caches the instance. A process that only ever renders with
-`matplotlib` never imports `xy`, `bokeh`, `altair`, or `plotly` (or their underlying libraries) even
-if all four are installed. The `plotmux.backends.<name>` subpackages register nothing at import time.
-
-A third-party backend is a `Backend` subclass advertised by an entry point whose value is
-`package.module:BackendClass` (see
-[Adding a Third-Party Backend](../uguide/backends.md#adding-a-third-party-backend)). The registry
-reads the entry-point _names_ from the installed metadata (nothing is imported) and loads the plugin
-on its first use. A plugin cannot take over a built-in name by being installed: `register_backend`
-raises `BackendRegistrationError` for a name already registered or built in, unless
-`replace=True`. A backend whose library cannot be imported raises `BackendNotFoundError` naming the
-extra to install (`pip install "plotmux[matplotlib]"`), with the `ImportError` as its cause.
-`available_backends()` lists the registered backends, the built-in backends whose library is
-installed and the names advertised by plugins, without importing anything.
-
-`api.py` never loads a backend itself: it only calls `get_backend(name)`, which is what actually
-imports a backend lazily, or raises `BackendNotFoundError` if `name` isn't known or its library isn't
-installed. `config.set_backend()`/`backend()`
-additionally reject a name that isn't even _known_ — neither a built-in name, an
-entry-point-advertised name, nor already registered — immediately, at the call site, without
-importing anything (`backends/registry.py::known_backend_names()`); a name that is known but not
-yet loaded still only fails later, at render time, since validating that would require the import
-laziness was introduced to avoid (`available_backends()` tells which libraries are installed).
+`Figure.save(path)` goes through `export.save`, which takes the format from the suffix, validates it
+against the capabilities of the backend (for a single panel or for a grid) before it creates any
+directory, then calls `Backend.save`.
 
 ## Key Components
 
-### `BaseSpec`
+### Marks, Panels and Grids
 
-Holds the figure-level fields every chart type inherits (`title`, `xlabel`, `ylabel`, `xscale`,
-`yscale`, `background_color`, `ymin`, `ymax`, `legend_title`, `legend_location`,
-`legend_orientation`) so they are defined once instead of being redeclared per chart type, and
-gives `Backend.render`/the `_RENDERERS` dicts a common type to dispatch on. These fields are
-`kw_only=True` so they (all defaulted) can precede a subclass's own required fields
-(e.g. `HistogramSpec.values`) without violating the dataclass "no non-default field after a
-default field" rule. It also owns two things a concrete spec's own `__post_init__` calls instead of
-reimplementing: `_normalize_color(name="color")` parses a `str | tuple | None` color field via
-`parse_color` and writes the canonical RGBA value back in place (`object.__setattr__`, since specs
-are frozen), and `_validate_base()` normalizes `background_color` and checks `ymin <= ymax`. The
-module-level `check_equal_length(x, y)` (public, unlike the fields above) coerces `x`/`y` to
-`np.ndarray` and raises `InvalidSpecError` if their lengths differ (shared by `LineSpec` and
-`ScatterSpec`).
+- A **mark** (`MarkSpec`) is what is drawn: the data and the style of one chart type. `label`,
+  `color` and `alpha` are declared and validated once. A mark knows its `x_extent()` and lowers
+  itself with `to_primitives(extent)`.
+- A **panel** (`PanelSpec`) is one axes: a tuple of marks and the axes style. A **layer** is a panel
+  with several marks. A **grid** (`GridSpec`) is a tuple of panels. The type forbids a grid in a grid
+  and a layer in a layer, and a grid of layers needs no special case.
+- Specs are frozen, their arrays are copied and read-only, and they have value equality (they are
+  not hashable). Every invalid input raises an `InvalidSpecError` when the spec is built.
 
-A plain, explicit-value-only `xmin`/`xmax` pair lives one level down, on `XBoundSpec(BaseSpec)`
-(`BarSpec`, `StackedBarSpec`, `LineSpec`, `ScatterSpec` inherit it), not on `BaseSpec` itself:
-`HistogramSpec`/`CdfSpec` need a _wider_ `float | str | None` type for their own `xmin`/`xmax` (to
-also accept a quantile string), and redeclaring an inherited field with an incompatible type would
-be a real Liskov substitution violation, not just a type-checker nitpick — a caller holding an
-`XBoundSpec` reference could dereference `xmin` expecting a `float` and get a `str`. So
-`HistogramSpec`/`CdfSpec` declare their own `xmin`/`xmax` directly against `BaseSpec` instead of
-inheriting `XBoundSpec`.
+### Primitives and the Scene
+
+`Bars` (histogram, bar, one series of a stacked bar), `Line` (line, CDF steps, slope) and `Points`
+(scatter) are the only things a backend draws. `build_scene` resolves the x extent of each panel,
+lowers each mark, gives a palette color to each uncolored primitive, decides whether there is a
+legend and collects the categories. The slope is a `Line` with the two endpoints of the x extent and
+the `(gradient, intercept)` in `Line.infinite`, which `matplotlib` and `bokeh` use to draw a native
+infinite line.
+
+### `Backend`, `BackendCapabilities` and the Registry
+
+A backend implements `capabilities()`, `draw(scene)` and `save()`, and where its library needs it
+`show()` and `mimebundle()`. `render` is concrete. `BackendCapabilities` is data (export formats of
+a figure and of a grid, legend locations, markers) that the base class checks before any drawing.
+`plotmux.backends.registry` finds a backend by name (a registered instance, the built-in table, then
+the entry-point group), imports only the module of that name, and turns a missing library into a
+`BackendNotFoundError` with the extra to install.
 
 ### Color Parsing
 
-`parse_color()` normalizes the color formats users already know (hex strings, CSS/Matplotlib named
-colors, RGB(A) float tuples) into one canonical representation, an RGBA tuple of floats in
-`[0, 1]`. A spec normalizes its own `color` field in `__post_init__`, so every backend always
-receives an already-validated, canonical color. The named-color table is bundled with `plotmux`
-itself, so it resolves without Matplotlib installed.
-
-### `CdfSpec`
-
-`CdfSpec` plots the empirical cumulative distribution function of `values`, approximated as a
-binned step curve. `plotmux.utils.cdf.compute_cdf_steps()` computes the `(x, y)` step vertices
-shared by every backend except matplotlib, which instead calls `Axes.hist(...,
-cumulative=True, histtype="step")` directly (see `plotmux.backends.matplotlib.cdf`). Unlike the
-other specs, `CdfSpec.ylabel` defaults to `"cumulative probability"` instead of `None`.
-
-### `Backend` and the Registry
-
-`Backend` is an ABC with two methods, `render(spec, **kwargs)` and `save(native, path, fmt)`, plus a
-`supported_formats: ClassVar[frozenset[str]]` each concrete backend declares.
-`resolve_renderer()` and `check_export_format()` in `backends/base.py` factor out the
-lookup-or-raise dispatch logic (`{spec_type: renderer}` lookup, `{format}` membership check) shared
-by every backend, so a backend only owns its dict of renderers, not the dispatch mechanics around
-it. `backends/registry.py` maps a backend name to its instance, and raises a `BackendNotFoundError`
-(also a `RuntimeError`) listing the known backends when an unknown name is requested, or naming the
-extra to install when its underlying plotting library is not installed.
-
-`Backend.capabilities()` (and the module-level `plotmux.backends.capabilities(name)`) returns a
-`BackendCapabilities(backend_name, spec_types, caveats)`: `spec_types` is simply
-`frozenset(cls._RENDERERS)`, no new bookkeeping, and `caveats` is a short, per-backend tuple of
-known partial-support gaps (e.g. `SlopeSpec` being layer-only on that backend, or `BarSpec.width`
-being ignored) that `spec_types` membership alone can't express. This is purely additive and
-read-only: it lets a caller check "does this backend support X" ahead of a render/export call
-instead of only discovering it via an exception.
+`plotmux.colors.parse_color` normalizes hex strings, CSS/matplotlib named colors and RGB(A) tuples to
+one RGBA tuple, from a bundled table (no matplotlib import). The scene gives the default palette
+color; each backend converts the tuple to its native format.
 
 ### `plotmux.exceptions`
 
-Every exception `plotmux` raises is a `PlotmuxError`, in addition to whichever standard-library
-exception type the raise site already used (`ValueError`, `RuntimeError`, `NotImplementedError`).
-Each concrete exception (`InvalidSpecError`, `InvalidColorError`, `UnsupportedSpecError`,
-`UnsupportedFormatError`, `ExportError`, `BackendNotFoundError`) multiply-inherits from both, so
-existing `except ValueError`-style code keeps working unchanged, while new code can catch anything
-`plotmux`-specific in one place with `except PlotmuxError`.
+Every exception is a `PlotmuxError` and also its builtin counterpart, so existing `except
+ValueError` code keeps working: `InvalidSpecError` and `InvalidColorError` (`ValueError`),
+`UnsupportedSpecError` (`NotImplementedError`), `UnsupportedFormatError` and `ExportError`
+(`ValueError`), `BackendNotFoundError` (`RuntimeError`) and `BackendRegistrationError`
+(`ValueError`).
 
-### Layering and Grid Layouts
+### `Figure` and `config`
 
-`LayerSpec` draws multiple child specs on one shared set of axes; `GridSpec` lays out multiple
-child specs as independent panels, the backend-agnostic equivalent of Matplotlib's
-`pyplot.subplots()`. Both are one flat pass over their children: a `LayerSpec` nested inside
-`layers`, or a `GridSpec` nested inside `cells`, is rejected in `__post_init__`, so callers must
-flatten nesting themselves rather than relying on recursive dispatch. A `GridSpec` cell may itself
-be a `LayerSpec`, since layering and gridding are independent, composable concerns. Each backend's
-own `backends/<name>/layer.py` / `backends/<name>/grid.py` owns composing the children onto shared
-axes/chart state or independent panels; every built-in backend implements both.
-`GridSpec` inherits `xlabel`/`ylabel`/`xscale`/`yscale` from `BaseSpec` but every backend's grid
-renderer ignores them, since each panel keeps its own; `grid()` in `api.py` does not even expose
-them as parameters.
-
-`LayerSpec.__post_init__` also assigns successive `DEFAULT_PALETTE` entries (see
-[Color Parsing](#color-parsing)) to any child spec whose own `color` field is left `None`,
-skipping children that already set one explicitly. Matplotlib gets distinct per-child colors for
-free from its own `Axes` color cycle when children share an axes, but
-`xy`/`bokeh`/`altair`/`plotly` do not, so this assignment happens once, backend-agnostically, at the
-spec layer (`specs/layer.py::_assign_default_colors`), rather than every backend needing its own workaround.
-`GridSpec` gets no such assignment: each cell is visually independent, so there is no
-shared-axes indistinguishability problem to solve there.
-
-`xy`'s grid support is the one asymmetry across backends: `xy` has no composition primitive for
-arbitrary, already-built, independent panels (`xy.facet_chart` is data-driven faceting, not this),
-so `backends/xy/grid.py::render_grid` returns a small `XyGrid` (the per-cell charts, `ncols`,
-`title`) instead of a bare `xy.Chart`, deferring layout to export time: `XyBackend.save` embeds
-each cell's standalone HTML document in its own sandboxed `<iframe srcdoc=...>` and arranges them
-with CSS grid, which makes `grid(..., backend="xy")` `"html"`-only — every other format raises
-`UnsupportedFormatError` for an `XyGrid`, even though a bare (non-grid) `xy.Chart` supports the
-full `supported_formats` set.
-
-### `StackedBarSpec`
-
-`StackedBarSpec` (`x`, `series: tuple[BarSeries, ...]`, `width`, `alpha`) is a concrete, data-bound
-spec, not a composition wrapper: unlike a `layer()` of several `BarSpec`s (which draws each one
-independently, so bars at the same `x` simply overlap), its `series` are drawn cumulatively, each
-stacked on the running total of the series before it, at each `x` position — bokeh's own
-`vbar_stack`, matplotlib's `bottom=running_total` idiom. Any `BarSeries` left with `color=None`
-gets a distinct `DEFAULT_PALETTE` entry, cycling in series order, the same pattern `LayerSpec` uses
-(see above), applied in `StackedBarSpec.__post_init__` instead since the unit needing coordinated
-colors here is `series`, not sibling top-level specs. Implemented on all five backends.
-
-### `SlopeSpec`
-
-`SlopeSpec` (`gradient`, `intercept`) describes a reference/trend line, `y = gradient * x +
-intercept`, with no data of its own — unlike every other spec, it owns no `x`/`y` array. It is
-registered as a _standalone_ top-level spec only on `matplotlib` (`Axes.axline`) and `bokeh`
-(`bokeh.models.Slope`), the two backends with a native "line by slope, independent of data range"
-primitive. `altair`, `xy`, and `plotly` instead support it only as a `layer()` child: each
-backend's own `layer.py` computes the x-range spanned by `SlopeSpec`'s data-bound siblings
-(`plotmux.utils.slope.resolve_slope_xrange`) and hands it to a `layer()`-only `render_slope(spec,
-xrange)` that draws a plain two-point line between those endpoints. Requesting `SlopeSpec`
-standalone on those three backends, or inside a `layer()` with no data-bound sibling to derive a
-range from, raises `UnsupportedSpecError`.
-
-### `Figure`
-
-The object returned to the user by every public plotting function. It is a thin wrapper holding
-`spec`, `backend_name`, and `native`, plus three convenience methods: `show()` (delegating to
-`Backend.show`), `save(path)` (delegating to `plotmux.export.save`), and `to_native()`, the escape
-hatch to backend-specific functionality not exposed by the unified API. Its Jupyter display
-(`_repr_mimebundle_`) delegates to `Backend.mimebundle`.
-
-### `config`
-
-The current default backend is stored in a `contextvars.ContextVar` rather than a plain module
-global, so it is thread/task-local: `set_backend()`/`backend(...)` in one thread or `asyncio` task
-never leaks into or races with another one, while still behaving like a single process-wide default
-in the common single-threaded case.
-
-`set_backend()` also validates its `name` argument against `known_backend_names()` before storing
-it, raising `BackendNotFoundError` immediately for a name that's neither built-in, advertised by an
-installed entry-point plugin, nor already registered — this catches a typo'd backend name at the
-`set_backend` call site instead of only on the next plotting call, at zero import cost (see
-[Data Flow](#data-flow)); `backend(...)` inherits the same check since it calls `set_backend()`
-internally.
+`Figure(spec, backend_name, native)` keeps what was rendered, and offers `show()`, `save()`,
+`to_native()` (the escape hatch to the library), `supported_formats` and the Jupyter display hook.
+`config` keeps the default backend in a `ContextVar`, so it is thread and task local.
 
 ## Constraints From the Existing Codebase
 
-- `coola`'s optional-dependency pattern (`is_*_available`, `*_available`, `raise_*_missing_error`)
-  is reused as-is by `plotmux.utils.imports`. New backends follow the same pattern instead of
-  introducing a new one.
-- `matplotlib`, `xy`, `bokeh`, `altair`, and `plotly` are optional extras. Only `numpy` and
-  `coola` are hard dependencies, so the core package (specs, registry, config, public API) must
-  import cleanly with no plotting library installed.
-- `plotmux.utils.range.find_range` implements quantile-or-explicit axis bounds (e.g. `xmin="q0.1"`)
-  once, and is reused by every spec that needs it rather than reimplemented.
+- `coola` is a dependency; the optional-dependency pattern of `plotmux.utils.imports` (an
+  `is_*_available` helper per library) is reused for the backends.
+- `matplotlib`, `xy`, `bokeh`, `altair` and `plotly` are optional extras of `pyproject.toml`. Only
+  `numpy` and `coola` are hard dependencies.
 - Style conventions: `from __future__ import annotations`, explicit `__all__`, Google-style
-  docstrings with runnable `pycon` examples, `ruff`/`pyright` clean, tests split into
-  `tests/unit/` and `tests/integration/` mirroring `src/plotmux/`.
+  docstrings with runnable `pycon` examples, `ruff`/`ty`/`pyright` clean, tests split into
+  `tests/unit/` (mirroring `src/plotmux/`) and `tests/integration/` (real libraries, the conformance
+  test).
 
 ## What's Next
 
-- [Development Guide](development.md): setting up the development environment
-- [User Guide](../uguide/api.md): the public API this architecture supports
+- [Development](development.md): how to add a chart type or a backend
+- [DESIGN.md](https://github.com/durandtibo/plotmux/blob/main/DESIGN.md): the full design reference

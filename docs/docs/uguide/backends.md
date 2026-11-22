@@ -110,6 +110,14 @@ RuntimeError: No backend registered under the name 'not_a_backend'. ...
 
 ## Adding a Third-Party Backend
 
+A backend is a class with three required methods: `capabilities()`, `draw(scene)` and
+`save(native, path, fmt)`. It draws the three primitives of a **scene** and applies the axes style;
+it does not decide any number on the screen. `plotmux.scene.build_scene(spec)` turns the spec of a
+figure into an `AxesScene` (one axes) or a `GridScene` (a grid of axes): its `primitives` are `Bars`,
+`Line` and `Points` (see `plotmux.primitives`), each with its resolved color and label, and the
+`AxesScene` holds the title, the labels, the scales, the limits, the background color, the legend
+style and the categories of the x-axis.
+
 A separate package can add a new backend without modifying `plotmux`'s source, via the
 `plotmux.backends` entry-point group. The entry point is named after the backend, and its value is
 `package.module:BackendClass`:
@@ -121,13 +129,27 @@ my_backend = "my_package.plotmux_backend:MyBackend"
 
 ```python
 # my_package/plotmux_backend.py
-from plotmux.backends.base import Backend
+from plotmux.backends.base import Backend, BackendCapabilities
+from plotmux.primitives import Bars, Line, Points
+from plotmux.scene import AxesScene, GridScene
 
 
 class MyBackend(Backend):
     name = "my_backend"
 
-    def render(self, spec, **kwargs): ...
+    def capabilities(self) -> BackendCapabilities:
+        return BackendCapabilities(
+            name=self.name,
+            formats=frozenset({"png"}),  # the export formats of a figure
+            grid_formats=frozenset({"png"}),  # the export formats of a grid
+            legend_locations=frozenset({"top_left", "top_right"}),
+            markers=frozenset({"circle", "square"}),
+        )
+
+    def draw(self, scene: AxesScene | GridScene):
+        # Draw each primitive of scene.primitives (Bars, Line or Points), then apply the
+        # style of the axes. A GridScene holds one AxesScene per panel in scene.panels.
+        ...
 
     def save(self, native, path, fmt): ...
 
@@ -138,6 +160,13 @@ class MyBackend(Backend):
 
     def mimebundle(self, native): ...
 ```
+
+`Backend.render(spec)` is not overridden: it builds the scene, checks it against `capabilities()`
+(a legend location or a marker that the backend does not declare raises an
+`UnsupportedSpecError` before anything is drawn, and `plotmux.export.save` raises an
+`UnsupportedFormatError` for a format that is not declared before any file or directory is created),
+then calls `draw`. A new chart type needs no change in a backend when it is a composition of `Bars`,
+`Line` and `Points`, see [the developer guide](../dev/development.md).
 
 The module is imported, and the class instantiated once, the first time the name is used (e.g.
 `plotmux.hist(..., backend="my_backend")`). `import plotmux` reads no entry point and imports no
@@ -150,7 +179,8 @@ A backend can also be registered from code, with `register_backend`:
 
 ```pycon
 >>> from plotmux.backends import get_backend, register_backend
->>> class OtherBackend:
+>>> from plotmux.backends.matplotlib.backend import MatplotlibBackend
+>>> class OtherBackend(MatplotlibBackend):
 ...     name = "other_backend"
 ...
 >>> register_backend(OtherBackend())

@@ -1,5 +1,7 @@
 ::: plotmux.specs.base
 
+::: plotmux.specs.panel
+
 ::: plotmux.specs.histogram
 
 ::: plotmux.specs.cdf
@@ -13,7 +15,5 @@
 ::: plotmux.specs.stacked_bar
 
 ::: plotmux.specs.slope
-
-::: plotmux.specs.layer
 
 ::: plotmux.specs.grid
