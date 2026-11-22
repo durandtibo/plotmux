@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Literal
 
 from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import XBoundSpec, check_equal_length
+from plotmux.utils.finite import check_no_inf
 
 if TYPE_CHECKING:
     import numpy as np
@@ -39,10 +40,13 @@ class LineSpec(XBoundSpec):
         linestyle: The line's dash style. Same field name/semantics
             as ``SlopeSpec.linestyle``.
 
+    ``NaN`` values are kept (a gap in the line, no point for a
+    scatter plot). ``inf`` and ``-inf`` values are rejected.
+
     Raises:
         ValueError: if ``x`` and ``y`` do not have the same length,
-            ``alpha`` is not in ``[0, 1]``, or ``color`` is not a
-            valid color.
+            ``x`` or ``y`` has an infinite value, ``alpha`` is not in
+            ``[0, 1]``, or ``color`` is not a valid color.
 
     Example:
         ```pycon
@@ -67,6 +71,8 @@ class LineSpec(XBoundSpec):
         x, y = check_equal_length(self.x, self.y)
         object.__setattr__(self, "x", x)
         object.__setattr__(self, "y", y)
+        check_no_inf(x, owner="LineSpec", name="x")
+        check_no_inf(y, owner="LineSpec", name="y")
         if self.alpha is not None and not 0.0 <= self.alpha <= 1.0:
             msg = f"alpha must be in the range [0, 1], but received {self.alpha}"
             raise InvalidSpecError(msg)

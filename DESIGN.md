@@ -504,6 +504,19 @@ meaningful "unset" state to skip, so the field is non-optional and
 the backend always calls `set_xscale`/`set_yscale` (matplotlib) or
 always passes `type_` (xy).
 
+#### 4.1.2 Input policy for `NaN` and `inf`
+
+The specs apply one policy, so the same data gives the same figure on
+every backend (`plotmux.utils.finite`). `HistogramSpec` and `CdfSpec`
+drop `NaN` and `inf` and emit a `UserWarning` with the count once, when
+the spec is built (so a render does not repeat it); they raise
+`InvalidSpecError` if no finite value is left or `values` is not
+numeric, and their quantile bounds use the finite values. `LineSpec`
+and `ScatterSpec` keep `NaN` (a gap in a line, no point) and reject
+`inf`. `LayerSpec` rejects a categorical `x` (strings) mixed with a
+numeric `x` on the same axes. The table of cases is in the
+[plotting API guide](docs/docs/uguide/api.md#non-finite-values-nan-and-inf).
+
 ### 4.2 `Backend`
 
 ```python

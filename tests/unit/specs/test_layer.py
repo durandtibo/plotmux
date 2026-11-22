@@ -6,7 +6,20 @@ import numpy as np
 import pytest
 
 from plotmux.colors.palette import DEFAULT_PALETTE
-from plotmux.specs import GridSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.exceptions import InvalidSpecError
+from plotmux.specs import (
+    BarSeries,
+    BarSpec,
+    BaseSpec,
+    CdfSpec,
+    GridSpec,
+    HistogramSpec,
+    LayerSpec,
+    LineSpec,
+    ScatterSpec,
+    SlopeSpec,
+    StackedBarSpec,
+)
 
 ################################
 #     Tests for LayerSpec     #
@@ -125,3 +138,58 @@ def test_layer_spec_not_equal_with_different_child_data() -> None:
     assert LayerSpec(layers=(LineSpec(x=np.arange(3), y=np.arange(3)),)) != LayerSpec(
         layers=(LineSpec(x=np.arange(3), y=np.arange(1, 4)),)
     )
+
+
+######################################
+#     Tests for the x-axis kind     #
+######################################
+
+
+def _categorical_bar() -> BarSpec:
+    return BarSpec(x=np.array(["a", "b"]), y=np.arange(2))
+
+
+def _categorical_stacked_bar() -> StackedBarSpec:
+    return StackedBarSpec(x=np.array(["a", "b"]), series=(BarSeries(y=np.arange(2)),))
+
+
+@pytest.mark.parametrize(
+    "numeric",
+    [
+        LineSpec(x=np.arange(2), y=np.arange(2)),
+        ScatterSpec(x=np.arange(2), y=np.arange(2)),
+        BarSpec(x=np.arange(2), y=np.arange(2)),
+        HistogramSpec(values=np.arange(5)),
+        CdfSpec(values=np.arange(5)),
+    ],
+)
+def test_layer_spec_categorical_bar_with_numeric_raises(numeric: BaseSpec) -> None:
+    with pytest.raises(InvalidSpecError, match="must not mix a categorical x"):
+        LayerSpec(layers=(_categorical_bar(), numeric))
+
+
+def test_layer_spec_numeric_then_categorical_raises() -> None:
+    with pytest.raises(InvalidSpecError, match="must not mix a categorical x"):
+        LayerSpec(layers=(LineSpec(x=np.arange(2), y=np.arange(2)), _categorical_bar()))
+
+
+def test_layer_spec_categorical_stacked_bar_with_numeric_raises() -> None:
+    with pytest.raises(InvalidSpecError, match="must not mix a categorical x"):
+        LayerSpec(layers=(_categorical_stacked_bar(), LineSpec(x=np.arange(2), y=np.arange(2))))
+
+
+def test_layer_spec_categorical_with_categorical() -> None:
+    spec = LayerSpec(layers=(_categorical_bar(), LineSpec(x=np.array(["a", "b"]), y=np.arange(2))))
+    assert len(spec.layers) == 2
+
+
+def test_layer_spec_categorical_bar_with_slope() -> None:
+    spec = LayerSpec(layers=(_categorical_bar(), SlopeSpec(gradient=1.0)))
+    assert len(spec.layers) == 2
+
+
+def test_layer_spec_numeric_with_numeric() -> None:
+    spec = LayerSpec(
+        layers=(HistogramSpec(values=np.arange(5)), LineSpec(x=np.arange(2), y=np.arange(2)))
+    )
+    assert len(spec.layers) == 2

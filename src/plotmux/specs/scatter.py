@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Literal
 
 from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import XBoundSpec, check_equal_length
+from plotmux.utils.finite import check_no_inf
 
 if TYPE_CHECKING:
     import numpy as np
@@ -61,10 +62,13 @@ class ScatterSpec(XBoundSpec):
             backend's own default fill is opaque, so ``fill=False``
             is the only portable way to get a hollow marker.
 
+    ``NaN`` values are kept (a gap in the line, no point for a
+    scatter plot). ``inf`` and ``-inf`` values are rejected.
+
     Raises:
         ValueError: if ``x`` and ``y`` do not have the same length,
-            ``size`` is not a positive number, ``alpha`` is not in
-            ``[0, 1]``, or ``color``/``edgecolor`` is not a valid
+            ``x`` or ``y`` has an infinite value, ``size`` is not a
+            positive number, ``alpha`` is not in ``[0, 1]``, or ``color``/``edgecolor`` is not a valid
             color.
 
     Example:
@@ -92,6 +96,8 @@ class ScatterSpec(XBoundSpec):
         x, y = check_equal_length(self.x, self.y)
         object.__setattr__(self, "x", x)
         object.__setattr__(self, "y", y)
+        check_no_inf(x, owner="ScatterSpec", name="x")
+        check_no_inf(y, owner="ScatterSpec", name="y")
         if self.size is not None and self.size <= 0:
             msg = f"size must be a positive number, but received {self.size}"
             raise InvalidSpecError(msg)
