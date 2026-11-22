@@ -16,7 +16,7 @@ Every file is prefixed by what it does:
 | `bot-`      | Scheduled automation that pushes commits / opens PRs as the `ci-bot` GitHub App.                                                                                     |
 | `nightly-`  | Scheduled checks against the _published_ PyPI package (as opposed to `ci-*`, which checks the repo's source).                                                        |
 | `release-`  | Publishing: PyPI package, GitHub release assets, documentation.                                                                                                      |
-| `security-` | Supply-chain/security scanning (dependency review).                                                                                                                  |
+| `security-` | Supply-chain/security scanning (dependency audit, Scorecard, dependency review).                                                                                     |
 
 `workflows/ci.yaml` is the entry point for pull requests/pushes to `main`; it fans out
 to the `ci-*.yaml` reusable workflows so each check can also be run/dispatched
@@ -58,6 +58,8 @@ The trigger of a reusable workflow is `workflow_call`: it runs when another work
 | `release-docs.yaml`                  | version tag `v*.*.*`, manual                | Deploy the documentation of the stable version (with `mike`).                           |
 | `release-docs-dev.yaml`              | push to `main`, manual                      | Deploy the documentation of the development version.                                    |
 | `release-docs-publish.yaml`          | called by the two previous workflows        | Build and deploy the documentation (shared logic).                                      |
+| `security-audit.yaml`                | weekly (Monday), manual                     | Audit the locked dependencies for known vulnerabilities (`pip-audit`).                  |
+| `security-scorecard.yaml`            | weekly, push, branch protection change      | OSSF Scorecard supply-chain analysis.                                                   |
 | `security-dependency-review.yaml`    | pull request                                | Review the dependencies added by the pull request.                                      |
 | `bot-cancel-stale-queued-runs.yaml`  | hourly                                      | Cancel the runs that have been queued for too long.                                     |
 | `bot-format-files.yaml`              | weekly (Friday)                             | Format the YAML, Makefile, shell and Markdown files and open a pull request.            |
