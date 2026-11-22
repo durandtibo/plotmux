@@ -57,7 +57,7 @@ merges), and three more gaps found there -- explicit x-axis bounds
 legend position, and a portable hollow (no-fill) marker -- are now
 closed too. Checked against bokeh's own stacked bar example next (see
 [Case study: reproducing bokeh's stacked bar example](#case-study-reproducing-bokehs-stacked-bar-example)):
-the first case study *not* close to reproducible -- no stacking
+the first case study _not_ close to reproducible -- no stacking
 mechanism exists at all (`layer()`'s `BarSpec` support overlaps bars
 rather than stacking them), `BarSpec`'s categorical (string) x-axis
 support is inconsistent across backends (works on matplotlib/plotly,
@@ -83,8 +83,8 @@ those three backends' own primitives. Every gap identified by this
 case study is closed:
 
 - **Slope/abline annotation.** `specs/slope.py::SlopeSpec(gradient,
-  intercept=0.0, color=None, linewidth=None, linestyle="solid",
-  alpha=None)`. Standalone (`plotmux.slope(...)`), it is matplotlib
+intercept=0.0, color=None, linewidth=None, linestyle="solid",
+alpha=None)`. Standalone (`plotmux.slope(...)`), it is matplotlib
   (`Axes.axline`) and bokeh (`fig.add_layout(bokeh.models.Slope(...))`)
   only, each with a native "line by slope, independent of data range"
   primitive matched almost one-to-one by `SlopeSpec`'s fields. altair
@@ -93,7 +93,7 @@ case study is closed:
   far-apart points would blow out altair's own default autoscale (xy
   has the same problem, plus no way to read back whatever range it
   picked). As a `layer()` child on those two backends, though,
-  `SlopeSpec` *is* supported:
+  `SlopeSpec` _is_ supported:
   `plotmux.backends.altair.layer.render_layer`/
   `plotmux.backends.xy.layer.render_layer` compute the x-range spanned
   by the `SlopeSpec`'s data-bound siblings
@@ -136,7 +136,7 @@ case study is closed:
   `opacity`.
 - **`LineSpec` line width and dash style.** The same
   `linewidth: float | None` / `linestyle: Literal["solid", "dashed",
-  "dotted", "dashdot"]` fields `SlopeSpec` already had, added to
+"dotted", "dashdot"]` fields `SlopeSpec` already had, added to
   `LineSpec` too, translated per backend the same way `xscale`/
   `yscale` are: matplotlib `linewidth`/`linestyle` passthrough; bokeh
   `line_width`/`line_dash`; altair `strokeWidth`/`strokeDash` (a
@@ -150,7 +150,7 @@ case study is closed:
   alongside title/labels/scale/`ymin`/`ymax`: matplotlib
   `Axes.set_facecolor`; bokeh `figure.background_fill_color`; altair
   `Chart.properties(background=...)`; xy a `style={"backgroundColor":
-  ...}` entry on the `Chart` (xy's CSS-style-dict escape hatch, the
+...}` entry on the `Chart` (xy's CSS-style-dict escape hatch, the
   closest xy has to a background-color constructor argument).
 - **Explicit y-axis bounds.** `BaseSpec.ymin`/`ymax`: unlike
   `HistogramSpec.xmin`/`xmax` (`float | str | None`, resolved via
@@ -164,10 +164,10 @@ case study is closed:
   individually on the default auto-fitting `DataRange1d`, so setting
   just one bound leaves the other autoscaled -- this is also what
   makes bokeh's `CdfSpec` renderer's own hardcoded `y_range =
-  Range1d(0, 1)`, set before `apply_common_style` runs, correctly
+Range1d(0, 1)`, set before `apply_common_style` runs, correctly
   overridable by an explicit `ymin`/`ymax`); altair
   `alt.Scale(domainMin=..., domainMax=...)`; xy `xy.y_axis(domain=
-  (ymin, ymax))` -- xy's `domain` takes both bounds together, no
+(ymin, ymax))` -- xy's `domain` takes both bounds together, no
   partial-bound form, so (unlike matplotlib/bokeh) only both explicit
   bounds set together are forwarded; either alone is left autoscaled.
 
@@ -207,19 +207,19 @@ of it already is:
 - **Dashed line, line width.** Already closed by the slope case
   study's `LineSpec.linewidth`/`linestyle`.
 - **Hollow (no-fill) marker via `ScatterSpec.edgecolor`.** Partially
-  wrong when first checked here: `edgecolor` only adds a *second*,
+  wrong when first checked here: `edgecolor` only adds a _second_,
   separate edge color on top of whatever fills the marker -- it does
   not make the fill transparent. `spec.color=None` +
-  `edgecolor=<green>` happens to *look* hollow on bokeh only, because
+  `edgecolor=<green>` happens to _look_ hollow on bokeh only, because
   bokeh's own `fill_color=None` (what `color=None` forwards to, see
   `plotmux.backends.bokeh.scatter.render_scatter`) is bokeh's native
   "transparent fill" value; on matplotlib/altair/plotly/xy, `color=None`
-  instead falls back to that library's own default *opaque* fill, so
+  instead falls back to that library's own default _opaque_ fill, so
   the same spec renders filled everywhere but bokeh. This was folded
   into the "no-fill marker" gap identified in the log plot case study,
   closed there by `ScatterSpec.fill`.
 - **Two figures side by side.** Already `plotmux.grid(fig1_spec,
-  fig2_spec, ncols=2)`.
+fig2_spec, ncols=2)`.
 
 Two gaps were found, both new (not raised by the slope case study).
 Both are now closed:
@@ -238,7 +238,7 @@ Both are now closed:
   its own renderer already called the label-less `ax.legend()`) to
   avoid a spurious "no artists with labels found" warning otherwise;
   bokeh `fig.legend.title = ...`, guarded the same way (`if
-  fig.legend:`) since bokeh warns when setting a legend property with
+fig.legend:`) since bokeh warns when setting a legend property with
   no legend yet added; altair re-`encode`s `color` with
   `alt.Legend(title=...)`, replacing the hardcoded
   `legend=alt.Legend(title=None)` `color_encoding` sets on a labeled
@@ -257,7 +257,7 @@ Both are now closed:
   every plotmux scatter series rendered as whatever each backend's own
   default marker shape is, with no way to request a square, triangle,
   cross, etc. Closed by `ScatterSpec.marker: Literal["circle", "square",
-  "triangle", "diamond", "cross", "x"] | None = None` (a small,
+"triangle", "diamond", "cross", "x"] | None = None` (a small,
   backend-portable set rather than passing through each backend's full
   native marker vocabulary, mirroring how `LineSpec.linestyle` exposes
   four portable names rather than every backend's native dash
@@ -265,7 +265,7 @@ Both are now closed:
   `Axes.scatter(marker=...)` via a `MARKER_STYLE` table
   (`plotmux.backends.matplotlib.scatter.MARKER_STYLE`, mapping to
   `"o"`/`"s"`/`"^"`/`"D"`/`"+"`/`"x"`); bokeh `figure.scatter(marker=
-  ...)`, which accepts plotmux's own names directly, no table needed;
+...)`, which accepts plotmux's own names directly, no table needed;
   altair `mark_point(shape=...)` via
   `plotmux.backends.altair.style.MARKER_STYLE` (`"circle"`/`"square"`/
   `"triangle-up"`/`"diamond"`/`"cross"` -- no `"x"` entry, altair's
@@ -335,10 +335,10 @@ studies. All three are now closed:
 - **Legend position.** Bokeh's `p.legend.location = "top_left"` had no
   plotmux equivalent, the same shape of gap as the legend case study's
   once-open `legend_title` gap: `BaseSpec` had `legend_title` but
-  nothing for legend *position*. Closed by a `BaseSpec`-level
+  nothing for legend _position_. Closed by a `BaseSpec`-level
   `legend_location: Literal["best", "top_left", "top_right",
-  "bottom_left", "bottom_right", "top", "bottom", "left", "right"] |
-  None = None` field, shipped alongside `legend_title` as one
+"bottom_left", "bottom_right", "top", "bottom", "left", "right"] |
+None = None` field, shipped alongside `legend_title` as one
   `legend_title`/`legend_location` pair rather than two unrelated
   additions, since both are set together in the bokeh original
   (`p.legend.title`/`p.legend.location`) and both apply post-hoc in the
@@ -351,21 +351,21 @@ studies. All three are now closed:
   falling back to bokeh's own default); altair
   `alt.Legend(orient=...)` via its own `LEGEND_LOCATION` table (altair's
   `orient` supports the four outer edges plus the four corners, all
-  *outside* the plot area -- unlike matplotlib's inside-the-plot `loc`,
+  _outside_ the plot area -- unlike matplotlib's inside-the-plot `loc`,
   so a given `legend_location` renders in a visibly different spot on
   altair, a small, permanent per-backend asymmetry; `"best"` again has
   no altair equivalent and is left as a no-op); plotly
   `fig.update_layout(legend=dict(x=..., y=..., xanchor=..., yanchor=
-  ...))` via a name-to-fractional-coordinates table (plotly has no
+...))` via a name-to-fractional-coordinates table (plotly has no
   named corner enum, only `x`/`y`; `"best"` again a no-op); xy
   `xy.legend(loc=...)`, needing no translation table at all -- xy's own
   `legend_loc` validator underscore/space-tokenizes its input and
   matches plotmux's own portable names directly, `"best"` included (xy
   natively supports "best" auto-placement).
 - **Hollow (no-fill) marker as a portable concept.** Distinct from the
-  marker-*shape* gap in the legend case study: even with a circular
+  marker-_shape_ gap in the legend case study: even with a circular
   marker, this example's `p.scatter(x, x**2, fill_color=None,
-  line_color="olivedrab")` had no reliable plotmux equivalent because
+line_color="olivedrab")` had no reliable plotmux equivalent because
   `ScatterSpec.color` has no "explicitly transparent" value distinct
   from "unset, use the backend default" -- `color=None` means the
   latter, and as the correction above notes, only bokeh's own default
@@ -385,7 +385,7 @@ studies. All three are now closed:
   `go.Scatter(marker=dict(color="rgba(0, 0, 0, 0)"))` with the outline
   drawn via `marker.line` (already wired for `edgecolor`); xy
   `xy.scatter(color="rgba(0, 0, 0, 0)", stroke=<outline>,
-  stroke_width=1.0)` -- xy has no dedicated "no fill" mark property
+stroke_width=1.0)` -- xy has no dedicated "no fill" mark property
   either, so (like plotly) the fill is forced fully transparent and
   the outline carried by `stroke`.
 
@@ -453,7 +453,7 @@ sits in the goal's stated non-goal territory for the rest.
   `legend_title` and the log-plot case study's `legend_location`, that
   plotmux had no equivalent for. Closed as a third field in the same
   batch: `legend_orientation: Literal["vertical", "horizontal"] | None
-  = None`, applied in `apply_common_style`: matplotlib
+= None`, applied in `apply_common_style`: matplotlib
   `ax.legend(ncols=len(handles))` when `"horizontal"` (matplotlib has
   no direct orientation flag, only a column count, so horizontal is
   approximated as one row); bokeh `fig.legend.orientation = ...`
@@ -466,7 +466,7 @@ Deliberately **not** treated as gaps, matching the project goal's
 stated non-goals:
 
 - **Hover tooltips** (`tools="hover", tooltips="$name @fruits:
-  @$name"`). An interactive, backend-specific power feature with no
+@$name"`). An interactive, backend-specific power feature with no
   meaning on matplotlib (a static image) and no obvious common
   vocabulary across bokeh/plotly's very different tooltip-templating
   systems and altair's own `tooltip` encoding channel; reachable per
@@ -476,7 +476,7 @@ stated non-goals:
 - **Gridline/minor-tick/outline removal, `toolbar_location=None`,
   `x_range.range_padding`.** Fine-grained chrome cosmetics with no
   existing common-style precedent (unlike `background_color`, which
-  *is* on `BaseSpec` because every backend has an equally central
+  _is_ on `BaseSpec` because every backend has an equally central
   notion of "figure background"); same escape-hatch treatment as
   above.
 

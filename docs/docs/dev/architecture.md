@@ -8,8 +8,8 @@ full, up-to-date design document.
 
 `plotmux` is a lightweight abstraction layer over Python's plotting libraries: users write plotting
 code once against `plotmux`'s unified API and choose the rendering backend (`matplotlib`, `xy`,
-`bokeh`, `altair`, `plotly`, ...) at runtime. Swapping backends should be a one-line configuration change, and
-adding a new backend or chart type should not require changing existing code.
+`bokeh`, `altair`, `plotly`, ...) at runtime. Swapping backends should be a one-line configuration
+change, and adding a new backend or chart type should not require changing existing code.
 
 The unified API targets a small set of generic, broadly-useful chart types and figure-level concerns:
 the ones almost every plotting task needs (histograms, empirical CDFs, line charts, scatter
@@ -23,18 +23,18 @@ spec.
 
 Two layers:
 
-1. **Chart specs** (`plotmux.specs`): plain, backend-agnostic frozen dataclasses describing *what*
+1. **Chart specs** (`plotmux.specs`): plain, backend-agnostic frozen dataclasses describing _what_
    to plot (data + encoding + style). They never import a plotting library.
 2. **Backends** (`plotmux.backends`): one package per plotting library, responsible for turning a
    spec into that library's native figure object and for exporting it to a file.
 
-This mirrors the Vega-Lite/Altair split, and is what makes "swap backend in one line" true: because a
-spec cannot hold a Matplotlib `Axes` or an `xy.Chart`, switching backends can never leak
+This mirrors the Vega-Lite/Altair split, and is what makes "swap backend in one line" true:
+because a spec cannot hold a Matplotlib `Axes` or an `xy.Chart`, switching backends can never leak
 library-specific state back into user code.
 
 ## Package Layout
 
-```
+```text
 src/plotmux/
 ├── utils/
 │   ├── range.py                  # find_range(): quantile-or-explicit axis bounds
@@ -82,7 +82,7 @@ src/plotmux/
 
 Every backend (`matplotlib`, `xy`, `bokeh`, `altair`, `plotly`) implements `StackedBarSpec` and the
 seven other data-bound/composition specs. `SlopeSpec` is the one exception: it is registered as a
-*standalone* spec only on `matplotlib`/`bokeh` (the two backends with a native "line by slope,
+_standalone_ spec only on `matplotlib`/`bokeh` (the two backends with a native "line by slope,
 independent of data range" primitive); on `altair`/`xy`/`plotly` it is only supported as a
 `layer()` child alongside a data-bound sibling, since those three need concrete endpoints, not a
 slope/intercept pair (see [Layering and Grid Layouts](#layering-and-grid-layouts)).
@@ -93,7 +93,7 @@ existing ones.
 
 ## Data Flow
 
-```
+```text
 user code
    │  plotmux.hist(values, bins=30, xmin="q0.1")
    ▼
@@ -115,7 +115,7 @@ figure.py           Figure(spec, backend_name, native)
 user code           fig.show() / fig.save("out.png") / fig.to_native()
 ```
 
-Backend registration is lazy, not eager: `plotmux/__init__.py` does *not* import any of the five
+Backend registration is lazy, not eager: `plotmux/__init__.py` does _not_ import any of the five
 built-in backend subpackages (`matplotlib`, `xy`, `bokeh`, `altair`, `plotly`) at `import plotmux`
 time. Instead, `backends/registry.py` holds a `{name: module path}` map, and `get_backend(name)`
 imports the matching submodule the first time that name is actually requested (e.g. via
@@ -139,7 +139,7 @@ itself, never crash `import plotmux` for every user.
 `api.py` never triggers registration itself: it only calls `get_backend(name)`, which is what
 actually imports a built-in submodule lazily, or raises `BackendNotFoundError` if `name` isn't
 registered (typically because its library isn't installed). `config.set_backend()`/`backend()`
-additionally reject a name that isn't even *known* — neither a built-in name, an
+additionally reject a name that isn't even _known_ — neither a built-in name, an
 entry-point-advertised name, nor already registered — immediately, at the call site, without
 importing anything (`backends/registry.py::known_backend_names()`); a name that is known but not
 yet registered still only fails later, at render time, since validating that would require the
@@ -165,7 +165,7 @@ module-level `check_equal_length(x, y)` (public, unlike the fields above) coerce
 
 A plain, explicit-value-only `xmin`/`xmax` pair lives one level down, on `XBoundSpec(BaseSpec)`
 (`BarSpec`, `StackedBarSpec`, `LineSpec`, `ScatterSpec` inherit it), not on `BaseSpec` itself:
-`HistogramSpec`/`CdfSpec` need a *wider* `float | str | None` type for their own `xmin`/`xmax` (to
+`HistogramSpec`/`CdfSpec` need a _wider_ `float | str | None` type for their own `xmin`/`xmax` (to
 also accept a quantile string), and redeclaring an inherited field with an incompatible type would
 be a real Liskov substitution violation, not just a type-checker nitpick — a caller holding an
 `XBoundSpec` reference could dereference `xmin` expecting a `float` and get a `str`. So
@@ -233,9 +233,9 @@ them as parameters.
 `LayerSpec.__post_init__` also assigns successive `DEFAULT_PALETTE` entries (see
 [Color Parsing](#color-parsing)) to any child spec whose own `color` field is left `None`,
 skipping children that already set one explicitly. Matplotlib gets distinct per-child colors for
-free from its own `Axes` color cycle when children share an axes, but `xy`/`bokeh`/`altair`/`plotly` do
-not, so this assignment happens once, backend-agnostically, at the spec layer
-(`specs/layer.py::_assign_default_colors`), rather than every backend needing its own workaround.
+free from its own `Axes` color cycle when children share an axes, but
+`xy`/`bokeh`/`altair`/`plotly` do not, so this assignment happens once, backend-agnostically, at the
+spec layer (`specs/layer.py::_assign_default_colors`), rather than every backend needing its own workaround.
 `GridSpec` gets no such assignment: each cell is visually independent, so there is no
 shared-axes indistinguishability problem to solve there.
 
@@ -263,7 +263,7 @@ colors here is `series`, not sibling top-level specs. Implemented on all five ba
 
 `SlopeSpec` (`gradient`, `intercept`) describes a reference/trend line, `y = gradient * x +
 intercept`, with no data of its own — unlike every other spec, it owns no `x`/`y` array. It is
-registered as a *standalone* top-level spec only on `matplotlib` (`Axes.axline`) and `bokeh`
+registered as a _standalone_ top-level spec only on `matplotlib` (`Axes.axline`) and `bokeh`
 (`bokeh.models.Slope`), the two backends with a native "line by slope, independent of data range"
 primitive. `altair`, `xy`, and `plotly` instead support it only as a `layer()` child: each
 backend's own `layer.py` computes the x-range spanned by `SlopeSpec`'s data-bound siblings

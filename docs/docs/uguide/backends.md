@@ -95,7 +95,7 @@ RuntimeError: Unknown backend 'not_a_backend'. Known backends: ['altair', 'bokeh
 
 A name that passes this check (a built-in name, or one advertised by an installed third-party
 plugin) can still fail later, when a plotting function actually renders with it, if its underlying
-library turns out not to be installed — being *known* is not the same as being *registered*.
+library turns out not to be installed — being _known_ is not the same as being _registered_.
 Passing such a name directly to a plotting function's `backend` argument (bypassing
 `set_backend`/`backend`) raises the same error there instead:
 
@@ -138,8 +138,8 @@ register_backend(MyBackend())
 
 `plotmux` imports every module advertised this way once, when it starts up (`import plotmux`).
 Built-in backends, by contrast, are registered lazily: none of the five (`matplotlib`, `xy`,
-`bokeh`, `altair`, `plotly`) is imported at `import plotmux` time, only the first time that name is actually
-requested (e.g. via `backend="matplotlib"` or `plotmux.set_backend("matplotlib")`). So a
+`bokeh`, `altair`, `plotly`) is imported at `import plotmux` time, only the first time that name is
+actually requested (e.g. via `backend="matplotlib"` or `plotmux.set_backend("matplotlib")`). So a
 third-party plugin module runs before any built-in backend has necessarily registered itself, and
 can freely reuse a built-in name — the last one registered under a given name wins.
 

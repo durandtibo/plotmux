@@ -144,7 +144,7 @@ pre-commit run --all-files
 mkdocs serve -f docs/mkdocs.yml
 ```
 
-Then open http://127.0.0.1:8000 in your browser.
+Then open <http://127.0.0.1:8000> in your browser.
 
 **Build documentation without serving:**
 
@@ -168,7 +168,7 @@ inv types.check
 
 ## Project Structure
 
-```
+```text
 plotmux/
 ├── .github/                    # GitHub configuration
 │   ├── workflows/              # CI/CD workflows
@@ -210,6 +210,7 @@ plotmux/
 ### Adding a New Chart Type
 
 1. **Create a new branch:**
+
    ```shell
    git checkout -b feature/my-chart-type
    ```
@@ -230,12 +231,14 @@ plotmux/
 6. **Update documentation** in `docs/docs/`.
 
 7. **Run tests and code quality checks:**
+
    ```shell
    inv test.unit --cov
    pre-commit run --all-files
    ```
 
 8. **Commit and push:**
+
    ```shell
    git add .
    git commit -m "Add: brief description of the new chart type"
@@ -251,6 +254,7 @@ plugin mechanism used by out-of-tree backends, and `src/plotmux/backends/matplot
 ### Fixing a Bug
 
 1. **Create a branch:**
+
    ```shell
    git checkout -b fix/bug-description
    ```
@@ -260,16 +264,19 @@ plugin mechanism used by out-of-tree backends, and `src/plotmux/backends/matplot
 3. **Fix the bug**
 
 4. **Verify the test passes:**
+
    ```shell
    pytest tests/unit/path/to/test.py
    ```
 
 5. **Run the full test suite:**
+
    ```shell
    inv test.unit --cov
    ```
 
 6. **Commit and push:**
+
    ```shell
    git commit -m "Fix: description of bug fix"
    git push origin fix/bug-description
@@ -288,6 +295,7 @@ Dependencies are managed in `pyproject.toml` and locked in `uv.lock`.
 ### Writing Good Tests
 
 1. **Use descriptive names:**
+
    ```python
    def test_hist_returns_figure(): ...
 
@@ -296,12 +304,13 @@ Dependencies are managed in `pyproject.toml` and locked in `uv.lock`.
    ```
 
 2. **Test edge cases:**
-    - Empty arrays
-    - `None` values
-    - Invalid colors or ranges
-    - Every combination of chart type x backend x export format
+   - Empty arrays
+   - `None` values
+   - Invalid colors or ranges
+   - Every combination of chart type x backend x export format
 
 3. **Use `plotmux.testing` fixtures to skip tests based on installed backends:**
+
    ```python
    from plotmux.testing import matplotlib_available
 
@@ -313,6 +322,7 @@ Dependencies are managed in `pyproject.toml` and locked in `uv.lock`.
    ```
 
 4. **Test both success and failure cases:**
+
    ```python
    def test_success_case():
        assert plotmux.hist([1, 2, 3]) is not None
@@ -328,17 +338,17 @@ Dependencies are managed in `pyproject.toml` and locked in `uv.lock`.
 The project uses GitHub Actions for CI. Workflows are in `.github/workflows/`:
 
 - **CI**: Runs on every push and PR
-    - Linting
-    - Tests
-    - Coverage
+  - Linting
+  - Tests
+  - Coverage
 
 - **Documentation**: Builds and deploys docs
-    - Builds on every push
-    - Deploys on release
+  - Builds on every push
+  - Deploys on release
 
 - **Nightly Tests**: Tests against latest dependencies
-    - Runs daily
-    - Tests multiple Python versions
+  - Runs daily
+  - Tests multiple Python versions
 
 ## Best Practices
 

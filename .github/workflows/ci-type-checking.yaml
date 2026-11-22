@@ -5,22 +5,24 @@
 name: Type Checking
 on:
   workflow_call:
-  workflow_dispatch:  # to trigger manually
+  workflow_dispatch: # to trigger manually
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   type-checking:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
 
       - name: Setup python environment
-        uses: durandtibo/setup-venv-uv-action@v0.1.0
+        uses: durandtibo/setup-venv-uv-action@4445098aa662d3d72aa0455918bc46a091b2a7f8 # ratchet:durandtibo/setup-venv-uv-action@v0.3.1
 
+      # Type-check the source code with pyright
       - name: Check types
         run: |
           inv types.check

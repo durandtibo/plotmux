@@ -4,26 +4,27 @@
 name: Notebooks
 on:
   workflow_call:
-  workflow_dispatch:  # to trigger manually
+  workflow_dispatch: # to trigger manually
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   check-notebooks:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
 
       # Install dependencies including Jupyter and all optional extras used
       # by the notebooks (e.g. matplotlib, xy).
       - name: Setup python environment
-        uses: durandtibo/setup-venv-uv-action@v0.1.0
+        uses: durandtibo/setup-venv-uv-action@4445098aa662d3d72aa0455918bc46a091b2a7f8 # ratchet:durandtibo/setup-venv-uv-action@v0.3.1
         with:
-          install-args: '--jupyter-deps'
+          install-args: "--groups dev,jupyter"
 
       # Execute every notebook in place; nbconvert fails the step if any
       # cell raises an error.
