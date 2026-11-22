@@ -1948,9 +1948,10 @@ inv<span class="w"> </span>config.show
 <div class="highlight"><pre><span></span><code>inv<span class="w"> </span>test.doctest
 </code></pre></div>
 <h3 id="type-checking">Type Checking<a class="headerlink" href="#type-checking" title="Permanent link">&para;</a></h3>
-<p><code>plotmux</code> uses pyright for type checking. You can run type checking locally:</p>
-<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>types.check
+<p><code>plotmux</code> uses ty and pyright for type checking. You can run both locally:</p>
+<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>types.check<span class="w"> </span>--complete
 </code></pre></div>
+<p><code>inv types.check</code> runs only ty, which is faster.</p>
 <h2 id="project-structure">Project Structure<a class="headerlink" href="#project-structure" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>plotmux/
 ├── .github/                    # GitHub configuration
