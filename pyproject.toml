@@ -26,7 +26,6 @@ classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: BSD License",
   "Operating System :: POSIX :: Linux",
   "Operating System :: MacOS",
   "Programming Language :: Python :: 3.11",
@@ -70,6 +69,7 @@ dev = [
 ]
 
 docs = [
+  "griffe-inherited-docstrings >=1.1,<2.0",
   "mike >=2.2,<3.0",
   "mkdocs-material >=9.7,<10.0",
   "mkdocstrings[python]>=1.0.8,<2.0",
