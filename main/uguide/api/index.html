@@ -661,6 +661,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#non-finite-values-nan-and-inf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-finite Values (NaN and inf)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#common-style-arguments" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1473,6 +1484,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#non-finite-values-nan-and-inf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-finite Values (NaN and inf)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#common-style-arguments" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1638,6 +1660,59 @@ next to a data-bound sibling (as in the example above) — the sibling's x-range
 endpoints. A standalone <code>plotmux.slope(..., backend="altair")</code> (no data-bound sibling) raises
 <code>NotImplementedError</code>. See <a href="../backends/">Choosing a Backend</a> and <code>plotmux.backends.capabilities()</code>
 (in <a href="../figure/">The Figure Object</a>) to check this ahead of time.</p>
+<h2 id="non-finite-values-nan-and-inf">Non-finite Values (<code>NaN</code> and <code>inf</code>)<a class="headerlink" href="#non-finite-values-nan-and-inf" title="Permanent link">&para;</a></h2>
+<p>The same input gives the same figure on every backend, so <code>plotmux</code> checks <code>NaN</code> and <code>inf</code> when the
+spec is built, not in the plotting library:</p>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hist</code>/<code>cdf</code>: <code>NaN</code> or <code>inf</code> among the values</td>
+<td>Dropped, with a <code>UserWarning</code> that gives the count (once per figure)</td>
+</tr>
+<tr>
+<td><code>hist</code>/<code>cdf</code>: no finite value left</td>
+<td><code>InvalidSpecError</code></td>
+</tr>
+<tr>
+<td><code>hist</code>/<code>cdf</code>: non-numeric values</td>
+<td><code>InvalidSpecError</code></td>
+</tr>
+<tr>
+<td><code>hist</code>/<code>cdf</code>: a quantile bound (<code>xmin="q0.1"</code>)</td>
+<td>Computed on the finite values</td>
+</tr>
+<tr>
+<td><code>line</code>/<code>scatter</code>: <code>NaN</code> in <code>x</code> or <code>y</code></td>
+<td>Kept: a gap in the line, no point</td>
+</tr>
+<tr>
+<td><code>line</code>/<code>scatter</code>: <code>inf</code> or <code>-inf</code> in <code>x</code> or <code>y</code></td>
+<td><code>InvalidSpecError</code></td>
+</tr>
+<tr>
+<td><code>layer</code>: a categorical <code>x</code> mixed with a numeric <code>x</code></td>
+<td><code>InvalidSpecError</code></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">caught</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"always"</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">hist</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">),</span> <span class="mf">3.0</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">caught</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+<span class="go">'HistogramSpec: 1 non-finite value(s) (NaN or inf) detected in values and filtered out'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">values</span>
+<span class="go">array([1., 2., 3.])</span>
+</code></pre></div>
+<p><code>InvalidSpecError</code> is also a <code>ValueError</code>.</p>
 <h2 id="common-style-arguments">Common Style Arguments<a class="headerlink" href="#common-style-arguments" title="Permanent link">&para;</a></h2>
 <p><code>hist</code>, <code>bar</code>, <code>stacked_bar</code>, <code>cdf</code>, <code>line</code>, <code>scatter</code>, <code>slope</code>, and <code>layer</code> all accept the same
 figure-level style arguments:</p>

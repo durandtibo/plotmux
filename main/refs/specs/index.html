@@ -2942,6 +2942,10 @@ Inherited from <code>BaseSpec</code>.</p>
           </tr>
       </tbody>
     </table>
+        <p><code>NaN</code> and <code>inf</code> values of <code>values</code> are dropped, and a
+<code>UserWarning</code> with their count is emitted once, when the spec is
+built. The quantile bounds (<code>xmin</code>/<code>xmax</code>) are computed on the
+finite values.</p>
 
 
 <p><span class="doc-section-title">Raises:</span></p>
@@ -2960,8 +2964,8 @@ Inherited from <code>BaseSpec</code>.</p>
             <td>
               <div class="doc-md-description">
                 <p>if <code>bins</code> is not a positive integer, <code>values</code>
-is not 1-dimensional or is empty, <code>color</code> is not a
-valid color, or <code>xmin</code> and <code>xmax</code> are both explicit
+is not 1-dimensional, is empty, is not numeric or has no
+finite value, <code>color</code> is not a valid color, or <code>xmin</code> and <code>xmax</code> are both explicit
 numeric values with <code>xmin &gt;= xmax</code>.</p>
               </div>
             </td>
@@ -3305,6 +3309,10 @@ Inherited from <code>BaseSpec</code>.</p>
           </tr>
       </tbody>
     </table>
+        <p><code>NaN</code> and <code>inf</code> values of <code>values</code> are dropped, and a
+<code>UserWarning</code> with their count is emitted once, when the spec is
+built. The quantile bounds (<code>xmin</code>/<code>xmax</code>) are computed on the
+finite values.</p>
 
 
 <p><span class="doc-section-title">Raises:</span></p>
@@ -3323,8 +3331,8 @@ Inherited from <code>BaseSpec</code>.</p>
             <td>
               <div class="doc-md-description">
                 <p>if <code>nbins</code> is set and is not a positive
-integer, <code>values</code> is not 1-dimensional or is empty,
-<code>color</code> is not a valid color, or <code>xmin</code> and <code>xmax</code>
+integer, <code>values</code> is not 1-dimensional, is empty, is not
+numeric or has no finite value, <code>color</code> is not a valid color, or <code>xmin</code> and <code>xmax</code>
 are both explicit numeric values with <code>xmin &gt;= xmax</code>.</p>
               </div>
             </td>
@@ -3577,6 +3585,8 @@ as <code>SlopeSpec.linestyle</code>.</p>
           </tr>
       </tbody>
     </table>
+        <p><code>NaN</code> values are kept (a gap in the line, no point for a
+scatter plot). <code>inf</code> and <code>-inf</code> values are rejected.</p>
 
 
 <p><span class="doc-section-title">Raises:</span></p>
@@ -3595,8 +3605,8 @@ as <code>SlopeSpec.linestyle</code>.</p>
             <td>
               <div class="doc-md-description">
                 <p>if <code>x</code> and <code>y</code> do not have the same length,
-<code>alpha</code> is not in <code>[0, 1]</code>, or <code>color</code> is not a
-valid color.</p>
+<code>x</code> or <code>y</code> has an infinite value, <code>alpha</code> is not in
+<code>[0, 1]</code>, or <code>color</code> is not a valid color.</p>
               </div>
             </td>
           </tr>
@@ -3900,6 +3910,8 @@ is the only portable way to get a hollow marker.</p>
           </tr>
       </tbody>
     </table>
+        <p><code>NaN</code> values are kept (a gap in the line, no point for a
+scatter plot). <code>inf</code> and <code>-inf</code> values are rejected.</p>
 
 
 <p><span class="doc-section-title">Raises:</span></p>
@@ -3918,8 +3930,8 @@ is the only portable way to get a hollow marker.</p>
             <td>
               <div class="doc-md-description">
                 <p>if <code>x</code> and <code>y</code> do not have the same length,
-<code>size</code> is not a positive number, <code>alpha</code> is not in
-<code>[0, 1]</code>, or <code>color</code>/<code>edgecolor</code> is not a valid
+<code>x</code> or <code>y</code> has an infinite value, <code>size</code> is not a
+positive number, <code>alpha</code> is not in <code>[0, 1]</code>, or <code>color</code>/<code>edgecolor</code> is not a valid
 color.</p>
               </div>
             </td>
@@ -5031,8 +5043,10 @@ on recursive dispatch.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>if <code>layers</code> is empty or contains a
-<code>LayerSpec</code>.</p>
+                <p>if <code>layers</code> is empty, contains a
+<code>LayerSpec</code>, or mixes a categorical x (strings, e.g.
+<code>BarSpec</code>) with a numeric x (e.g. <code>LineSpec</code>,
+<code>HistogramSpec</code>) on the same axes.</p>
               </div>
             </td>
           </tr>
