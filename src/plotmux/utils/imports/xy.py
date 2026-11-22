@@ -9,8 +9,8 @@ __all__ = [
     "xy_available",
 ]
 
-from functools import lru_cache
-from typing import TYPE_CHECKING, Any, NoReturn, TypeVar
+from functools import cache
+from typing import TYPE_CHECKING, Any, Never, TypeVar
 
 from coola.utils.imports.universal import (
     decorator_package_available,
@@ -41,7 +41,7 @@ def check_xy() -> None:
         raise_xy_missing_error()
 
 
-@lru_cache(1)
+@cache
 def is_xy_available() -> bool:
     r"""Indicate if the ``xy`` package is installed or not.
 
@@ -83,7 +83,7 @@ def xy_available(fn: F) -> F:
     return decorator_package_available(fn, is_xy_available)
 
 
-def raise_xy_missing_error() -> NoReturn:
+def raise_xy_missing_error() -> Never:
     r"""Raise a ``RuntimeError`` to indicate the ``xy`` package is
     missing.
 

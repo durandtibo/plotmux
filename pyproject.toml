@@ -29,7 +29,6 @@ classifiers = [
   "License :: OSI Approved :: BSD License",
   "Operating System :: POSIX :: Linux",
   "Operating System :: MacOS",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -40,7 +39,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = ["coola >=1.1,<2.0", "numpy>=2.0,<3.0"]
 
 [project.optional-dependencies]
@@ -48,7 +47,7 @@ altair = ["altair>=6.0,<7.0"]
 bokeh = ["bokeh>=3.6,<4.0"]
 matplotlib = ["matplotlib>=3.10,<4.0"]
 plotly = ["plotly>=7.0,<8.0"]
-xy = ["xy>=0.0.6,<1.0 ; python_version >= '3.11'"]
+xy = ["xy>=0.0.6,<1.0"]
 
 [dependency-groups]
 dev = [
@@ -56,8 +55,8 @@ dev = [
   "coverage[toml]>=7.15,<8.0",
   "docformatter>=1.7.8,<2.0",
   "feu[all]>=0.8.4,<1.0",
-  "import-linter>=2.0,<3.0 ; python_version >= '3.11'",
-  "invoke-tasklib>=0.1.0a0,<1.0 ; python_version >= '3.11'",
+  "import-linter>=2.0,<3.0",
+  "invoke-tasklib>=0.1.0a0,<1.0",
   "invoke>=3.0,<4.0",
   "pre-commit>=4.6,<5.0",
   "pygments>=2.20,<3.0",
@@ -185,7 +184,6 @@ lint.select = [
 lint.ignore = [
   "A003",    # Class attribute `{name}` is shadowing a python builtin
   "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed.
-  "B905",    # `zip()` without an explicit strict= parameter set. The `strict=` argument was added in Python 3.10
   "E501",    # Line lengths are recommended to be no greater than 79 characters.
   "W505",    # Doc line too long
   "PLR0913", # Too many arguments in function definition (8 > 5)
@@ -203,7 +201,7 @@ lint.ignore = [
 lint.extend-select = ["D400", "D401", "D404"]
 
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 src = ["src"]
 
 [tool.ruff.lint.per-file-ignores]
@@ -238,6 +236,6 @@ xarray = "xr"
 
 [tool.pyright]
 include = ["src"]
-pythonVersion = "3.10"
+pythonVersion = "3.11"
 venvPath = "."
 venv = ".venv"

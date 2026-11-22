@@ -120,8 +120,8 @@ Values that would otherwise be duplicated across workflows are centralized in
 
 - `workflow-config.json` (in `.github`) — the supported Python versions and the operating systems to
   test, loaded once per run by `durandtibo/workflow-config-action` in `lib-get-test-matrix.yaml`.
-  It has the keys and the operating systems of the default config of the action, and also the
-  Python version 3.10, which plotmux supports and the default config does not have.
+  It has the keys and the operating systems of the default config of the action, minus the Python
+  versions that plotmux does not support.
 - `../dev/config/package_versions.json` — version ranges to test optional
   dependencies against, read by `lib-get-package-versions.yaml` and kept
   current by `bot-generate-package-versions.yaml`.

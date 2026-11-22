@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 _REPR_METHODS = frozenset({"_repr_html_", "_repr_mimebundle_", "_repr_svg_", "_repr_jpeg_"})
 
 
-@dataclass
+@dataclass(slots=True)
 class Figure:
     r"""Wrap the result of rendering a spec through a backend.
 

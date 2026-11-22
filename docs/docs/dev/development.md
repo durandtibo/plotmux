@@ -4,7 +4,7 @@ This guide covers setting up your development environment and common development
 
 ## Prerequisites
 
-- Python 3.10 or higher
+- Python 3.11 or higher
 - [`uv`](https://docs.astral.sh/uv/) for dependency management
 - Git for version control
 - Basic knowledge of Python and testing
@@ -108,7 +108,6 @@ inv config.show
 ```
 
 `inv check` runs the main read-only checks and `inv fix` fixes the lint and format issues.
-`invoke-tasklib` requires Python 3.11 or later, so it is only installed on those versions.
 
 ### Code Quality
 

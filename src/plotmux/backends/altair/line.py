@@ -31,7 +31,7 @@ def render_line(spec: LineSpec, **kwargs: Any) -> alt.Chart:
     Returns:
         The resulting altair ``Chart``.
     """
-    data = [{"x": x, "y": y} for x, y in zip(spec.x, spec.y)]
+    data = [{"x": x, "y": y} for x, y in zip(spec.x, spec.y, strict=True)]
     # ``spec.color``, once set, is already a canonical RGBA tuple: it went
     # through ``parse_color`` in ``LineSpec.__post_init__``.
     color = (

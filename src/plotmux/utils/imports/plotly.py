@@ -9,8 +9,8 @@ __all__ = [
     "raise_plotly_missing_error",
 ]
 
-from functools import lru_cache
-from typing import TYPE_CHECKING, Any, NoReturn, TypeVar
+from functools import cache
+from typing import TYPE_CHECKING, Any, Never, TypeVar
 
 from coola.utils.imports.universal import (
     decorator_package_available,
@@ -41,7 +41,7 @@ def check_plotly() -> None:
         raise_plotly_missing_error()
 
 
-@lru_cache(1)
+@cache
 def is_plotly_available() -> bool:
     r"""Indicate if the ``plotly`` package is installed or not.
 
@@ -83,7 +83,7 @@ def plotly_available(fn: F) -> F:
     return decorator_package_available(fn, is_plotly_available)
 
 
-def raise_plotly_missing_error() -> NoReturn:
+def raise_plotly_missing_error() -> Never:
     r"""Raise a ``RuntimeError`` to indicate the ``plotly`` package is
     missing.
 

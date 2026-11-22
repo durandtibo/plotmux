@@ -60,8 +60,7 @@ the common API to the union of all backends.
 altair}.py`. New backends follow the same pattern instead of
   introducing a new one.
 - `matplotlib`, `xy`, `bokeh`, and `altair` are declared as optional
-  extras in `pyproject.toml` (`xy` is further gated to
-  `python_version >= '3.11'` in its extra marker). Only `numpy` and
+  extras in `pyproject.toml`. Only `numpy` and
   `coola` are hard dependencies, so the core package (specs, registry,
   config, public API) imports cleanly with no plotting library
   installed.

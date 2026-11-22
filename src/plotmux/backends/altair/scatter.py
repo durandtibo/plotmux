@@ -31,7 +31,7 @@ def render_scatter(spec: ScatterSpec, **kwargs: Any) -> alt.Chart:
     Returns:
         The resulting altair ``Chart``.
     """
-    data = [{"x": x, "y": y} for x, y in zip(spec.x, spec.y)]
+    data = [{"x": x, "y": y} for x, y in zip(spec.x, spec.y, strict=True)]
     # ``spec.color``/``spec.edgecolor``, once set, are already canonical
     # RGBA tuples: they went through ``parse_color`` in
     # ``ScatterSpec.__post_init__``.

@@ -9,8 +9,8 @@ __all__ = [
     "raise_altair_missing_error",
 ]
 
-from functools import lru_cache
-from typing import TYPE_CHECKING, Any, NoReturn, TypeVar
+from functools import cache
+from typing import TYPE_CHECKING, Any, Never, TypeVar
 
 from coola.utils.imports.universal import (
     decorator_package_available,
@@ -41,7 +41,7 @@ def check_altair() -> None:
         raise_altair_missing_error()
 
 
-@lru_cache(1)
+@cache
 def is_altair_available() -> bool:
     r"""Indicate if the ``altair`` package is installed or not.
 
@@ -83,7 +83,7 @@ def altair_available(fn: F) -> F:
     return decorator_package_available(fn, is_altair_available)
 
 
-def raise_altair_missing_error() -> NoReturn:
+def raise_altair_missing_error() -> Never:
     r"""Raise a ``RuntimeError`` to indicate the ``altair`` package is
     missing.
 

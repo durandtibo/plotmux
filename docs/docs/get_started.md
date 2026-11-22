@@ -58,8 +58,7 @@ git clone git@github.com:durandtibo/plotmux.git
 cd plotmux
 ```
 
-**Note**: `plotmux` requires Python 3.10 or higher. The `xy` backend additionally requires
-Python 3.11 or higher.
+**Note**: `plotmux` requires Python 3.11 or higher.
 
 It is recommended to create a virtual environment (this step is optional).
 To create a virtual environment, you can use the following command:
@@ -98,11 +97,11 @@ no plotting library installed. Only the backend you actually use needs to be ins
 
 | Extra        | Installs                                 | Notes        |
 | ------------ | ---------------------------------------- | ------------ |
-| `matplotlib` | [Matplotlib](https://matplotlib.org/)    | Python 3.10+ |
+| `matplotlib` | [Matplotlib](https://matplotlib.org/)    | Python 3.11+ |
 | `xy`         | [`xy`](https://github.com/durandtibo/xy) | Python 3.11+ |
-| `bokeh`      | [Bokeh](https://bokeh.org/)              | Python 3.10+ |
-| `altair`     | [Altair](https://altair-viz.github.io/)  | Python 3.10+ |
-| `plotly`     | [Plotly](https://plotly.com/python/)     | Python 3.10+ |
+| `bokeh`      | [Bokeh](https://bokeh.org/)              | Python 3.11+ |
+| `altair`     | [Altair](https://altair-viz.github.io/)  | Python 3.11+ |
+| `plotly`     | [Plotly](https://plotly.com/python/)     | Python 3.11+ |
 
 ## Quick check
 

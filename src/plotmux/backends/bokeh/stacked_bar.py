@@ -62,7 +62,10 @@ def render_stacked_bar(fig: figure, spec: StackedBarSpec, **kwargs: Any) -> figu
         The ``figure`` the bars were drawn onto.
     """
     stackers = [f"series_{i}" for i in range(len(spec.series))]
-    data: dict[str, Any] = {"x": spec.x, **{k: s.y for k, s in zip(stackers, spec.series)}}
+    data: dict[str, Any] = {
+        "x": spec.x,
+        **{k: s.y for k, s in zip(stackers, spec.series, strict=True)},
+    }
     source = ColumnDataSource(data=data)
     # Every series' ``color``, once set, is already a canonical RGBA tuple:
     # it went through ``parse_color`` in ``StackedBarSpec.__post_init__``.

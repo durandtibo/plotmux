@@ -5,8 +5,7 @@ name: Get Test Matrix
 # supported version/OS lists only need to be updated in one place
 # (.github/workflow-config.json) instead of being duplicated across every
 # test-* workflow. The config file has the same keys and the same OS lists as the
-# default config of the action, but it also tests Python 3.10, which plotmux supports
-# and the default config does not have.
+# default config of the action, restricted to the Python versions plotmux supports.
 #
 # Usage:
 #   jobs:

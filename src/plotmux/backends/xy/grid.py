@@ -53,7 +53,7 @@ _CELL_RENDERERS: dict[type[BaseSpec], Callable[..., xy.Chart]] = {
 }
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class XyGrid:
     r"""Hold the per-cell xy ``Chart``\ s composing one grid layout.
 

@@ -11,8 +11,7 @@ five built-in backends:
 
 - `"matplotlib"`: renders with [Matplotlib](https://matplotlib.org/) (the default). Requires the
   `matplotlib` extra.
-- `"xy"`: renders with [`xy`](https://github.com/durandtibo/xy). Requires the `xy` extra
-  (Python 3.11+).
+- `"xy"`: renders with [`xy`](https://github.com/durandtibo/xy). Requires the `xy` extra.
 - `"bokeh"`: renders with [Bokeh](https://bokeh.org/). Requires the `bokeh` extra. Only the
   `"html"` export format is supported: static image export (`png`/`svg`) would additionally
   require a Selenium webdriver at runtime, which is outside the scope of a `pip install bokeh`.
