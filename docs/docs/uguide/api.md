@@ -150,7 +150,7 @@ line overlaid:
 
 ```
 
-Not every backend supports a *standalone* `plotmux.slope(...)` call: matplotlib and bokeh have a
+Not every backend supports a _standalone_ `plotmux.slope(...)` call: matplotlib and bokeh have a
 native "line by slope, independent of data range" primitive, but altair, `xy`, and plotly need
 concrete endpoints to draw from. On those three backends, `slope()` only works as a `layer()` child
 next to a data-bound sibling (as in the example above) — the sibling's x-range supplies the

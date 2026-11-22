@@ -1,5 +1,5 @@
 site_name: plotmux
-site_url: 'https://durandtibo.github.io/plotmux/'
+site_url: "https://durandtibo.github.io/plotmux/"
 theme:
   name: material
   features:
@@ -75,7 +75,7 @@ plugins:
       default_handler: python
       handlers:
         python:
-          paths: [ ../src ]
+          paths: [../src]
           options:
             allow_inspection: true
             docstring_style: google

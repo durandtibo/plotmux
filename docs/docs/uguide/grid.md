@@ -8,7 +8,7 @@ a grid.
 `plotmux.grid()` accepts any number of child specs, or already-rendered `Figure`s, and lays each one
 out in its own, independent panel (the backend-agnostic equivalent of Matplotlib's
 `pyplot.subplots()`). This is different from [`plotmux.layer()`](layer.md), which draws every child
-onto one *shared* set of axes: with `grid`, each child keeps its own axes.
+onto one _shared_ set of axes: with `grid`, each child keeps its own axes.
 
 ```pycon
 >>> import numpy as np

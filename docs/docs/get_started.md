@@ -96,13 +96,13 @@ inv test.unit --cov
 so the core package (specs, registry, configuration, public API) always imports cleanly, even with
 no plotting library installed. Only the backend you actually use needs to be installed.
 
-| Extra          | Installs                                     | Notes                       |
-|----------------|-----------------------------------------------|------------------------------|
-| `matplotlib`   | [Matplotlib](https://matplotlib.org/)         | Python 3.10+                 |
-| `xy`           | [`xy`](https://github.com/durandtibo/xy)      | Python 3.11+                 |
-| `bokeh`        | [Bokeh](https://bokeh.org/)                   | Python 3.10+                 |
-| `altair`       | [Altair](https://altair-viz.github.io/)       | Python 3.10+                 |
-| `plotly`       | [Plotly](https://plotly.com/python/)          | Python 3.10+                 |
+| Extra        | Installs                                 | Notes        |
+| ------------ | ---------------------------------------- | ------------ |
+| `matplotlib` | [Matplotlib](https://matplotlib.org/)    | Python 3.10+ |
+| `xy`         | [`xy`](https://github.com/durandtibo/xy) | Python 3.11+ |
+| `bokeh`      | [Bokeh](https://bokeh.org/)              | Python 3.10+ |
+| `altair`     | [Altair](https://altair-viz.github.io/)  | Python 3.10+ |
+| `plotly`     | [Plotly](https://plotly.com/python/)     | Python 3.10+ |
 
 ## Quick check
 

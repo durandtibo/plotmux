@@ -50,13 +50,13 @@ already exist:
 A path with no suffix raises a `ValueError`, since the export format cannot be inferred. Supported
 formats depend on the backend:
 
-| Backend        | Supported formats                                |
-|----------------|----------------------------------------------------|
-| `matplotlib`   | `png`, `svg`, `pdf`, `jpg`, `jpeg`                 |
-| `xy`           | `png`, `jpg`, `jpeg`, `webp`, `svg`, `pdf`, `html`  |
-| `bokeh`        | `html`                                             |
-| `altair`       | `html`, `json`                                     |
-| `plotly`       | `html`, `json`                                     |
+| Backend      | Supported formats                                  |
+| ------------ | -------------------------------------------------- |
+| `matplotlib` | `png`, `svg`, `pdf`, `jpg`, `jpeg`                 |
+| `xy`         | `png`, `jpg`, `jpeg`, `webp`, `svg`, `pdf`, `html` |
+| `bokeh`      | `html`                                             |
+| `altair`     | `html`, `json`                                     |
+| `plotly`     | `html`, `json`                                     |
 
 One exception to this table: a `plotmux.grid(..., backend="xy")` figure only supports `"html"`,
 even though the `xy` backend otherwise supports the full row above. `xy` has no primitive for
