@@ -2713,7 +2713,9 @@ dependencies (<code>altair</code>, <code>bokeh</code>, <code>matplotlib</code>, 
 
 
 <a href="#plotmux.utils.imports.altair_available" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">altair_available</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n"><span title="plotmux.utils.imports.altair.F">F</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="plotmux.utils.imports.altair.F">F</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">altair_available</span><span class="p">(</span>
+    <span class="n">fn</span><span class="p">:</span> <span class="n"><span title="collections.abc.Callable">Callable</span></span><span class="p">[</span><span class="n"><span title="plotmux.utils.imports.altair.P">P</span></span><span class="p">,</span> <span class="n"><span title="plotmux.utils.imports.altair.R">R</span></span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="collections.abc.Callable">Callable</span></span><span class="p">[</span><span class="n"><span title="plotmux.utils.imports.altair.P">P</span></span><span class="p">,</span> <span class="n"><span title="plotmux.utils.imports.altair.R">R</span></span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2738,7 +2740,7 @@ is installed.</p>
                 <code>fn</code>
             </td>
             <td>
-                  <code><span title="plotmux.utils.imports.altair.F">F</span></code>
+                  <code><span title="collections.abc.Callable">Callable</span>[<span title="plotmux.utils.imports.altair.P">P</span>, <span title="plotmux.utils.imports.altair.R">R</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2764,7 +2766,7 @@ is installed.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="plotmux.utils.imports.altair.F">F</span></code>
+                  <code><span title="collections.abc.Callable">Callable</span>[<span title="plotmux.utils.imports.altair.P">P</span>, <span title="plotmux.utils.imports.altair.R">R</span> | None]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2800,7 +2802,9 @@ otherwise <code>None</code>.</p>
 
 
 <a href="#plotmux.utils.imports.bokeh_available" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">bokeh_available</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n"><span title="plotmux.utils.imports.bokeh.F">F</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="plotmux.utils.imports.bokeh.F">F</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">bokeh_available</span><span class="p">(</span>
+    <span class="n">fn</span><span class="p">:</span> <span class="n"><span title="collections.abc.Callable">Callable</span></span><span class="p">[</span><span class="n"><span title="plotmux.utils.imports.bokeh.P">P</span></span><span class="p">,</span> <span class="n"><span title="plotmux.utils.imports.bokeh.R">R</span></span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="collections.abc.Callable">Callable</span></span><span class="p">[</span><span class="n"><span title="plotmux.utils.imports.bokeh.P">P</span></span><span class="p">,</span> <span class="n"><span title="plotmux.utils.imports.bokeh.R">R</span></span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2825,7 +2829,7 @@ is installed.</p>
                 <code>fn</code>
             </td>
             <td>
-                  <code><span title="plotmux.utils.imports.bokeh.F">F</span></code>
+                  <code><span title="collections.abc.Callable">Callable</span>[<span title="plotmux.utils.imports.bokeh.P">P</span>, <span title="plotmux.utils.imports.bokeh.R">R</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2851,7 +2855,7 @@ is installed.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="plotmux.utils.imports.bokeh.F">F</span></code>
+                  <code><span title="collections.abc.Callable">Callable</span>[<span title="plotmux.utils.imports.bokeh.P">P</span>, <span title="plotmux.utils.imports.bokeh.R">R</span> | None]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3407,7 +3411,9 @@ otherwise <code>None</code>.</p>
 
 
 <a href="#plotmux.utils.imports.matplotlib_available" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">matplotlib_available</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n"><span title="plotmux.utils.imports.matplotlib.F">F</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="plotmux.utils.imports.matplotlib.F">F</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">matplotlib_available</span><span class="p">(</span>
+    <span class="n">fn</span><span class="p">:</span> <span class="n"><span title="collections.abc.Callable">Callable</span></span><span class="p">[</span><span class="n"><span title="plotmux.utils.imports.matplotlib.P">P</span></span><span class="p">,</span> <span class="n"><span title="plotmux.utils.imports.matplotlib.R">R</span></span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="collections.abc.Callable">Callable</span></span><span class="p">[</span><span class="n"><span title="plotmux.utils.imports.matplotlib.P">P</span></span><span class="p">,</span> <span class="n"><span title="plotmux.utils.imports.matplotlib.R">R</span></span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -3432,7 +3438,7 @@ is installed.</p>
                 <code>fn</code>
             </td>
             <td>
-                  <code><span title="plotmux.utils.imports.matplotlib.F">F</span></code>
+                  <code><span title="collections.abc.Callable">Callable</span>[<span title="plotmux.utils.imports.matplotlib.P">P</span>, <span title="plotmux.utils.imports.matplotlib.R">R</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3458,7 +3464,7 @@ is installed.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="plotmux.utils.imports.matplotlib.F">F</span></code>
+                  <code><span title="collections.abc.Callable">Callable</span>[<span title="plotmux.utils.imports.matplotlib.P">P</span>, <span title="plotmux.utils.imports.matplotlib.R">R</span> | None]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3494,7 +3500,9 @@ otherwise <code>None</code>.</p>
 
 
 <a href="#plotmux.utils.imports.plotly_available" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">plotly_available</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n"><span title="plotmux.utils.imports.plotly.F">F</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="plotmux.utils.imports.plotly.F">F</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">plotly_available</span><span class="p">(</span>
+    <span class="n">fn</span><span class="p">:</span> <span class="n"><span title="collections.abc.Callable">Callable</span></span><span class="p">[</span><span class="n"><span title="plotmux.utils.imports.plotly.P">P</span></span><span class="p">,</span> <span class="n"><span title="plotmux.utils.imports.plotly.R">R</span></span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="collections.abc.Callable">Callable</span></span><span class="p">[</span><span class="n"><span title="plotmux.utils.imports.plotly.P">P</span></span><span class="p">,</span> <span class="n"><span title="plotmux.utils.imports.plotly.R">R</span></span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -3519,7 +3527,7 @@ is installed.</p>
                 <code>fn</code>
             </td>
             <td>
-                  <code><span title="plotmux.utils.imports.plotly.F">F</span></code>
+                  <code><span title="collections.abc.Callable">Callable</span>[<span title="plotmux.utils.imports.plotly.P">P</span>, <span title="plotmux.utils.imports.plotly.R">R</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3545,7 +3553,7 @@ is installed.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="plotmux.utils.imports.plotly.F">F</span></code>
+                  <code><span title="collections.abc.Callable">Callable</span>[<span title="plotmux.utils.imports.plotly.P">P</span>, <span title="plotmux.utils.imports.plotly.R">R</span> | None]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3841,7 +3849,9 @@ missing.</p>
 
 
 <a href="#plotmux.utils.imports.xy_available" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">xy_available</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n"><span title="plotmux.utils.imports.xy.F">F</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="plotmux.utils.imports.xy.F">F</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">xy_available</span><span class="p">(</span>
+    <span class="n">fn</span><span class="p">:</span> <span class="n"><span title="collections.abc.Callable">Callable</span></span><span class="p">[</span><span class="n"><span title="plotmux.utils.imports.xy.P">P</span></span><span class="p">,</span> <span class="n"><span title="plotmux.utils.imports.xy.R">R</span></span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="collections.abc.Callable">Callable</span></span><span class="p">[</span><span class="n"><span title="plotmux.utils.imports.xy.P">P</span></span><span class="p">,</span> <span class="n"><span title="plotmux.utils.imports.xy.R">R</span></span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -3866,7 +3876,7 @@ is installed.</p>
                 <code>fn</code>
             </td>
             <td>
-                  <code><span title="plotmux.utils.imports.xy.F">F</span></code>
+                  <code><span title="collections.abc.Callable">Callable</span>[<span title="plotmux.utils.imports.xy.P">P</span>, <span title="plotmux.utils.imports.xy.R">R</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3892,7 +3902,7 @@ is installed.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="plotmux.utils.imports.xy.F">F</span></code>
+                  <code><span title="collections.abc.Callable">Callable</span>[<span title="plotmux.utils.imports.xy.P">P</span>, <span title="plotmux.utils.imports.xy.R">R</span> | None]</code>
             </td>
             <td>
               <div class="doc-md-description">
