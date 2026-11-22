@@ -8,7 +8,10 @@ from __future__ import annotations
 
 __all__ = ["XyBackend"]
 
-from typing import TYPE_CHECKING, ClassVar
+import tempfile
+import webbrowser
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from plotmux.backends.base import Backend, check_export_format, make_renderer
 from plotmux.backends.xy.bar import render_bar
@@ -35,7 +38,6 @@ from plotmux.specs import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from pathlib import Path
 
     import xy
 
@@ -93,6 +95,47 @@ class XyBackend(Backend):
     # ``render`` is inherited from ``Backend``: it dispatches on
     # ``type(spec)`` against ``_RENDERERS`` above, so this backend does not
     # need its own copy of that dispatch body.
+
+    def show(self, native: xy.Chart | XyGrid) -> None:
+        r"""Display an xy ``Chart`` or ``XyGrid`` in the web browser.
+
+        The HTML of the figure is written to a temporary file that is
+        opened with ``webbrowser.open``.
+
+        Args:
+            native: The xy ``Chart`` or ``XyGrid`` to display.
+        """
+        html = self._html(native)
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".html", delete=False, encoding="utf-8"
+        ) as file:
+            file.write(html)
+        webbrowser.open(Path(file.name).as_uri())
+
+    def mimebundle(self, native: xy.Chart | XyGrid) -> dict[str, Any] | None:
+        r"""Return the HTML of an xy ``Chart`` or ``XyGrid`` for Jupyter.
+
+        Args:
+            native: The xy ``Chart`` or ``XyGrid`` to display.
+
+        Returns:
+            A dict with the HTML as ``"text/html"``.
+        """
+        return {"text/html": self._html(native)}
+
+    @staticmethod
+    def _html(native: xy.Chart | XyGrid) -> str:
+        r"""Return the standalone HTML of an xy ``Chart`` or ``XyGrid``.
+
+        Args:
+            native: The xy ``Chart`` or ``XyGrid``.
+
+        Returns:
+            The HTML document.
+        """
+        if isinstance(native, XyGrid):
+            return render_grid_html(native)
+        return native._repr_html_()
 
     def save(self, native: xy.Chart | XyGrid, path: Path, fmt: str) -> None:
         r"""Export an xy ``Chart`` or ``XyGrid`` to a file.

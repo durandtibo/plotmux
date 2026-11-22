@@ -59,7 +59,7 @@ the common API to the union of all backends.
   `MissingPackageError`) is reused by
   `src/plotmux/utils/imports/optional.py`. New backends follow the same pattern instead of
   introducing a new one.
-- `matplotlib`, `xy`, `bokeh`, and `altair` are declared as optional
+- `matplotlib`, `xy`, `bokeh`, `altair`, and `plotly` are declared as optional
   extras in `pyproject.toml`. Only `numpy` and
   `coola` are hard dependencies, so the core package (specs, registry,
   config, public API) imports cleanly with no plotting library
@@ -69,7 +69,7 @@ the common API to the union of all backends.
   by every spec that needs it rather than reimplemented per spec.
 - Style conventions in place throughout: `from __future__ import
 annotations`, explicit `__all__`, Google-style docstrings with
-  runnable `pycon` examples, `ruff`/`black`/`pyright` clean, tests
+  runnable `pycon` examples, `ruff`/`ty`/`pyright` clean, tests
   split into `tests/unit/` and `tests/integration/` mirroring
   `src/plotmux/`.
 
@@ -276,7 +276,7 @@ The layout otherwise leaves room for one more chart type (a new
 `specs/<type>.py` plus one `_RENDERERS` entry per backend) if a
 similarly generic type comes up. A new backend (see
 [6](#6-candidate-future-backends)) adds a new `backends/<name>/`
-subpackage alongside the existing four, or, since
+subpackage alongside the existing five, or, since
 [3.4](#34-lazy-registration-and-third-party-plugins), can be added
 entirely outside this repository via the `plotmux.backends` entry
 point, with no subpackage here at all.
@@ -352,7 +352,6 @@ inherits so they are defined once instead of being redeclared per
 chart type, and gives `Backend.render` / the `_RENDERERS` dicts a
 common type to dispatch on. Beyond the original `title`/`xlabel`/
 `ylabel`/`xscale`/`yscale`, four case studies (see
-[9](#9-proposed-improvements-external-design-review-2026-09-02) and
 [`docs/docs/dev/design_history.md`](docs/docs/dev/design_history.md))
 added `background_color` (a figure-level `Color`, applied after the
 mark is drawn), `ymin`/`ymax` (a plain, explicit-value-only y-axis
@@ -587,8 +586,11 @@ color parsing, backend dispatch, and export.
 
 Thin wrapper returned to the user: `(spec, backend_name, native)`.
 
-- `.show()`: calls `native.show()` if the native object exposes it,
-  otherwise raises `NotImplementedError`.
+- `.show()`: calls `Backend.show(native)` of the backend that rendered
+  the figure (`bokeh.io.show` for bokeh, the figure's own `show()` for
+  altair and plotly, a pyplot window for matplotlib, a browser tab for
+  xy). A backend that does not override `Backend.show` raises
+  `NotImplementedError`.
 - `.save(path)`: delegates to `export.save`, which infers the format
   from the file suffix and calls `backend.save(native, path, fmt)`.
 - `.supported_formats`: a property delegating to
@@ -603,20 +605,16 @@ Thin wrapper returned to the user: `(spec, backend_name, native)`.
 small without trapping users who need one backend-specific feature.
 
 `Figure` also makes itself display automatically as the last
-expression of a Jupyter cell, without every backend having to
-reimplement its own rich-display wrapper: `__getattr__` forwards a
-fixed, closed set of IPython/Jupyter dunder methods (`_repr_html_`,
-`_repr_mimebundle_`, `_repr_svg_`, `_repr_jpeg_`) to `native`: closed
-rather than forwarding arbitrary attribute access, so a typo like
-`fig.sav(...)` still raises a clear `AttributeError` instead of
-silently forwarding to `native`. `_repr_png_` gets its own method
-instead of living in that forwarded set: it tries `native._repr_png_`
-first, then falls back to a duck-typed `native.canvas.print_png` (the
-shape `MatplotlibBackend` attaches to every `Figure` it builds, since
-matplotlib's own `Figure` has no `_repr_png_` of its own outside
-`%matplotlib inline`), without `figure.py` importing matplotlib
-itself, which would break the "a backend module is only imported when
-its library is installed" rule every other backend follows.
+expression of a Jupyter cell: `Figure._repr_mimebundle_(include,
+exclude)` returns `Backend.mimebundle(native)` of the backend that
+rendered it, filtered by `include`/`exclude`. The default
+`Backend.mimebundle` uses the `_repr_mimebundle_` of the native object
+or its `_repr_html_`/`_repr_svg_`/`_repr_png_`/`_repr_jpeg_` methods;
+`MatplotlibBackend` overrides it to return a base64 PNG made by
+`savefig` (which works on a `Figure` built without pyplot), and
+`XyBackend` overrides it to also cover `XyGrid`. `Figure` forwards no
+other attribute to `native`, so a typo like `fig.sav(...)` raises a
+plain `AttributeError`.
 
 ### 4.4 Backend registry
 
@@ -1144,14 +1142,14 @@ and only for `LayerSpec`.
 
 ## 5. Why this shape
 
-- **Works for any backend, not just today's four**: nothing outside a
+- **Works for any backend, not just today's five**: nothing outside a
   `backends/<name>/` subpackage may special-case a backend by name.
   `Figure`, `export.py`, `config.py`, and `api.py` only ever go
   through `Backend`'s interface (`render`, `save`, `supported_formats`)
   and the registry (`get_backend`, `register_backend`); never
   `if backend_name == "matplotlib"`. This is why adding `xy`, `bokeh`,
-  and `altair` each required zero changes to any of those four
-  modules, and it is the bar any future backend (plotly, ...) must
+  `altair`, and `plotly` each required zero changes to any of those four
+  modules, and it is the bar any future backend (plotnine, ...) must
   also clear, including one added purely as a third-party plugin via
   the entry-point mechanism (see
   [3.4](#34-lazy-registration-and-third-party-plugins)), with no
@@ -1221,17 +1219,6 @@ should be driven by actual user requests, not by this list.
 
 ## 7. Open questions
 
-- `colors/parser.py::parse_color` resolves named colors via
-  `matplotlib.colors.to_rgba`, gated by `check_matplotlib()`, so this
-  works even when the matplotlib _backend_ is unavailable, but it
-  does require matplotlib to be _installed_ for the named-color case
-  (hex strings and RGB(A) tuples need no matplotlib import at all).
-  Is depending on `matplotlib` from `colors/`, a module outside any
-  `backends/<name>/` subpackage, an acceptable exception to "non-
-  backend code never imports a plotting library" (see
-  [3.1](#31-principle-separate-spec-from-render)), or does named-color
-  resolution need to be plotmux's own copy so `colors/` has zero
-  matplotlib dependency even when matplotlib isn't installed?
 - `LayerSpec` does not validate that its children make sense together
   (see [4.8](#48-layering-multiple-specs-on-one-axes)). Should
   `plotmux.layer()` at least warn (not raise) on an obvious mismatch
@@ -1285,16 +1272,12 @@ once picked up.
 - `LayerSpec` child-compatibility warnings (e.g. mismatched
   `xscale`), if real usage shows this is a common mistake worth
   surfacing early rather than a silent axis-level override.
-- Structural improvements from the external design review in
-  [9](#9-proposed-improvements-external-design-review-2026-09-02):
-  a declarative per-field translation table for backend renderers
-  ([9.1](#91-the-per-backend-translation-table-is-duplicated-by-hand-n-x-m-times----partly-done)),
-  reducing `api.py`'s repeated parameter boilerplate
-  ([9.2](#92-apipy-is-900-lines-of-repeated-parameter-lists-and-docstrings----partly-done)),
-  a queryable `Backend.capabilities()` (
-  [9.3](#93-unsupported-combinations-surface-only-at-render-time-never-queryable-ahead-of-it----done)),
-  and kwarg-typo diagnostics
-  ([9.4](#94-kwargs-any-forwarded-to-the-underlying-library-is-a-silent-typo-trap)).
+- Structural improvements from the external design review (a declarative
+  per-field translation table for backend renderers, less parameter
+  boilerplate in `api.py`, a queryable `Backend.capabilities()`, and
+  kwarg-typo diagnostics), recorded in
+  [the design history](docs/docs/dev/design_history.md#external-design-review-2026-09-02)
+  and superseded by `review/target_state.md`.
 
 ### 8.1 Partial or asymmetric backend support
 
@@ -1329,222 +1312,6 @@ studies in
 
 None of these are bugs to fix silently -- they are the visible edge of
 each backend's own primitives, consistent with [1](#1-goal)'s
-"escape hatch, not union of all backends" stance. [9.3](#93-unsupported-combinations-surface-only-at-render-time-never-queryable-ahead-of-it----done)
-proposes making this list programmatically queryable instead of only
+"escape hatch, not union of all backends" stance. The external design review ([design history](docs/docs/dev/design_history.md#external-design-review-2026-09-02))
+proposed making this list programmatically queryable instead of only
 documented here.
-
-## 9. Proposed improvements (external design review, 2026-09-02)
-
-The case studies in [8](#8-candidate-future-work) drive plotmux's
-_feature_ growth (new specs, new fields) reactively, one bokeh example
-at a time. The gaps below are different in kind: they are about the
-growth _process_ itself -- how each new field/spec/backend gets paid
-for -- and were not surfaced by any single case study because each one
-only exercises one feature end to end, not the combinatorics of adding
-it everywhere. None of this contradicts [5](#5-why-this-shape); it is
-about the cost of keeping that shape's promise as the matrix grows.
-
-### 9.1 The per-backend translation table is duplicated by hand, N x M times -- partly done
-
-Every mark-level field (`color`, `alpha`, `linewidth`, `linestyle`,
-`edgecolor`, ...) is translated from its canonical form to each
-backend's native call independently, in that backend's own
-`render_<type>.py` (see [4.9](#49-specifying-colors-across-backends)
-and [8.1](#81-partial-or-asymmetric-backend-support)). With 5
-backends x 9 spec types, a new common field (the last four case
-studies added `alpha`, `linewidth`/`linestyle`, `background_color`,
-`ymin`/`ymax`, `legend_title`, `legend_location`,
-`legend_orientation`, `edgecolor`, `fill`, `marker` -- nine fields in
-four case studies) means touching on the order of 10-20 call sites by
-hand, each a small, easy-to-get-subtly-wrong translation (e.g. bokeh's
-`alpha` rejecting `None`, altair's `strokeDash` needing a name-to-
-pixel-list table `SlopeSpec` and `LineSpec` both reach into). Nothing
-enforces that a field added to one backend's renderer is added to
-every other's; the only thing that currently catches an omission is
-the integration test matrix (chart-type x backend x format,
-[5](#5-why-this-shape)), after the fact, not before.
-
-Proposal: factor each field's canonical-to-native translation into one
-small, named function per field, living beside `rgba_to_bokeh`/
-`rgba_to_altair`/`rgba_to_xy`/`rgba_to_plotly` in each backend's own
-`style.py` (`STROKE_DASH`, the alpha-omit-if-None pattern, and the
-`DASH_STYLE` map already are this, just not named or reused
-consistently). A renderer then reads as a short, declarative list of
-`(spec_field, native_kwarg, translator)` triples applied by one shared
-helper, instead of a bespoke `if spec.alpha is not None: kwargs["fill_alpha"]
-= spec.alpha` block repeated per mark type within a backend. This
-does not remove the N x M translation work (every backend genuinely
-does need its own encoding), but it turns "did every backend's every
-render function pick up the new field" from a question answered by
-grepping five directories into one checkable per-backend list, and
-makes the _pattern_ (bokeh omits `None`, altair needs a name table,
-...) visible and reusable instead of rediscovered per spec type.
-
-**Partly done (2026-09-03).** `plotmux.backends.bokeh.style` now
-defines `FieldRule` (`field`/`kwarg`/`translate`/`omit_if_none`) and
-`apply_fields(spec, rules, kwargs)`, plus named rules for the fields
-bokeh's renderers shared (`ALPHA`, `LABEL`, `LINEWIDTH`, `LINESTYLE`,
-`SIZE`, `MARKER`). Every bokeh `render_<type>.py`
-(`histogram`/`bar`/`cdf`/`line`/`scatter`/`slope`/`stacked_bar`) was
-migrated from its own repeated `if spec.field is not None:
-kwargs["..."] = spec.field` blocks to a single
-`apply_fields(spec, [...], kwargs)` call; `slope.py` also shows a
-field needing its own kwarg name (`line_alpha` instead of `alpha`,
-since `bokeh.models.Slope` is an annotation, not a glyph) as one extra
-`FieldRule`, not a bespoke branch. This is the bokeh backend only --
-altair/matplotlib/plotly/xy's `style.py` still hold their own
-`rgba_to_*`/`STROKE_DASH`/`DASH_STYLE` helpers but not yet the same
-`FieldRule`/`apply_fields` shape, so the N x M translation work itself
-is unchanged; what changed is that bokeh's own M-sized slice of it is
-now one checkable list per renderer instead of a scattered `if`
-per field, and the shape is there to copy into the other four
-backends' `style.py` next.
-
-### 9.2 `api.py` is ~900 lines of repeated parameter lists and docstrings -- partly done
-
-Every public function (`hist`, `bar`, `stacked_bar`, `cdf`, `line`,
-`scatter`, `slope`, `layer`) redeclares the same seven
-`BaseSpec`-level parameters (`title`, `xlabel`, `ylabel`, `xscale`,
-`yscale`, `background_color`, `ymin`, `ymax`) with the same defaults,
-the same type union spelled out inline four times per function
-(`str | tuple[float, float, float] | tuple[float, float, float,
-float] | None` appears 9 times for `color` alone), and a docstring
-`Args:` block that repeats the same wording for each. This is
-consistent (a real strength: no function drifts from the others in
-naming or default), but it means every new `BaseSpec` field (the
-seven added across the four case studies) is a ~9-site edit to
-`api.py` alone, on top of the ~15-20 renderer sites in
-[9.1](#91-the-per-backend-translation-table-is-duplicated-by-hand-n-x-m-times----partly-done),
-and a docstring reviewer has to check nine near-identical copies stay
-in sync rather than one.
-
-Proposal: extract the shared `BaseSpec`-level parameters into one
-`TypedDict`/`dataclass`-backed shape (e.g. a `CommonKwargs` `TypedDict`
-with matching field-level docstrings written once), and have each
-public function accept `**common: Unpack[CommonKwargs]` (or, more
-conservatively, keep the explicit signatures for IDE-completion's
-sake but generate the repeated `Args:` docstring block instead of
-hand-copying it, the way `dev/generate_versions.py` already generates
-`dev/config/package_versions.json` rather than hand-maintaining it).
-Either approach turns "add a `BaseSpec` field" from a 9-site manual
-edit in `api.py` into a 1-site edit, without changing any call site's
-signature (`plotmux.hist(..., title=...)` keeps working identically
-either way) or losing the current strength of dedicated,
-autocompletable keyword arguments.
-
-Done (the conservative half): `plotmux.colors.Color` is now the one
-place the `str | tuple[float, float, float] | tuple[float, float,
-float, float] | None` union is spelled out -- every `color`,
-`edgecolor`, and `background_color` field/parameter across `specs/`
-and `api.py` (23 sites) now reads `Color` instead of repeating the
-union inline. And `api.py`'s `_COMMON_STYLE_ARGS` constant holds the
-`title`/`xlabel`/`ylabel`/`xscale`/`yscale`/`background_color`/
-`ymin`/`ymax`/`backend` `Args:` block, word for word, once; the
-`_with_common_style_args` decorator splices it into `hist`, `bar`,
-`line`, `scatter`, and `slope`'s docstrings (the five functions whose
-copies were identical) via `str.format`, the same "generate, don't
-hand-copy" move as `dev/generate_versions.py`. `cdf` (a different
-`ymin` note), `stacked_bar`/`layer` (a different `background_color`
-note, no `color` to refer back to), and `grid` (none of these fields)
-keep their own text since theirs already wasn't identical. Explicit
-signatures are untouched, so call sites and autocompletion are
-unaffected. Not done: the parameter _lists_ themselves (as opposed to
-their docstrings) are still redeclared per function -- the
-`TypedDict`/`Unpack` half of the proposal, which would collapse the
-9-site signature edit itself, remains open.
-
-### 9.3 Unsupported combinations surface only at render time, never queryable ahead of it -- done
-
-**Done (2026-09-04).** Added `Backend.capabilities()` (instance and
-classmethod) returning a `BackendCapabilities(backend_name, spec_types,
-caveats)`, plus a module-level `plotmux.backends.capabilities(name)`
-convenience wrapping `get_backend(name).capabilities()`. `spec_types`
-is `frozenset(cls._RENDERERS)` -- no new bookkeeping. `caveats` is a
-new `Backend._CAVEATS: ClassVar[tuple[str, ...]]` (empty by default)
-that each backend overrides where a known partial-support caveat
-exists: altair and xy both record `SlopeSpec`-is-layer-only-support
-and their own respective caveat (`BarSpec.width` ignored for altair;
-`GridSpec` export HTML-only for xy), and plotly records the
-`SlopeSpec` caveat. matplotlib and bokeh have none. This is purely
-additive and read-only -- it does not change any render-time or
-export-time behavior -- and is covered by tests per backend (see
-`tests/unit/backends/*/test_backend.py::test_*_backend_capabilities`
-and `tests/unit/backends/test_base.py`/`test_registry.py`).
-
-`resolve_renderer` (see [4.2](#42-backend)) raises
-`UnsupportedSpecError` the moment an unsupported spec/backend
-combination is actually rendered, and `Figure.supported_formats` (see
-[4.3](#43-figure)) lets a caller check export-format support ahead of
-`.save()` -- but there is no equivalent for spec-type or field-level
-support. A caller cannot ask "does this backend support `SlopeSpec`
-standalone?" or "does `BarSpec.width` do anything on altair?" (see
-[7](#7-open-questions)'s last bullet) without either reading this
-document or triggering the failure. This matters more as the matrix
-grows: `SlopeSpec` is backend-standalone/layer-only-supported
-per-backend, `BarSpec.width` is silently ignored on one backend,
-xy's grid export is HTML-only, bokeh has no static image export --
-four different flavors of "partial support," each currently
-discoverable only by hitting it or reading DESIGN.md.
-
-Proposal: a small `Backend.capabilities()` (or a module-level
-`plotmux.backends.capabilities(backend_name)`) returning, at minimum,
-the set of spec types with a registered top-level renderer (already
-computable from `_RENDERERS.keys()` with no new bookkeeping) plus a
-short, explicit list of the known partial-support caveats that
-`_RENDERERS.keys()` alone can't express (layer-only `SlopeSpec`
-support, ignored `BarSpec.width`, HTML-only grid/export). This is
-strictly additive -- it does not change render-time behavior or any
-existing error -- and gives library authors building on top of
-plotmux (or a user picking a backend for a specific chart) a
-programmatic answer instead of a DESIGN.md search.
-
-### 9.4 `**kwargs: Any` forwarded to the underlying library is a silent typo trap
-
-Every renderer and every public API function accepts `**kwargs: Any`
-and forwards it to the underlying plotting call (see
-[4.6](#46-public-api-apipy)).
-This is the right escape hatch for a real backend-specific argument,
-but it also means a typo'd kwarg intended for one of plotmux's own
-named parameters (e.g. `plotmux.line(x, y, colour="red")`, a common
-British-spelling slip) is silently absorbed and forwarded instead of
-raising immediately: the failure, if any, happens deep inside
-matplotlib/bokeh/altair/plotly/xy with a traceback that does not
-mention plotmux at all, and on some backends a stray kwarg the
-underlying call happens to also accept silently changes behavior
-instead of erroring.
-
-Proposal: no change to the escape hatch's reach (it should keep
-forwarding anything not recognized), but each backend's renderer could
-cheaply check forwarded kwargs against the underlying call's own
-accepted parameter names via `inspect.signature` before forwarding,
-turning an unrecognized kwarg into a clear `InvalidSpecError` naming
-the closest match (`"colour" -> did you mean "color"?`) instead of a
-deep, confusing traceback. Low priority relative to
-[9.1](#91-the-per-backend-translation-table-is-duplicated-by-hand-n-x-m-times----partly-done)-[9.3](#93-unsupported-combinations-surface-only-at-render-time-never-queryable-ahead-of-it----done),
-since it is a diagnostics improvement, not a correctness or
-extensibility one, but cheap once `inspect.signature` is memoized per
-underlying callable.
-
-### 9.5 DESIGN.md itself is becoming two documents in one -- done
-
-**Done (2026-09-02).** DESIGN.md used to mix two different kinds of
-content: the current-state architecture reference ([1](#1-goal)-[6](#6-candidate-future-backends))
-a new contributor needs to read once, and a chronological log of case
-studies, closed gaps, and "nothing carried over from 8.x" bookkeeping,
-valuable as a _history_ of why each field exists but not something a
-reader needs to re-derive every time. The status paragraph at the top
-of the file had itself grown into a dense, run-on changelog that was
-hard to skim precisely because it was trying to stay a single accurate
-sentence-per-fact across nine cumulative rounds of edits.
-
-The case-study log and the old status paragraph's history were split
-out into [`docs/docs/dev/design_history.md`](docs/docs/dev/design_history.md),
-leaving DESIGN.md as the current-state reference plus
-[7](#7-open-questions)/[8](#8-candidate-future-work) (the _live_,
-forward-looking lists) and a short [8.1](#81-partial-or-asymmetric-backend-support)
-summary of the asymmetries those case studies produced, with the full
-narrative linked from there rather than inlined.
-
-None of 9.1-9.4 are scheduled; each is additive/refactor-only and
-would become a new step once picked up, following the same convention
-as [8](#8-candidate-future-work).

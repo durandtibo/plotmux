@@ -105,3 +105,13 @@ def test_grid_spec_ncols_larger_than_cells_does_not_raise() -> None:
     spec = GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), ncols=5)
     assert spec.ncols == 5
     assert len(spec.cells) == 1
+
+
+def test_grid_spec_equal() -> None:
+    cells = (HistogramSpec(values=np.arange(5)), LineSpec(x=np.arange(3), y=np.arange(3)))
+    assert GridSpec(cells=cells, ncols=2) == GridSpec(cells=cells, ncols=2)
+
+
+def test_grid_spec_not_equal_with_different_ncols() -> None:
+    cells = (HistogramSpec(values=np.arange(5)), LineSpec(x=np.arange(3), y=np.arange(3)))
+    assert GridSpec(cells=cells, ncols=2) != GridSpec(cells=cells, ncols=1)

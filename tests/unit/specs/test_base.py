@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Literal, cast
 
 import numpy as np
@@ -12,6 +12,16 @@ from plotmux.specs.base import BaseSpec, XBoundSpec, check_equal_length
 @dataclass(frozen=True)
 class FakeSpec(BaseSpec):
     value: int = 0
+
+
+@dataclass(frozen=True, eq=False)
+class FakeArraySpec(BaseSpec):
+    values: np.ndarray = field(default_factory=lambda: np.arange(3))
+
+
+@dataclass(frozen=True, eq=False)
+class OtherFakeArraySpec(BaseSpec):
+    values: np.ndarray = field(default_factory=lambda: np.arange(3))
 
 
 @dataclass(frozen=True)
@@ -109,6 +119,40 @@ def test_base_spec_equality() -> None:
 
 def test_base_spec_inequality_on_style() -> None:
     assert FakeSpec(value=1, title="a") != FakeSpec(value=1, title="b")
+
+
+###########################
+#     Tests for Spec     #
+###########################
+
+
+def test_spec_equal_with_equal_arrays() -> None:
+    assert FakeArraySpec(values=np.arange(3)) == FakeArraySpec(values=np.arange(3))
+
+
+def test_spec_not_equal_with_different_array_values() -> None:
+    assert FakeArraySpec(values=np.arange(3)) != FakeArraySpec(values=np.arange(1, 4))
+
+
+def test_spec_not_equal_with_different_array_lengths() -> None:
+    assert FakeArraySpec(values=np.arange(3)) != FakeArraySpec(values=np.arange(4))
+
+
+def test_spec_not_equal_with_different_style() -> None:
+    assert FakeArraySpec(title="a") != FakeArraySpec(title="b")
+
+
+def test_spec_not_equal_with_different_type() -> None:
+    assert FakeArraySpec() != OtherFakeArraySpec()
+
+
+def test_spec_not_equal_with_other_object() -> None:
+    assert FakeArraySpec() != "spec"
+
+
+def test_spec_hash_raises() -> None:
+    with pytest.raises(TypeError, match="unhashable type: 'FakeArraySpec'"):
+        hash(FakeArraySpec())
 
 
 ##########################################

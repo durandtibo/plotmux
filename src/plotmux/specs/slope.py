@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from plotmux.colors import Color
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class SlopeSpec(XBoundSpec):
     r"""Define a backend-agnostic slope (a.k.a. abline) annotation
     specification.

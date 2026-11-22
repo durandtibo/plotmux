@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from plotmux.colors import Color
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class ScatterSpec(XBoundSpec):
     r"""Define a backend-agnostic scatter-chart specification.
 

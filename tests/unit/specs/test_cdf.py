@@ -156,3 +156,29 @@ def test_cdf_spec_invalid_alpha(alpha: float) -> None:
 @pytest.mark.parametrize("alpha", [0.0, 1.0])
 def test_cdf_spec_alpha_boundary_values(alpha: float) -> None:
     assert CdfSpec(values=np.arange(101), alpha=alpha).alpha == alpha
+
+
+def test_cdf_spec_does_not_alias_the_input_values() -> None:
+    values = np.arange(5, dtype=float)
+    spec = CdfSpec(values=values)
+    values[0] = 99
+    assert spec.values[0] == 0.0
+
+
+def test_cdf_spec_values_are_read_only() -> None:
+    spec = CdfSpec(values=np.arange(5))
+    with pytest.raises(ValueError, match="read-only"):
+        spec.values[0] = 1
+
+
+def test_cdf_spec_equal() -> None:
+    assert CdfSpec(values=np.arange(5)) == CdfSpec(values=np.arange(5))
+
+
+def test_cdf_spec_not_equal_with_different_values() -> None:
+    assert CdfSpec(values=np.arange(5)) != CdfSpec(values=np.arange(1, 6))
+
+
+def test_cdf_spec_hash_raises() -> None:
+    with pytest.raises(TypeError, match="unhashable type: 'CdfSpec'"):
+        hash(CdfSpec(values=np.arange(5)))

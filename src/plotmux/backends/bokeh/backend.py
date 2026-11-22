@@ -11,6 +11,7 @@ __all__ = ["BokehBackend"]
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from bokeh.io import show as bokeh_show
 from bokeh.models import Title
 from bokeh.plotting import figure as bokeh_figure, save as bokeh_save
 from bokeh.resources import CDN
@@ -146,6 +147,14 @@ class BokehBackend(Backend):
     # ``render`` is inherited from ``Backend``: it dispatches on
     # ``type(spec)`` against ``_RENDERERS`` above, so this backend does not
     # need its own copy of that dispatch body.
+
+    def show(self, native: Figure | LayoutDOM) -> None:
+        r"""Display a bokeh figure or layout with ``bokeh.io.show``.
+
+        Args:
+            native: The bokeh ``figure`` or layout to display.
+        """
+        bokeh_show(native)
 
     def save(self, native: Figure | LayoutDOM, path: Path, fmt: str) -> None:
         r"""Export a bokeh ``figure`` to a file.

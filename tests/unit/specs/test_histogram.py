@@ -175,3 +175,29 @@ def test_histogram_spec_xmin_only_explicit_does_not_raise() -> None:
 def test_histogram_spec_ymin_greater_than_ymax_raises() -> None:
     with pytest.raises(ValueError, match="ymin must not be greater than ymax"):
         HistogramSpec(values=np.arange(101), ymin=10, ymax=0)
+
+
+def test_histogram_spec_does_not_alias_the_input_values() -> None:
+    values = np.arange(5, dtype=float)
+    spec = HistogramSpec(values=values)
+    values[0] = 99
+    assert spec.values[0] == 0.0
+
+
+def test_histogram_spec_values_are_read_only() -> None:
+    spec = HistogramSpec(values=np.arange(5))
+    with pytest.raises(ValueError, match="read-only"):
+        spec.values[0] = 1
+
+
+def test_histogram_spec_equal() -> None:
+    assert HistogramSpec(values=np.arange(5)) == HistogramSpec(values=np.arange(5))
+
+
+def test_histogram_spec_not_equal_with_different_values() -> None:
+    assert HistogramSpec(values=np.arange(5)) != HistogramSpec(values=np.arange(1, 6))
+
+
+def test_histogram_spec_hash_raises() -> None:
+    with pytest.raises(TypeError, match="unhashable type: 'HistogramSpec'"):
+        hash(HistogramSpec(values=np.arange(5)))

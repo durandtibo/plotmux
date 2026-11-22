@@ -14,12 +14,10 @@ if TYPE_CHECKING:
 
 if is_matplotlib_available():
     import matplotlib.pyplot as plt
-    from matplotlib.figure import Figure as MplFigure
 
     from plotmux.backends.matplotlib.style import (
         _apply_legend_style,
         apply_common_style,
-        attach_repr_png,
     )
 
 #########################################
@@ -285,32 +283,6 @@ def test_apply_common_style_no_legend_orientation() -> None:
     apply_common_style(ax, spec)
     assert cast("Any", ax.get_legend())._ncols == 1
     plt.close(fig)
-
-
-#######################################
-#     Tests for attach_repr_png     #
-#######################################
-
-
-@matplotlib_available
-def test_attach_repr_png_adds_working_method() -> None:
-    fig = MplFigure()
-    fig.subplots().plot([1, 2, 3], [1, 4, 9])
-    assert not hasattr(fig, "_repr_png_")
-    attach_repr_png(fig)
-    png = cast("Any", fig)._repr_png_()
-    assert isinstance(png, bytes)
-    assert png.startswith(b"\x89PNG\r\n\x1a\n")
-
-
-@matplotlib_available
-def test_attach_repr_png_bare_figure_canvas_has_no_print_png() -> None:
-    # Regression test: a ``Figure`` built via the constructor (rather than
-    # ``pyplot.subplots()``) gets a plain ``FigureCanvasBase`` with no
-    # ``print_png`` of its own -- this is exactly the gap ``attach_repr_png``
-    # fixes (see its own docstring).
-    fig = MplFigure()
-    assert not hasattr(fig.canvas, "print_png")
 
 
 ###########################################

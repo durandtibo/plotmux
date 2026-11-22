@@ -98,6 +98,14 @@ class AltairBackend(Backend):
     # ``type(spec)`` against ``_RENDERERS`` above, so this backend does not
     # need its own copy of that dispatch body.
 
+    def show(self, native: alt.typing.ChartType) -> None:
+        r"""Display an altair chart with ``Chart.show``.
+
+        Args:
+            native: The altair chart to display.
+        """
+        native.show()
+
     def save(self, native: alt.typing.ChartType, path: Path, fmt: str) -> None:
         r"""Export an altair ``Chart`` to a file.
 

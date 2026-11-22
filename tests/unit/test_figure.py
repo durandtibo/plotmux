@@ -22,6 +22,7 @@ class FakeBackend(Backend):
 
     def __init__(self) -> None:
         self.saved: list[tuple[Any, Path, str]] = []
+        self.shown: list[Any] = []
 
     def render(self, spec: Any, **kwargs: Any) -> Any:
         del kwargs
@@ -29,6 +30,24 @@ class FakeBackend(Backend):
 
     def save(self, native: Any, path: Path, fmt: str) -> None:
         self.saved.append((native, path, fmt))
+
+    def show(self, native: Any) -> None:
+        self.shown.append(native)
+
+    def mimebundle(self, native: Any) -> dict[str, Any] | None:
+        return {"text/html": f"<b>{native}</b>", "image/png": "png"}
+
+
+class BareBackend(Backend):
+    name = "bare"
+    supported_formats = frozenset({"png"})
+
+    def render(self, spec: Any, **kwargs: Any) -> Any:
+        del kwargs
+        return spec
+
+    def save(self, native: Any, path: Path, fmt: str) -> None:
+        del native, path, fmt
 
 
 @pytest.fixture(autouse=True)
@@ -55,25 +74,19 @@ def test_figure_to_native() -> None:
 ##############################
 
 
-def test_figure_show_delegates_to_native() -> None:
-    native = Mock()
+def test_figure_show_delegates_to_backend() -> None:
+    backend = FakeBackend()
+    register_backend(backend)
     spec = HistogramSpec(values=np.array([1, 2, 3]))
-    fig = Figure(spec=spec, backend_name="fake", native=native)
-    fig.show()
-    native.show.assert_called_once_with()
+    Figure(spec=spec, backend_name="fake", native="native-object").show()
+    assert backend.shown == ["native-object"]
 
 
-def test_figure_show_unsupported_native() -> None:
+def test_figure_show_unsupported_backend() -> None:
+    register_backend(BareBackend())
     spec = HistogramSpec(values=np.array([1, 2, 3]))
-    fig = Figure(spec=spec, backend_name="fake", native=object())
-    with pytest.raises(NotImplementedError, match="does not support 'show'"):
-        fig.show()
-
-
-def test_figure_show_none_native() -> None:
-    spec = HistogramSpec(values=np.array([1, 2, 3]))
-    fig = Figure(spec=spec, backend_name="fake", native=None)
-    with pytest.raises(NotImplementedError, match="does not support 'show'"):
+    fig = Figure(spec=spec, backend_name="bare", native="native-object")
+    with pytest.raises(NotImplementedError, match="The bare backend does not support 'show'"):
         fig.show()
 
 
@@ -112,86 +125,49 @@ def test_figure_supported_formats() -> None:
     assert fig.supported_formats == frozenset({"png", "svg"})
 
 
-##########################################
+#######################################
 #     Tests for Figure rich display     #
-##########################################
+#######################################
 
 
-def test_figure_repr_html_forwards_to_native() -> None:
-    native = Mock()
-    native._repr_html_.return_value = "<div>native</div>"
+def test_figure_repr_mimebundle_delegates_to_backend() -> None:
+    register_backend(FakeBackend())
     spec = HistogramSpec(values=np.array([1, 2, 3]))
-    fig = Figure(spec=spec, backend_name="fake", native=native)
-    assert fig._repr_html_() == "<div>native</div>"
+    fig = Figure(spec=spec, backend_name="fake", native="native-object")
+    assert fig._repr_mimebundle_() == {"text/html": "<b>native-object</b>", "image/png": "png"}
 
 
-def test_figure_repr_mimebundle_forwards_to_native() -> None:
-    native = Mock()
-    native._repr_mimebundle_.return_value = ({"text/plain": "x"}, {})
+def test_figure_repr_mimebundle_include() -> None:
+    register_backend(FakeBackend())
     spec = HistogramSpec(values=np.array([1, 2, 3]))
-    fig = Figure(spec=spec, backend_name="fake", native=native)
-    assert fig._repr_mimebundle_() == ({"text/plain": "x"}, {})
+    fig = Figure(spec=spec, backend_name="fake", native="native-object")
+    assert fig._repr_mimebundle_(include={"image/png"}) == {"image/png": "png"}
 
 
-def test_figure_repr_svg_forwards_to_native() -> None:
-    native = Mock()
-    native._repr_svg_.return_value = "<svg></svg>"
+def test_figure_repr_mimebundle_exclude() -> None:
+    register_backend(FakeBackend())
     spec = HistogramSpec(values=np.array([1, 2, 3]))
-    fig = Figure(spec=spec, backend_name="fake", native=native)
-    assert fig._repr_svg_() == "<svg></svg>"
+    fig = Figure(spec=spec, backend_name="fake", native="native-object")
+    assert fig._repr_mimebundle_(exclude={"image/png"}) == {"text/html": "<b>native-object</b>"}
 
 
-def test_figure_repr_html_missing_on_native_raises() -> None:
+def test_figure_repr_mimebundle_include_and_exclude() -> None:
+    register_backend(FakeBackend())
     spec = HistogramSpec(values=np.array([1, 2, 3]))
-    fig = Figure(spec=spec, backend_name="fake", native=object())
-    with pytest.raises(AttributeError):
-        fig._repr_html_()
+    fig = Figure(spec=spec, backend_name="fake", native="native-object")
+    assert fig._repr_mimebundle_(include={"image/png", "text/html"}, exclude={"image/png"}) == {
+        "text/html": "<b>native-object</b>"
+    }
 
 
-def test_figure_repr_png_forwards_to_native_repr_png() -> None:
-    native = Mock()
-    native._repr_png_.return_value = b"native-png-bytes"
+def test_figure_repr_mimebundle_none_without_representation() -> None:
+    register_backend(BareBackend())
     spec = HistogramSpec(values=np.array([1, 2, 3]))
-    fig = Figure(spec=spec, backend_name="fake", native=native)
-    assert fig._repr_png_() == b"native-png-bytes"
+    fig = Figure(spec=spec, backend_name="bare", native=object())
+    assert fig._repr_mimebundle_() is None
 
 
-def test_figure_repr_png_falls_back_to_canvas_print_png() -> None:
-    class FakeCanvas:
-        def print_png(self, buffer: Any) -> None:
-            buffer.write(b"canvas-png-bytes")
-
-    class FakeNative:
-        canvas = FakeCanvas()
-
+def test_figure_does_not_forward_unknown_attributes_to_native() -> None:
     spec = HistogramSpec(values=np.array([1, 2, 3]))
-    fig = Figure(spec=spec, backend_name="fake", native=FakeNative())
-    assert fig._repr_png_() == b"canvas-png-bytes"
-
-
-def test_figure_repr_png_none_when_unsupported() -> None:
-    spec = HistogramSpec(values=np.array([1, 2, 3]))
-    fig = Figure(spec=spec, backend_name="fake", native=object())
-    assert fig._repr_png_() is None
-
-
-def test_figure_repr_jpeg_forwards_to_native() -> None:
-    native = Mock()
-    native._repr_jpeg_.return_value = b"native-jpeg-bytes"
-    spec = HistogramSpec(values=np.array([1, 2, 3]))
-    fig = Figure(spec=spec, backend_name="fake", native=native)
-    assert fig._repr_jpeg_() == b"native-jpeg-bytes"
-
-
-def test_figure_repr_jpeg_missing_on_native_raises() -> None:
-    spec = HistogramSpec(values=np.array([1, 2, 3]))
-    fig = Figure(spec=spec, backend_name="fake", native=object())
-    with pytest.raises(AttributeError):
-        fig._repr_jpeg_()
-
-
-def test_figure_getattr_unknown_attribute_raises() -> None:
-    spec = HistogramSpec(values=np.array([1, 2, 3]))
-    fig = Figure(spec=spec, backend_name="fake", native=object())
-    with pytest.raises(AttributeError, match="no attribute 'not_a_real_method'"):
-        fig.not_a_real_method()
+    fig = Figure(spec=spec, backend_name="fake", native=Mock())
+    assert not hasattr(fig, "_repr_html_")

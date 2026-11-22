@@ -80,12 +80,15 @@ directly with a `Figure` you already have.
 
 ## Displaying a Figure in Jupyter
 
-`Figure` displays itself automatically as the last expression of a Jupyter cell, exactly as its
-`native` object would on its own: it forwards the IPython/Jupyter rich-display dunder methods
-(`_repr_html_`, `_repr_mimebundle_`, `_repr_svg_`, `_repr_jpeg_`, `_repr_png_`) to `native`, so no
-extra call is needed beyond leaving `fig` as a cell's last expression. This forwarding is
-restricted to that fixed set of methods, so a typo like `fig.sav(...)` still raises a clear
-`AttributeError` instead of silently forwarding to `native`.
+`Figure` displays itself automatically as the last expression of a Jupyter cell, so no extra call is
+needed beyond leaving `fig` as a cell's last expression. The display comes from the backend that
+rendered the figure (`Backend.mimebundle`): a PNG for `matplotlib`, and the HTML or mime bundle of
+the native object for the other backends. `Figure` forwards no other attribute to the native
+object, so a typo like `fig.sav(...)` raises a plain `AttributeError`.
+
+`fig.show()` displays the figure with the viewer of its backend, and works on every backend:
+`matplotlib` opens a window (`pyplot.show`), `bokeh` calls `bokeh.io.show`, `altair` and `plotly`
+call the `show` of their native figure, and `xy` opens the HTML of the figure in the web browser.
 
 ## Escaping to the Native Figure
 

@@ -102,3 +102,42 @@ def test_bar_spec_invalid_alpha(alpha: float) -> None:
 @pytest.mark.parametrize("alpha", [0.0, 1.0])
 def test_bar_spec_alpha_boundary_values(alpha: float) -> None:
     assert BarSpec(x=np.arange(10), y=np.arange(10), alpha=alpha).alpha == alpha
+
+
+def test_bar_spec_does_not_alias_the_input_x() -> None:
+    x = np.arange(5, dtype=float)
+    spec = BarSpec(x=x, y=np.arange(5))
+    x[0] = 99
+    assert spec.x[0] == 0.0
+
+
+def test_bar_spec_does_not_alias_the_input_y() -> None:
+    y = np.arange(5, dtype=float)
+    spec = BarSpec(x=np.arange(5), y=y)
+    y[0] = 99
+    assert spec.y[0] == 0.0
+
+
+def test_bar_spec_x_is_read_only() -> None:
+    spec = BarSpec(x=np.arange(5), y=np.arange(5))
+    with pytest.raises(ValueError, match="read-only"):
+        spec.x[0] = 1
+
+
+def test_bar_spec_y_is_read_only() -> None:
+    spec = BarSpec(x=np.arange(5), y=np.arange(5))
+    with pytest.raises(ValueError, match="read-only"):
+        spec.y[0] = 1
+
+
+def test_bar_spec_equal() -> None:
+    assert BarSpec(x=np.arange(5), y=np.arange(5)) == BarSpec(x=np.arange(5), y=np.arange(5))
+
+
+def test_bar_spec_not_equal_with_different_y() -> None:
+    assert BarSpec(x=np.arange(5), y=np.arange(5)) != BarSpec(x=np.arange(5), y=np.arange(1, 6))
+
+
+def test_bar_spec_hash_raises() -> None:
+    with pytest.raises(TypeError, match="unhashable type: 'BarSpec'"):
+        hash(BarSpec(x=np.arange(5), y=np.arange(5)))
