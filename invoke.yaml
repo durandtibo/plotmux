@@ -1,0 +1,8 @@
+tasklib:
+  package:
+    name: plotmux
+  groups:
+    install: dev,docs,jupyter
+    update: dev,docs,jupyter
+  types:
+    checker: pyright

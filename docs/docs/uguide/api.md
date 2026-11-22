@@ -222,9 +222,7 @@ renderer, letting you reach backend-specific options without leaving the unified
 
 ```pycon
 >>> import plotmux
->>> fig = plotmux.hist(
-...     [1, 2, 3], bins=5, histtype="step"
-... )  # "histtype" is forwarded to Matplotlib
+>>> fig = plotmux.hist([1, 2, 3], bins=5, histtype="step")  # "histtype" is forwarded to Matplotlib
 >>> fig.save("histogram.png")  # doctest: +SKIP
 
 ```

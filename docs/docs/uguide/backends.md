@@ -60,7 +60,6 @@ Every plotting function accepts a `backend` argument:
 >>> import plotmux
 >>> with plotmux.backend("matplotlib"):
 ...     fig = plotmux.hist([1, 2, 3])
-...
 
 ```
 
@@ -72,7 +71,6 @@ output, without permanently changing the default:
 >>> for name in ["matplotlib"]:  # doctest: +SKIP
 ...     with plotmux.backend(name):
 ...         plotmux.line([1, 2, 3], [1, 4, 9]).save(f"line_{name}.png")
-...
 
 ```
 

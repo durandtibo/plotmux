@@ -91,7 +91,6 @@ rewriting every call site. `plotmux` solves this with a small, backend-agnostic 
 >>> import plotmux
 >>> with plotmux.backend("xy"):  # doctest: +SKIP
 ...     fig = plotmux.line([1, 2, 3], [1, 4, 9])
-...
 
 ```
 

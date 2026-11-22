@@ -78,7 +78,7 @@ source .venv/bin/activate
 Then, you should install the required packages to use `plotmux` with the following command:
 
 ```shell
-inv install --docs-deps
+inv env.install
 ```
 
 This command will install all the required packages. You can also use this command to update the
@@ -86,7 +86,7 @@ required packages. This command will check if there is a more recent package ava
 install it. Finally, you can test the installation with the following command:
 
 ```shell
-inv unit-test --cov
+inv test.unit --cov
 ```
 
 ## Dependencies

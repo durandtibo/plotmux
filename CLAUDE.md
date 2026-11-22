@@ -5,16 +5,16 @@
 - Use the virtual environment in `.venv`: `.venv/bin/python`, `.venv/bin/pytest`, `.venv/bin/ruff`.
   There is no `python` on the `PATH`.
 - Lint before committing with `.venv/bin/ruff check src tests`, and format with
-  `.venv/bin/black src tests` (the repository uses black, not `ruff format`; `inv check-lint`,
-  `inv check-format` and `inv docformat` run the same checks as CI). Fix the issues raised by ruff.
+  `.venv/bin/ruff format src tests` (`inv lint.check-python`, `inv format.check-python` and
+  `inv format.check-docstrings` run the same checks as CI). Fix the issues raised by ruff.
   Ignoring an issue (`noqa`, a changed rule set) is not fixing it.
-- Type check with `.venv/bin/pyright` (`inv check-types`, configured in `pyproject.toml`, it checks `src`). Fix the
+- Type check with `.venv/bin/pyright` (`inv types.check`, configured in `pyproject.toml`, it checks `src`). Fix the
   issues raised by pyright. Ignoring an issue (`type: ignore`, `pyright: ignore`, a cast that
   hides the problem) is not fixing it.
 - Run the unit tests of the packages you changed (for example
   `.venv/bin/pytest tests/unit/specs -q`). Some tests fail on `main`; check with `git stash`
   before blaming your change.
-- Run the doctests of the code you changed (`.venv/bin/inv doctest-src`, which is what the
+- Run the doctests of the code you changed (`.venv/bin/inv test.doctest`, which is what the
   `doctest` workflow runs).
 - `make lint` and `make format` check and format the non-Python files (YAML, Makefile, shell,
   TOML, Markdown, GitHub Actions workflows). Run them when you change such files. `make help`

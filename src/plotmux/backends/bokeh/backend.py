@@ -12,8 +12,7 @@ __all__ = ["BokehBackend"]
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from bokeh.models import Title
-from bokeh.plotting import figure as bokeh_figure
-from bokeh.plotting import save as bokeh_save
+from bokeh.plotting import figure as bokeh_figure, save as bokeh_save
 from bokeh.resources import CDN
 
 from plotmux.backends.base import Backend, check_export_format

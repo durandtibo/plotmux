@@ -305,7 +305,7 @@ internally.
 - `plotmux.utils.range.find_range` implements quantile-or-explicit axis bounds (e.g. `xmin="q0.1"`)
   once, and is reused by every spec that needs it rather than reimplemented.
 - Style conventions: `from __future__ import annotations`, explicit `__all__`, Google-style
-  docstrings with runnable `pycon` examples, `ruff`/`black`/`pyright` clean, tests split into
+  docstrings with runnable `pycon` examples, `ruff`/`pyright` clean, tests split into
   `tests/unit/` and `tests/integration/` mirroring `src/plotmux/`.
 
 ## What's Next
