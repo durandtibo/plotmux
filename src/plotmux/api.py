@@ -1,121 +1,177 @@
-r"""Contain the public plotting API."""
+r"""Contain the public plotting API.
+
+Every function builds the spec of a mark, wraps it in a ``PanelSpec``
+and renders it. The axes options are the same for every chart, they
+are declared once in ``PanelOptions`` and ``BoundedPanelOptions``.
+"""
 
 from __future__ import annotations
 
-__all__ = ["bar", "cdf", "grid", "hist", "layer", "line", "scatter", "slope", "stacked_bar"]
+__all__ = [
+    "BoundedPanelOptions",
+    "PanelOptions",
+    "bar",
+    "cdf",
+    "grid",
+    "hist",
+    "layer",
+    "line",
+    "scatter",
+    "slope",
+    "stacked_bar",
+]
 
-from typing import TYPE_CHECKING, Any, Literal
+from dataclasses import fields
+from typing import TYPE_CHECKING, Any, Literal, TypedDict, Unpack
 
 import numpy as np
 
 from plotmux.backends.registry import get_backend
 from plotmux.config import get_default_backend
+from plotmux.exceptions import InvalidSpecError
 from plotmux.figure import Figure
 from plotmux.specs import (
     BarSeries,
     BarSpec,
-    BaseSpec,
     CdfSpec,
     GridSpec,
     HistogramSpec,
-    LayerSpec,
     LineSpec,
+    MarkSpec,
+    PanelSpec,
     ScatterSpec,
     SlopeSpec,
     StackedBarSpec,
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
+    from collections.abc import Mapping, Sequence
 
     from plotmux.colors import Color
+    from plotmux.specs import LegendLocation
 
 
-# The ``BaseSpec``-level ``Args:`` lines shared, word for word, by every
-# public plotting function that also declares a ``color`` parameter (``hist``,
-# ``bar``, ``line``, ``scatter``, ``slope``). Written once here and spliced
-# into each function's docstring via ``str.format`` (see the ``{_COMMON_STYLE_ARGS}``
-# placeholder below) instead of being hand-copied five times, so a wording
-# change is a one-site edit rather than a five-site one to keep in sync (see
-# DESIGN.md, section 9.2). ``cdf`` (a different ``ymin`` note),
-# ``stacked_bar``/``layer`` (a different ``background_color`` note, no
-# ``color`` to refer back to) and ``grid`` (none of these fields) keep their
-# own text rather than reusing this constant.
-_COMMON_STYLE_ARGS = """title: An optional figure title.
-    xlabel: An optional x-axis label.
-    ylabel: An optional y-axis label.
-    xscale: The x-axis scale, ``"linear"`` or ``"log"``.
-    yscale: The y-axis scale, ``"linear"`` or ``"log"``.
-    background_color: An optional figure background color. Same
-        format as ``color``. ``None`` uses the backend's default.
-    ymin: An optional explicit lower bound for the y-axis.
-        ``None`` leaves the axis autoscaled.
-    ymax: An optional explicit upper bound for the y-axis.
-        ``None`` leaves the axis autoscaled.
-    backend: The name of the backend to use to render the
-        figure, or ``None`` to use the current default backend
-        (see ``plotmux.set_backend``)."""
+class PanelOptions(TypedDict, total=False):
+    r"""Define the axes options of every plotting function.
 
+    These keyword arguments are accepted by every plotting function
+    (``hist``, ``line``, ...), and have the meaning of the fields of
+    ``plotmux.specs.PanelSpec``. A misspelled keyword is a
+    ``TypeError`` at the call site, whatever the backend.
 
-def _with_common_style_args(fn: Callable[..., Figure]) -> Callable[..., Figure]:
-    r"""Splice ``_COMMON_STYLE_ARGS`` into a function's
-    ``{_COMMON_STYLE_ARGS}`` docstring placeholder.
-
-    A decorator rather than a plain ``.format()`` call after every
-    ``def`` so the substitution reads the same way at each of the five
-    call sites (see ``_COMMON_STYLE_ARGS`` above) and a sixth function
-    adopting the shared block is a one-line addition.
+    Args:
+        title: An optional axes title.
+        xlabel: An optional x-axis label.
+        ylabel: An optional y-axis label.
+        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
+        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
+        ymin: An optional explicit lower limit of the y-axis.
+            ``None`` leaves the axis autoscaled.
+        ymax: An optional explicit upper limit of the y-axis.
+        background_color: An optional axes background color. Same
+            format as the ``color`` of a mark. ``None`` uses the
+            backend's default.
+        legend_title: An optional heading of the legend box.
+        legend_location: An optional legend position, one of
+            ``"top_left"``, ``"top_right"``, ``"bottom_left"``,
+            ``"bottom_right"``, ``"top"``, ``"bottom"``, ``"left"``
+            or ``"right"``. ``None`` uses the backend's default.
+        legend_orientation: An optional legend layout,
+            ``"vertical"`` or ``"horizontal"``.
+        backend: The name of the backend to use to render the
+            figure, or ``None`` to use the current default backend
+            (see ``plotmux.set_backend``).
     """
-    assert fn.__doc__ is not None  # noqa: S101 every decorated function below has one
-    fn.__doc__ = fn.__doc__.format(_COMMON_STYLE_ARGS=_COMMON_STYLE_ARGS)
-    return fn
+
+    title: str | None
+    xlabel: str | None
+    ylabel: str | None
+    xscale: Literal["linear", "log"]
+    yscale: Literal["linear", "log"]
+    ymin: float | None
+    ymax: float | None
+    background_color: Color
+    legend_title: str | None
+    legend_location: LegendLocation | None
+    legend_orientation: Literal["vertical", "horizontal"] | None
+    backend: str | None
 
 
-def _render(spec: BaseSpec, backend: str | None, **kwargs: Any) -> Figure:
+class BoundedPanelOptions(PanelOptions, total=False):
+    r"""Define the axes options of the charts that have an x-axis
+    limit.
+
+    It adds the limits of the x-axis to ``PanelOptions``. ``hist`` and
+    ``cdf`` do not take them: their ``xmin``/``xmax`` are the range of
+    the data they bin or plot.
+
+    Args:
+        xmin: An optional explicit lower limit of the x-axis.
+            ``None`` leaves the axis autoscaled.
+        xmax: An optional explicit upper limit of the x-axis.
+    """
+
+    xmin: float | None
+    xmax: float | None
+
+
+def _render(spec: PanelSpec | GridSpec, backend: str | None) -> Figure:
     r"""Render a spec through a backend and wrap the result in a
     ``Figure``.
 
-    Factors out the three steps shared by every public plotting
-    function (``hist``, ``line``, ``scatter``, ``layer``): resolve the
-    backend name, render the spec, wrap the native output.
-
     Args:
-        spec: The backend-agnostic spec to render.
+        spec: The spec to render.
         backend: The name of the backend to use, or ``None`` to use
             the current default backend (see
             ``plotmux.config.get_default_backend``).
-        **kwargs: Additional backend-specific keyword arguments,
-            forwarded to the backend's renderer.
 
     Returns:
         The rendered figure.
     """
     backend_name = backend or get_default_backend()
-    native = get_backend(backend_name).render(spec, **kwargs)
+    native = get_backend(backend_name).render(spec)
     return Figure(spec=spec, backend_name=backend_name, native=native)
 
 
-@_with_common_style_args
-def hist(  # noqa: D417 the common Args entries are spliced in by _with_common_style_args
+def _render_mark(mark: MarkSpec, options: Mapping[str, Any]) -> Figure:
+    r"""Wrap one mark in a panel and render it.
+
+    Args:
+        mark: The mark to draw.
+        options: The axes options of the call, with the ``backend``.
+
+    Returns:
+        The rendered figure.
+    """
+    return _render_marks((mark,), options)
+
+
+def _render_marks(marks: tuple[MarkSpec, ...], options: Mapping[str, Any]) -> Figure:
+    r"""Wrap marks in a panel and render it.
+
+    Args:
+        marks: The marks to draw.
+        options: The axes options of the call, with the ``backend``.
+
+    Returns:
+        The rendered figure.
+    """
+    axes = dict(options)
+    backend = axes.pop("backend", None)
+    return _render(PanelSpec(marks=marks, **axes), backend)
+
+
+def hist(
     values: Sequence[float] | np.ndarray,
     *,
     bins: int = 30,
     xmin: float | str | None = None,
     xmax: float | str | None = None,
-    label: str | None = None,
     density: bool = False,
+    label: str | None = None,
     color: Color = None,
     alpha: float | None = None,
-    title: str | None = None,
-    xlabel: str | None = None,
-    ylabel: str | None = None,
-    xscale: Literal["linear", "log"] = "linear",
-    yscale: Literal["linear", "log"] = "linear",
-    background_color: Color = None,
-    ymin: float | None = None,
-    ymax: float | None = None,
-    backend: str | None = None,
-    **kwargs: Any,
+    **panel: Unpack[PanelOptions],
 ) -> Figure:
     r"""Plot a histogram.
 
@@ -123,140 +179,86 @@ def hist(  # noqa: D417 the common Args entries are spliced in by _with_common_s
         values: The array of values to plot.
         bins: The number of histogram bins. Must be a positive
             integer.
-        xmin: Specifies the lower bound of the x-axis range. It can
-            be an explicit value, a quantile string such as
-            ``"q0.1"``, or ``None`` to use the minimum of ``values``.
-        xmax: Specifies the upper bound of the x-axis range. Same
-            semantics as ``xmin`` but for the upper bound.
-        label: An optional label used e.g. in the legend.
-        density: If ``True``, draw and return a probability
-            density: each bin will display the bin's raw count
-            divided by the total number of counts and the bin
-            width, so that the area under the histogram integrates
-            to 1. Defaults to ``False``.
-        color: An optional color for the bars. It can be a hex
-            string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
-            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
-            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
-            backend's default color.
-        alpha: An optional bar opacity, in ``[0, 1]``. ``None`` uses
-            the backend's default (usually fully opaque).
-        {_COMMON_STYLE_ARGS}
-        **kwargs: Additional backend-specific keyword arguments,
-            forwarded to the backend's renderer.
+        xmin: Specifies the lower bound of the range of the values
+            that are binned. It can be an explicit value, a quantile
+            string such as ``"q0.1"``, or ``None`` to use the minimum
+            of ``values``. It is not an axis limit.
+        xmax: Specifies the upper bound of the range of the values
+            that are binned. Same semantics as ``xmin``.
+        density: If ``True``, draw a probability density: each bin
+            displays the bin's raw count divided by the total number
+            of counts and the bin width, so that the area under the
+            histogram integrates to 1.
+        label: An optional label used in the legend.
+        color: An optional color for the bars. It can be a hex string
+            (``"#rrggbb"`` or ``"#rrggbbaa"``), a CSS/matplotlib named
+            color (e.g. ``"tab:blue"``), or an RGB(A) tuple of floats
+            in ``[0, 1]``. ``None`` takes the next color of the
+            default palette.
+        alpha: An optional bar opacity, in ``[0, 1]``.
+        **panel: The axes options, see ``PanelOptions``.
 
     Returns:
         The rendered figure.
 
-    Raises:
-        ValueError: if ``bins`` is not a positive integer, ``alpha``
-            is not in ``[0, 1]``, ``color``/``background_color`` is
-            not a valid color, ``xmin`` and ``xmax`` are both
-            explicit numeric values with ``xmin >= xmax``, or
-            ``ymin``/``ymax`` are both set with ``ymin > ymax``.
-
     Example:
         ```pycon
         >>> import plotmux
-        >>> fig = plotmux.hist([1, 2, 2, 3, 3, 3], bins=3)  # doctest: +SKIP
+        >>> fig = plotmux.hist([1, 2, 2, 3], bins=3, backend="matplotlib")  # doctest: +SKIP
 
         ```
     """
-    spec = HistogramSpec(
+    mark = HistogramSpec(
         values=np.asarray(values),
         bins=bins,
         xmin=xmin,
         xmax=xmax,
-        label=label,
         density=density,
+        label=label,
         color=color,
         alpha=alpha,
-        title=title,
-        xlabel=xlabel,
-        ylabel=ylabel,
-        xscale=xscale,
-        yscale=yscale,
-        background_color=background_color,
-        ymin=ymin,
-        ymax=ymax,
     )
-    return _render(spec, backend, **kwargs)
+    return _render_mark(mark, panel)
 
 
-@_with_common_style_args
-def bar(  # noqa: D417 the common Args entries are spliced in by _with_common_style_args
-    x: Sequence[float] | np.ndarray,
+def bar(
+    x: Sequence[float] | Sequence[str] | np.ndarray,
     y: Sequence[float] | np.ndarray,
     *,
+    width: float = 0.8,
     label: str | None = None,
     color: Color = None,
-    width: float = 0.8,
     alpha: float | None = None,
-    title: str | None = None,
-    xlabel: str | None = None,
-    ylabel: str | None = None,
-    xscale: Literal["linear", "log"] = "linear",
-    yscale: Literal["linear", "log"] = "linear",
-    background_color: Color = None,
-    ymin: float | None = None,
-    ymax: float | None = None,
-    backend: str | None = None,
-    **kwargs: Any,
+    **panel: Unpack[BoundedPanelOptions],
 ) -> Figure:
     r"""Plot a bar chart.
 
     Args:
-        x: The array of bar positions.
+        x: The array of bar positions: numbers, or strings for a
+            categorical x-axis.
         y: The array of bar heights. Must have the same length as
             ``x``.
-        label: An optional label used e.g. in the legend.
-        color: An optional color for the bars. It can be a hex
-            string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
-            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
-            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
-            backend's default color.
-        width: The width of each bar, in ``x`` data units. Must be a
-            positive number.
-        alpha: An optional bar opacity, in ``[0, 1]``. ``None`` uses
-            the backend's default (usually fully opaque).
-        {_COMMON_STYLE_ARGS}
-        **kwargs: Additional backend-specific keyword arguments,
-            forwarded to the backend's renderer.
+        width: The width of each bar, in ``x`` data units (a fraction
+            of the band for a categorical ``x``). Must be positive.
+        label: An optional label used in the legend.
+        color: An optional color for the bars (see ``hist``).
+        alpha: An optional bar opacity, in ``[0, 1]``.
+        **panel: The axes options, see ``BoundedPanelOptions``.
 
     Returns:
         The rendered figure.
 
-    Raises:
-        ValueError: if ``x`` and ``y`` do not have the same length,
-            ``width`` is not a positive number, ``alpha`` is not in
-            ``[0, 1]``, ``color``/``background_color`` is not a
-            valid color, or ``ymin``/``ymax`` are both set with
-            ``ymin > ymax``.
-
     Example:
         ```pycon
         >>> import plotmux
-        >>> fig = plotmux.bar([1, 2, 3], [4, 5, 6])  # doctest: +SKIP
+        >>> fig = plotmux.bar(["a", "b"], [1, 2], backend="matplotlib")  # doctest: +SKIP
 
         ```
     """
-    spec = BarSpec(
-        x=np.asarray(x),
-        y=np.asarray(y),
-        label=label,
-        color=color,
-        width=width,
-        alpha=alpha,
-        title=title,
-        xlabel=xlabel,
-        ylabel=ylabel,
-        xscale=xscale,
-        yscale=yscale,
-        background_color=background_color,
-        ymin=ymin,
-        ymax=ymax,
+    mark = BarSpec(
+        x=np.asarray(x), y=np.asarray(y), width=width, label=label, color=color, alpha=alpha
     )
-    return _render(spec, backend, **kwargs)
+    return _render_mark(mark, panel)
 
 
 def stacked_bar(
@@ -265,92 +267,36 @@ def stacked_bar(
     *,
     width: float = 0.8,
     alpha: float | None = None,
-    title: str | None = None,
-    xlabel: str | None = None,
-    ylabel: str | None = None,
-    xscale: Literal["linear", "log"] = "linear",
-    yscale: Literal["linear", "log"] = "linear",
-    background_color: Color = None,
-    ymin: float | None = None,
-    ymax: float | None = None,
-    backend: str | None = None,
-    **kwargs: Any,
+    **panel: Unpack[BoundedPanelOptions],
 ) -> Figure:
     r"""Plot a stacked bar chart.
 
-    Unlike ``layer()``'s ``BarSpec`` support, which draws several
-    ``BarSpec``s independently onto shared axes (they simply overlap
-    at shared ``x`` positions), this draws ``series`` cumulatively:
-    each series is stacked on top of the running total of the series
-    before it, at each ``x`` position. See ``plotmux.specs.
-    StackedBarSpec``/``plotmux.specs.BarSeries``.
-
     Args:
-        x: The array of bar positions, shared by every series. Either
-            numeric or an array of strings, drawn as a categorical
-            x-axis (e.g. ``x=["Apples", "Pears", "Nectarines"]``).
-        series: The series to stack, in stacking order (bottom to
-            top). Must be non-empty, and every series' ``y`` must have
-            the same length as ``x``.
-        width: The width of each bar, in ``x`` data units. Must be a
-            positive number.
-        alpha: An optional bar opacity, in ``[0, 1]``, applied to
-            every series. ``None`` uses the backend's default (usually
-            fully opaque).
-        title: An optional figure title.
-        xlabel: An optional x-axis label.
-        ylabel: An optional y-axis label.
-        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
-        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
-        background_color: An optional figure background color. Same
-            format as a series' ``color``. ``None`` uses the
-            backend's default.
-        ymin: An optional explicit lower bound for the y-axis.
-            ``None`` leaves the axis autoscaled.
-        ymax: An optional explicit upper bound for the y-axis.
-            ``None`` leaves the axis autoscaled.
-        backend: The name of the backend to use to render the
-            figure, or ``None`` to use the current default backend
-            (see ``plotmux.set_backend``).
-        **kwargs: Additional backend-specific keyword arguments,
-            forwarded to the backend's renderer.
+        x: The array of bar positions, shared by every series:
+            numbers, or strings for a categorical x-axis.
+        series: The series to stack, bottom to top. Each series has
+            its own label and color.
+        width: The width of each bar, in ``x`` data units (a fraction
+            of the band for a categorical ``x``). Must be positive.
+        alpha: An optional bar opacity, in ``[0, 1]``, for every
+            series.
+        **panel: The axes options, see ``BoundedPanelOptions``.
 
     Returns:
         The rendered figure.
-
-    Raises:
-        ValueError: if ``series`` is empty, any series' ``y`` does
-            not have the same length as ``x``, ``width`` is not a
-            positive number, ``alpha`` is not in ``[0, 1]``, any
-            series' ``color`` is not a valid color, or
-            ``ymin``/``ymax`` are both set with ``ymin > ymax``.
 
     Example:
         ```pycon
         >>> import plotmux
         >>> from plotmux.specs import BarSeries
         >>> fig = plotmux.stacked_bar(
-        ...     ["Apples", "Pears", "Nectarines"],
-        ...     [BarSeries(y=[2, 1, 4], label="2015"), BarSeries(y=[1, 3, 2], label="2016")],
+        ...     ["a", "b"], [BarSeries(y=[1, 2])], backend="matplotlib"
         ... )  # doctest: +SKIP
 
         ```
     """
-    spec = StackedBarSpec(
-        x=np.asarray(x),
-        series=tuple(series),
-        width=width,
-        alpha=alpha,
-        title=title,
-        xlabel=xlabel,
-        ylabel=ylabel,
-        xscale=xscale,
-        yscale=yscale,
-        background_color=background_color,
-        ymin=ymin,
-        ymax=ymax,
-    )
-    return _render(spec, backend, **kwargs)
+    mark = StackedBarSpec(x=np.asarray(x), series=tuple(series), width=width, alpha=alpha)
+    return _render_mark(mark, panel)
 
 
 def cdf(
@@ -362,78 +308,41 @@ def cdf(
     label: str | None = None,
     color: Color = None,
     alpha: float | None = None,
-    title: str | None = None,
-    xlabel: str | None = None,
-    ylabel: str | None = "cumulative probability",
-    xscale: Literal["linear", "log"] = "linear",
-    yscale: Literal["linear", "log"] = "linear",
-    background_color: Color = None,
-    ymin: float | None = None,
-    ymax: float | None = None,
-    backend: str | None = None,
-    **kwargs: Any,
+    **panel: Unpack[PanelOptions],
 ) -> Figure:
-    r"""Plot the empirical cumulative distribution function (CDF) of
-    an array of values.
+    r"""Plot an empirical cumulative distribution function.
+
+    The curve is the exact ``P(X <= x)`` over all the values.
 
     Args:
         values: The array of values to plot.
-        nbins: The number of bins to use to approximate the
-            cumulative distribution. Must be a positive integer, or
-            ``None`` to use the backend's default binning.
-        xmin: Specifies the lower bound of the x-axis range. It can
-            be an explicit value, a quantile string such as
-            ``"q0.1"``, or ``None`` to use the minimum of ``values``.
-        xmax: Specifies the upper bound of the x-axis range. Same
-            semantics as ``xmin`` but for the upper bound.
-        label: An optional label used e.g. in the legend.
-        color: An optional color for the curve. It can be a hex
-            string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
-            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
-            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
-            backend's default color.
-        alpha: An optional curve opacity, in ``[0, 1]``. ``None``
-            uses the backend's default (usually fully opaque).
-        title: An optional figure title.
-        xlabel: An optional x-axis label.
-        ylabel: An optional y-axis label. Defaults to
-            ``"cumulative probability"``.
-        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
-        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
-        background_color: An optional figure background color. Same
-            format as ``color``. ``None`` uses the backend's default.
-        ymin: An optional explicit lower bound for the y-axis.
-            ``None`` leaves the axis autoscaled (bokeh's ``CdfSpec``
-            renderer hardcodes its own ``0``/``1`` bounds regardless;
-            an explicit ``ymin``/``ymax`` here overrides that, see
-            ``plotmux.backends.bokeh.cdf.render_cdf``).
-        ymax: An optional explicit upper bound for the y-axis.
-            ``None`` leaves the axis autoscaled.
-        backend: The name of the backend to use to render the
-            figure, or ``None`` to use the current default backend
-            (see ``plotmux.set_backend``).
-        **kwargs: Additional backend-specific keyword arguments,
-            forwarded to the backend's renderer.
+        nbins: ``None`` for the exact CDF, or a positive integer to
+            bin the values first and bound the number of vertices for
+            a large input.
+        xmin: Specifies the lower bound of the part of the curve that
+            is drawn. It can be an explicit value, a quantile string
+            such as ``"q0.1"``, or ``None`` to use the minimum of
+            ``values``. It does not renormalize the curve and is not
+            an axis limit.
+        xmax: Specifies the upper bound of the part of the curve that
+            is drawn. Same semantics as ``xmin``.
+        label: An optional label used in the legend.
+        color: An optional color for the curve (see ``hist``).
+        alpha: An optional curve opacity, in ``[0, 1]``.
+        **panel: The axes options, see ``PanelOptions``. ``ylabel``
+            defaults to ``"cumulative probability"``.
 
     Returns:
         The rendered figure.
 
-    Raises:
-        ValueError: if ``nbins`` is set and is not a positive
-            integer, ``alpha`` is not in ``[0, 1]``,
-            ``color``/``background_color`` is not a valid color,
-            ``xmin`` and ``xmax`` are both explicit numeric values
-            with ``xmin >= xmax``, or ``ymin``/``ymax`` are both set
-            with ``ymin > ymax``.
-
     Example:
         ```pycon
         >>> import plotmux
-        >>> fig = plotmux.cdf([1, 2, 2, 3, 3, 3])  # doctest: +SKIP
+        >>> fig = plotmux.cdf([1, 2, 2, 3], backend="matplotlib")  # doctest: +SKIP
 
         ```
     """
-    spec = CdfSpec(
+    mark = CdfSpec(
         values=np.asarray(values),
         nbins=nbins,
         xmin=xmin,
@@ -441,20 +350,11 @@ def cdf(
         label=label,
         color=color,
         alpha=alpha,
-        title=title,
-        xlabel=xlabel,
-        ylabel=ylabel,
-        xscale=xscale,
-        yscale=yscale,
-        background_color=background_color,
-        ymin=ymin,
-        ymax=ymax,
     )
-    return _render(spec, backend, **kwargs)
+    return _render_mark(mark, {"ylabel": "cumulative probability", **panel})
 
 
-@_with_common_style_args
-def line(  # noqa: D417 the common Args entries are spliced in by _with_common_style_args
+def line(
     x: Sequence[float] | np.ndarray,
     y: Sequence[float] | np.ndarray,
     *,
@@ -463,55 +363,31 @@ def line(  # noqa: D417 the common Args entries are spliced in by _with_common_s
     alpha: float | None = None,
     linewidth: float | None = None,
     linestyle: Literal["solid", "dashed", "dotted", "dashdot"] = "solid",
-    title: str | None = None,
-    xlabel: str | None = None,
-    ylabel: str | None = None,
-    xscale: Literal["linear", "log"] = "linear",
-    yscale: Literal["linear", "log"] = "linear",
-    background_color: Color = None,
-    ymin: float | None = None,
-    ymax: float | None = None,
-    backend: str | None = None,
-    **kwargs: Any,
+    **panel: Unpack[BoundedPanelOptions],
 ) -> Figure:
     r"""Plot a line chart.
 
     Args:
         x: The array of x values.
-        y: The array of y values. Must have the same length as
-            ``x``.
-        label: An optional label used e.g. in the legend.
-        color: An optional color for the line. It can be a hex
-            string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
-            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
-            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
-            backend's default color.
-        alpha: An optional line opacity, in ``[0, 1]``. ``None`` uses
-            the backend's default (usually fully opaque).
-        linewidth: An optional line width. ``None`` uses the
-            backend's default width.
+        y: The array of y values. Must have the same length as ``x``.
+        label: An optional label used in the legend.
+        color: An optional color for the line (see ``hist``).
+        alpha: An optional line opacity, in ``[0, 1]``.
+        linewidth: An optional line width.
         linestyle: The line's dash style.
-        {_COMMON_STYLE_ARGS}
-        **kwargs: Additional backend-specific keyword arguments,
-            forwarded to the backend's renderer.
+        **panel: The axes options, see ``BoundedPanelOptions``.
 
     Returns:
         The rendered figure.
 
-    Raises:
-        ValueError: if ``x`` and ``y`` do not have the same length,
-            ``alpha`` is not in ``[0, 1]``,
-            ``color``/``background_color`` is not a valid color, or
-            ``ymin``/``ymax`` are both set with ``ymin > ymax``.
-
     Example:
         ```pycon
         >>> import plotmux
-        >>> fig = plotmux.line([1, 2, 3], [1, 4, 9])  # doctest: +SKIP
+        >>> fig = plotmux.line([1, 2, 3], [1, 4, 9], backend="matplotlib")  # doctest: +SKIP
 
         ```
     """
-    spec = LineSpec(
+    mark = LineSpec(
         x=np.asarray(x),
         y=np.asarray(y),
         label=label,
@@ -519,20 +395,11 @@ def line(  # noqa: D417 the common Args entries are spliced in by _with_common_s
         alpha=alpha,
         linewidth=linewidth,
         linestyle=linestyle,
-        title=title,
-        xlabel=xlabel,
-        ylabel=ylabel,
-        xscale=xscale,
-        yscale=yscale,
-        background_color=background_color,
-        ymin=ymin,
-        ymax=ymax,
     )
-    return _render(spec, backend, **kwargs)
+    return _render_mark(mark, panel)
 
 
-@_with_common_style_args
-def scatter(  # noqa: D417 the common Args entries are spliced in by _with_common_style_args
+def scatter(
     x: Sequence[float] | np.ndarray,
     y: Sequence[float] | np.ndarray,
     *,
@@ -541,59 +408,35 @@ def scatter(  # noqa: D417 the common Args entries are spliced in by _with_commo
     size: float | None = None,
     edgecolor: Color = None,
     alpha: float | None = None,
-    title: str | None = None,
-    xlabel: str | None = None,
-    ylabel: str | None = None,
-    xscale: Literal["linear", "log"] = "linear",
-    yscale: Literal["linear", "log"] = "linear",
-    background_color: Color = None,
-    ymin: float | None = None,
-    ymax: float | None = None,
-    backend: str | None = None,
-    **kwargs: Any,
+    marker: Literal["circle", "square", "triangle", "diamond", "cross", "x"] | None = None,
+    fill: bool | None = None,
+    **panel: Unpack[BoundedPanelOptions],
 ) -> Figure:
     r"""Plot a scatter chart.
 
     Args:
         x: The array of x values.
-        y: The array of y values. Must have the same length as
-            ``x``.
-        label: An optional label used e.g. in the legend.
-        color: An optional color for the markers. It can be a hex
-            string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
-            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
-            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
-            backend's default color.
-        size: An optional marker size. ``None`` uses the backend's
-            default size.
-        edgecolor: An optional, separate color for the marker edge.
-            Same format as ``color``. ``None`` uses ``color`` for the
-            edge too.
-        alpha: An optional marker opacity, in ``[0, 1]``. ``None``
-            uses the backend's default (usually fully opaque).
-        {_COMMON_STYLE_ARGS}
-        **kwargs: Additional backend-specific keyword arguments,
-            forwarded to the backend's renderer.
+        y: The array of y values. Must have the same length as ``x``.
+        label: An optional label used in the legend.
+        color: An optional color for the markers (see ``hist``).
+        size: An optional marker size.
+        edgecolor: An optional color for the marker edge.
+        alpha: An optional marker opacity, in ``[0, 1]``.
+        marker: An optional marker shape.
+        fill: ``False`` draws hollow markers.
+        **panel: The axes options, see ``BoundedPanelOptions``.
 
     Returns:
         The rendered figure.
 
-    Raises:
-        ValueError: if ``x`` and ``y`` do not have the same length,
-            ``size`` is not a positive number, ``alpha`` is not in
-            ``[0, 1]``,
-            ``color``/``edgecolor``/``background_color`` is not a
-            valid color, or ``ymin``/``ymax`` are both set with
-            ``ymin > ymax``.
-
     Example:
         ```pycon
         >>> import plotmux
-        >>> fig = plotmux.scatter([1, 2, 3], [1, 4, 9])  # doctest: +SKIP
+        >>> fig = plotmux.scatter([1, 2, 3], [1, 4, 9], backend="matplotlib")  # doctest: +SKIP
 
         ```
     """
-    spec = ScatterSpec(
+    mark = ScatterSpec(
         x=np.asarray(x),
         y=np.asarray(y),
         label=label,
@@ -601,20 +444,13 @@ def scatter(  # noqa: D417 the common Args entries are spliced in by _with_commo
         size=size,
         edgecolor=edgecolor,
         alpha=alpha,
-        title=title,
-        xlabel=xlabel,
-        ylabel=ylabel,
-        xscale=xscale,
-        yscale=yscale,
-        background_color=background_color,
-        ymin=ymin,
-        ymax=ymax,
+        marker=marker,
+        fill=fill,
     )
-    return _render(spec, backend, **kwargs)
+    return _render_mark(mark, panel)
 
 
-@_with_common_style_args
-def slope(  # noqa: D417 the common Args entries are spliced in by _with_common_style_args
+def slope(
     gradient: float,
     intercept: float = 0.0,
     *,
@@ -623,70 +459,39 @@ def slope(  # noqa: D417 the common Args entries are spliced in by _with_common_
     linewidth: float | None = None,
     linestyle: Literal["solid", "dashed", "dotted", "dashdot"] = "solid",
     alpha: float | None = None,
-    title: str | None = None,
-    xlabel: str | None = None,
-    ylabel: str | None = None,
-    xscale: Literal["linear", "log"] = "linear",
-    yscale: Literal["linear", "log"] = "linear",
-    background_color: Color = None,
-    ymin: float | None = None,
-    ymax: float | None = None,
-    backend: str | None = None,
-    **kwargs: Any,
+    **panel: Unpack[BoundedPanelOptions],
 ) -> Figure:
-    r"""Plot a slope (a.k.a. abline) annotation: a line defined by
-    ``y = gradient * x + intercept``, spanning the current axes.
+    r"""Plot a line given by its slope and intercept.
 
-    Unlike ``line``, this draws no data of its own -- it is a
-    reference/trend line. Not supported by every backend: matplotlib
-    (via ``Axes.axline``) and bokeh (via ``bokeh.models.Slope``) both
-    have a native "line by slope, independent of data range"
-    primitive; altair and xy do not (see ``DESIGN.md``, section 8.1),
-    so ``backend="altair"``/``backend="xy"`` raises
-    ``UnsupportedSpecError``. It typically appears as a ``layer()``
-    child alongside a data-bound spec, e.g. a scatter plot with a
-    fitted trend line overlaid.
+    The line is drawn over the x extent of the panel: ``xmin`` and
+    ``xmax`` of ``panel``, which are required here as the slope has no
+    data of its own (in a ``layer``, the data of the other marks gives
+    the extent).
 
     Args:
-        gradient: The line's slope.
-        intercept: The line's y-intercept (the ``y`` value at
-            ``x = 0``). Defaults to ``0.0``.
-        label: An optional label used e.g. in the legend.
-        color: An optional color for the line. It can be a hex
-            string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
-            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
-            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
-            backend's default color.
-        linewidth: An optional line width. ``None`` uses the
-            backend's default width.
+        gradient: The slope of the line.
+        intercept: The y-intercept of the line.
+        label: An optional label used in the legend.
+        color: An optional color for the line (see ``hist``).
+        linewidth: An optional line width.
         linestyle: The line's dash style.
-        alpha: An optional line opacity, in ``[0, 1]``. ``None`` uses
-            the backend's default (usually fully opaque).
-        {_COMMON_STYLE_ARGS}
-        **kwargs: Additional backend-specific keyword arguments,
-            forwarded to the backend's renderer.
+        alpha: An optional line opacity, in ``[0, 1]``.
+        **panel: The axes options, see ``BoundedPanelOptions``.
 
     Returns:
         The rendered figure.
 
     Raises:
-        ValueError: if ``alpha`` is not in ``[0, 1]``,
-            ``color``/``background_color`` is not a valid color, or
-            ``ymin``/``ymax`` are both set with ``ymin > ymax``.
-        NotImplementedError: if the resolved backend is ``altair`` or
-            ``xy`` and this ``slope(...)`` call is not layered with a
-            data-bound spec (see ``layer``): standalone ``SlopeSpec``
-            support remains matplotlib/bokeh only (see DESIGN.md,
-            section 8.1).
+        InvalidSpecError: if ``panel`` has no ``xmin`` and ``xmax``.
 
     Example:
         ```pycon
         >>> import plotmux
-        >>> fig = plotmux.slope(2, 10, backend="matplotlib")  # doctest: +SKIP
+        >>> fig = plotmux.slope(2, 1, xmin=0, xmax=10, backend="matplotlib")  # doctest: +SKIP
 
         ```
     """
-    spec = SlopeSpec(
+    mark = SlopeSpec(
         gradient=gradient,
         intercept=intercept,
         label=label,
@@ -694,156 +499,148 @@ def slope(  # noqa: D417 the common Args entries are spliced in by _with_common_
         linewidth=linewidth,
         linestyle=linestyle,
         alpha=alpha,
-        title=title,
-        xlabel=xlabel,
-        ylabel=ylabel,
-        xscale=xscale,
-        yscale=yscale,
-        background_color=background_color,
-        ymin=ymin,
-        ymax=ymax,
     )
-    return _render(spec, backend, **kwargs)
+    return _render_mark(mark, panel)
 
 
-def layer(
-    *items: BaseSpec | Figure,
-    title: str | None = None,
-    xlabel: str | None = None,
-    ylabel: str | None = None,
-    xscale: Literal["linear", "log"] = "linear",
-    yscale: Literal["linear", "log"] = "linear",
-    background_color: Color = None,
-    ymin: float | None = None,
-    ymax: float | None = None,
-    backend: str | None = None,
-    **kwargs: Any,
-) -> Figure:
-    r"""Combine specs (or already-rendered ``Figure``s) onto one
-    shared axes.
+def layer(*items: MarkSpec | Figure, **panel: Unpack[BoundedPanelOptions]) -> Figure:
+    r"""Draw several marks on one shared axes.
+
+    A ``Figure`` of a single panel contributes its marks and its axes
+    options. For each axes option the call does not set, the unique
+    non-default value of the figures is used.
 
     Args:
-        *items: The child specs to draw together, in draw order. A
-            ``Figure`` (e.g. one returned by ``plotmux.line(...)``)
-            is accepted as shorthand for its ``.spec``: only the spec
-            is reused, the earlier native figure is discarded and
-            everything is re-rendered together, since two independent
-            native figures can't be merged after the fact in either
-            backend.
-        title: An optional figure title, describing the combined
-            axes (not any individual child).
-        xlabel: An optional x-axis label.
-        ylabel: An optional y-axis label.
-        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
-        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
-        background_color: An optional figure background color. It
-            can be a hex string, a CSS/matplotlib named color, or an
-            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
-            backend's default.
-        ymin: An optional explicit lower bound for the y-axis.
-            ``None`` leaves the axis autoscaled.
-        ymax: An optional explicit upper bound for the y-axis.
-            ``None`` leaves the axis autoscaled.
-        backend: The name of the backend to use to render the
-            figure, or ``None`` to use the current default backend
-            (see ``plotmux.set_backend``).
-        **kwargs: Additional backend-specific keyword arguments,
-            forwarded to every child's renderer call.
+        *items: The marks and the single-panel figures, in drawing
+            order.
+        **panel: The axes options, see ``BoundedPanelOptions``. They
+            win over the options of the figures.
 
     Returns:
         The rendered figure.
 
     Raises:
-        ValueError: if no ``items`` are given, one of the given
-            specs is itself a ``LayerSpec`` (nesting is not
-            supported), ``background_color`` is not a valid color,
-            or ``ymin``/``ymax`` are both set with ``ymin > ymax``.
+        InvalidSpecError: if a figure is a grid, or two figures have
+            different non-default values of an axes option that the
+            call does not set.
 
     Example:
         ```pycon
-        >>> import numpy as np
         >>> import plotmux
-        >>> from plotmux.specs import HistogramSpec
         >>> fig = plotmux.layer(
-        ...     HistogramSpec(values=np.arange(101), bins=10),
-        ...     plotmux.line([0, 100], [0, 5]),
+        ...     plotmux.line([1, 2], [1, 2]), plotmux.slope(1), backend="matplotlib"
         ... )  # doctest: +SKIP
 
         ```
     """
-    layers = tuple(item.spec if isinstance(item, Figure) else item for item in items)
-    spec = LayerSpec(
-        layers=layers,
-        title=title,
-        xlabel=xlabel,
-        ylabel=ylabel,
-        xscale=xscale,
-        yscale=yscale,
-        background_color=background_color,
-        ymin=ymin,
-        ymax=ymax,
-    )
-    return _render(spec, backend, **kwargs)
+    marks: list[MarkSpec] = []
+    figure_panels: list[PanelSpec] = []
+    for item in items:
+        if isinstance(item, MarkSpec):
+            marks.append(item)
+        else:
+            figure_panel = _as_panel(item)
+            figure_panels.append(figure_panel)
+            marks.extend(figure_panel.marks)
+    return _render_marks(tuple(marks), _merge_axes_options(figure_panels, panel))
 
 
 def grid(
-    *items: BaseSpec | Figure,
+    *items: PanelSpec | MarkSpec | Figure,
     ncols: int = 1,
     title: str | None = None,
     backend: str | None = None,
-    **kwargs: Any,
 ) -> Figure:
-    r"""Lay out specs (or already-rendered ``Figure``s) as independent
-    panels in a grid.
-
-    Unlike ``layer`` (which draws every child onto one shared axes),
-    each item here gets its own, independent panel -- the
-    backend-agnostic equivalent of matplotlib's ``pyplot.subplots``.
-    An item may itself be built with ``layer(...)`` (several series
-    sharing one panel), since layering and gridding are independent,
-    composable concerns.
+    r"""Draw several panels as independent axes in a grid.
 
     Args:
-        *items: The child specs to draw, one independent panel per
-            item, in row-major order (left to right, top to bottom).
-            A ``Figure`` (e.g. one returned by ``plotmux.line(...)``)
-            is accepted as shorthand for its ``.spec``, same as
-            ``layer``: only the spec is reused, the earlier native
-            figure is discarded and everything is re-rendered
-            together.
-        ncols: The number of columns in the grid. Rows are filled
-            left to right; the last row is left short when
-            ``len(items)`` is not a multiple of ``ncols``. Must be a
-            positive integer.
-        title: An optional figure-level title, shown once above the
-            whole grid (not any individual panel).
-        backend: The name of the backend to use to render the
-            figure, or ``None`` to use the current default backend
-            (see ``plotmux.set_backend``).
-        **kwargs: Additional backend-specific keyword arguments,
-            forwarded to every panel's renderer call.
+        *items: The panels, the marks (each wrapped in a default
+            panel) and the single-panel figures, in row-major order.
+        ncols: The number of columns. Must be a positive integer.
+        title: An optional title of the whole grid.
+        backend: The name of the backend to use, or ``None`` to use
+            the current default backend.
 
     Returns:
         The rendered figure.
 
     Raises:
-        ValueError: if no ``items`` are given, one of the given specs
-            is itself a ``GridSpec`` (nesting is not supported), or
-            ``ncols`` is not a positive integer.
+        InvalidSpecError: if a figure is a grid.
 
     Example:
         ```pycon
-        >>> import numpy as np
         >>> import plotmux
-        >>> from plotmux.specs import HistogramSpec
         >>> fig = plotmux.grid(
-        ...     HistogramSpec(values=np.arange(101), bins=10),
-        ...     plotmux.line([0, 100], [0, 5]),
-        ...     ncols=2,
+        ...     plotmux.hist([1, 2, 3]), plotmux.line([1, 2], [1, 2]), ncols=2, backend="matplotlib"
         ... )  # doctest: +SKIP
 
         ```
     """
-    cells = tuple(item.spec if isinstance(item, Figure) else item for item in items)
-    spec = GridSpec(cells=cells, ncols=ncols, title=title)
-    return _render(spec, backend, **kwargs)
+    spec = GridSpec(panels=tuple(_as_panel(item) for item in items), ncols=ncols, title=title)
+    return _render(spec, backend)
+
+
+def _as_panel(item: PanelSpec | MarkSpec | Figure) -> PanelSpec:
+    r"""Convert an item of ``layer`` or ``grid`` to a panel.
+
+    Args:
+        item: A panel, a mark, or a figure of a single panel.
+
+    Returns:
+        The panel: the item itself, a default panel holding the mark,
+            or the panel of the figure.
+
+    Raises:
+        InvalidSpecError: if the item is a figure of a grid. Also a
+            ``ValueError``.
+    """
+    spec = item.spec if isinstance(item, Figure) else item
+    if isinstance(spec, GridSpec):
+        msg = "a grid cannot be an item of layer or grid: only a single-panel figure can"
+        raise InvalidSpecError(msg)
+    if isinstance(spec, PanelSpec):
+        return spec
+    return PanelSpec(marks=(spec,))
+
+
+def _merge_axes_options(
+    panels: Sequence[PanelSpec], explicit: BoundedPanelOptions
+) -> dict[str, Any]:
+    r"""Merge the axes options of the panels given to ``layer``.
+
+    The explicit options win. For an option that is not explicit, the
+    unique non-default value of the panels is used, and two different
+    non-default values are a conflict.
+
+    Args:
+        panels: The panels to merge.
+        explicit: The axes options of the call.
+
+    Returns:
+        The axes options to build the merged panel with, with the
+            ``backend`` of the call if any.
+
+    Raises:
+        InvalidSpecError: if two panels have different non-default
+            values of an option the call does not set. Also a
+            ``ValueError``.
+    """
+    options: dict[str, Any] = dict(explicit)
+    for field in fields(PanelSpec):
+        name = field.name
+        if name == "marks" or name in options:
+            continue
+        values: list[Any] = []
+        for panel in panels:
+            value = getattr(panel, name)
+            if value != field.default and value not in values:
+                values.append(value)
+        if len(values) > 1:
+            msg = (
+                f"the figures have different values of {name}: {values}. "
+                f"Set {name} in the call to layer."
+            )
+            raise InvalidSpecError(msg)
+        if values:
+            options[name] = values[0]
+    return options

@@ -4,7 +4,8 @@ from typing import Any, cast
 
 import pytest
 
-from plotmux.colors import parse_color
+from plotmux.colors import parse_color, parse_optional_color
+from plotmux.exceptions import InvalidColorError
 
 ################################
 #     Tests for parse_color     #
@@ -206,3 +207,25 @@ def test_parse_color_invalid_tuple_length(bad_tuple: tuple[float, ...]) -> None:
 def test_parse_color_out_of_range(bad_tuple: tuple[float, ...]) -> None:
     with pytest.raises(ValueError, match="must be in the range"):
         parse_color(cast("Any", bad_tuple))
+
+
+#######################################
+#     Tests for parse_optional_color  #
+#######################################
+
+
+def test_parse_optional_color_none() -> None:
+    assert parse_optional_color(None) is None
+
+
+def test_parse_optional_color_hex() -> None:
+    assert parse_optional_color("#ff0000") == (1.0, 0.0, 0.0, 1.0)
+
+
+def test_parse_optional_color_rgba_is_unchanged() -> None:
+    assert parse_optional_color((0.1, 0.2, 0.3, 0.4)) == (0.1, 0.2, 0.3, 0.4)
+
+
+def test_parse_optional_color_invalid_raises() -> None:
+    with pytest.raises(InvalidColorError, match="Invalid color"):
+        parse_optional_color("not-a-color")

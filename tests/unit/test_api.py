@@ -1,109 +1,185 @@
 from __future__ import annotations
 
-from typing import cast
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pytest
 
 import plotmux
+from plotmux.api import _as_panel, _merge_axes_options
+from plotmux.backends.base import Backend
+from plotmux.backends.registry import _REGISTRY, register_backend
+from plotmux.exceptions import InvalidSpecError
 from plotmux.specs import (
     BarSeries,
     BarSpec,
     CdfSpec,
     GridSpec,
     HistogramSpec,
-    LayerSpec,
     LineSpec,
+    PanelSpec,
     ScatterSpec,
     SlopeSpec,
     StackedBarSpec,
 )
-from plotmux.testing.fixtures import bokeh_available, matplotlib_available, xy_available
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from pathlib import Path
+
+    from plotmux.figure import Figure
+
+
+class FakeBackend(Backend):
+    name = "fake"
+    supported_formats = frozenset({"png"})
+
+    def render(self, spec: Any, **kwargs: Any) -> Any:
+        del kwargs
+        return spec
+
+    def save(self, native: Any, path: Path, fmt: str) -> None:
+        del native, path, fmt
+
+
+@pytest.fixture(autouse=True)
+def _fake_backend() -> Iterator[None]:
+    snapshot = dict(_REGISTRY)
+    register_backend(FakeBackend())
+    with plotmux.backend("fake"):
+        yield
+    _REGISTRY.clear()
+    _REGISTRY.update(snapshot)
+
+
+def _panel(figure: Figure) -> PanelSpec:
+    return cast("PanelSpec", figure.spec)
+
+
+def _mark(figure: Figure) -> Any:
+    return _panel(figure).marks[0]
+
 
 ##########################
 #     Tests for hist     #
 ##########################
 
 
-@matplotlib_available
-def test_hist_returns_figure_with_matplotlib_backend() -> None:
-    fig = plotmux.hist(np.arange(101), bins=10)
-    assert fig.backend_name == "matplotlib"
-    assert cast("HistogramSpec", fig.spec).bins == 10
+def test_hist_builds_a_panel_with_a_histogram() -> None:
+    assert _panel(plotmux.hist(np.arange(101), bins=10, backend="fake")) == PanelSpec(
+        marks=(HistogramSpec(values=np.arange(101), bins=10),)
+    )
 
 
-@matplotlib_available
-def test_hist_explicit_backend() -> None:
-    fig = plotmux.hist(np.arange(101), bins=10, backend="matplotlib")
-    assert fig.backend_name == "matplotlib"
+def test_hist_returns_a_figure_of_the_backend() -> None:
+    assert plotmux.hist(np.arange(11), backend="fake").backend_name == "fake"
 
 
-@xy_available
-def test_hist_explicit_xy_backend() -> None:
-    fig = plotmux.hist(np.arange(101), bins=10, backend="xy")
-    assert fig.backend_name == "xy"
-    assert cast("HistogramSpec", fig.spec).bins == 10
+def test_hist_native_is_the_render_of_the_backend() -> None:
+    fig = plotmux.hist(np.arange(11), backend="fake")
+    assert fig.native is fig.spec
 
 
-def test_hist_unknown_backend_raises() -> None:
-    with pytest.raises(RuntimeError, match="No backend registered"):
-        plotmux.hist(np.arange(101), backend="does-not-exist")
+def test_hist_uses_the_default_backend() -> None:
+    assert plotmux.hist(np.arange(11)).backend_name == "fake"
 
 
-@matplotlib_available
-def test_hist_default_kwargs() -> None:
-    fig = plotmux.hist(np.arange(101))
-    assert cast("HistogramSpec", fig.spec).bins == 30
-    assert cast("HistogramSpec", fig.spec).density is False
-    assert cast("HistogramSpec", fig.spec).color is None
+def test_hist_default_mark() -> None:
+    mark = _mark(plotmux.hist(np.arange(101), backend="fake"))
+    assert (mark.bins, mark.density, mark.color, mark.xmin, mark.xmax) == (
+        30,
+        False,
+        None,
+        None,
+        None,
+    )
 
 
-@matplotlib_available
-def test_hist_invalid_bins_raises() -> None:
-    with pytest.raises(ValueError, match="bins must be a positive integer"):
-        plotmux.hist(np.arange(101), bins=0)
+def test_hist_mark_options() -> None:
+    mark = _mark(
+        plotmux.hist(
+            [1, 2, 3],
+            bins=3,
+            xmin="q0.1",
+            xmax=3,
+            density=True,
+            label="a",
+            color="red",
+            alpha=0.5,
+            backend="fake",
+        )
+    )
+    assert (mark.bins, mark.xmin, mark.xmax, mark.density, mark.label, mark.alpha) == (
+        3,
+        "q0.1",
+        3,
+        True,
+        "a",
+        0.5,
+    )
 
 
-@matplotlib_available
-def test_hist_xmin_greater_than_xmax_raises() -> None:
-    with pytest.raises(ValueError, match="xmin must be strictly less than xmax"):
-        plotmux.hist(np.arange(101), xmin=10, xmax=0)
+def test_hist_xmin_is_the_range_of_the_data_and_not_an_axis_limit() -> None:
+    assert _panel(plotmux.hist(np.arange(11), xmin=2, xmax=4, backend="fake")).xmin is None
 
 
-@matplotlib_available
-def test_hist_ymin_greater_than_ymax_raises() -> None:
-    with pytest.raises(ValueError, match="ymin must not be greater than ymax"):
-        plotmux.hist(np.arange(101), ymin=10, ymax=0)
-
-
-@matplotlib_available
-def test_hist_invalid_background_color_raises() -> None:
-    with pytest.raises(ValueError, match="Invalid color"):
-        plotmux.hist(np.arange(101), background_color="not-a-color")
-
-
-@matplotlib_available
-def test_hist_common_style() -> None:
-    fig = plotmux.hist(
-        np.arange(101),
-        bins=10,
+def test_hist_panel_options() -> None:
+    panel = _panel(
+        plotmux.hist(
+            np.arange(11),
+            title="t",
+            xlabel="x",
+            ylabel="y",
+            xscale="log",
+            yscale="log",
+            ymin=1,
+            ymax=2,
+            background_color="#ff0000",
+            legend_title="l",
+            legend_location="top",
+            legend_orientation="horizontal",
+            backend="fake",
+        )
+    )
+    assert panel == PanelSpec(
+        marks=(HistogramSpec(values=np.arange(11)),),
         title="t",
         xlabel="x",
         ylabel="y",
         xscale="log",
         yscale="log",
+        ymin=1,
+        ymax=2,
+        background_color="#ff0000",
+        legend_title="l",
+        legend_location="top",
+        legend_orientation="horizontal",
     )
-    assert fig.spec.title == "t"
-    assert fig.spec.xlabel == "x"
-    assert fig.spec.ylabel == "y"
-    assert fig.spec.xscale == "log"
-    assert fig.spec.yscale == "log"
-    ax = fig.native.axes[0]
-    assert ax.get_title() == "t"
-    assert ax.get_xlabel() == "x"
-    assert ax.get_ylabel() == "y"
-    assert ax.get_xscale() == "log"
-    assert ax.get_yscale() == "log"
+
+
+def test_hist_unknown_backend_raises() -> None:
+    with pytest.raises(RuntimeError, match="No backend registered"):
+        plotmux.hist(np.arange(11), backend="does-not-exist")
+
+
+def test_hist_invalid_bins_raises() -> None:
+    with pytest.raises(InvalidSpecError, match="bins must be a positive integer"):
+        plotmux.hist(np.arange(11), bins=0, backend="fake")
+
+
+def test_hist_ymin_greater_than_ymax_raises() -> None:
+    with pytest.raises(InvalidSpecError, match="ymin must not be greater than ymax"):
+        plotmux.hist(np.arange(11), ymin=10, ymax=0, backend="fake")
+
+
+def test_hist_misspelled_keyword_raises() -> None:
+    with pytest.raises(TypeError, match="unexpected keyword argument 'colour'"):
+        cast("Any", plotmux.hist)(np.arange(11), colour="red", backend="fake")
+
+
+def test_hist_has_no_keyword_pass_through() -> None:
+    with pytest.raises(TypeError, match="unexpected keyword argument 'bandwidth'"):
+        cast("Any", plotmux.hist)(np.arange(11), bandwidth=1, backend="fake")
 
 
 #########################
@@ -111,296 +187,195 @@ def test_hist_common_style() -> None:
 #########################
 
 
-@matplotlib_available
-def test_cdf_returns_figure_with_matplotlib_backend() -> None:
-    fig = plotmux.cdf(np.arange(101), nbins=10)
-    assert fig.backend_name == "matplotlib"
-    assert isinstance(fig.spec, CdfSpec)
-    assert fig.spec.nbins == 10
+def test_cdf_builds_a_panel_with_a_cdf() -> None:
+    assert _panel(plotmux.cdf([1, 2, 3], nbins=2, backend="fake")) == PanelSpec(
+        marks=(CdfSpec(values=np.array([1, 2, 3]), nbins=2),), ylabel="cumulative probability"
+    )
 
 
-@matplotlib_available
-def test_cdf_explicit_backend() -> None:
-    fig = plotmux.cdf(np.arange(101), nbins=10, backend="matplotlib")
-    assert fig.backend_name == "matplotlib"
+def test_cdf_ylabel_can_be_overridden() -> None:
+    assert _panel(plotmux.cdf([1, 2, 3], ylabel="p", backend="fake")).ylabel == "p"
 
 
-@xy_available
-def test_cdf_explicit_xy_backend() -> None:
-    fig = plotmux.cdf(np.arange(101), nbins=10, backend="xy")
-    assert fig.backend_name == "xy"
-    assert cast("CdfSpec", fig.spec).nbins == 10
+def test_cdf_ylabel_can_be_removed() -> None:
+    assert _panel(plotmux.cdf([1, 2, 3], ylabel=None, backend="fake")).ylabel is None
+
+
+def test_cdf_mark_options() -> None:
+    mark = _mark(
+        plotmux.cdf(
+            [1, 2, 3], xmin=1, xmax="q0.9", label="a", color="red", alpha=0.5, backend="fake"
+        )
+    )
+    assert (mark.xmin, mark.xmax, mark.label, mark.alpha) == (1, "q0.9", "a", 0.5)
+
+
+def test_cdf_invalid_nbins_raises() -> None:
+    with pytest.raises(InvalidSpecError, match="nbins must be a positive integer"):
+        plotmux.cdf([1, 2, 3], nbins=0, backend="fake")
 
 
 def test_cdf_unknown_backend_raises() -> None:
     with pytest.raises(RuntimeError, match="No backend registered"):
-        plotmux.cdf(np.arange(101), backend="does-not-exist")
+        plotmux.cdf([1, 2, 3], backend="does-not-exist")
 
 
-@matplotlib_available
-def test_cdf_default_kwargs() -> None:
-    fig = plotmux.cdf(np.arange(101))
-    assert cast("CdfSpec", fig.spec).nbins is None
-    assert cast("CdfSpec", fig.spec).color is None
-    assert fig.spec.ylabel == "cumulative probability"
+#########################
+#     Tests for line    #
+#########################
 
 
-@matplotlib_available
-def test_cdf_invalid_nbins_raises() -> None:
-    with pytest.raises(ValueError, match="nbins must be a positive integer or None"):
-        plotmux.cdf(np.arange(101), nbins=0)
-
-
-@matplotlib_available
-def test_cdf_common_style() -> None:
-    fig = plotmux.cdf(
-        np.arange(101),
-        nbins=10,
-        title="t",
-        xlabel="x",
-        ylabel="y",
-        xscale="log",
-        yscale="log",
+def test_line_builds_a_panel_with_a_line() -> None:
+    assert _panel(plotmux.line([1, 2], [3, 4], backend="fake")) == PanelSpec(
+        marks=(LineSpec(x=np.array([1, 2]), y=np.array([3, 4])),)
     )
-    assert fig.spec.title == "t"
-    assert fig.spec.xlabel == "x"
-    assert fig.spec.ylabel == "y"
-    assert fig.spec.xscale == "log"
-    assert fig.spec.yscale == "log"
-    ax = fig.native.axes[0]
-    assert ax.get_title() == "t"
-    assert ax.get_xlabel() == "x"
-    assert ax.get_ylabel() == "y"
-    assert ax.get_xscale() == "log"
-    assert ax.get_yscale() == "log"
 
 
-##########################
-#     Tests for line     #
-##########################
+def test_line_mark_options() -> None:
+    mark = _mark(
+        plotmux.line(
+            [1, 2],
+            [3, 4],
+            label="a",
+            color="red",
+            alpha=0.5,
+            linewidth=2,
+            linestyle="dashed",
+            backend="fake",
+        )
+    )
+    assert (mark.label, mark.alpha, mark.linewidth, mark.linestyle) == ("a", 0.5, 2, "dashed")
 
 
-@matplotlib_available
-def test_line_returns_figure_with_matplotlib_backend() -> None:
-    fig = plotmux.line(np.arange(10), np.arange(10) ** 2)
-    assert fig.backend_name == "matplotlib"
-    assert isinstance(fig.spec, LineSpec)
+def test_line_axis_limits() -> None:
+    panel = _panel(plotmux.line([1, 2], [3, 4], xmin=0, xmax=5, backend="fake"))
+    assert (panel.xmin, panel.xmax) == (0, 5)
 
 
-@xy_available
-def test_line_explicit_xy_backend() -> None:
-    fig = plotmux.line(np.arange(10), np.arange(10) ** 2, backend="xy")
-    assert fig.backend_name == "xy"
-
-
-def test_line_unknown_backend_raises() -> None:
-    with pytest.raises(RuntimeError, match="No backend registered"):
-        plotmux.line(np.arange(10), np.arange(10), backend="does-not-exist")
-
-
-@matplotlib_available
 def test_line_mismatched_length_raises() -> None:
-    with pytest.raises(ValueError, match="x and y must have the same length"):
-        plotmux.line(np.arange(10), np.arange(5))
+    with pytest.raises(InvalidSpecError, match="x and y must have the same length"):
+        plotmux.line([1, 2], [3], backend="fake")
 
 
-@matplotlib_available
-def test_line_invalid_alpha_raises() -> None:
-    with pytest.raises(ValueError, match="alpha must be in the range"):
-        plotmux.line(np.arange(10), np.arange(10), alpha=2.0)
-
-
-@matplotlib_available
 def test_line_invalid_color_raises() -> None:
     with pytest.raises(ValueError, match="Invalid color"):
-        plotmux.line(np.arange(10), np.arange(10), color="not-a-color")
+        plotmux.line([1, 2], [3, 4], color="not-a-color", backend="fake")
 
 
-#############################
-#     Tests for scatter     #
-#############################
+def test_line_xmin_greater_than_xmax_raises() -> None:
+    with pytest.raises(InvalidSpecError, match="xmin must not be greater than xmax"):
+        plotmux.line([1, 2], [3, 4], xmin=5, xmax=0, backend="fake")
 
 
-@matplotlib_available
-def test_scatter_returns_figure_with_matplotlib_backend() -> None:
-    fig = plotmux.scatter(np.arange(10), np.arange(10) ** 2)
-    assert fig.backend_name == "matplotlib"
-    assert isinstance(fig.spec, ScatterSpec)
+############################
+#     Tests for scatter    #
+############################
 
 
-@xy_available
-def test_scatter_explicit_xy_backend() -> None:
-    fig = plotmux.scatter(np.arange(10), np.arange(10) ** 2, backend="xy")
-    assert fig.backend_name == "xy"
+def test_scatter_builds_a_panel_with_a_scatter() -> None:
+    assert _panel(plotmux.scatter([1, 2], [3, 4], backend="fake")) == PanelSpec(
+        marks=(ScatterSpec(x=np.array([1, 2]), y=np.array([3, 4])),)
+    )
 
 
-def test_scatter_unknown_backend_raises() -> None:
-    with pytest.raises(RuntimeError, match="No backend registered"):
-        plotmux.scatter(np.arange(10), np.arange(10), backend="does-not-exist")
+def test_scatter_mark_options() -> None:
+    mark = _mark(
+        plotmux.scatter(
+            [1, 2],
+            [3, 4],
+            label="a",
+            color="red",
+            size=3,
+            edgecolor="blue",
+            alpha=0.5,
+            marker="square",
+            fill=False,
+            backend="fake",
+        )
+    )
+    assert (mark.label, mark.size, mark.alpha, mark.marker, mark.fill) == (
+        "a",
+        3,
+        0.5,
+        "square",
+        False,
+    )
 
 
-@matplotlib_available
-def test_scatter_mismatched_length_raises() -> None:
-    with pytest.raises(ValueError, match="x and y must have the same length"):
-        plotmux.scatter(np.arange(10), np.arange(5))
-
-
-@matplotlib_available
 def test_scatter_invalid_size_raises() -> None:
-    with pytest.raises(ValueError, match="size must be a positive number"):
-        plotmux.scatter(np.arange(10), np.arange(10), size=-1.0)
+    with pytest.raises(InvalidSpecError, match="size must be a positive number"):
+        plotmux.scatter([1, 2], [3, 4], size=0, backend="fake")
 
 
-@matplotlib_available
-def test_scatter_invalid_edgecolor_raises() -> None:
-    with pytest.raises(ValueError, match="Invalid color"):
-        plotmux.scatter(np.arange(10), np.arange(10), edgecolor="not-a-color")
+###########################
+#     Tests for bar       #
+###########################
 
 
-########################
-#     Tests for bar     #
-########################
+def test_bar_builds_a_panel_with_a_bar() -> None:
+    assert _panel(plotmux.bar(["a", "b"], [1, 2], width=0.5, backend="fake")) == PanelSpec(
+        marks=(BarSpec(x=np.array(["a", "b"]), y=np.array([1, 2]), width=0.5),)
+    )
 
 
-@matplotlib_available
-def test_bar_returns_figure_with_matplotlib_backend() -> None:
-    fig = plotmux.bar(np.arange(10), np.arange(10) ** 2)
-    assert fig.backend_name == "matplotlib"
-    assert isinstance(fig.spec, BarSpec)
+def test_bar_mark_options() -> None:
+    mark = _mark(plotmux.bar([1, 2], [3, 4], label="a", color="red", alpha=0.5, backend="fake"))
+    assert (mark.label, mark.alpha) == ("a", 0.5)
 
 
-@xy_available
-def test_bar_explicit_xy_backend() -> None:
-    fig = plotmux.bar(np.arange(10), np.arange(10) ** 2, backend="xy")
-    assert fig.backend_name == "xy"
-
-
-def test_bar_unknown_backend_raises() -> None:
-    with pytest.raises(RuntimeError, match="No backend registered"):
-        plotmux.bar(np.arange(10), np.arange(10), backend="does-not-exist")
-
-
-@matplotlib_available
-def test_bar_mismatched_length_raises() -> None:
-    with pytest.raises(ValueError, match="x and y must have the same length"):
-        plotmux.bar(np.arange(10), np.arange(5))
-
-
-@matplotlib_available
 def test_bar_invalid_width_raises() -> None:
-    with pytest.raises(ValueError, match="width must be a positive number"):
-        plotmux.bar(np.arange(10), np.arange(10), width=0)
+    with pytest.raises(InvalidSpecError, match="width must be a positive number"):
+        plotmux.bar([1, 2], [3, 4], width=0, backend="fake")
 
 
-@matplotlib_available
-def test_bar_common_style() -> None:
-    fig = plotmux.bar(
-        np.arange(10),
-        np.arange(10) ** 2,
-        title="t",
-        xlabel="x",
-        ylabel="y",
-        xscale="log",
-        yscale="log",
+###################################
+#     Tests for stacked_bar       #
+###################################
+
+
+def test_stacked_bar_builds_a_panel_with_a_stacked_bar() -> None:
+    series = (BarSeries(y=np.array([1, 2]), label="a"),)
+    assert _panel(plotmux.stacked_bar(["x", "y"], series, alpha=0.5, backend="fake")) == PanelSpec(
+        marks=(StackedBarSpec(x=np.array(["x", "y"]), series=series, alpha=0.5),)
     )
-    assert fig.spec.title == "t"
-    assert fig.spec.xlabel == "x"
-    assert fig.spec.ylabel == "y"
-    assert fig.spec.xscale == "log"
-    assert fig.spec.yscale == "log"
 
 
-################################
-#     Tests for stacked_bar     #
-################################
-
-
-@matplotlib_available
-def test_stacked_bar_returns_figure_with_matplotlib_backend() -> None:
-    fig = plotmux.stacked_bar(np.arange(3), [BarSeries(y=np.arange(3)), BarSeries(y=np.arange(3))])
-    assert fig.backend_name == "matplotlib"
-    assert isinstance(fig.spec, StackedBarSpec)
-    assert len(fig.spec.series) == 2
-
-
-@matplotlib_available
-def test_stacked_bar_categorical_x() -> None:
-    fig = plotmux.stacked_bar(["Apples", "Pears"], [BarSeries(y=np.array([2, 1]))])
-    assert cast("StackedBarSpec", fig.spec).x.tolist() == ["Apples", "Pears"]
-
-
-@xy_available
-def test_stacked_bar_explicit_xy_backend() -> None:
-    fig = plotmux.stacked_bar(np.arange(3), [BarSeries(y=np.arange(3))], backend="xy")
-    assert fig.backend_name == "xy"
-
-
-def test_stacked_bar_unknown_backend_raises() -> None:
-    with pytest.raises(RuntimeError, match="No backend registered"):
-        plotmux.stacked_bar(np.arange(3), [BarSeries(y=np.arange(3))], backend="does-not-exist")
-
-
-@matplotlib_available
 def test_stacked_bar_empty_series_raises() -> None:
-    with pytest.raises(ValueError, match="series must contain at least one BarSeries"):
-        plotmux.stacked_bar(np.arange(3), [])
+    with pytest.raises(InvalidSpecError, match="series must contain at least one BarSeries"):
+        plotmux.stacked_bar(["x", "y"], [], backend="fake")
 
 
-@matplotlib_available
-def test_stacked_bar_invalid_width_raises() -> None:
-    with pytest.raises(ValueError, match="width must be a positive number"):
-        plotmux.stacked_bar(np.arange(3), [BarSeries(y=np.arange(3))], width=0)
+##########################
+#     Tests for slope    #
+##########################
 
 
-@matplotlib_available
-def test_stacked_bar_common_style() -> None:
-    fig = plotmux.stacked_bar(
-        np.arange(3),
-        [BarSeries(y=np.arange(3))],
-        title="t",
-        xlabel="x",
-        ylabel="y",
+def test_slope_builds_a_panel_with_a_slope() -> None:
+    assert _panel(plotmux.slope(2, 10, xmin=0, xmax=5, backend="fake")) == PanelSpec(
+        marks=(SlopeSpec(gradient=2, intercept=10),), xmin=0, xmax=5
     )
-    assert fig.spec.title == "t"
-    assert fig.spec.xlabel == "x"
-    assert fig.spec.ylabel == "y"
 
 
-###########################
-#     Tests for slope     #
-###########################
+def test_slope_mark_options() -> None:
+    mark = _mark(
+        plotmux.slope(
+            2,
+            label="a",
+            color="red",
+            linewidth=3,
+            linestyle="dotted",
+            alpha=0.5,
+            xmin=0,
+            xmax=1,
+            backend="fake",
+        )
+    )
+    assert (mark.label, mark.linewidth, mark.linestyle, mark.alpha) == ("a", 3, "dotted", 0.5)
 
 
-@matplotlib_available
-def test_slope_returns_figure_with_matplotlib_backend() -> None:
-    fig = plotmux.slope(2, 10)
-    assert fig.backend_name == "matplotlib"
-    assert isinstance(fig.spec, SlopeSpec)
-    assert fig.spec.gradient == 2
-    assert fig.spec.intercept == 10
-
-
-@bokeh_available
-def test_slope_explicit_bokeh_backend() -> None:
-    fig = plotmux.slope(2, 10, backend="bokeh", color="blue", linewidth=4, linestyle="dashed")
-    assert fig.backend_name == "bokeh"
-
-
-@xy_available
-def test_slope_xy_backend_unsupported() -> None:
-    with pytest.raises(NotImplementedError, match="No xy renderer registered"):
-        plotmux.slope(2, 10, backend="xy")
-
-
-def test_slope_unknown_backend_raises() -> None:
-    with pytest.raises(RuntimeError, match="No backend registered"):
-        plotmux.slope(2, 10, backend="does-not-exist")
-
-
-@matplotlib_available
-def test_slope_invalid_color_raises() -> None:
-    with pytest.raises(ValueError, match="Invalid color"):
-        plotmux.slope(2, 10, color="not-a-color")
+def test_slope_without_extent_raises() -> None:
+    with pytest.raises(InvalidSpecError, match="needs the x extent of the panel"):
+        plotmux.slope(2, 10, backend="fake")
 
 
 ###########################
@@ -408,91 +383,111 @@ def test_slope_invalid_color_raises() -> None:
 ###########################
 
 
-@matplotlib_available
-def test_layer_returns_figure_with_matplotlib_backend() -> None:
-    fig = plotmux.layer(
-        HistogramSpec(values=np.arange(101), bins=10),
-        LineSpec(x=np.arange(0, 100, 10), y=np.arange(10)),
+def test_layer_of_marks() -> None:
+    hist = HistogramSpec(values=np.arange(11))
+    line = LineSpec(x=np.arange(3), y=np.arange(3))
+    assert _panel(plotmux.layer(hist, line, backend="fake")) == PanelSpec(marks=(hist, line))
+
+
+def test_layer_of_figures_takes_their_marks() -> None:
+    fig = plotmux.layer(plotmux.hist(np.arange(11)), plotmux.line([1, 2], [3, 4]), backend="fake")
+    assert [type(m).__name__ for m in _panel(fig).marks] == ["HistogramSpec", "LineSpec"]
+
+
+def test_layer_of_a_layer_flattens() -> None:
+    inner = plotmux.layer(
+        plotmux.line([1, 2], [3, 4]), plotmux.line([1, 2], [5, 6]), backend="fake"
     )
-    assert fig.backend_name == "matplotlib"
-    assert isinstance(fig.spec, LayerSpec)
-    ax = fig.native.axes[0]
-    assert len(ax.patches) == 10
-    assert len(ax.lines) == 1
+    outer = plotmux.layer(inner, plotmux.line([1, 2], [7, 8]), backend="fake")
+    assert len(_panel(outer).marks) == 3
 
 
-@matplotlib_available
-def test_layer_accepts_figure_items() -> None:
-    line_fig = plotmux.line(np.arange(10), np.arange(10))
-    fig = plotmux.layer(line_fig, ScatterSpec(x=np.arange(10), y=np.arange(10)))
-    assert isinstance(fig.spec, LayerSpec)
-    # Not ``is line_fig.spec``: an uncolored child is replaced with an
-    # equivalent copy carrying a ``LayerSpec``-assigned default color (see
-    # ``plotmux.specs.layer._assign_default_colors``), so identity is not
-    # preserved, only the data.
-    np.testing.assert_array_equal(
-        cast("LineSpec", fig.spec.layers[0]).x, cast("LineSpec", line_fig.spec).x
-    )
-    np.testing.assert_array_equal(
-        cast("LineSpec", fig.spec.layers[0]).y, cast("LineSpec", line_fig.spec).y
-    )
-    ax = fig.native.axes[0]
-    assert len(ax.lines) == 1
-    assert len(ax.collections) == 1
-
-
-@matplotlib_available
 def test_layer_single_item() -> None:
-    fig = plotmux.layer(LineSpec(x=np.arange(10), y=np.arange(10)))
-    assert len(cast("LayerSpec", fig.spec).layers) == 1
+    assert len(_panel(plotmux.layer(plotmux.line([1, 2], [3, 4]), backend="fake")).marks) == 1
 
 
-@xy_available
-def test_layer_explicit_xy_backend() -> None:
+def test_layer_slope_uses_the_data_of_a_sibling() -> None:
+    fig = plotmux.layer(plotmux.line([1, 5], [3, 4]), SlopeSpec(gradient=1.0), backend="fake")
+    assert len(_panel(fig).marks) == 2
+
+
+def test_layer_slope_alone_raises() -> None:
+    with pytest.raises(InvalidSpecError, match="needs the x extent of the panel"):
+        plotmux.layer(SlopeSpec(gradient=1.0), backend="fake")
+
+
+def test_layer_figure_title_is_kept() -> None:
     fig = plotmux.layer(
-        LineSpec(x=np.arange(10), y=np.arange(10)),
-        ScatterSpec(x=np.arange(10), y=np.arange(10)),
-        backend="xy",
+        plotmux.line([1, 2], [3, 4], title="t"), plotmux.line([1, 2], [5, 6]), backend="fake"
     )
-    assert fig.backend_name == "xy"
+    assert _panel(fig).title == "t"
+
+
+def test_layer_call_option_wins_over_the_figures() -> None:
+    fig = plotmux.layer(plotmux.line([1, 2], [3, 4], title="t"), title="call", backend="fake")
+    assert _panel(fig).title == "call"
+
+
+def test_layer_same_option_on_two_figures_is_not_a_conflict() -> None:
+    fig = plotmux.layer(
+        plotmux.line([1, 2], [3, 4], title="t"),
+        plotmux.line([1, 2], [5, 6], title="t"),
+        backend="fake",
+    )
+    assert _panel(fig).title == "t"
+
+
+def test_layer_conflicting_options_raise() -> None:
+    with pytest.raises(
+        InvalidSpecError, match=r"the figures have different values of title: \['a', 'b'\]"
+    ):
+        plotmux.layer(
+            plotmux.line([1, 2], [3, 4], title="a"),
+            plotmux.line([1, 2], [5, 6], title="b"),
+            backend="fake",
+        )
+
+
+def test_layer_conflict_is_resolved_by_the_call() -> None:
+    fig = plotmux.layer(
+        plotmux.line([1, 2], [3, 4], title="a"),
+        plotmux.line([1, 2], [5, 6], title="b"),
+        title="c",
+        backend="fake",
+    )
+    assert _panel(fig).title == "c"
+
+
+def test_layer_empty_raises() -> None:
+    with pytest.raises(InvalidSpecError, match="marks must contain at least one mark"):
+        plotmux.layer(backend="fake")
+
+
+def test_layer_grid_item_raises() -> None:
+    inner = plotmux.grid(plotmux.line([1, 2], [3, 4]), backend="fake")
+    with pytest.raises(InvalidSpecError, match="a grid cannot be an item of layer or grid"):
+        plotmux.layer(inner, backend="fake")
+
+
+def test_layer_ymin_greater_than_ymax_raises() -> None:
+    with pytest.raises(InvalidSpecError, match="ymin must not be greater than ymax"):
+        plotmux.layer(plotmux.line([1, 2], [3, 4]), ymin=10, ymax=0, backend="fake")
+
+
+def test_layer_invalid_background_color_raises() -> None:
+    with pytest.raises(ValueError, match="Invalid color"):
+        plotmux.layer(plotmux.line([1, 2], [3, 4]), background_color="not-a-color", backend="fake")
 
 
 def test_layer_unknown_backend_raises() -> None:
     with pytest.raises(RuntimeError, match="No backend registered"):
-        plotmux.layer(
-            LineSpec(x=np.arange(10), y=np.arange(10)),
-            backend="does-not-exist",
-        )
+        plotmux.layer(plotmux.line([1, 2], [3, 4]), backend="does-not-exist")
 
 
-def test_layer_empty_raises() -> None:
-    with pytest.raises(ValueError, match="layers must contain at least one spec"):
-        plotmux.layer()
-
-
-@matplotlib_available
-def test_layer_nested_layer_item_raises() -> None:
-    inner = plotmux.layer(LineSpec(x=np.arange(10), y=np.arange(10)))
-    with pytest.raises(ValueError, match="layers must not contain a LayerSpec"):
-        plotmux.layer(inner)
-
-
-@matplotlib_available
-def test_layer_common_style() -> None:
-    fig = plotmux.layer(
-        LineSpec(x=np.arange(10), y=np.arange(10)),
-        title="t",
-        xlabel="x",
-        ylabel="y",
-        xscale="log",
-        yscale="log",
-    )
-    ax = fig.native.axes[0]
-    assert ax.get_title() == "t"
-    assert ax.get_xlabel() == "x"
-    assert ax.get_ylabel() == "y"
-    assert ax.get_xscale() == "log"
-    assert ax.get_yscale() == "log"
+def test_layer_does_not_change_the_figures() -> None:
+    first = plotmux.line([1, 2], [3, 4], title="t")
+    plotmux.layer(first, title="other", backend="fake")
+    assert _panel(first).title == "t"
 
 
 ##########################
@@ -500,95 +495,128 @@ def test_layer_common_style() -> None:
 ##########################
 
 
-@matplotlib_available
-def test_grid_returns_figure_with_matplotlib_backend() -> None:
-    fig = plotmux.grid(
-        HistogramSpec(values=np.arange(101), bins=10),
-        LineSpec(x=np.arange(0, 100, 10), y=np.arange(10)),
-        ncols=2,
+def test_grid_of_marks_wraps_each_in_a_panel() -> None:
+    hist = HistogramSpec(values=np.arange(11))
+    line = LineSpec(x=np.arange(3), y=np.arange(3))
+    assert plotmux.grid(hist, line, ncols=2, title="t", backend="fake").spec == GridSpec(
+        panels=(PanelSpec(marks=(hist,)), PanelSpec(marks=(line,))), ncols=2, title="t"
     )
-    assert fig.backend_name == "matplotlib"
-    assert isinstance(fig.spec, GridSpec)
-    assert len(fig.native.axes) == 2
 
 
-@matplotlib_available
-def test_grid_accepts_figure_items() -> None:
-    line_fig = plotmux.line(np.arange(10), np.arange(10))
-    fig = plotmux.grid(line_fig, ScatterSpec(x=np.arange(10), y=np.arange(10)))
-    assert isinstance(fig.spec, GridSpec)
-    assert fig.spec.cells[0] is line_fig.spec
+def test_grid_of_figures_keeps_their_panels() -> None:
+    first = plotmux.line([1, 2], [3, 4], title="a")
+    grid = plotmux.grid(first, backend="fake").spec
+    assert cast("GridSpec", grid).panels == (first.spec,)
 
 
-@matplotlib_available
-def test_grid_single_item() -> None:
-    fig = plotmux.grid(LineSpec(x=np.arange(10), y=np.arange(10)))
-    assert len(cast("GridSpec", fig.spec).cells) == 1
+def test_grid_of_a_layer_figure() -> None:
+    layer = plotmux.layer(plotmux.line([1, 2], [3, 4]), SlopeSpec(gradient=1.0), backend="fake")
+    assert len(cast("GridSpec", plotmux.grid(layer, backend="fake").spec).panels[0].marks) == 2
 
 
-@matplotlib_available
 def test_grid_default_ncols_is_one() -> None:
-    fig = plotmux.grid(
-        LineSpec(x=np.arange(10), y=np.arange(10)),
-        ScatterSpec(x=np.arange(10), y=np.arange(10)),
+    assert (
+        cast("GridSpec", plotmux.grid(plotmux.line([1, 2], [3, 4]), backend="fake").spec).ncols == 1
     )
-    assert cast("GridSpec", fig.spec).ncols == 1
-    assert len(fig.native.axes) == 2
 
 
-@matplotlib_available
-def test_grid_hides_trailing_empty_cells() -> None:
-    fig = plotmux.grid(
-        LineSpec(x=np.arange(10), y=np.arange(10)),
-        ScatterSpec(x=np.arange(10), y=np.arange(10)),
-        HistogramSpec(values=np.arange(101), bins=10),
-        ncols=2,
-    )
-    visible = [ax for ax in fig.native.axes if ax.get_visible()]
-    hidden = [ax for ax in fig.native.axes if not ax.get_visible()]
-    assert len(visible) == 3
-    assert len(hidden) == 1
+def test_grid_returns_a_figure_of_the_backend() -> None:
+    assert plotmux.grid(plotmux.line([1, 2], [3, 4]), backend="fake").backend_name == "fake"
+
+
+def test_grid_empty_raises() -> None:
+    with pytest.raises(InvalidSpecError, match="panels must contain at least one panel"):
+        plotmux.grid(backend="fake")
+
+
+def test_grid_nested_grid_item_raises() -> None:
+    inner = plotmux.grid(plotmux.line([1, 2], [3, 4]), backend="fake")
+    with pytest.raises(InvalidSpecError, match="a grid cannot be an item of layer or grid"):
+        plotmux.grid(inner, backend="fake")
+
+
+def test_grid_invalid_ncols_raises() -> None:
+    with pytest.raises(InvalidSpecError, match="ncols must be a positive integer"):
+        plotmux.grid(plotmux.line([1, 2], [3, 4]), ncols=0, backend="fake")
 
 
 def test_grid_unknown_backend_raises() -> None:
     with pytest.raises(RuntimeError, match="No backend registered"):
-        plotmux.grid(
-            LineSpec(x=np.arange(10), y=np.arange(10)),
-            backend="does-not-exist",
-        )
+        plotmux.grid(plotmux.line([1, 2], [3, 4]), backend="does-not-exist")
 
 
-def test_grid_empty_raises() -> None:
-    with pytest.raises(ValueError, match="cells must contain at least one spec"):
-        plotmux.grid()
+def test_grid_has_no_axes_options() -> None:
+    with pytest.raises(TypeError, match="unexpected keyword argument 'xlabel'"):
+        cast("Any", plotmux.grid)(plotmux.line([1, 2], [3, 4]), xlabel="x", backend="fake")
 
 
-@matplotlib_available
-def test_grid_nested_grid_item_raises() -> None:
-    inner = plotmux.grid(LineSpec(x=np.arange(10), y=np.arange(10)))
-    with pytest.raises(ValueError, match="cells must not contain a GridSpec"):
-        plotmux.grid(inner)
+############################
+#     Tests for _as_panel  #
+############################
 
 
-@matplotlib_available
-def test_grid_title_becomes_suptitle() -> None:
-    fig = plotmux.grid(LineSpec(x=np.arange(10), y=np.arange(10)), title="t")
-    assert fig.native._suptitle.get_text() == "t"
+def test_as_panel_of_a_mark() -> None:
+    line = LineSpec(x=np.arange(3), y=np.arange(3))
+    assert _as_panel(line) == PanelSpec(marks=(line,))
 
 
-@matplotlib_available
-def test_grid_invalid_ncols_raises() -> None:
-    with pytest.raises(ValueError, match="ncols must be a positive integer"):
-        plotmux.grid(LineSpec(x=np.arange(10), y=np.arange(10)), ncols=0)
+def test_as_panel_of_a_panel() -> None:
+    panel = PanelSpec(marks=(LineSpec(x=np.arange(3), y=np.arange(3)),), title="t")
+    assert _as_panel(panel) is panel
 
 
-@matplotlib_available
-def test_layer_ymin_greater_than_ymax_raises() -> None:
-    with pytest.raises(ValueError, match="ymin must not be greater than ymax"):
-        plotmux.layer(LineSpec(x=np.arange(10), y=np.arange(10)), ymin=10, ymax=0)
+def test_as_panel_of_a_figure() -> None:
+    fig = plotmux.line([1, 2], [3, 4], backend="fake")
+    assert _as_panel(fig) is fig.spec
 
 
-@matplotlib_available
-def test_layer_invalid_background_color_raises() -> None:
-    with pytest.raises(ValueError, match="Invalid color"):
-        plotmux.layer(LineSpec(x=np.arange(10), y=np.arange(10)), background_color="not-a-color")
+def test_as_panel_of_a_grid_raises() -> None:
+    grid = GridSpec(panels=(PanelSpec(marks=(LineSpec(x=np.arange(3), y=np.arange(3)),)),))
+    with pytest.raises(InvalidSpecError, match="a grid cannot be an item"):
+        _as_panel(cast("Any", grid))
+
+
+#####################################
+#     Tests for _merge_axes_options #
+#####################################
+
+LINE = LineSpec(x=np.arange(3), y=np.arange(3))
+
+
+def test_merge_axes_options_no_panel_returns_the_explicit_options() -> None:
+    assert _merge_axes_options([], {"title": "t", "backend": "fake"}) == {
+        "title": "t",
+        "backend": "fake",
+    }
+
+
+def test_merge_axes_options_default_values_are_not_merged() -> None:
+    assert _merge_axes_options([PanelSpec(marks=(LINE,))], {}) == {}
+
+
+def test_merge_axes_options_takes_the_non_default_value() -> None:
+    panels = [PanelSpec(marks=(LINE,), xlabel="x"), PanelSpec(marks=(LINE,))]
+    assert _merge_axes_options(panels, {}) == {"xlabel": "x"}
+
+
+def test_merge_axes_options_merges_several_fields() -> None:
+    panels = [
+        PanelSpec(marks=(LINE,), xlabel="x"),
+        PanelSpec(marks=(LINE,), ylabel="y", yscale="log"),
+    ]
+    assert _merge_axes_options(panels, {}) == {"xlabel": "x", "ylabel": "y", "yscale": "log"}
+
+
+def test_merge_axes_options_explicit_wins_over_a_conflict() -> None:
+    panels = [PanelSpec(marks=(LINE,), xlabel="a"), PanelSpec(marks=(LINE,), xlabel="b")]
+    assert _merge_axes_options(panels, {"xlabel": "c"}) == {"xlabel": "c"}
+
+
+def test_merge_axes_options_conflict_raises() -> None:
+    panels = [PanelSpec(marks=(LINE,), ymax=1), PanelSpec(marks=(LINE,), ymax=2)]
+    with pytest.raises(InvalidSpecError, match=r"different values of ymax: \[1, 2\]"):
+        _merge_axes_options(panels, {})
+
+
+def test_merge_axes_options_does_not_merge_the_marks() -> None:
+    assert "marks" not in _merge_axes_options([PanelSpec(marks=(LINE,), title="t")], {})

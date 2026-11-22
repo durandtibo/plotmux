@@ -5,6 +5,7 @@ from typing import Any, cast
 import numpy as np
 import pytest
 
+from plotmux.primitives import Bars
 from plotmux.specs import BarSpec
 
 ##############################
@@ -54,23 +55,6 @@ def test_bar_spec_invalid_color() -> None:
 
 
 # --- common style ---
-
-
-def test_bar_spec_common_style() -> None:
-    spec = BarSpec(
-        x=np.arange(10),
-        y=np.arange(10),
-        title="t",
-        xlabel="x",
-        ylabel="y",
-        xscale="log",
-        yscale="log",
-    )
-    assert spec.title == "t"
-    assert spec.xlabel == "x"
-    assert spec.ylabel == "y"
-    assert spec.xscale == "log"
-    assert spec.yscale == "log"
 
 
 # --- frozen / error cases ---
@@ -141,3 +125,53 @@ def test_bar_spec_not_equal_with_different_y() -> None:
 def test_bar_spec_hash_raises() -> None:
     with pytest.raises(TypeError, match="unhashable type: 'BarSpec'"):
         hash(BarSpec(x=np.arange(5), y=np.arange(5)))
+
+
+######################################
+#     Tests for BarSpec lowering     #
+######################################
+
+
+def test_bar_spec_to_primitives() -> None:
+    spec = BarSpec(
+        x=np.array([0.0, 1.0]), y=np.array([2, 3]), width=0.5, label="a", color="#ff0000", alpha=0.5
+    )
+    assert spec.to_primitives(None) == (
+        Bars(
+            x=np.array([0.0, 1.0]),
+            height=np.array([2.0, 3.0]),
+            base=np.array([0.0, 0.0]),
+            width=0.5,
+            color=(1.0, 0.0, 0.0, 1.0),
+            alpha=0.5,
+            label="a",
+        ),
+    )
+
+
+def test_bar_spec_to_primitives_categorical() -> None:
+    primitive = cast(
+        "Bars", BarSpec(x=np.array(["a", "b"]), y=np.array([1, 2])).to_primitives(None)[0]
+    )
+    assert primitive.x.tolist() == ["a", "b"]
+
+
+def test_bar_spec_to_primitives_empty() -> None:
+    primitive = cast("Bars", BarSpec(x=np.array([]), y=np.array([])).to_primitives(None)[0])
+    assert primitive.x.shape == (0,)
+
+
+def test_bar_spec_x_extent_includes_the_half_width() -> None:
+    assert BarSpec(x=np.array([0.0, 4.0]), y=np.arange(2), width=2.0).x_extent() == (-1.0, 5.0)
+
+
+def test_bar_spec_x_extent_categorical() -> None:
+    assert BarSpec(x=np.array(["a", "b"]), y=np.arange(2)).x_extent() is None
+
+
+def test_bar_spec_is_categorical_numeric() -> None:
+    assert BarSpec(x=np.arange(2), y=np.arange(2)).is_categorical() is False
+
+
+def test_bar_spec_is_categorical_strings() -> None:
+    assert BarSpec(x=np.array(["a", "b"]), y=np.arange(2)).is_categorical() is True

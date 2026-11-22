@@ -1,129 +1,33 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 import numpy as np
 import pytest
 
-from plotmux.specs.base import BaseSpec, XBoundSpec, check_equal_length
-
-
-@dataclass(frozen=True)
-class FakeSpec(BaseSpec):
-    value: int = 0
+from plotmux.exceptions import InvalidColorError, InvalidSpecError
+from plotmux.specs.base import MarkSpec, Spec
 
 
 @dataclass(frozen=True, eq=False)
-class FakeArraySpec(BaseSpec):
+class FakeArraySpec(Spec):
     values: np.ndarray = field(default_factory=lambda: np.arange(3))
 
 
 @dataclass(frozen=True, eq=False)
-class OtherFakeArraySpec(BaseSpec):
-    values: np.ndarray = field(default_factory=lambda: np.arange(3))
-
-
-@dataclass(frozen=True)
-class FakeColorSpec(BaseSpec):
-    color: str | tuple[float, ...] | None = None
-
-    def __post_init__(self) -> None:
-        self._normalize_color()
-
-
-@dataclass(frozen=True)
-class FakeValidatedSpec(BaseSpec):
+class FakeMark(MarkSpec):
     value: int = 0
 
-    def __post_init__(self) -> None:
-        self._validate_base()
+
+###########################
+#     Tests for Spec      #
+###########################
 
 
-@dataclass(frozen=True)
-class FakeValidatedXBoundSpec(XBoundSpec):
-    value: int = 0
-
-    def __post_init__(self) -> None:
-        self._validate_base()
-
-
-###############################
-#     Tests for BaseSpec     #
-###############################
-
-
-def test_base_spec_is_dataclass() -> None:
-    spec = FakeSpec(value=42)
-    assert spec.value == 42
-
-
-def test_base_spec_is_frozen() -> None:
-    spec = FakeSpec(value=42)
+def test_spec_is_frozen() -> None:
     with pytest.raises(AttributeError):
-        cast("Any", spec).value = 43
-
-
-def test_base_spec_default_style() -> None:
-    spec = FakeSpec(value=42)
-    assert spec.title is None
-    assert spec.xlabel is None
-    assert spec.ylabel is None
-    assert spec.xscale == "linear"
-    assert spec.yscale == "linear"
-    assert spec.background_color is None
-    assert spec.ymin is None
-    assert spec.ymax is None
-    assert spec.legend_title is None
-    assert spec.legend_location is None
-
-
-def test_base_spec_custom_style() -> None:
-    spec = FakeSpec(
-        value=42,
-        title="t",
-        xlabel="x",
-        ylabel="y",
-        xscale="log",
-        yscale="log",
-        legend_title="Lines",
-        legend_location="top_left",
-    )
-    assert spec.title == "t"
-    assert spec.xlabel == "x"
-    assert spec.ylabel == "y"
-    assert spec.xscale == "log"
-    assert spec.yscale == "log"
-    assert spec.legend_title == "Lines"
-    assert spec.legend_location == "top_left"
-
-
-@pytest.mark.parametrize("scale", ["linear", "log"])
-def test_base_spec_xscale_values(scale: Literal["linear", "log"]) -> None:
-    assert FakeSpec(xscale=scale).xscale == scale
-
-
-@pytest.mark.parametrize("scale", ["linear", "log"])
-def test_base_spec_yscale_values(scale: Literal["linear", "log"]) -> None:
-    assert FakeSpec(yscale=scale).yscale == scale
-
-
-def test_base_spec_style_fields_are_keyword_only() -> None:
-    with pytest.raises(TypeError):
-        cast("Any", FakeSpec)(0, "t")
-
-
-def test_base_spec_equality() -> None:
-    assert FakeSpec(value=1) == FakeSpec(value=1)
-
-
-def test_base_spec_inequality_on_style() -> None:
-    assert FakeSpec(value=1, title="a") != FakeSpec(value=1, title="b")
-
-
-###########################
-#     Tests for Spec     #
-###########################
+        cast("Any", FakeArraySpec()).values = np.arange(2)
 
 
 def test_spec_equal_with_equal_arrays() -> None:
@@ -134,188 +38,70 @@ def test_spec_not_equal_with_different_array_values() -> None:
     assert FakeArraySpec(values=np.arange(3)) != FakeArraySpec(values=np.arange(1, 4))
 
 
-def test_spec_not_equal_with_different_array_lengths() -> None:
-    assert FakeArraySpec(values=np.arange(3)) != FakeArraySpec(values=np.arange(4))
-
-
-def test_spec_not_equal_with_different_style() -> None:
-    assert FakeArraySpec(title="a") != FakeArraySpec(title="b")
-
-
-def test_spec_not_equal_with_different_type() -> None:
-    assert FakeArraySpec() != OtherFakeArraySpec()
-
-
-def test_spec_not_equal_with_other_object() -> None:
-    assert FakeArraySpec() != "spec"
-
-
 def test_spec_hash_raises() -> None:
     with pytest.raises(TypeError, match="unhashable type: 'FakeArraySpec'"):
         hash(FakeArraySpec())
 
 
-##########################################
-#     Tests for BaseSpec._normalize_color     #
-##########################################
+###############################
+#     Tests for MarkSpec      #
+###############################
 
 
-def test_normalize_color_leaves_none_untouched() -> None:
-    spec = FakeColorSpec(color=None)
-    assert spec.color is None
+def test_mark_spec_defaults() -> None:
+    mark = FakeMark()
+    assert (mark.label, mark.color, mark.alpha) == (None, None, None)
 
 
-def test_normalize_color_parses_hex_string() -> None:
-    spec = FakeColorSpec(color="#ff0000")
-    assert spec.color == (1.0, 0.0, 0.0, 1.0)
+def test_mark_spec_does_not_require_an_extent() -> None:
+    assert FakeMark.requires_extent is False
 
 
-def test_normalize_color_parses_named_color() -> None:
-    spec = FakeColorSpec(color="tab:blue")
-    assert spec.color == pytest.approx((31 / 255, 119 / 255, 180 / 255, 1.0))
+def test_mark_spec_style_fields_are_keyword_only() -> None:
+    with pytest.raises(TypeError):
+        cast("Any", FakeMark)(0, "label")
 
 
-def test_normalize_color_parses_rgb_tuple() -> None:
-    spec = FakeColorSpec(color=(0.5, 0.5, 0.5))
-    assert spec.color == (0.5, 0.5, 0.5, 1.0)
+def test_mark_spec_label() -> None:
+    assert FakeMark(label="a").label == "a"
 
 
-def test_normalize_color_invalid_color_raises() -> None:
-    with pytest.raises(ValueError, match="Invalid color"):
-        FakeColorSpec(color="not-a-color")
+def test_mark_spec_color_hex() -> None:
+    assert FakeMark(color="#ff0000").color == (1.0, 0.0, 0.0, 1.0)
 
 
-##############################################
-#     Tests for check_equal_length     #
-##############################################
+def test_mark_spec_color_named() -> None:
+    assert FakeMark(color="tab:blue").color == pytest.approx((31 / 255, 119 / 255, 180 / 255, 1.0))
 
 
-def test_check_equal_length_same_length_does_not_raise() -> None:
-    check_equal_length(np.arange(5), np.arange(5))
+def test_mark_spec_color_rgb_tuple() -> None:
+    assert FakeMark(color=(0.5, 0.5, 0.5)).color == (0.5, 0.5, 0.5, 1.0)
 
 
-def test_check_equal_length_different_length_raises() -> None:
-    with pytest.raises(ValueError, match="x and y must have the same length"):
-        check_equal_length(np.arange(5), np.arange(3))
+def test_mark_spec_invalid_color_raises() -> None:
+    with pytest.raises(InvalidColorError, match="Invalid color"):
+        FakeMark(color="not-a-color")
 
 
-def test_check_equal_length_non_1d_raises() -> None:
-    # A 2D x with a matching leading dimension must not slip past this
-    # check: it would otherwise fail deep inside a backend's plotting
-    # call with a confusing, backend-specific error instead of a clear
-    # InvalidSpecError here.
-    with pytest.raises(ValueError, match="x and y must be 1-dimensional"):
-        check_equal_length(np.zeros((5, 3)), np.arange(5))
+@pytest.mark.parametrize("alpha", [0.0, 0.5, 1.0])
+def test_mark_spec_alpha_boundaries(alpha: float) -> None:
+    assert FakeMark(alpha=alpha).alpha == alpha
 
 
-def test_check_equal_length_y_non_1d_raises() -> None:
-    with pytest.raises(ValueError, match="x and y must be 1-dimensional"):
-        check_equal_length(np.arange(5), np.zeros((5, 3)))
+@pytest.mark.parametrize("alpha", [-0.1, 1.1, 2.0])
+def test_mark_spec_invalid_alpha_raises(alpha: float) -> None:
+    with pytest.raises(InvalidSpecError, match=r"alpha must be in the range \[0, 1\]"):
+        FakeMark(alpha=alpha)
 
 
-def test_check_equal_length_coerces_lists_to_arrays() -> None:
-    x, y = check_equal_length([1, 2, 3], [4, 5, 6])
-    assert isinstance(x, np.ndarray)
-    assert isinstance(y, np.ndarray)
-    np.testing.assert_array_equal(x, np.array([1, 2, 3]))
-    np.testing.assert_array_equal(y, np.array([4, 5, 6]))
+def test_mark_spec_x_extent_is_none() -> None:
+    assert FakeMark().x_extent() is None
 
 
-def test_check_equal_length_empty_arrays_do_not_raise() -> None:
-    x, y = check_equal_length(np.array([]), np.array([]))
-    assert x.shape == (0,)
-    assert y.shape == (0,)
+def test_mark_spec_is_categorical_is_none() -> None:
+    assert FakeMark().is_categorical() is None
 
 
-def test_check_equal_length_error_message_reports_lengths() -> None:
-    with pytest.raises(ValueError, match="but received 5 and 3"):
-        check_equal_length(np.arange(5), np.arange(3))
-
-
-##########################################
-#     Tests for BaseSpec._validate_base     #
-##########################################
-
-
-def test_validate_base_normalizes_background_color() -> None:
-    spec = FakeValidatedSpec(background_color="#ff0000")
-    assert spec.background_color == (1.0, 0.0, 0.0, 1.0)
-
-
-def test_validate_base_invalid_background_color_raises() -> None:
-    with pytest.raises(ValueError, match="Invalid color"):
-        FakeValidatedSpec(background_color="not-a-color")
-
-
-def test_validate_base_ymin_ymax_ok() -> None:
-    spec = FakeValidatedSpec(ymin=0, ymax=10)
-    assert spec.ymin == 0
-    assert spec.ymax == 10
-
-
-def test_validate_base_ymin_greater_than_ymax_raises() -> None:
-    with pytest.raises(ValueError, match="ymin must not be greater than ymax"):
-        FakeValidatedSpec(ymin=10, ymax=0)
-
-
-def test_validate_base_ymin_equal_ymax_does_not_raise() -> None:
-    spec = FakeValidatedSpec(ymin=5, ymax=5)
-    assert spec.ymin == 5
-    assert spec.ymax == 5
-
-
-def test_validate_base_ymin_only_does_not_raise() -> None:
-    spec = FakeValidatedSpec(ymin=5)
-    assert spec.ymin == 5
-    assert spec.ymax is None
-
-
-def test_validate_base_ymax_only_does_not_raise() -> None:
-    spec = FakeValidatedSpec(ymax=5)
-    assert spec.ymin is None
-    assert spec.ymax == 5
-
-
-def test_validate_base_background_color_none_left_untouched() -> None:
-    spec = FakeValidatedSpec(background_color=None)
-    assert spec.background_color is None
-
-
-##########################################
-#     Tests for XBoundSpec     #
-##########################################
-
-
-def test_xbound_spec_default_style() -> None:
-    spec = FakeValidatedXBoundSpec(value=42)
-    assert spec.xmin is None
-    assert spec.xmax is None
-
-
-def test_validate_base_xmin_xmax_ok() -> None:
-    spec = FakeValidatedXBoundSpec(xmin=0, xmax=10)
-    assert spec.xmin == 0
-    assert spec.xmax == 10
-
-
-def test_validate_base_xmin_greater_than_xmax_raises() -> None:
-    with pytest.raises(ValueError, match="xmin must not be greater than xmax"):
-        FakeValidatedXBoundSpec(xmin=10, xmax=0)
-
-
-def test_validate_base_xmin_equal_xmax_does_not_raise() -> None:
-    spec = FakeValidatedXBoundSpec(xmin=5, xmax=5)
-    assert spec.xmin == 5
-    assert spec.xmax == 5
-
-
-def test_validate_base_xmin_only_does_not_raise() -> None:
-    spec = FakeValidatedXBoundSpec(xmin=5)
-    assert spec.xmin == 5
-    assert spec.xmax is None
-
-
-def test_validate_base_xmax_only_does_not_raise() -> None:
-    spec = FakeValidatedXBoundSpec(xmax=5)
-    assert spec.xmin is None
-    assert spec.xmax == 5
+def test_mark_spec_to_primitives_must_be_overridden() -> None:
+    with pytest.raises(NotImplementedError, match="FakeMark must implement to_primitives"):
+        FakeMark().to_primitives(None)

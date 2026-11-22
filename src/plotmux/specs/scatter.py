@@ -7,69 +7,54 @@ __all__ = ["ScatterSpec"]
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
+from plotmux.colors import Color, parse_color, parse_optional_color
 from plotmux.exceptions import InvalidSpecError
-from plotmux.specs.base import XBoundSpec, check_equal_length
+from plotmux.primitives import Points
+from plotmux.specs.base import MarkSpec
+from plotmux.utils.array import to_paired_arrays
+from plotmux.utils.categorical import is_categorical
+from plotmux.utils.extent import finite_extent
 from plotmux.utils.finite import check_no_inf
 
 if TYPE_CHECKING:
     import numpy as np
 
-    from plotmux.colors import Color
+    from plotmux.primitives import Primitive
 
 
 @dataclass(frozen=True, eq=False)
-class ScatterSpec(XBoundSpec):
-    r"""Define a backend-agnostic scatter-chart specification.
+class ScatterSpec(MarkSpec):
+    r"""Define a backend-agnostic scatter mark.
 
     Args:
         x: The array of x values.
         y: The array of y values. Must have the same length as
             ``x``.
-        label: An optional label used e.g. in the legend.
-        color: An optional color for the markers. It can be a hex
-            string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
-            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
-            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
-            backend's default color. See
-            ``plotmux.colors.parse_color`` for the exact semantics.
         size: An optional marker size. ``None`` uses the backend's
             default size.
         edgecolor: An optional, separate color for the marker edge
             (as opposed to ``color``, which fills the marker). Same
             format as ``color``. ``None`` uses ``color`` for the edge
-            too (every backend's renderer already does this when
-            ``edgecolor`` is unset -- see e.g.
-            ``plotmux.backends.bokeh.scatter.render_scatter``), so a
-            plain, single-color marker still needs only ``color``.
-        alpha: An optional marker opacity, in ``[0, 1]``. ``None``
-            uses the backend's default (usually fully opaque).
+            too.
         marker: An optional marker shape, one of a small,
-            backend-portable set (mirroring how ``LineSpec.linestyle``
-            exposes four portable names rather than every backend's
-            native dash vocabulary). ``None`` uses the backend's
-            default shape (a circle on every current backend). altair
-            has no native ``"x"`` shape (see
-            ``plotmux.backends.altair.style.MARKER_STYLE``), a small,
-            permanent per-backend asymmetry, the same pattern as
-            ``BarSpec.width``'s altair gap.
+            backend-portable set. ``None`` uses the backend's default
+            shape (a circle on every backend).
         fill: An optional tri-state fill toggle. ``None``/``True``
-            draw a filled marker using ``color``, today's behavior.
-            ``False`` draws a hollow marker: only the outline (
-            ``edgecolor`` if set, else ``color``) is drawn, with no
-            fill -- distinct from leaving ``color`` unset, which asks
-            for the backend's own default (opaque) fill color rather
-            than an explicitly transparent one. Every current
-            backend's own default fill is opaque, so ``fill=False``
-            is the only portable way to get a hollow marker.
+            draw a filled marker using ``color``. ``False`` draws a
+            hollow marker: only the outline (``edgecolor`` if set,
+            else ``color``) is drawn.
 
-    ``NaN`` values are kept (a gap in the line, no point for a
-    scatter plot). ``inf`` and ``-inf`` values are rejected.
+    ``label``, ``color`` and ``alpha`` are inherited from
+    ``MarkSpec``. ``NaN`` values are kept (no point). ``inf`` and
+    ``-inf`` values are rejected.
 
     Raises:
-        ValueError: if ``x`` and ``y`` do not have the same length,
-            ``x`` or ``y`` has an infinite value, ``size`` is not a
-            positive number, ``alpha`` is not in ``[0, 1]``, or ``color``/``edgecolor`` is not a valid
-            color.
+        InvalidSpecError: if ``x`` and ``y`` do not have the same
+            length, ``x`` or ``y`` has an infinite value, ``size`` is
+            not a positive number, or ``alpha`` is not in ``[0, 1]``. Also
+            a ``ValueError``.
+        InvalidColorError: if ``color``/``edgecolor`` is not a valid
+            color. Also a ``ValueError``.
 
     Example:
         ```pycon
@@ -84,26 +69,42 @@ class ScatterSpec(XBoundSpec):
 
     x: np.ndarray
     y: np.ndarray
-    label: str | None = None
-    color: Color = None
     size: float | None = None
     edgecolor: Color = None
-    alpha: float | None = None
     marker: Literal["circle", "square", "triangle", "diamond", "cross", "x"] | None = None
     fill: bool | None = None
 
     def __post_init__(self) -> None:
-        x, y = check_equal_length(self.x, self.y)
-        object.__setattr__(self, "x", x)
-        object.__setattr__(self, "y", y)
+        super().__post_init__()
+        x, y = to_paired_arrays(self.x, self.y)
         check_no_inf(x, owner="ScatterSpec", name="x")
         check_no_inf(y, owner="ScatterSpec", name="y")
+        object.__setattr__(self, "x", x)
+        object.__setattr__(self, "y", y)
         if self.size is not None and self.size <= 0:
             msg = f"size must be a positive number, but received {self.size}"
             raise InvalidSpecError(msg)
-        if self.alpha is not None and not 0.0 <= self.alpha <= 1.0:
-            msg = f"alpha must be in the range [0, 1], but received {self.alpha}"
-            raise InvalidSpecError(msg)
-        self._normalize_color()
-        self._normalize_color("edgecolor")
-        self._validate_base()
+        if self.edgecolor is not None:
+            object.__setattr__(self, "edgecolor", parse_color(self.edgecolor))
+
+    def x_extent(self) -> tuple[float, float] | None:
+        return finite_extent(self.x)
+
+    def is_categorical(self) -> bool | None:
+        return is_categorical(self.x)
+
+    def to_primitives(self, extent: tuple[float, float] | None) -> tuple[Primitive, ...]:
+        del extent  # the mark has data of its own
+        return (
+            Points(
+                x=self.x,
+                y=self.y,
+                color=parse_optional_color(self.color),
+                alpha=self.alpha,
+                size=self.size,
+                marker=self.marker,
+                fill=self.fill,
+                edgecolor=parse_optional_color(self.edgecolor),
+                label=self.label,
+            ),
+        )

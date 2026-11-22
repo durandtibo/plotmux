@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from plotmux.exceptions import InvalidSpecError
+from plotmux.primitives import Line
 from plotmux.specs import CdfSpec
 from plotmux.utils import find_range
 
@@ -21,7 +22,6 @@ def test_cdf_spec_defaults() -> None:
     assert spec.xmax is None
     assert spec.label is None
     assert spec.color is None
-    assert spec.ylabel == "cumulative probability"
 
 
 def test_cdf_spec_custom() -> None:
@@ -95,22 +95,6 @@ def test_cdf_spec_invalid_color() -> None:
 
 
 # --- common style ---
-
-
-def test_cdf_spec_common_style() -> None:
-    spec = CdfSpec(
-        values=np.arange(101),
-        title="t",
-        xlabel="x",
-        ylabel="y",
-        xscale="log",
-        yscale="log",
-    )
-    assert spec.title == "t"
-    assert spec.xlabel == "x"
-    assert spec.ylabel == "y"
-    assert spec.xscale == "log"
-    assert spec.yscale == "log"
 
 
 # --- frozen / error cases ---
@@ -268,3 +252,59 @@ def test_cdf_spec_equal_after_filtering() -> None:
     with pytest.warns(UserWarning, match="NaN or inf"):
         a = CdfSpec(values=np.array([1.0, np.nan, 3.0]))
     assert a == CdfSpec(values=np.array([1.0, 3.0]))
+
+
+#######################################
+#     Tests for CdfSpec lowering      #
+#######################################
+
+
+def test_cdf_spec_to_primitives() -> None:
+    spec = CdfSpec(values=np.array([3.0, 1.0, 2.0, 4.0]), label="a", color="#ff0000", alpha=0.5)
+    assert spec.to_primitives(None) == (
+        Line(
+            x=np.array([1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0]),
+            y=np.array([0.0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1.0]),
+            infinite=None,
+            color=(1.0, 0.0, 0.0, 1.0),
+            alpha=0.5,
+            linewidth=None,
+            linestyle="solid",
+            label="a",
+        ),
+    )
+
+
+def test_cdf_spec_to_primitives_binned() -> None:
+    primitive = cast("Line", CdfSpec(values=np.arange(5.0), nbins=2).to_primitives(None)[0])
+    assert primitive.y.tolist() == [0.0, 0.4, 0.4, 1.0, 1.0]
+
+
+def test_cdf_spec_to_primitives_range_does_not_renormalize() -> None:
+    primitive = cast(
+        "Line",
+        CdfSpec(values=np.array([1.0, 2.0, 3.0, 4.0]), xmin=2, xmax=3).to_primitives(None)[0],
+    )
+    assert primitive.y.tolist() == [0.25, 0.5, 0.5, 0.75]
+
+
+def test_cdf_spec_to_primitives_quantile_range() -> None:
+    primitive = cast("Line", CdfSpec(values=np.arange(11.0), xmin="q0.5").to_primitives(None)[0])
+    assert primitive.x[0] == 5.0
+
+
+def test_cdf_spec_to_primitives_is_exact_without_nbins() -> None:
+    primitive = cast("Line", CdfSpec(values=np.arange(1000.0)).to_primitives(None)[0])
+    assert primitive.x.shape == (2000,)
+
+
+def test_cdf_spec_x_extent() -> None:
+    assert CdfSpec(values=np.array([3.0, 1.0, 2.0])).x_extent() == (1.0, 3.0)
+
+
+def test_cdf_spec_x_extent_explicit_range() -> None:
+    assert CdfSpec(values=np.arange(11.0), xmin=2, xmax=4).x_extent() == (2.0, 4.0)
+
+
+def test_cdf_spec_is_categorical() -> None:
+    assert CdfSpec(values=np.arange(3)).is_categorical() is False
