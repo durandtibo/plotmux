@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 import plotmux
-from plotmux.backends.base import check_export_format, resolve_renderer
+from plotmux.backends.base import BackendCapabilities
 from plotmux.backends.registry import get_backend
 from plotmux.colors import parse_color
 from plotmux.exceptions import (
@@ -21,6 +21,8 @@ from plotmux.exceptions import (
 )
 from plotmux.export import save
 from plotmux.figure import Figure
+from plotmux.primitives import Points
+from plotmux.scene import AxesScene
 from plotmux.testing.fixtures import matplotlib_available
 
 ######################################
@@ -79,18 +81,21 @@ def test_get_backend_unknown_raises_plotmux_error() -> None:
         get_backend("does-not-exist")
 
 
-def test_resolve_renderer_unknown_raises_plotmux_error() -> None:
+def test_unsupported_marker_raises_plotmux_error() -> None:
+    caps = BackendCapabilities("test", frozenset(), frozenset(), frozenset(), frozenset())
+    scene = AxesScene(primitives=(Points(x=np.arange(2.0), y=np.arange(2.0), marker="x"),))
     with pytest.raises(PlotmuxError):
-        resolve_renderer({}, cast("Any", object()), "test")
+        caps.check(scene)
     with pytest.raises(NotImplementedError):
-        resolve_renderer({}, cast("Any", object()), "test")
+        caps.check(scene)
 
 
-def test_check_export_format_unsupported_raises_plotmux_error() -> None:
+def test_unsupported_format_raises_plotmux_error() -> None:
+    caps = BackendCapabilities("test", frozenset({"html"}), frozenset(), frozenset(), frozenset())
     with pytest.raises(PlotmuxError):
-        check_export_format("bogus", frozenset({"html"}), "test")
-    with pytest.raises(ValueError, match="Unsupported export format"):
-        check_export_format("bogus", frozenset({"html"}), "test")
+        caps.check_format("bogus")
+    with pytest.raises(ValueError, match="does not support exporting a figure"):
+        caps.check_format("bogus")
 
 
 def test_parse_color_invalid_raises_plotmux_error() -> None:

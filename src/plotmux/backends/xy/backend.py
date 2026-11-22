@@ -6,95 +6,211 @@ This module is only imported when xy is installed (see
 
 from __future__ import annotations
 
-__all__ = ["XyBackend"]
+__all__ = ["XyBackend", "mark_bars", "mark_line", "mark_points"]
 
 import tempfile
 import webbrowser
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from plotmux.backends.base import Backend, check_export_format, make_renderer
-from plotmux.backends.xy.bar import render_bar
-from plotmux.backends.xy.cdf import render_cdf
-from plotmux.backends.xy.grid import XyGrid, render_grid, render_grid_html
-from plotmux.backends.xy.histogram import render_histogram
-from plotmux.backends.xy.layer import render_layer
-from plotmux.backends.xy.line import render_line
-from plotmux.backends.xy.scatter import render_scatter
-from plotmux.backends.xy.stacked_bar import render_stacked_bar
-from plotmux.backends.xy.style import apply_common_style
-from plotmux.exceptions import UnsupportedFormatError
-from plotmux.specs import (
-    BarSpec,
-    BaseSpec,
-    CdfSpec,
-    GridSpec,
-    HistogramSpec,
-    LayerSpec,
-    LineSpec,
-    ScatterSpec,
-    StackedBarSpec,
-)
+import xy
+
+from plotmux.backends.base import Backend, BackendCapabilities
+from plotmux.backends.xy.grid import XyGrid, render_grid_html
+from plotmux.backends.xy.style import LEGEND_LOCATION, MARKERS, apply_style, rgba_to_xy
+from plotmux.primitives import Bars, Line
+from plotmux.scene import AxesScene, GridScene
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from plotmux.primitives import Points, Primitive
 
-    import xy
+
+def mark_bars(bars: Bars) -> xy.Mark:
+    r"""Turn a ``Bars`` primitive into an xy mark.
+
+    Args:
+        bars: The bars to draw.
+
+    Returns:
+        The xy ``bar`` mark.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> from plotmux.backends.xy.backend import mark_bars
+        >>> from plotmux.primitives import Bars
+        >>> mark_bars(Bars(x=np.arange(3.0), height=np.ones(3), base=np.zeros(3), width=0.8)).kind
+        'bar'
+
+        ```
+    """
+    kwargs: dict[str, Any] = {}
+    if bars.alpha is not None:
+        kwargs["opacity"] = bars.alpha
+    return xy.bar(
+        bars.x,
+        bars.height,
+        width=bars.width,
+        base=bars.base,
+        name=bars.label,
+        color=None if bars.color is None else rgba_to_xy(bars.color),
+        **kwargs,
+    )
+
+
+def mark_line(line: Line) -> xy.Mark:
+    r"""Turn a ``Line`` primitive into an xy mark.
+
+    xy has no infinite line: a slope is drawn as the segment of
+    ``line.x``, ``line.y``.
+
+    Args:
+        line: The line to draw.
+
+    Returns:
+        The xy ``line`` mark.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> from plotmux.backends.xy.backend import mark_line
+        >>> from plotmux.primitives import Line
+        >>> mark_line(Line(x=np.arange(3.0), y=np.arange(3.0))).kind
+        'line'
+
+        ```
+    """
+    kwargs: dict[str, Any] = {}
+    if line.alpha is not None:
+        kwargs["opacity"] = line.alpha
+    if line.linewidth is not None:
+        kwargs["width"] = line.linewidth
+    if line.linestyle != "solid":
+        kwargs["dash"] = line.linestyle
+    return xy.line(
+        line.x,
+        line.y,
+        name=line.label,
+        color=None if line.color is None else rgba_to_xy(line.color),
+        **kwargs,
+    )
+
+
+def mark_points(points: Points) -> xy.Mark:
+    r"""Turn a ``Points`` primitive into an xy mark.
+
+    Args:
+        points: The markers to draw.
+
+    Returns:
+        The xy ``scatter`` mark.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> from plotmux.backends.xy.backend import mark_points
+        >>> from plotmux.primitives import Points
+        >>> mark_points(Points(x=np.arange(3.0), y=np.arange(3.0))).kind
+        'scatter'
+
+        ```
+    """
+    color = None if points.color is None else rgba_to_xy(points.color)
+    kwargs: dict[str, Any] = {}
+    if points.size is not None:
+        kwargs["size"] = points.size
+    if points.alpha is not None:
+        kwargs["opacity"] = points.alpha
+    if points.edgecolor is not None:
+        kwargs["stroke"] = rgba_to_xy(points.edgecolor)
+        kwargs["stroke_width"] = 1.0
+    if points.fill is False:
+        kwargs.setdefault("stroke", color)
+        kwargs["stroke_width"] = 1.0
+        color = "rgba(0, 0, 0, 0)"
+    if points.marker is not None:
+        kwargs["symbol"] = points.marker
+    return xy.scatter(points.x, points.y, name=points.label, color=color, **kwargs)
+
+
+def _mark(primitive: Primitive) -> xy.Mark:
+    r"""Turn a primitive into an xy mark.
+
+    Args:
+        primitive: The primitive to draw.
+
+    Returns:
+        The xy mark.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> from plotmux.backends.xy.backend import _mark
+        >>> from plotmux.primitives import Line
+        >>> _mark(Line(x=np.arange(3.0), y=np.arange(3.0))).kind
+        'line'
+
+        ```
+    """
+    if isinstance(primitive, Bars):
+        return mark_bars(primitive)
+    if isinstance(primitive, Line):
+        return mark_line(primitive)
+    return mark_points(primitive)
+
+
+def _draw_axes(scene: AxesScene) -> xy.Chart:
+    r"""Draw the primitives of a scene into a styled xy ``Chart``.
+
+    Args:
+        scene: The scene of one axes.
+
+    Returns:
+        The xy ``Chart``.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> from plotmux.backends.xy.backend import _draw_axes
+        >>> from plotmux.primitives import Line
+        >>> from plotmux.scene import AxesScene
+        >>> scene = AxesScene(primitives=(Line(x=np.arange(3.0), y=np.arange(3.0)),), title="t")
+        >>> _draw_axes(scene).title
+        't'
+
+        ```
+    """
+    return apply_style(xy.chart(*(_mark(p) for p in scene.primitives)), scene)
 
 
 class XyBackend(Backend):
     r"""Implement the xy rendering backend.
 
-    One renderer function is registered per supported spec type in
-    ``_RENDERERS``. Adding a new chart type to this backend means
-    adding one entry here; it never grows an if/elif chain.
+    A figure is an ``xy.Chart`` and a grid is an ``XyGrid`` of charts
+    (see ``plotmux.backends.xy.grid``), which can only be exported to
+    HTML: xy has no chart-composition primitive for arranging
+    independent panels into one PNG/SVG/PDF.
     """
 
     name: ClassVar[str] = "xy"
-    supported_formats: ClassVar[frozenset[str]] = frozenset(
-        {"png", "jpg", "jpeg", "webp", "svg", "pdf", "html"}
-    )
 
-    # See ``Backend._CAVEATS``/``capabilities()``. ``SlopeSpec`` has no
-    # entry in ``_RENDERERS`` below -- it renders only nested inside a
-    # ``LayerSpec`` (see ``plotmux.backends.xy.layer``/``.slope``), not
-    # standalone. The ``GridSpec`` export restriction is also
-    # ``supported_formats``-discoverable per-format, but not as a
-    # "html-only, and only for a grid" statement -- see ``save``'s
-    # docstring and ``XyGrid``.
-    _CAVEATS: ClassVar[tuple[str, ...]] = (
-        "SlopeSpec is only supported nested inside a LayerSpec, not standalone.",
-        (
-            "GridSpec export supports 'html' only, unlike every other spec "
-            "type on this backend: xy has no chart-composition primitive "
-            "for arranging independent panels into one PNG/SVG/PDF."
-        ),
-    )
+    def capabilities(self) -> BackendCapabilities:
+        return BackendCapabilities(
+            name=self.name,
+            formats=frozenset({"png", "jpg", "jpeg", "webp", "svg", "pdf", "html"}),
+            grid_formats=frozenset({"html"}),
+            legend_locations=frozenset(LEGEND_LOCATION),
+            markers=frozenset(MARKERS),
+        )
 
-    # ``make_renderer`` (``plotmux.backends.base``) wraps a chart-specific
-    # ``(spec, **kwargs) -> Chart`` renderer with ``apply_common_style``. xy
-    # has no separate figure/axes object to construct first (unlike
-    # matplotlib's/bokeh's own local ``_make_renderer``), so it shares this
-    # helper with the ``altair`` backend rather than defining its own.
-    _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., xy.Chart | XyGrid]]] = {
-        HistogramSpec: make_renderer(render_histogram, apply_common_style),
-        BarSpec: make_renderer(render_bar, apply_common_style),
-        StackedBarSpec: make_renderer(render_stacked_bar, apply_common_style),
-        CdfSpec: make_renderer(render_cdf, apply_common_style),
-        LineSpec: make_renderer(render_line, apply_common_style),
-        ScatterSpec: make_renderer(render_scatter, apply_common_style),
-        LayerSpec: make_renderer(render_layer, apply_common_style),
-        # ``GridSpec`` is *not* wrapped in ``make_renderer``: unlike every
-        # other entry, ``render_grid`` returns an ``XyGrid``, not a bare
-        # ``xy.Chart``, and title/labels/scale have no grid-level meaning
-        # (each cell already styled itself, see ``render_grid``) -- same
-        # rationale as matplotlib's/bokeh's/altair's own ``GridSpec`` entry.
-        GridSpec: render_grid,
-    }
-
-    # ``render`` is inherited from ``Backend``: it dispatches on
-    # ``type(spec)`` against ``_RENDERERS`` above, so this backend does not
-    # need its own copy of that dispatch body.
+    def draw(self, scene: AxesScene | GridScene) -> xy.Chart | XyGrid:
+        if isinstance(scene, GridScene):
+            return XyGrid(
+                charts=tuple(_draw_axes(panel) for panel in scene.panels),
+                ncols=scene.ncols,
+                title=scene.title,
+            )
+        return _draw_axes(scene)
 
     def show(self, native: xy.Chart | XyGrid) -> None:
         r"""Display an xy ``Chart`` or ``XyGrid`` in the web browser.
@@ -141,31 +257,17 @@ class XyBackend(Backend):
         r"""Export an xy ``Chart`` or ``XyGrid`` to a file.
 
         Args:
-            native: The xy ``Chart`` (any spec type but ``GridSpec``)
-                or ``XyGrid`` (a rendered ``GridSpec``, see
-                ``plotmux.backends.xy.grid``) to export.
+            native: The xy ``Chart`` or ``XyGrid`` to export.
             path: The path where to save the figure.
             fmt: The export format (e.g. ``"png"``, ``"svg"``,
                 ``"html"``).
 
         Raises:
-            ValueError: if ``fmt`` is not a supported export format,
-                or ``native`` is an ``XyGrid`` and ``fmt`` is not
-                ``"html"`` (see ``XyGrid``'s docstring for why grid
-                export is HTML-only).
+            UnsupportedFormatError: if ``native`` is an ``XyGrid`` and
+                ``fmt`` is not ``"html"``. Also a ``ValueError``.
         """
-        check_export_format(fmt, self.supported_formats, self.name)
         if isinstance(native, XyGrid):
-            if fmt != "html":
-                msg = (
-                    f"Unsupported export format {fmt!r} for an xy grid: only "
-                    f"'html' is supported. xy has no chart-composition "
-                    f"primitive for arranging independent panels (see "
-                    f"XyGrid's docstring), so a grid's per-cell charts can "
-                    f"only be composed as separate, embedded documents in "
-                    f"one HTML page, not rasterized into one PNG/SVG/PDF."
-                )
-                raise UnsupportedFormatError(msg)
+            self.capabilities().check_format(fmt, grid=True)
             path.write_text(render_grid_html(native), encoding="utf-8")
         else:
             native.write_image(path, format=fmt)

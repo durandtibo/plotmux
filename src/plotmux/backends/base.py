@@ -1,36 +1,27 @@
-r"""Contain the ``Backend`` base class implemented by rendering backends,
-plus the small dispatch helpers every backend shares.
+r"""Contain the ``Backend`` base class implemented by rendering
+backends, and the capabilities a backend declares.
 
-Each backend (and each backend's layer renderer) dispatches on
-``type(spec)`` against a ``{type: renderer}`` dict. ``resolve_renderer``
-and ``check_export_format`` factor out that repeated lookup-or-raise
-logic so a backend only owns its dict of renderers, not the dispatch
-mechanics around it.
+A backend draws the three primitives of a scene (see
+``plotmux.scene``) and applies the axes style: it owns no decision
+that changes the numbers on the screen.
 """
 
 from __future__ import annotations
 
-__all__ = [
-    "Backend",
-    "BackendCapabilities",
-    "check_export_format",
-    "make_renderer",
-    "resolve_renderer",
-]
+__all__ = ["Backend", "BackendCapabilities"]
 
 import dataclasses
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from plotmux.exceptions import UnsupportedFormatError, UnsupportedSpecError
+from plotmux.primitives import Points
+from plotmux.scene import AxesScene, GridScene, build_scene
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Collection
     from pathlib import Path
 
-    from plotmux.specs import BaseSpec
-
-T = TypeVar("T")
+    from plotmux.specs import FigureSpec
 
 # The rich-display methods a native figure may define, by mime type.
 _REPR_METHODS = {
@@ -41,198 +32,174 @@ _REPR_METHODS = {
 }
 
 
-def resolve_renderer(
-    registry: dict[type[BaseSpec], Callable[..., T]], spec: BaseSpec, backend_name: str
-) -> Callable[..., T]:
-    r"""Look up the renderer registered for ``type(spec)``.
-
-    Args:
-        registry: A ``{spec_type: renderer}`` dict, as owned by a
-            backend's ``_RENDERERS`` or a layer module's
-            ``_AX_RENDERERS``/``_MARK_RENDERERS``.
-        spec: The spec whose type is looked up.
-        backend_name: The backend name, used only in the error
-            message (e.g. ``"matplotlib"``, ``"xy"``).
-
-    Returns:
-        The renderer registered for ``type(spec)``.
-
-    Raises:
-        UnsupportedSpecError: if no renderer is registered for
-            ``type(spec)``. Also a ``NotImplementedError``, so
-            existing ``except NotImplementedError`` code keeps
-            working unchanged.
-    """
-    renderer = registry.get(type(spec))
-    if renderer is None:
-        msg = f"No {backend_name} renderer registered for spec type {type(spec)}"
-        raise UnsupportedSpecError(msg)
-    return renderer
-
-
-def check_export_format(fmt: str, supported: Collection[str], backend_name: str) -> None:
-    r"""Validate that ``fmt`` is one of ``supported``.
-
-    Args:
-        fmt: The requested export format (e.g. ``"png"``).
-        supported: The formats the backend supports.
-        backend_name: The backend name, used only in the error
-            message (e.g. ``"matplotlib"``, ``"xy"``).
-
-    Raises:
-        UnsupportedFormatError: if ``fmt`` is not in ``supported``.
-            Also a ``ValueError``, so existing ``except ValueError``
-            code keeps working unchanged.
-    """
-    if fmt not in supported:
-        msg = (
-            f"Unsupported export format {fmt!r} for the {backend_name} backend. "
-            f"Supported formats: {sorted(supported)}"
-        )
-        raise UnsupportedFormatError(msg)
-
-
-def make_renderer(
-    chart_render: Callable[..., T], style: Callable[[T, BaseSpec], T]
-) -> Callable[..., T]:
-    r"""Build a ``render(spec, **kwargs) -> native`` function that draws
-    then styles in a single step.
-
-    This suits backends with no separate figure/axes object to
-    construct up front -- the chart-specific renderer already returns
-    the finished native object, and styling (title, labels, scale) is
-    applied to that same object afterwards. Both ``altair`` and ``xy``
-    follow this shape, so they share this helper instead of each
-    defining their own near-identical wrapper.
-
-    Backends that *do* need a construction step first (e.g.
-    matplotlib building a ``Figure``/``Axes`` pair, or bokeh passing
-    axis type at ``figure()`` construction time) define their own
-    local ``_make_renderer`` instead, since that construction step is
-    backend-specific and would otherwise leak into this shared helper.
-
-    Args:
-        chart_render: The chart-specific ``(spec, **kwargs) -> native``
-            renderer to wrap, e.g. ``render_histogram``.
-        style: The backend's ``apply_common_style``-shaped function,
-            called as ``style(native, spec)`` and returning the
-            (possibly new, for immutable native objects) styled
-            native object.
-
-    Returns:
-        A ``(spec, **kwargs) -> native`` renderer suitable for a
-            backend's ``_RENDERERS`` dict.
-    """
-
-    def render(spec: BaseSpec, **kwargs: Any) -> T:
-        return style(chart_render(spec, **kwargs), spec)
-
-    return render
-
-
 @dataclasses.dataclass(frozen=True, slots=True)
 class BackendCapabilities:
-    r"""Report what a backend supports, for querying ahead of a render or
-    export call instead of discovering it via an exception.
+    r"""Declare what a backend supports, as data.
 
-    ``spec_types`` answers "does this backend support ``X`` as a
-    top-level spec" (e.g. standalone, not just nested in a
-    ``LayerSpec``) with no new bookkeeping -- it is exactly
-    ``Backend._RENDERERS.keys()``. ``caveats`` covers the partial
-    support that a spec-type membership test alone can't express (a
-    spec type only supported inside a layer, a field silently
-    ignored, an export restriction) -- see ``Backend._CAVEATS``.
-
-    This is descriptive only: nothing here changes render-time or
-    export-time behavior, and a caveat not listed here does not mean
-    "definitely fully supported," only "no known caveat is on
-    record."
+    The base class checks a scene against it before any drawing (see
+    ``Backend.render``) and ``plotmux.export.save`` checks the format
+    of a file against it before any file or directory is created, so a
+    request a backend cannot honor is an error, not a silent no-op.
 
     Args:
-        backend_name: The backend's ``name`` (e.g. ``"matplotlib"``).
-        spec_types: The spec types with a registered top-level
-            renderer in this backend.
-        caveats: Short, human-readable notes about known partial
-            support not implied by ``spec_types`` alone.
+        name: The name of the backend (e.g. ``"matplotlib"``).
+        formats: The export formats of a single-panel figure.
+        grid_formats: The export formats of a grid. It differs from
+            ``formats`` when the library cannot compose the panels
+            (``xy`` exports a grid to HTML only).
+        legend_locations: The legend locations the backend honors.
+        markers: The scatter markers the backend draws.
+
+    Example:
+        ```pycon
+        >>> from plotmux.backends.base import BackendCapabilities
+        >>> caps = BackendCapabilities(
+        ...     name="demo",
+        ...     formats=frozenset({"png"}),
+        ...     grid_formats=frozenset({"png"}),
+        ...     legend_locations=frozenset({"top"}),
+        ...     markers=frozenset({"circle"}),
+        ... )
+        >>> caps.check_format("png")
+
+        ```
     """
 
-    backend_name: str
-    spec_types: frozenset[type[BaseSpec]]
-    caveats: tuple[str, ...] = ()
+    name: str
+    formats: frozenset[str]
+    grid_formats: frozenset[str]
+    legend_locations: frozenset[str]
+    markers: frozenset[str]
+
+    def check(self, scene: AxesScene | GridScene) -> None:
+        r"""Check that a scene only asks for what the backend supports.
+
+        Args:
+            scene: The scene to check.
+
+        Raises:
+            UnsupportedSpecError: if a legend location or a marker is
+                not supported. The message names the backend and the
+                supported values. Also a ``NotImplementedError``.
+
+        Example:
+            ```pycon
+            >>> from plotmux.backends.base import BackendCapabilities
+            >>> from plotmux.scene import AxesScene
+            >>> caps = BackendCapabilities("demo", frozenset(), frozenset(), frozenset(), frozenset())
+            >>> caps.check(AxesScene(primitives=()))
+
+            ```
+        """
+        panels = scene.panels if isinstance(scene, GridScene) else (scene,)
+        for panel in panels:
+            location = panel.legend.location if panel.legend is not None else None
+            if location is not None and location not in self.legend_locations:
+                msg = (
+                    f"The {self.name} backend does not support legend_location={location!r}: "
+                    f"supported values are {sorted(self.legend_locations)}"
+                )
+                raise UnsupportedSpecError(msg)
+            for primitive in panel.primitives:
+                if (
+                    isinstance(primitive, Points)
+                    and primitive.marker is not None
+                    and primitive.marker not in self.markers
+                ):
+                    msg = (
+                        f"The {self.name} backend does not support marker={primitive.marker!r}: "
+                        f"supported values are {sorted(self.markers)}"
+                    )
+                    raise UnsupportedSpecError(msg)
+
+    def check_format(self, fmt: str, *, grid: bool = False) -> None:
+        r"""Check that an export format is supported.
+
+        Args:
+            fmt: The export format (e.g. ``"png"``).
+            grid: ``True`` for the figure of a grid.
+
+        Raises:
+            UnsupportedFormatError: if ``fmt`` is not supported. The
+                message names the backend and the supported formats.
+                Also a ``ValueError``.
+
+        Example:
+            ```pycon
+            >>> from plotmux.backends.base import BackendCapabilities
+            >>> caps = BackendCapabilities("demo", frozenset({"png"}), frozenset(), frozenset(), frozenset())
+            >>> caps.check_format("png")
+            >>> caps.check_format("png", grid=True)
+            Traceback (most recent call last):
+                ...
+            plotmux.exceptions.UnsupportedFormatError: The demo backend does not support exporting a grid to 'png': supported formats are []
+
+            ```
+        """
+        supported = self.grid_formats if grid else self.formats
+        if fmt not in supported:
+            kind = "a grid" if grid else "a figure"
+            msg = (
+                f"The {self.name} backend does not support exporting {kind} to {fmt!r}: "
+                f"supported formats are {sorted(supported)}"
+            )
+            raise UnsupportedFormatError(msg)
 
 
 class Backend(ABC):
     r"""Define the interface implemented by a rendering backend.
 
-    A backend turns a backend-agnostic ``BaseSpec`` into its native
-    figure object (e.g. a matplotlib ``Figure``) and knows how to export
-    that native object to a file.
+    A backend turns a scene (the lowered spec of a figure, see
+    ``plotmux.scene.build_scene``) into its native figure object
+    (e.g. a matplotlib ``Figure``) and knows how to export that native
+    object to a file. A backend implements ``capabilities``, ``draw``
+    and ``save``, and ``show`` and ``mimebundle`` where its library
+    needs them. ``render`` is not overridden.
     """
 
     name: ClassVar[str]
 
-    #: The export formats this backend's ``save`` accepts (e.g.
-    #: ``frozenset({"png", "svg"})``). Exposed so callers can introspect
-    #: a backend's capabilities (``get_backend("bokeh").supported_formats``)
-    #: instead of discovering them only via a ``ValueError`` from ``save``.
-    supported_formats: ClassVar[frozenset[str]]
-
-    #: A ``{spec_type: renderer}`` dict, one entry per spec type this
-    #: backend supports. ``render`` below dispatches on ``type(spec)``
-    #: against this dict via ``resolve_renderer``, so a concrete backend
-    #: only ever needs to own this mapping, not the dispatch mechanics
-    #: around it -- every backend used to hand-write an identical
-    #: ``render`` body doing exactly that lookup-then-call.
-    _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., Any]]]
-
-    #: Short, explicit notes about partial support this backend has
-    #: that membership in ``_RENDERERS`` alone can't express -- e.g. a
-    #: spec type only supported nested inside a ``LayerSpec``, or a
-    #: spec field the backend silently ignores. Empty by default; a
-    #: concrete backend overrides this only where such a caveat is
-    #: known. See ``capabilities()``.
-    _CAVEATS: ClassVar[tuple[str, ...]] = ()
-
-    @classmethod
-    def capabilities(cls) -> BackendCapabilities:
-        r"""Report this backend's supported spec types and known partial-
-        support caveats.
-
-        Purely additive and read-only: it changes no render-time or
-        export-time behavior, it only exposes what ``_RENDERERS`` and
-        ``_CAVEATS`` already record. Lets a caller ask "does this
-        backend support ``SlopeSpec`` standalone?" programmatically
-        instead of hitting ``UnsupportedSpecError`` or searching
-        DESIGN.md. See also ``supported_formats`` for export-format
-        support.
+    @abstractmethod
+    def capabilities(self) -> BackendCapabilities:
+        r"""Declare the export formats, legend locations and markers
+        supported by this backend.
 
         Returns:
             This backend's ``BackendCapabilities``.
         """
-        return BackendCapabilities(
-            backend_name=cls.name,
-            spec_types=frozenset(cls._RENDERERS),
-            caveats=cls._CAVEATS,
-        )
 
-    def render(self, spec: BaseSpec, **kwargs: Any) -> Any:
-        r"""Render a spec into the backend's native figure object.
+    @abstractmethod
+    def draw(self, scene: AxesScene | GridScene) -> Any:
+        r"""Draw a scene into the backend's native figure object.
 
         Args:
-            spec: The backend-agnostic spec to render.
-            **kwargs: Additional backend-specific keyword arguments,
-                forwarded to the underlying plotting call.
+            scene: The scene to draw: one axes, or a grid of axes.
+
+        Returns:
+            The backend's native figure object.
+        """
+
+    def render(self, spec: FigureSpec) -> Any:
+        r"""Render a spec into the backend's native figure object.
+
+        The spec is lowered to a scene, checked against
+        ``capabilities`` and drawn. The check happens before any
+        drawing.
+
+        Args:
+            spec: The spec of a panel or of a grid.
 
         Returns:
             The backend's native figure object.
 
         Raises:
-            NotImplementedError: if there is no renderer registered
-                for the type of ``spec`` in this backend's
-                ``_RENDERERS``.
+            UnsupportedSpecError: if the spec asks for something the
+                backend does not support (see
+                ``BackendCapabilities.check``).
         """
-        renderer = resolve_renderer(self._RENDERERS, spec, self.name)
-        return renderer(spec, **kwargs)
+        scene = build_scene(spec)
+        self.capabilities().check(scene)
+        return self.draw(scene)
 
     def show(self, native: Any) -> None:
         r"""Display a native figure object with the library's own viewer.

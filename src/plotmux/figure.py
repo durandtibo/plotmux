@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 from plotmux.backends.registry import get_backend
 from plotmux.export import save
+from plotmux.specs import GridSpec
 
 if TYPE_CHECKING:
     from collections.abc import Collection
@@ -49,19 +50,23 @@ class Figure:
 
     @property
     def supported_formats(self) -> frozenset[str]:
-        r"""The export formats accepted by ``save`` for this figure's
-        backend.
+        r"""The export formats accepted by ``save`` for this figure.
 
         Different backends support different export formats (e.g. the
         ``bokeh`` backend only supports ``"html"``, since static image
-        export requires an extra, environment-specific dependency).
-        This lets callers check what is supported ahead of time
-        instead of discovering it via a ``ValueError`` from ``save``.
+        export requires an extra, environment-specific dependency), and
+        a grid may support fewer formats than a single panel (``xy``
+        exports a grid to HTML only). This lets callers check what is
+        supported ahead of time instead of discovering it via an
+        ``UnsupportedFormatError`` from ``save``.
 
         Returns:
             The set of export formats accepted by ``save``.
         """
-        return get_backend(self.backend_name).supported_formats
+        capabilities = get_backend(self.backend_name).capabilities()
+        return (
+            capabilities.grid_formats if isinstance(self.spec, GridSpec) else capabilities.formats
+        )
 
     def save(self, path: str | Path) -> None:
         r"""Save the figure to a file.

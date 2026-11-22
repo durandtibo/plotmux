@@ -18,14 +18,22 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 PLUGIN_MODULE = """
-from plotmux.backends.base import Backend
+from plotmux.backends.base import Backend, BackendCapabilities
 
 
 class PluginBackend(Backend):
     name = "plugin"
-    supported_formats = frozenset({"txt"})
 
-    def render(self, spec, **kwargs):
+    def capabilities(self):
+        return BackendCapabilities(
+            name="plugin",
+            formats=frozenset({"txt"}),
+            grid_formats=frozenset({"txt"}),
+            legend_locations=frozenset(),
+            markers=frozenset(),
+        )
+
+    def draw(self, scene):
         return "rendered"
 
     def save(self, native, path, fmt):

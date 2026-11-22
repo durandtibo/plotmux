@@ -1,5 +1,4 @@
-r"""Apply the common figure-level style fields onto a matplotlib
-``Axes``.
+r"""Apply the style of an ``AxesScene`` onto a matplotlib ``Axes``.
 
 This module is only imported when matplotlib is installed (see
 ``plotmux.backends.matplotlib.__init__``), so it can import matplotlib
@@ -8,25 +7,16 @@ unconditionally.
 
 from __future__ import annotations
 
-__all__ = ["apply_common_style"]
+__all__ = ["LEGEND_LOCATION", "MARKER_STYLE", "apply_style"]
 
-from typing import TYPE_CHECKING, cast
-
-from plotmux.specs import XBoundSpec
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
-    from plotmux.specs import BaseSpec
+    from plotmux.scene import AxesScene
 
-#: Maps ``BaseSpec.legend_location``'s portable position name to
-#: matplotlib's own ``Axes.legend(loc=...)`` string. matplotlib spells
-#: every corner/edge ``"upper left"``-style rather than bokeh's
-#: ``"top_left"``-style (see
-#: ``plotmux.backends.bokeh.style.apply_common_style``, which needs no
-#: such table since this candidate's names were chosen to match bokeh's
-#: own vocabulary directly); ``"best"`` matches matplotlib's own name
-#: already and needs no entry here.
+#: The matplotlib ``loc`` of each portable legend location.
 LEGEND_LOCATION = {
     "top_left": "upper left",
     "top_right": "upper right",
@@ -38,85 +28,86 @@ LEGEND_LOCATION = {
     "right": "center right",
 }
 
+#: The matplotlib marker of each portable marker name.
+MARKER_STYLE = {
+    "circle": "o",
+    "square": "s",
+    "triangle": "^",
+    "diamond": "D",
+    "cross": "+",
+    "x": "x",
+}
 
-def apply_common_style(ax: Axes, spec: BaseSpec) -> Axes:
-    r"""Apply the common figure-level style fields onto an ``Axes``.
 
-    Applies ``title``/``xlabel``/``ylabel``/``xscale``/``yscale``/
-    ``background_color``/``ymin``/``ymax``/``xmin``/``xmax``/
-    ``legend_title``/``legend_location``/``legend_orientation`` from
-    ``spec`` (defined on
-    ``BaseSpec``, shared by every chart type). Called once per
-    backend, right after the chart-specific renderer has drawn its
-    mark, so a new chart type gets title/label/scale support for
-    free.
+def apply_style(ax: Axes, scene: AxesScene) -> Axes:
+    r"""Apply the axes style of a scene onto an ``Axes``.
 
-    ``legend_title``/``legend_location`` only re-issue
-    ``ax.legend(...)`` when a legend already exists (i.e. some mark
-    set a ``label``, and one of the per-type renderers already called
-    the label-less ``ax.legend()`` -- see e.g.
-    ``plotmux.backends.matplotlib.scatter.render_scatter``): calling
-    ``ax.legend()`` with no labeled artist at all would print a
-    spurious "no artists with labels found" warning.
+    Called once per axes, after the primitives are drawn. It applies
+    the title, the labels, the scales, the background color, the
+    limits and the legend.
 
     Args:
         ax: The matplotlib ``Axes`` to style.
-        spec: The spec whose common style fields to apply.
+        scene: The scene whose axes style to apply.
 
     Returns:
         The ``Axes`` that was styled.
+
+    Example:
+        ```pycon
+        >>> from matplotlib.figure import Figure
+        >>> from plotmux.backends.matplotlib.style import apply_style
+        >>> from plotmux.scene import AxesScene
+        >>> ax = Figure().subplots()
+        >>> apply_style(ax, AxesScene(primitives=(), title="t")).get_title()
+        't'
+
+        ```
     """
-    if spec.title is not None:
-        ax.set_title(spec.title)
-    if spec.xlabel is not None:
-        ax.set_xlabel(spec.xlabel)
-    if spec.ylabel is not None:
-        ax.set_ylabel(spec.ylabel)
-    ax.set_xscale(spec.xscale)
-    ax.set_yscale(spec.yscale)
-    if spec.background_color is not None:
-        # ``spec.background_color``, once set, is already a canonical RGBA
-        # tuple: it went through ``parse_color`` in ``BaseSpec._validate_base``.
-        # matplotlib's ``Axes.set_facecolor`` accepts that tuple directly, no
-        # conversion helper needed (unlike bokeh/altair/xy's native color
-        # representations).
-        ax.set_facecolor(cast("tuple[float, float, float, float]", spec.background_color))
-    if spec.ymin is not None or spec.ymax is not None:
-        ax.set_ylim(bottom=spec.ymin, top=spec.ymax)
-    if isinstance(spec, XBoundSpec) and (spec.xmin is not None or spec.xmax is not None):
-        ax.set_xlim(left=spec.xmin, right=spec.xmax)
-    _apply_legend_style(ax, spec)
+    if scene.title is not None:
+        ax.set_title(scene.title)
+    if scene.xlabel is not None:
+        ax.set_xlabel(scene.xlabel)
+    if scene.ylabel is not None:
+        ax.set_ylabel(scene.ylabel)
+    ax.set_xscale(scene.xscale)
+    ax.set_yscale(scene.yscale)
+    if scene.background_color is not None:
+        ax.set_facecolor(scene.background_color)
+    if scene.xlim != (None, None):
+        ax.set_xlim(left=scene.xlim[0], right=scene.xlim[1])
+    if scene.ylim != (None, None):
+        ax.set_ylim(bottom=scene.ylim[0], top=scene.ylim[1])
+    _apply_legend(ax, scene)
     return ax
 
 
-def _apply_legend_style(ax: Axes, spec: BaseSpec) -> None:
-    r"""Apply the legend style fields of ``spec`` onto an ``Axes``.
-
-    The legend is only re-issued (``ax.legend(...)``) when one already
-    exists and at least one of ``legend_title``/``legend_location``/
-    ``legend_orientation`` is set. Factored out of
-    ``apply_common_style`` to keep its complexity under the linter's
-    limit.
+def _apply_legend(ax: Axes, scene: AxesScene) -> None:
+    r"""Draw the legend of a scene, if it has one.
 
     Args:
-        ax: The matplotlib ``Axes`` whose legend to style.
-        spec: The spec whose legend style fields to apply.
+        ax: The matplotlib ``Axes`` that holds the labeled artists.
+        scene: The scene whose legend style to apply.
+
+    Example:
+        ```pycon
+        >>> from matplotlib.figure import Figure
+        >>> from plotmux.backends.matplotlib.style import _apply_legend
+        >>> from plotmux.scene import AxesScene
+        >>> ax = Figure().subplots()
+        >>> _apply_legend(ax, AxesScene(primitives=()))
+        >>> ax.get_legend() is None
+        True
+
+        ```
     """
-    legend = ax.get_legend()
-    if legend is None or (
-        spec.legend_title is None
-        and spec.legend_location is None
-        and spec.legend_orientation is None
-    ):
+    if scene.legend is None:
         return
-    legend_kwargs = {}
-    if spec.legend_title is not None:
-        legend_kwargs["title"] = spec.legend_title
-    if spec.legend_location is not None:
-        legend_kwargs["loc"] = LEGEND_LOCATION.get(spec.legend_location, spec.legend_location)
-    if spec.legend_orientation == "horizontal":
-        # matplotlib has no direct orientation flag, only a column
-        # count -- so "horizontal" is approximated as laying out every
-        # handle in one row.
-        legend_kwargs["ncols"] = len(legend.legend_handles)
-    ax.legend(**legend_kwargs)
+    kwargs: dict[str, object] = {}
+    if scene.legend.title is not None:
+        kwargs["title"] = scene.legend.title
+    if scene.legend.location is not None:
+        kwargs["loc"] = LEGEND_LOCATION[scene.legend.location]
+    if scene.legend.orientation == "horizontal":
+        kwargs["ncols"] = len(ax.get_legend_handles_labels()[0])
+    ax.legend(**kwargs)

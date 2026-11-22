@@ -23,14 +23,14 @@ __all__ = [
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Literal, overload
 
+from plotmux.colors import parse_optional_color
 from plotmux.colors.palette import DEFAULT_PALETTE
 from plotmux.primitives import Bars, Line, Points
 from plotmux.specs import GridSpec, PanelSpec
 from plotmux.utils.equality import ValueObject
 
 if TYPE_CHECKING:
-    from plotmux.colors import Color
-    from plotmux.primitives import Primitive
+    from plotmux.primitives import RGBA, Primitive
     from plotmux.specs import FigureSpec, LegendLocation
 
 
@@ -90,7 +90,7 @@ class AxesScene(ValueObject):
     yscale: Literal["linear", "log"] = "linear"
     xlim: tuple[float | None, float | None] = (None, None)
     ylim: tuple[float | None, float | None] = (None, None)
-    background_color: Color = None
+    background_color: RGBA | None = None
     legend: LegendStyle | None = None
     categories: tuple[str, ...] | None = None
 
@@ -197,7 +197,7 @@ def _build_axes(panel: PanelSpec) -> AxesScene:
         yscale=panel.yscale,
         xlim=(panel.xmin, panel.xmax),
         ylim=(panel.ymin, panel.ymax),
-        background_color=panel.background_color,
+        background_color=parse_optional_color(panel.background_color),
         legend=legend,
         categories=_collect_categories(primitives),
     )

@@ -43,12 +43,19 @@ def _chart(backend: str) -> Figure:
 
 def _layer(backend: str) -> Figure:
     x = np.arange(5.0)
-    return plotmux.layer(plotmux.line(x, x).spec, plotmux.scatter(x, x).spec, backend=backend)
+    return plotmux.layer(
+        plotmux.line(x, x, backend=backend), plotmux.scatter(x, x, backend=backend), backend=backend
+    )
 
 
 def _grid(backend: str) -> Figure:
     x = np.arange(5.0)
-    return plotmux.grid(plotmux.line(x, x).spec, plotmux.hist(x).spec, ncols=2, backend=backend)
+    return plotmux.grid(
+        plotmux.line(x, x, backend=backend),
+        plotmux.hist(x, backend=backend),
+        ncols=2,
+        backend=backend,
+    )
 
 
 FIGURES = [_chart, _layer, _grid]

@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import pytest
 
-from plotmux.backends.base import Backend
 from plotmux.backends.registry import _REGISTRY, known_backend_names, register_backend
 from plotmux.config import backend, get_default_backend, set_backend
+from tests.fakes import FakeBackend
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-    from pathlib import Path
 
 ##########################################
 #     Tests for get_default_backend     #
@@ -24,16 +23,6 @@ def test_get_default_backend_initial() -> None:
 
 @pytest.fixture
 def _registered_fake_backend() -> Iterator[None]:
-    class FakeBackend(Backend):
-        name = "fake"
-
-        def render(self, spec: Any, **kwargs: Any) -> Any:
-            del kwargs
-            return spec
-
-        def save(self, native: Any, path: Path, fmt: str) -> None:
-            del native, path, fmt
-
     snapshot = dict(_REGISTRY)
     register_backend(FakeBackend())
     yield

@@ -1,4 +1,4 @@
-r"""Contain xy-specific style helpers shared across chart types.
+r"""Contain xy-specific style helpers.
 
 This module is only imported when xy is installed (see
 ``plotmux.backends.xy.__init__``), so it can import xy unconditionally.
@@ -6,16 +6,29 @@ This module is only imported when xy is installed (see
 
 from __future__ import annotations
 
-__all__ = ["apply_common_style", "rgba_to_xy"]
+__all__ = ["LEGEND_LOCATION", "MARKERS", "apply_style", "rgba_to_xy"]
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 import xy
 
-from plotmux.specs import XBoundSpec
-
 if TYPE_CHECKING:
-    from plotmux.specs import BaseSpec
+    from plotmux.scene import AxesScene
+
+#: The xy ``loc`` of each portable legend location.
+LEGEND_LOCATION = {
+    "top_left": "upper left",
+    "top_right": "upper right",
+    "bottom_left": "lower left",
+    "bottom_right": "lower right",
+    "top": "upper center",
+    "bottom": "lower center",
+    "left": "center left",
+    "right": "center right",
+}
+
+#: The scatter markers drawn by xy (its ``symbol`` names).
+MARKERS = ("circle", "square", "triangle", "diamond", "cross", "x")
 
 
 def rgba_to_xy(color: tuple[float, float, float, float]) -> str:
@@ -23,9 +36,7 @@ def rgba_to_xy(color: tuple[float, float, float, float]) -> str:
 
     xy's mark color parameters accept a CSS color string (e.g.
     ``"rgba(255, 0, 0, 1)"``), so the canonical ``[0, 1]`` float RGBA
-    tuple produced by ``plotmux.colors.parse_color`` is converted
-    to that format here rather than in ``core/``, keeping ``core/``
-    free of any single backend's native color representation.
+    tuple of the scene is converted to that format here.
 
     Args:
         color: The color as an ``(r, g, b, a)`` tuple of floats in
@@ -48,106 +59,94 @@ def rgba_to_xy(color: tuple[float, float, float, float]) -> str:
     return f"rgba({round(r * 255)}, {round(g * 255)}, {round(b * 255)}, {a})"
 
 
-def apply_common_style(chart: xy.Chart, spec: BaseSpec) -> xy.Chart:
-    r"""Apply the common figure-level style fields onto an xy ``Chart``.
+def apply_style(chart: xy.Chart, scene: AxesScene) -> xy.Chart:
+    r"""Apply the axes style of a scene onto an xy ``Chart``.
 
-    Applies ``title``/``xlabel``/``ylabel``/``xscale``/``yscale``/
-    ``ymin``/``ymax``/``xmin``/``xmax``/``legend_title``/
-    ``legend_location`` from ``spec`` (defined on ``BaseSpec``, shared
-    by every chart type). Called once per backend, right after the
-    chart-specific renderer has built its ``Chart``, so a new chart
-    type gets title/label/scale support for free.
+    xy charts are structure-immutable, so this builds a new ``Chart``
+    instead of mutating ``chart``: the marks already drawn are kept
+    and an ``x_axis``/``y_axis`` pair carrying the labels, the scales
+    and the limits is appended, then a ``legend`` when the scene sets
+    a legend title, location or orientation. The layout of ``chart``
+    is copied over unchanged.
 
-    ``legend_title``/``legend_location`` are appended as one
-    ``xy.legend(title=..., loc=...)`` chrome child alongside the
-    ``x_axis``/``y_axis`` pair below, mirroring bokeh's
-    ``fig.legend.title``/``.location``/altair's legend-only ``color``
-    re-``encode`` -- unlike those two, xy's ``legend`` chrome needs no
-    "does a legend already exist" guard: an ``xy.legend()`` with no
-    named series simply draws nothing, so it is safe to append
-    unconditionally whenever either is set.
-
-    xy charts are structure-immutable (see ``xy.Chart.append``'s
-    docstring), so this builds a new ``Chart`` instead of mutating
-    ``chart`` in place: the existing children (the mark(s) already
-    drawn) are kept and an ``x_axis``/``y_axis`` pair carrying
-    ``xlabel``/``ylabel`` and ``xscale``/``yscale`` is appended.
-    Layout (``width``/``height``/``padding``/``data``) is copied over
-    unchanged from ``chart``; other constructor arguments (styling,
-    interaction, linking, ...) are intentionally not reflected off
-    ``chart`` here -- several (e.g. ``select``) are stored under a
-    private attribute name specifically because the public name
-    collides with a same-named ``Chart`` method, so generic
-    ``getattr`` introspection over ``xy.Chart``'s signature would
-    silently pick up the wrong (bound-method) value.
+    ``xy.x_axis``/``xy.y_axis`` take both bounds of a limit together:
+    a limit with only one explicit bound is left to the autoscale of
+    xy.
 
     Args:
         chart: The xy ``Chart`` to style.
-        spec: The spec whose common style fields to apply.
+        scene: The scene whose axes style to apply.
 
     Returns:
-        A new ``Chart`` with the common style fields applied.
+        A new ``Chart`` with the axes style applied.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> import xy
+        >>> from plotmux.backends.xy.style import apply_style
+        >>> from plotmux.scene import AxesScene
+        >>> chart = xy.chart(xy.line(np.arange(3.0), np.arange(3.0)))
+        >>> apply_style(chart, AxesScene(primitives=(), title="t")).title
+        't'
+
+        ```
     """
-    # ``xy.y_axis``'s ``domain`` takes both bounds together (``tuple[float,
-    # float]``, no partial-bound form) -- unlike matplotlib's
-    # ``Axes.set_ylim``/bokeh's ``y_range.start``/``.end`` (see
-    # ``plotmux.backends.matplotlib.style``/
-    # ``plotmux.backends.bokeh.style``), which can pin just one bound and
-    # leave the other autoscaled. So only both explicit bounds together are
-    # forwarded here; either alone is left for xy's own autoscale, same as
-    # neither being set.
-    y_domain = (spec.ymin, spec.ymax) if spec.ymin is not None and spec.ymax is not None else None
-    # Same "both bounds together, or neither" shape as ``y_domain`` above,
-    # for the x-axis. Gated on ``XBoundSpec``: ``HistogramSpec``/``CdfSpec``
-    # are not ``XBoundSpec`` (their own ``xmin``/``xmax`` accept a quantile
-    # string, resolved and applied by their own renderer -- see
-    # ``plotmux.specs.base.XBoundSpec``).
-    x_domain = (
-        (spec.xmin, spec.xmax)
-        if isinstance(spec, XBoundSpec) and spec.xmin is not None and spec.xmax is not None
-        else None
-    )
+    x_domain = _domain(scene.xlim)
+    y_domain = _domain(scene.ylim)
     children = (
         *chart.children,
-        xy.x_axis(label=spec.xlabel, type_=spec.xscale, domain=x_domain),
-        xy.y_axis(label=spec.ylabel, type_=spec.yscale, domain=y_domain),
+        xy.x_axis(label=scene.xlabel, type_=scene.xscale, domain=x_domain),
+        xy.y_axis(label=scene.ylabel, type_=scene.yscale, domain=y_domain),
     )
-    if (
-        spec.legend_title is not None
-        or spec.legend_location is not None
-        or spec.legend_orientation is not None
+    legend = scene.legend
+    if legend is not None and (
+        legend.title is not None or legend.location is not None or legend.orientation is not None
     ):
-        # ``BaseSpec.legend_location``'s portable names (``"top_left"``,
-        # ...) match xy's own ``legend(loc=...)`` vocabulary once
-        # underscore-tokenized (xy accepts both `"_"` and `" "` as token
-        # separators, see ``xy._validate.legend_loc``), including
-        # ``"best"`` (xy's own auto-placement mode) -- so, unlike every
-        # other backend, this needs no translation table at all.
-        legend_kwargs: dict[str, Any] = {"title": spec.legend_title, "loc": spec.legend_location}
-        if spec.legend_orientation == "horizontal":
-            # xy has no direct orientation flag, only a column count (like
-            # matplotlib, see
-            # ``plotmux.backends.matplotlib.style.apply_common_style``) --
-            # so "horizontal" is approximated as laying out every named
-            # series in one row.
+        legend_kwargs: dict[str, Any] = {
+            "title": legend.title,
+            "loc": None if legend.location is None else LEGEND_LOCATION[legend.location],
+        }
+        if legend.orientation == "horizontal":
+            # xy has no orientation flag, only a column count: "horizontal"
+            # lays out every named series in one row.
             named = sum(1 for child in chart.children if getattr(child, "name", None) is not None)
             legend_kwargs["ncols"] = max(named, 1)
         children = (*children, xy.legend(**legend_kwargs))
     style = dict(chart.style or {})
-    if spec.background_color is not None:
-        # ``spec.background_color``, once set, is already a canonical RGBA
-        # tuple: it went through ``parse_color`` in
-        # ``BaseSpec._validate_base``.
-        style["backgroundColor"] = rgba_to_xy(
-            cast("tuple[float, float, float, float]", spec.background_color)
-        )
+    if scene.background_color is not None:
+        style["backgroundColor"] = rgba_to_xy(scene.background_color)
     return xy.Chart(
         chart.kind,
         children,
-        title=spec.title,
+        title=scene.title,
         width=chart.width,
         height=chart.height,
         padding=chart.padding,
         data=chart.data,
         style=style or None,
     )
+
+
+def _domain(limits: tuple[float | None, float | None]) -> tuple[float, float] | None:
+    r"""Return the domain of an xy axis from the limits of a scene.
+
+    Args:
+        limits: The ``(lower, upper)`` limits of the scene.
+
+    Returns:
+        The ``(lower, upper)`` domain if both bounds are set, else
+            ``None``: xy takes both bounds together.
+
+    Example:
+        ```pycon
+        >>> from plotmux.backends.xy.style import _domain
+        >>> _domain((1.0, 2.0))
+        (1.0, 2.0)
+        >>> _domain((1.0, None)) is None
+        True
+
+        ```
+    """
+    lower, upper = limits
+    return (lower, upper) if lower is not None and upper is not None else None
