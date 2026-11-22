@@ -8,10 +8,10 @@
   `.venv/bin/ruff format src tests` (`inv lint.check-python`, `inv format.check-python` and
   `inv format.check-docstrings` run the same checks as CI). Fix the issues raised by ruff.
   Ignoring an issue (`noqa`, a changed rule set) is not fixing it.
-- Type check with `.venv/bin/ty check` and `.venv/bin/pyright` (`inv types.check --complete` runs both,
-  configured in `pyproject.toml`, ty checks `src`, `tests` and `dev`, pyright checks `src`). Fix the issues raised by ty and pyright.
-  Ignoring an issue (`type: ignore`, `ty: ignore`, `pyright: ignore`, a cast that hides the problem)
-  is not fixing it.
+- Type check with `.venv/bin/ty check` and `.venv/bin/pyright` (`inv types.check --complete` runs
+  both, configured in `pyproject.toml`: ty checks `src`, `tests` and `dev`, pyright checks `src`).
+  Fix the issues raised by ty and pyright. Ignoring an issue (`type: ignore`, `ty: ignore`,
+  `pyright: ignore`, a cast that hides the problem) is not fixing it.
 - Run the unit tests of the packages you changed (for example
   `.venv/bin/pytest tests/unit/specs -q`). Some tests fail on `main`; check with `git stash`
   before blaming your change.
@@ -81,7 +81,7 @@
   or to the other dunder methods (`__repr__`, `__str__`, `__eq__`, ...).
 - Keep docstrings and documentation up to date and comprehensive: update them whenever the
   behaviour, signature or options of the code change.
-- Target Python 3.10 and above: do not use syntax or standard-library features that are newer.
+- Target Python 3.11 and above: do not use syntax or standard-library features that are newer.
 
 ## Tests
 
@@ -161,29 +161,41 @@ failure points at the specific behavior that broke.
 
 ## GitHub Actions workflows
 
-The workflows are in `.github/workflows/` (no subdirectories). `.github/GUIDELINES.md` lists them
-and describes the conventions: read it before changing a workflow.
+The workflows are in `.github/workflows/` (no subdirectories); the composite actions are in
+`.github/actions/`. `.github/GUIDELINES.md` has the full table of workflows, triggers and
+conventions: read it and keep it up to date when you add, rename or remove a workflow.
 
-- Every file is prefixed by what it does: `ci-` (checks), `lib-` (reusable workflows that only
-  expose outputs), `bot-` (scheduled automation that opens pull requests), `nightly-` (checks of the
-  published package), `release-` (PyPI and documentation) and `security-`.
-- `ci.yaml` is the single entry point of the checks (pull request, push to `main`, nightly). The
-  checks (`ci-test`, `ci-doctest`, `ci-format`, `ci-type-checking`, `ci-cyclic-imports`,
-  `ci-pre-commit`, `ci-notebooks`, `ci-build`, ...) are reusable workflows (`workflow_call`, plus
-  `workflow_dispatch` to run one alone) called from `ci.yaml`. To add a check, create a
-  reusable workflow and add a job in `ci.yaml`.
+- The file name starts with a prefix that gives the role of the workflow:
+  - `ci-`: quality and test checks of the repository source. Most are reusable workflows
+    (`workflow_call`, plus `workflow_dispatch` to run one alone) called from `ci.yaml`.
+    `ci-verify-workflows.yaml` (every change of the workflows) is standalone and not called from
+    `ci.yaml`.
+  - `lib-`: reusable helpers that only compute an output for other workflows (test matrix,
+    package dependencies, extras, versions).
+  - `nightly-`: scheduled tests of the _published_ PyPI package, not of the source.
+    `nightly-package.yaml` is the entry point; the other `nightly-test-*` are called by it.
+  - `bot-`: scheduled automation that opens pull requests (dependency updates, pinning
+    actions, formatting, ...) with the `ci-bot` GitHub App token.
+  - `release-`: publishing to PyPI and the documentation, triggered by version tags
+    (`v*.*.*`) or manually; they run `ci.yaml` before publishing.
+  - `security-`: dependency review of PRs, scheduled dependency audit and scorecard.
+- `ci.yaml` is the single entry point of the checks (pull request, push to `main`, nightly).
+  It calls `lib-get-test-matrix.yaml` once and passes the matrix (`test-matrix` input) to the
+  test workflows, so the Python versions and OS are defined in one place. To add a check,
+  create a `ci-<name>.yaml` reusable workflow and add a job in `ci.yaml`.
 - The Python versions and the operating systems to test are in `.github/workflow-config.json`,
   loaded by `lib-get-test-matrix.yaml` with `durandtibo/workflow-config-action`. The names of the
   extras are read from `pyproject.toml` with `durandtibo/extract-pyproject-metadata-action`
   (`lib-get-package-extras.yaml`): do not copy them in a workflow.
-- Pin every action to a commit SHA with a `# ratchet:owner/repo@vX.Y.Z` comment (`bot-pin-action.yaml`
-  does it).
 - Conventions: a header comment that says what the workflow does and when it runs; `permissions: {}`
-  at the workflow level and `contents: read` (more only if needed) on each job; a `timeout-minutes`
-  on each job; follow the existing workflows for the setup of the environment and the use of `inv`
-  tasks.
-- `ci-verify-workflows.yaml` lints the workflows: check your changes with `actionlint` (`make lint-actions`)
-  when available.
+  at the workflow level and the minimum permissions per job (`contents: read` by default);
+  `timeout-minutes` on every job; actions pinned to a commit SHA with a
+  `# ratchet:owner/repo@vX.Y.Z` comment (`bot-pin-action.yaml` maintains them); follow the existing
+  workflows for the setup of the environment and the use of `inv` tasks.
+- Set `permissions` on every job (including jobs that call a reusable workflow). Every workflow
+  has `permissions: {}` at the workflow level (it grants nothing), never a grant.
+- `ci-verify-workflows.yaml` lints the workflows: check your changes with `actionlint`
+  (`make lint-actions`) when available.
 
 ## Releases
 
