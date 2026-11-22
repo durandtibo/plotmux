@@ -130,11 +130,11 @@ src/plotmux/
 ├── backends/
 │   ├── base.py                  # Backend ABC + resolve_renderer()/
 │   │                             #   check_export_format()/make_renderer()
-│   ├── registry.py              # register_backend() / get_backend() (lazy
-│   │                             #   per-name import) / load_entry_point_backends()
+│   ├── registry.py              # register_backend(replace=) / get_backend()
+│   │                             #   (lazy per-name import) / available_backends()
 │   │                             #   / known_backend_names()
 │   ├── matplotlib/
-│   │   ├── __init__.py          # registers MatplotlibBackend if available
+│   │   ├── __init__.py          # empty: registers nothing (lazy registry)
 │   │   ├── backend.py           # MatplotlibBackend
 │   │   ├── style.py             # apply_common_style(ax, spec)
 │   │   ├── histogram.py         # render_histogram(ax, spec) -> Axes
@@ -147,7 +147,7 @@ src/plotmux/
 │   │   ├── layer.py              # render_layer(ax, spec) -> shared Axes
 │   │   └── grid.py               # render_grid(fig, spec) -> Figure with subplots
 │   ├── xy/
-│   │   ├── __init__.py          # registers XyBackend if available
+│   │   ├── __init__.py          # empty: registers nothing (lazy registry)
 │   │   ├── backend.py           # XyBackend (renderers wrapped via
 │   │   │                         #   backends.base.make_renderer)
 │   │   ├── style.py             # rgba_to_xy(); apply_common_style(chart, spec)
@@ -164,7 +164,7 @@ src/plotmux/
 │   │                             #   independent panels, so PNG/SVG/PDF/... are
 │   │                             #   not supported for a grid, only "html")
 │   ├── bokeh/
-│   │   ├── __init__.py          # registers BokehBackend if available
+│   │   ├── __init__.py          # empty: registers nothing (lazy registry)
 │   │   ├── backend.py           # BokehBackend
 │   │   ├── style.py             # rgba_to_bokeh(); apply_common_style(fig, spec)
 │   │   ├── histogram.py         # render_histogram(fig, spec) -> figure
@@ -178,7 +178,7 @@ src/plotmux/
 │   │   ├── layer.py              # render_layer(fig, spec) -> shared figure
 │   │   └── grid.py               # render_grid(spec) -> bokeh gridplot layout
 │   ├── altair/
-│   │   ├── __init__.py          # registers AltairBackend if available
+│   │   ├── __init__.py          # empty: registers nothing (lazy registry)
 │   │   ├── backend.py           # AltairBackend (renderers wrapped via
 │   │   │                         #   backends.base.make_renderer)
 │   │   ├── style.py             # rgba_to_altair(); prepare_color(); apply_common_style(chart, spec)
@@ -191,7 +191,7 @@ src/plotmux/
 │   │   ├── layer.py              # render_layer(spec) -> alt.LayerChart, via alt.layer(*charts)
 │   │   └── grid.py               # render_grid(spec) -> alt.ConcatChart, via alt.concat(*charts)
 │   └── plotly/
-│       ├── __init__.py          # registers PlotlyBackend if available
+│       ├── __init__.py          # empty: registers nothing (lazy registry)
 │       ├── backend.py           # PlotlyBackend
 │       ├── style.py             # rgba_to_plotly(); DASH_STYLE; apply_common_style(fig, spec)
 │       ├── histogram.py         # render_histogram(fig, spec, row=, col=) -> go.Figure
@@ -314,36 +314,34 @@ flow is written once, not once per public function.
 
 ### 3.4 Lazy registration and third-party plugins
 
-Registration is **lazy**: `plotmux/__init__.py` does _not_ import any
-of the five built-in backend subpackages at `import plotmux` time.
-Instead, `backends/registry.py` holds `_BUILTIN_BACKEND_MODULES`, a
-`{name: module path}` map, and `get_backend(name)` imports the
-matching submodule on first request for that name; each subpackage's
-`__init__.py` registers itself as an import-time side effect (guarded
-by its own `is_*_available()` check), triggered on that first
-request rather than at `import plotmux` time. This means `import
-plotmux` does not pay the import cost (and underlying-library import
-cost) of every installed backend regardless of which one, if any, a
-given process actually uses; a process that only ever calls
-`plotmux.hist(..., backend="matplotlib")` never imports `xy`,
-`bokeh`, `altair`, or `plotly` even if all four happen to be installed
-alongside matplotlib.
+Loading is **lazy**: `import plotmux` imports no backend module, no
+plotting library and no plugin. `backends/registry.py` finds a backend
+by name, in this order: an instance given to
+`register_backend(backend, *, replace=False)`, the built-in table
+`_BUILTIN_BACKENDS` (`{name: "module:Class"}`), then the
+`plotmux.backends` entry-point group. `get_backend(name)` imports only
+the module of that name on the first request for it, instantiates the
+class once and caches the instance (the first instance is kept if two
+threads load the same name at once). The `plotmux.backends.<name>`
+subpackages register nothing at import time. A backend whose library
+cannot be imported raises `BackendNotFoundError` with the extra to
+install and the `ImportError` as its cause. A process that only ever
+calls `plotmux.hist(..., backend="matplotlib")` never imports `xy`,
+`bokeh`, `altair`, or `plotly` even if all four are installed.
 
-`plotmux/__init__.py` additionally calls
-`load_entry_point_backends()` once, at import time: this is the
-plug-in mechanism for a _third-party_ backend to register itself
-without editing plotmux's source, via a
-`[project.entry-points."plotmux.backends"]` entry in the plugin
-package's own `pyproject.toml`, pointing at a module that calls
-`register_backend(...)` the same way a built-in backend subpackage
-does. A plugin module that fails to import because its underlying
-library isn't installed is silently skipped (`ImportError`); any other
-exception it raises while loading is caught and turned into a
-`RuntimeWarning` instead of propagating, so a broken third-party
-plugin can never crash `import plotmux` for every user; it can only
-fail to register itself. This is what lets [6](#6-candidate-future-backends)'s
-remaining candidates (plotnine, ...) ship as independent
-packages instead of requiring a PR into this repository.
+A _third-party_ backend is a `Backend` subclass advertised by an entry
+point of the `plotmux.backends` group whose value is
+`package.module:BackendClass`; the name of the entry point is the name
+of the backend. `known_backend_names()` reads these names from the
+installed metadata, which imports nothing, and the plugin is loaded on
+its first use. `register_backend` raises `BackendRegistrationError`
+for a name already registered or built in unless `replace=True`, so a
+plugin cannot take over a built-in name by being installed. The order
+of precedence is an explicit `register_backend(..., replace=True)`,
+then a built-in backend, then an entry point. This is what lets
+[6](#6-candidate-future-backends)'s remaining candidate (plotnine, ...)
+ship as an independent package instead of requiring a PR into this
+repository.
 
 ## 4. Key components
 
@@ -620,32 +618,26 @@ plain `AttributeError`.
 
 ### 4.4 Backend registry
 
-`backends/registry.py` holds a `name -> Backend` mapping
-(`_REGISTRY: dict[str, Backend]`), plus `_BUILTIN_BACKEND_MODULES`, a
-`name -> module path` mapping for the five built-in backends. Each
-backend subpackage's `__init__.py` registers its own instance at
-import time, guarded by that library's `is_*_available()` check (same
-pattern as `utils/imports/optional.py`); `get_backend(name)` imports
-the matching built-in submodule lazily, the first time that name is
-requested, rather than `plotmux/__init__.py` importing all five up
-front (see [3.4](#34-lazy-registration-and-third-party-plugins)).
-`load_entry_point_backends()` additionally imports every module
-advertised under the `plotmux.backends` entry-point group, once, at
-`import plotmux` time, registering any third-party backend the same
-way. Requesting an unregistered backend raises `BackendNotFoundError`
-naming the requested backend and listing the currently-registered
-ones.
+`backends/registry.py` holds `_REGISTRY: dict[str, Backend]` (the
+instances in use: registered, or created on the first use of a name),
+`_BUILTIN_BACKENDS` (`name -> "module:Class"` for the five built-in
+backends) and `ENTRY_POINT_GROUP`. See
+[3.4](#34-lazy-registration-and-third-party-plugins) for the lookup
+order and the plugin contract. The public functions are
+`register_backend(backend, *, replace=False)`, `get_backend(name)`,
+`available_backends()` (the registered backends, the built-in backends
+whose library is installed and the plugin names, with no import),
+`known_backend_names()` and `capabilities(name)`.
 
 `known_backend_names()` computes the set of _known_ backend names
-without importing anything: the union of `_BUILTIN_BACKEND_MODULES`
-keys, whatever `entry_points(group=ENTRY_POINT_GROUP)` currently
-advertises (reading installed packages' metadata is cheap; it does
-not import them), and whatever is already in `_REGISTRY`. This backs
-`config.set_backend()`'s fast validation (see [4.5](#45-configpy)): a
-typo'd or nonexistent backend name fails immediately, at zero import
-cost, while a name that is merely _known_ but not yet _registered_
-(its underlying library isn't installed) only fails later, at render
-time, via `get_backend`.
+without importing anything: the built-in names, whatever
+`entry_points(group=ENTRY_POINT_GROUP)` currently advertises (reading
+installed packages' metadata is cheap; it does not import them), and
+whatever is already in `_REGISTRY`. This backs `config.set_backend()`'s
+fast validation (see [4.5](#45-configpy)): a typo'd or nonexistent
+backend name fails immediately, at zero import cost, while a name that
+is merely _known_ but not yet loaded (its underlying library isn't
+installed) only fails later, at render time, via `get_backend`.
 
 ### 4.5 `config.py`
 
@@ -1163,7 +1155,7 @@ and only for `LayerSpec`.
   [3.4](#34-lazy-registration-and-third-party-plugins)), with no
   change to plotmux itself at all.
 - **Extensibility without breaking existing code**: a new backend is
-  a new subpackage plus one registry entry (proven five times already:
+  a new subpackage plus one built-in table entry (proven five times already:
   matplotlib, xy, bokeh, altair, plotly) or, since
   [3.4](#34-lazy-registration-and-third-party-plugins), an entirely
   external package; a new chart type is a new spec plus one

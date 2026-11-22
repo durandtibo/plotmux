@@ -1,58 +1,87 @@
-r"""Contain the registry of available rendering backends."""
+r"""Contain the registry of available rendering backends.
+
+A backend is found by name, in this order: an instance registered with
+``register_backend``, a built-in backend (``_BUILTIN_BACKENDS``), then a
+third-party backend advertised in the ``plotmux.backends`` entry-point
+group. A backend is imported and instantiated on its first use only, so
+``import plotmux`` imports no backend, no plotting library and no plugin.
+"""
 
 from __future__ import annotations
 
 __all__ = [
     "ENTRY_POINT_GROUP",
+    "available_backends",
     "capabilities",
     "get_backend",
     "known_backend_names",
-    "load_entry_point_backends",
     "register_backend",
 ]
 
 import importlib
-import warnings
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
 
-from plotmux.exceptions import BackendNotFoundError
+from plotmux.backends.base import Backend
+from plotmux.exceptions import BackendNotFoundError, BackendRegistrationError
+from plotmux.utils.imports import (
+    is_altair_available,
+    is_bokeh_available,
+    is_matplotlib_available,
+    is_plotly_available,
+    is_xy_available,
+)
 
 if TYPE_CHECKING:
-    from importlib.metadata import EntryPoint
+    from collections.abc import Callable
 
-    from plotmux.backends.base import Backend, BackendCapabilities
+    from plotmux.backends.base import BackendCapabilities
 
+# The instances that can be used: registered with ``register_backend``, or
+# created on the first use of a built-in or an entry-point backend.
 _REGISTRY: dict[str, Backend] = {}
 
 # The entry-point group third-party packages use to plug in a backend
-# without editing plotmux's source. See ``load_entry_point_backends``.
+# without editing plotmux's source. An entry point is named after the
+# backend and its value is ``package.module:BackendClass``.
 ENTRY_POINT_GROUP = "plotmux.backends"
 
-# Maps a built-in backend's registered ``name`` to the submodule that
-# registers it as an import-time side effect (see e.g.
-# ``plotmux.backends.matplotlib``). ``get_backend`` imports the matching
-# submodule lazily, on first request for that name, instead of
-# ``plotmux/__init__.py`` eagerly importing all four (and so all four
-# underlying plotting libraries) on every ``import plotmux`` regardless of
-# which backend, if any, actually gets used.
-_BUILTIN_BACKEND_MODULES = {
-    "altair": "plotmux.backends.altair",
-    "bokeh": "plotmux.backends.bokeh",
-    "matplotlib": "plotmux.backends.matplotlib",
-    "plotly": "plotmux.backends.plotly",
-    "xy": "plotmux.backends.xy",
+# Maps the name of a built-in backend to ``module:Class``. The module is
+# imported on the first use of the name, never at ``import plotmux``.
+_BUILTIN_BACKENDS = {
+    "altair": "plotmux.backends.altair.backend:AltairBackend",
+    "bokeh": "plotmux.backends.bokeh.backend:BokehBackend",
+    "matplotlib": "plotmux.backends.matplotlib.backend:MatplotlibBackend",
+    "plotly": "plotmux.backends.plotly.backend:PlotlyBackend",
+    "xy": "plotmux.backends.xy.backend:XyBackend",
+}
+
+# Tells if the plotting library of a built-in backend can be imported.
+_BUILTIN_AVAILABILITY: dict[str, Callable[[], bool]] = {
+    "altair": is_altair_available,
+    "bokeh": is_bokeh_available,
+    "matplotlib": is_matplotlib_available,
+    "plotly": is_plotly_available,
+    "xy": is_xy_available,
 }
 
 
-def register_backend(backend: Backend) -> None:
+def register_backend(backend: Backend, *, replace: bool = False) -> None:
     r"""Register a backend instance under its ``name``.
 
-    Registering a backend under a name that is already registered
-    replaces the previous registration.
+    A name already used by a registered backend or by a built-in
+    backend is refused unless ``replace=True``, so installing a package
+    can never take over a built-in name by accident.
 
     Args:
         backend: The backend instance to register.
+        replace: If ``True``, replace the backend already registered
+            under the same name, or the built-in backend of that name.
+
+    Raises:
+        BackendRegistrationError: if the name is already used by a
+            registered or a built-in backend and ``replace`` is
+            ``False``. Also a ``ValueError``.
 
     Example:
         ```pycon
@@ -63,47 +92,71 @@ def register_backend(backend: Backend) -> None:
         >>> register_backend(MyBackend())
         >>> get_backend("my_backend")  # doctest: +ELLIPSIS
         <....MyBackend object at 0x...>
+        >>> register_backend(MyBackend(), replace=True)
 
         ```
     """
-    _REGISTRY[backend.name] = backend
+    name = backend.name
+    if not replace and (name in _REGISTRY or name in _BUILTIN_BACKENDS):
+        msg = (
+            f"A backend is already registered under the name {name!r}. "
+            f"Use register_backend(..., replace=True) to replace it."
+        )
+        raise BackendRegistrationError(msg)
+    _REGISTRY[name] = backend
 
 
 def get_backend(name: str) -> Backend:
-    r"""Get a registered backend by name.
+    r"""Get a backend by name.
+
+    The backend is looked up in the registered instances, then in the
+    built-in backends, then in the entry-point group
+    ``plotmux.backends``. A built-in or entry-point backend is
+    imported and instantiated on the first request for its name, and
+    the instance is reused afterwards. Only the module of that name is
+    imported.
 
     Args:
         name: The name of the backend to retrieve.
 
     Returns:
-        The registered backend instance.
+        The backend instance.
 
     Raises:
-        BackendNotFoundError: if no backend is registered under
-            ``name``. This typically means the backend's underlying
-            plotting library is not installed. Also a
-            ``RuntimeError``, so existing ``except RuntimeError``
-            code keeps working unchanged.
+        BackendNotFoundError: if no backend has this name, or if its
+            module cannot be imported (typically because its plotting
+            library is not installed; the message gives the extra to
+            install). Also a ``RuntimeError``.
     """
-    if name not in _REGISTRY and name in _BUILTIN_BACKEND_MODULES:
-        # Import lazily, on first request for this name: this is what lets
-        # ``plotmux/__init__.py`` skip eagerly importing every built-in
-        # backend submodule (and so every underlying plotting library) up
-        # front. A submodule whose plotting library is not installed
-        # imports fine but registers nothing (see e.g.
-        # ``plotmux.backends.matplotlib``), so ``name`` simply stays
-        # unregistered and the lookup below still raises normally.
-        importlib.import_module(_BUILTIN_BACKEND_MODULES[name])
-    try:
-        return _REGISTRY[name]
-    except KeyError as err:
-        available = sorted(_REGISTRY)
-        msg = (
-            f"No backend registered under the name {name!r}. This backend's "
-            f"underlying plotting library may not be installed. "
-            f"Available backends: {available}"
-        )
-        raise BackendNotFoundError(msg) from err
+    backend = _REGISTRY.get(name)
+    if backend is None:
+        backend = _load_builtin(name) if name in _BUILTIN_BACKENDS else _load_entry_point(name)
+        # Keep the first instance if another thread created one meanwhile.
+        backend = _REGISTRY.setdefault(name, backend)
+    return backend
+
+
+def available_backends() -> frozenset[str]:
+    r"""Return the names of the backends that can be used.
+
+    These are the registered backends, the built-in backends whose
+    plotting library is installed, and the names advertised by an
+    installed plugin (a plugin is imported on its first use, so its
+    library is not checked here). Nothing is imported.
+
+    Returns:
+        The set of usable backend names.
+
+    Example:
+        ```pycon
+        >>> from plotmux.backends.registry import available_backends
+        >>> "matplotlib" in available_backends()
+        True
+
+        ```
+    """
+    builtin = {name for name, is_available in _BUILTIN_AVAILABILITY.items() if is_available()}
+    return frozenset(builtin) | _entry_point_names() | frozenset(_REGISTRY)
 
 
 def capabilities(name: str) -> BackendCapabilities:
@@ -120,8 +173,8 @@ def capabilities(name: str) -> BackendCapabilities:
         The backend's ``BackendCapabilities``.
 
     Raises:
-        BackendNotFoundError: if no backend is registered under
-            ``name`` (see ``get_backend``).
+        BackendNotFoundError: if no backend has this name (see
+            ``get_backend``).
     """
     return get_backend(name).capabilities()
 
@@ -130,69 +183,95 @@ def known_backend_names() -> frozenset[str]:
     r"""Return every backend name that could resolve, without importing
     or registering anything.
 
-    This is the union of the built-in backend names
-    (``_BUILTIN_BACKEND_MODULES``), the names advertised under the
-    ``plotmux.backends`` entry-point group (querying
-    ``importlib.metadata.entry_points`` is itself cheap: it reads
-    installed packages' metadata, it does not import them), and
-    whatever is already registered in ``_REGISTRY`` (covers a backend
-    registered programmatically via ``register_backend`` outside both
-    of the above, e.g. in a test or a script). Used by
-    ``plotmux.config.set_backend``/``backend`` to reject a typo'd or
-    nonexistent name immediately, at zero import cost, rather than
-    only at the next render call (see ``plotmux.backends.get_backend``):
-    a name in this set may still fail at render time if its underlying
-    plotting library is not installed, since being *known* is not the
-    same as being *registered*.
+    This is the union of the built-in backend names, the names
+    advertised under the ``plotmux.backends`` entry-point group
+    (reading the metadata of the installed packages does not import
+    them), and the registered names. Used by
+    ``plotmux.config.set_backend`` to reject a typo'd name immediately,
+    at zero import cost. A name in this set may still fail at render
+    time if its plotting library is not installed (see
+    ``available_backends``).
 
     Returns:
         The set of currently-resolvable backend names.
     """
-    entry_point_names = {ep.name for ep in entry_points(group=ENTRY_POINT_GROUP)}
-    return frozenset(_BUILTIN_BACKEND_MODULES) | entry_point_names | frozenset(_REGISTRY)
+    return frozenset(_BUILTIN_BACKENDS) | _entry_point_names() | frozenset(_REGISTRY)
 
 
-def load_entry_point_backends() -> None:
-    r"""Import every backend advertised via the ``plotmux.backends``
-    entry-point group.
+def _entry_point_names() -> frozenset[str]:
+    r"""Return the backend names advertised in the entry-point group.
 
-    plotmux's own ``matplotlib`` and ``xy`` backends are wired in
-    directly (see ``plotmux.__init__``); this function is the plug-in
-    mechanism for *third-party* backends, so a separate package can
-    add a new backend without editing plotmux's source. To do so, a
-    package declares an entry point of the form::
+    Only the installed metadata is read: no plugin is imported.
 
-        [project.entry-points."plotmux.backends"]
-        my_backend = "my_package.plotmux_backend"
-
-    pointing at a module that calls ``register_backend(...)`` at
-    import time (the same pattern used by
-    ``plotmux.backends.matplotlib``/``plotmux.backends.xy``). Calling
-    this function imports every such module, which registers itself
-    as a side effect.
-
-    A module that fails to import because its own underlying plotting
-    library is not installed (``ImportError``) is silently skipped,
-    mirroring how the built-in backends guard their own registration
-    behind an ``is_..._available()`` check. Any other exception raised
-    while loading a plugin (a bug in the plugin itself, e.g. a broken
-    ``register_backend(...)`` call) is caught and turned into a
-    warning instead of propagating: a broken third-party plugin must
-    never be able to crash ``import plotmux`` for every user, only
-    fail to register itself.
+    Returns:
+        The names of the entry points of the group.
     """
-    for ep in entry_points(group=ENTRY_POINT_GROUP):
-        _load_entry_point(ep)
+    return frozenset(ep.name for ep in entry_points(group=ENTRY_POINT_GROUP))
 
 
-def _load_entry_point(ep: EntryPoint) -> None:
+def _load_builtin(name: str) -> Backend:
+    r"""Import the module of a built-in backend and instantiate it.
+
+    Args:
+        name: The name of a built-in backend.
+
+    Returns:
+        A new backend instance.
+
+    Raises:
+        BackendNotFoundError: if the module cannot be imported.
+    """
+    module_name, _, class_name = _BUILTIN_BACKENDS[name].partition(":")
     try:
-        ep.load()
-    except ImportError:
-        pass
-    except Exception as err:  # noqa: BLE001
+        module = importlib.import_module(module_name)
+    except ImportError as err:
         msg = (
-            f"Skipping plotmux backend plugin {ep.name!r} ({ep.value}): "
-            f"it raised {err!r} while loading"
+            f"The {name!r} backend cannot be used because its plotting library "
+            f"cannot be imported ({err}). "
+            f'Install it with: pip install "plotmux[{name}]"'
         )
-        warnings.warn(msg, RuntimeWarning, stacklevel=2)
+        raise BackendNotFoundError(msg) from err
+    return getattr(module, class_name)()
+
+
+def _load_entry_point(name: str) -> Backend:
+    r"""Load the entry-point backend of this name and instantiate it.
+
+    The value of the entry point is ``package.module:BackendClass``.
+
+    Args:
+        name: The name of a backend advertised in the entry-point
+            group.
+
+    Returns:
+        A new backend instance.
+
+    Raises:
+        BackendNotFoundError: if no entry point has this name, its
+            module cannot be imported, or it does not point to a
+            ``Backend`` subclass.
+    """
+    matches = entry_points(group=ENTRY_POINT_GROUP, name=name)
+    if not matches:
+        msg = (
+            f"No backend registered under the name {name!r}. "
+            f"Known backends: {sorted(known_backend_names())}"
+        )
+        raise BackendNotFoundError(msg)
+    entry_point = next(iter(matches))
+    try:
+        backend_class = entry_point.load()
+    except ImportError as err:
+        msg = (
+            f"The {name!r} backend plugin ({entry_point.value}) cannot be imported "
+            f"({err}). Is its plotting library installed?"
+        )
+        raise BackendNotFoundError(msg) from err
+    if not (isinstance(backend_class, type) and issubclass(backend_class, Backend)):
+        msg = (
+            f"The entry point {name!r} ({entry_point.value}) must point to a Backend "
+            f"subclass with the value 'package.module:BackendClass', but received "
+            f"{backend_class!r}"
+        )
+        raise BackendNotFoundError(msg)
+    return backend_class()

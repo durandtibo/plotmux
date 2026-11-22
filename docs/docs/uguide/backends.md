@@ -23,9 +23,9 @@ five built-in backends:
   the `"html"`/`"json"` export formats are supported: static image export (`png`/`svg`/`pdf`) would
   additionally require the `kaleido` package, which is outside the scope of a `pip install plotly`.
 
-A backend is only registered if its underlying plotting library is installed, so importing
-`plotmux` never fails because a backend's dependency is missing; only calling a plotting function
-that needs it does.
+A backend is only imported when it is used, so importing `plotmux` never fails because a backend's
+dependency is missing; only calling a plotting function that needs it does (it raises a
+`BackendNotFoundError` that names the extra to install).
 
 ## Selecting a Backend per Call
 
@@ -94,7 +94,8 @@ RuntimeError: Unknown backend 'not_a_backend'. Known backends: ['altair', 'bokeh
 
 A name that passes this check (a built-in name, or one advertised by an installed third-party
 plugin) can still fail later, when a plotting function actually renders with it, if its underlying
-library turns out not to be installed — being _known_ is not the same as being _registered_.
+library turns out not to be installed — being _known_ is not the same as being _installed_
+(`plotmux.backends.available_backends()` lists the backends that can be used).
 Passing such a name directly to a plotting function's `backend` argument (bypassing
 `set_backend`/`backend`) raises the same error there instead:
 
@@ -109,19 +110,18 @@ RuntimeError: No backend registered under the name 'not_a_backend'. ...
 
 ## Adding a Third-Party Backend
 
-A separate package can register a new backend without modifying `plotmux`'s source, via the
-`plotmux.backends` entry-point group. The package declares an entry point pointing at a module that
-calls `register_backend(...)` at import time:
+A separate package can add a new backend without modifying `plotmux`'s source, via the
+`plotmux.backends` entry-point group. The entry point is named after the backend, and its value is
+`package.module:BackendClass`:
 
 ```toml
 [project.entry-points."plotmux.backends"]
-my_backend = "my_package.plotmux_backend"
+my_backend = "my_package.plotmux_backend:MyBackend"
 ```
 
 ```python
 # my_package/plotmux_backend.py
 from plotmux.backends.base import Backend
-from plotmux.backends.registry import register_backend
 
 
 class MyBackend(Backend):
@@ -137,24 +137,38 @@ class MyBackend(Backend):
     def show(self, native): ...
 
     def mimebundle(self, native): ...
-
-
-register_backend(MyBackend())
 ```
 
-`plotmux` imports every module advertised this way once, when it starts up (`import plotmux`).
-Built-in backends, by contrast, are registered lazily: none of the five (`matplotlib`, `xy`,
-`bokeh`, `altair`, `plotly`) is imported at `import plotmux` time, only the first time that name is
-actually requested (e.g. via `backend="matplotlib"` or `plotmux.set_backend("matplotlib")`). So a
-third-party plugin module runs before any built-in backend has necessarily registered itself, and
-can freely reuse a built-in name — the last one registered under a given name wins.
+The module is imported, and the class instantiated once, the first time the name is used (e.g.
+`plotmux.hist(..., backend="my_backend")`). `import plotmux` reads no entry point and imports no
+backend: none of the five built-in backends (`matplotlib`, `xy`, `bokeh`, `altair`, `plotly`) is
+imported before it is requested either. `plotmux.set_backend("my_backend")` accepts the name as soon
+as the package is installed, because the names of the entry points are read from the installed
+metadata without importing the plugin.
 
-A plugin module that fails to import because its own underlying library is missing (`ImportError`)
-is silently skipped, mirroring how the built-in backends guard their own registration behind an
-"is this library installed" check. Any other exception raised while a plugin module is loading (a
-bug in the plugin itself, e.g. a broken `register_backend(...)` call) is caught and turned into a
-`RuntimeWarning` instead of propagating, so a broken third-party plugin can never crash
-`import plotmux` for every user; it can only fail to register itself.
+A backend can also be registered from code, with `register_backend`:
+
+```pycon
+>>> from plotmux.backends import get_backend, register_backend
+>>> class OtherBackend:
+...     name = "other_backend"
+...
+>>> register_backend(OtherBackend())
+>>> get_backend("other_backend") is get_backend("other_backend")
+True
+
+```
+
+A name already used by a registered backend or by a built-in backend is refused with a
+`BackendRegistrationError`, so installing a plugin never takes over `matplotlib` by accident. To
+replace a backend on purpose, call `register_backend(backend, replace=True)`. An instance registered
+that way wins over the built-in backend and over a plugin of the same name.
+
+If the library of a backend is not installed, using the backend raises a `BackendNotFoundError` that
+names the extra to install (e.g. `pip install "plotmux[matplotlib]"`), and the original
+`ImportError` is its `__cause__`. `plotmux.backends.available_backends()` lists the names that can
+be used, without importing anything. Any other exception raised while a plugin loads (a bug in the
+plugin) is not hidden: it propagates when the plugin is first used.
 
 ## What's Next
 

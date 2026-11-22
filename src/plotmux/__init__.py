@@ -21,23 +21,10 @@ from importlib.metadata import PackageNotFoundError, version
 
 from plotmux.api import bar, cdf, grid, hist, layer, line, scatter, slope, stacked_bar
 
-# The four built-in backend submodules (plotmux.backends.{altair,bokeh,
-# matplotlib,xy}) are *not* imported here. Each one eagerly imports its
-# underlying plotting library as a side effect of registering itself (see
-# e.g. plotmux.backends.matplotlib), so importing all four unconditionally
-# would pay that cost for every library that happens to be installed, even
-# if only one backend is ever used. Instead, plotmux.backends.registry.
-# get_backend imports the matching submodule lazily, the first time that
-# backend's name is actually requested.
-from plotmux.backends.registry import load_entry_point_backends
+# No backend is imported here: the registry (plotmux.backends.registry) imports
+# the module of a backend, built-in or plugged in through the "plotmux.backends"
+# entry-point group, the first time its name is requested.
 from plotmux.config import backend, set_backend
-
-# Register any third-party backend plugged in via the "plotmux.backends"
-# entry-point group (see load_entry_point_backends), so a plugin backend is
-# discovered before any built-in one has necessarily registered itself
-# (none have, at this point: see the comment above), rather than needing
-# its own eager-import special case.
-load_entry_point_backends()
 
 try:
     __version__ = version(__name__)

@@ -19,6 +19,7 @@ from __future__ import annotations
 
 __all__ = [
     "BackendNotFoundError",
+    "BackendRegistrationError",
     "ExportError",
     "InvalidColorError",
     "InvalidSpecError",
@@ -42,6 +43,13 @@ class BackendNotFoundError(PlotmuxError, RuntimeError):
 
     Typically means the backend's underlying plotting library is not
     installed. See ``plotmux.backends.registry.get_backend``.
+    """
+
+
+class BackendRegistrationError(PlotmuxError, ValueError):
+    r"""Raised when a backend is registered under a name already in use.
+
+    See ``plotmux.backends.registry.register_backend``.
     """
 
 
