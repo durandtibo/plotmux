@@ -15,6 +15,7 @@ if is_altair_available():
         _apply_legend_style,
         apply_common_style,
         color_encoding,
+        make_mark_chart,
         prepare_color,
         rgba_to_altair,
         with_label_field,
@@ -342,3 +343,25 @@ def test_apply_legend_style_no_field_returns_chart_unchanged() -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s")
     chart = render_line(spec)
     assert _apply_legend_style(chart, spec) is chart
+
+
+########################################
+#     Tests for make_mark_chart     #
+########################################
+
+
+@altair_available
+def test_make_mark_chart_no_kwargs() -> None:
+    assert make_mark_chart([{"x": 0, "y": 1}], "line", {}).to_dict()["mark"] == {"type": "line"}
+
+
+@altair_available
+def test_make_mark_chart_kwargs() -> None:
+    chart = make_mark_chart([{"x": 0, "y": 1}], "bar", {"opacity": 0.5})
+    assert chart.to_dict()["mark"] == {"opacity": 0.5, "type": "bar"}
+
+
+@altair_available
+def test_make_mark_chart_inline_data() -> None:
+    chart = make_mark_chart([{"x": 0, "y": 1}], "point", {})
+    assert chart.to_dict()["data"]["values"] == [{"x": 0, "y": 1}]

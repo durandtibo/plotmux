@@ -6,12 +6,12 @@ __all__ = ["render_bar"]
 
 from typing import TYPE_CHECKING, Any, cast
 
-import altair as alt
-
-from plotmux.backends.altair.style import prepare_color, rgba_to_altair
+from plotmux.backends.altair.style import make_mark_chart, prepare_color, rgba_to_altair
 from plotmux.utils.categorical import is_categorical
 
 if TYPE_CHECKING:
+    import altair as alt
+
     from plotmux.specs import BarSpec
 
 
@@ -57,7 +57,7 @@ def render_bar(spec: BarSpec, **kwargs: Any) -> alt.Chart:
     # ``:Q``-implying ``alt.Scale`` -- see its docstring -- but does not
     # touch the field-name/type specifier itself, so this stays in effect).
     x_type = "N" if is_categorical(spec.x) else "Q"
-    chart = alt.Chart(alt.Data(values=data)).mark_bar(**kwargs).encode(x=f"x:{x_type}", y="y:Q")
+    chart = make_mark_chart(data, "bar", kwargs).encode(x=f"x:{x_type}", y="y:Q")
     if encoding_color is not None:
         chart = chart.encode(color=encoding_color)
     return chart
