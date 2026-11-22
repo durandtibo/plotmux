@@ -22,8 +22,8 @@ SECONDARY = parse_color("tab:orange")
 TERTIARY = parse_color("tab:green")
 
 #: Default categorical palette, an ordered tuple of RGBA tuples used to
-#: assign successive, visually-distinct colors to multiple series or
-#: ``LayerSpec`` children that set no explicit ``color``.
+#: assign successive, visually-distinct colors to the primitives of a
+#: panel that set no explicit ``color`` (see ``plotmux.scene.build_scene``).
 DEFAULT_PALETTE: tuple[tuple[float, float, float, float], ...] = (
     PRIMARY,
     SECONDARY,

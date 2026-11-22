@@ -1,4 +1,5 @@
-r"""Contain the base class of the immutable value objects of the package."""
+r"""Contain the base class of the immutable value objects of the
+package."""
 
 from __future__ import annotations
 
@@ -11,8 +12,7 @@ from coola.equality import objects_are_equal
 
 @dataclass(frozen=True, eq=False)
 class ValueObject:
-    r"""Define the base class of the frozen dataclasses that hold
-    arrays.
+    r"""Define the base class of the frozen dataclasses that hold arrays.
 
     Two value objects are equal if they have the same type and equal
     fields, where arrays are compared by value (a plain dataclass

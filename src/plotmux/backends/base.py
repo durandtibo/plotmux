@@ -1,9 +1,9 @@
-r"""Contain the ``Backend`` base class implemented by rendering
-backends, and the capabilities a backend declares.
+r"""Contain the ``Backend`` base class implemented by rendering backends,
+and the capabilities a backend declares.
 
-A backend draws the three primitives of a scene (see
-``plotmux.scene``) and applies the axes style: it owns no decision
-that changes the numbers on the screen.
+A backend draws the three primitives of a scene (see ``plotmux.scene``)
+and applies the axes style: it owns no decision that changes the numbers
+on the screen.
 """
 
 from __future__ import annotations
@@ -150,11 +150,11 @@ class Backend(ABC):
     r"""Define the interface implemented by a rendering backend.
 
     A backend turns a scene (the lowered spec of a figure, see
-    ``plotmux.scene.build_scene``) into its native figure object
-    (e.g. a matplotlib ``Figure``) and knows how to export that native
-    object to a file. A backend implements ``capabilities``, ``draw``
-    and ``save``, and ``show`` and ``mimebundle`` where its library
-    needs them. ``render`` is not overridden.
+    ``plotmux.scene.build_scene``) into its native figure object (e.g. a
+    matplotlib ``Figure``) and knows how to export that native object to
+    a file. A backend implements ``capabilities``, ``draw`` and
+    ``save``, and ``show`` and ``mimebundle`` where its library needs
+    them. ``render`` is not overridden.
     """
 
     name: ClassVar[str]

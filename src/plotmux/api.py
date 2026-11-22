@@ -1,8 +1,8 @@
 r"""Contain the public plotting API.
 
 Every function builds the spec of a mark, wraps it in a ``PanelSpec``
-and renders it. The axes options are the same for every chart, they
-are declared once in ``PanelOptions`` and ``BoundedPanelOptions``.
+and renders it. The axes options are the same for every chart, they are
+declared once in ``PanelOptions`` and ``BoundedPanelOptions``.
 """
 
 from __future__ import annotations
@@ -98,8 +98,7 @@ class PanelOptions(TypedDict, total=False):
 
 
 class BoundedPanelOptions(PanelOptions, total=False):
-    r"""Define the axes options of the charts that have an x-axis
-    limit.
+    r"""Define the axes options of the charts that have an x-axis limit.
 
     It adds the limits of the x-axis to ``PanelOptions``. ``hist`` and
     ``cdf`` do not take them: their ``xmin``/``xmax`` are the range of
