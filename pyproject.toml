@@ -39,7 +39,7 @@ classifiers = [
 ]
 
 requires-python = ">=3.11"
-dependencies = ["coola >=1.1,<2.0", "numpy>=2.0,<3.0"]
+dependencies = ["coola >=2.0.0a4,<3.0", "numpy>=2.0,<3.0"]
 
 [project.optional-dependencies]
 altair = ["altair>=6.0,<7.0"]
