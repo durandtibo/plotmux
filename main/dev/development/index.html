@@ -923,6 +923,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#invoke-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Invoke Tasks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#code-quality" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1636,6 +1647,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#invoke-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Invoke Tasks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#code-quality" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1867,10 +1889,10 @@ and documentation dependencies.</p>
 <h3 id="3-install-dependencies">3. Install Dependencies<a class="headerlink" href="#3-install-dependencies" title="Permanent link">&para;</a></h3>
 <p>If you already have a virtual environment and just want to install dependencies:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Install core dependencies</span>
-inv<span class="w"> </span>install<span class="w"> </span>--no-optional-deps
+inv<span class="w"> </span>env.install<span class="w"> </span>--no-optional-deps<span class="w"> </span>--groups<span class="w"> </span><span class="s2">""</span>
 
 <span class="c1"># Install with documentation dependencies</span>
-inv<span class="w"> </span>install<span class="w"> </span>--docs-deps
+inv<span class="w"> </span>env.install
 </code></pre></div>
 <h3 id="4-set-up-pre-commit-hooks">4. Set Up Pre-commit Hooks<a class="headerlink" href="#4-set-up-pre-commit-hooks" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>pre-commit<span class="w"> </span>install
@@ -1879,13 +1901,13 @@ inv<span class="w"> </span>install<span class="w"> </span>--docs-deps
 <h2 id="development-workflow">Development Workflow<a class="headerlink" href="#development-workflow" title="Permanent link">&para;</a></h2>
 <h3 id="running-tests">Running Tests<a class="headerlink" href="#running-tests" title="Permanent link">&para;</a></h3>
 <p><strong>Run all unit tests:</strong></p>
-<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>unit-test
+<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>test.unit
 </code></pre></div>
 <p><strong>Run unit tests with coverage:</strong></p>
-<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>unit-test<span class="w"> </span>--cov
+<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>test.unit<span class="w"> </span>--cov
 </code></pre></div>
 <p><strong>Run integration tests:</strong></p>
-<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>integration-test
+<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>test.integration
 </code></pre></div>
 <p><strong>Run a specific test file:</strong></p>
 <div class="highlight"><pre><span></span><code>pytest<span class="w"> </span>tests/unit/test_api.py
@@ -1893,15 +1915,24 @@ inv<span class="w"> </span>install<span class="w"> </span>--docs-deps
 <p><strong>Run a specific test:</strong></p>
 <div class="highlight"><pre><span></span><code>pytest<span class="w"> </span>tests/unit/test_api.py::test_hist
 </code></pre></div>
+<h3 id="invoke-tasks">Invoke Tasks<a class="headerlink" href="#invoke-tasks" title="Permanent link">&para;</a></h3>
+<p>The predefined <code>inv</code> tasks come from <a href="https://github.com/durandtibo/invoke-tasklib">invoke-tasklib</a>,
+configured in <code>invoke.yaml</code> (<code>tasks.py</code> only calls <code>make_ns()</code> and adds the <code>test.check-notebooks</code>
+task). List the tasks and the resolved configuration with:</p>
+<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>--list
+inv<span class="w"> </span>config.show
+</code></pre></div>
+<p><code>inv check</code> runs the main read-only checks and <code>inv fix</code> fixes the lint and format issues.
+<code>invoke-tasklib</code> requires Python 3.11 or later, so it is only installed on those versions.</p>
 <h3 id="code-quality">Code Quality<a class="headerlink" href="#code-quality" title="Permanent link">&para;</a></h3>
-<p><strong>Format code with Black:</strong></p>
-<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>check-format
+<p><strong>Check the code format (Ruff):</strong></p>
+<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>format.check-python
 </code></pre></div>
 <p><strong>Run the linter (Ruff):</strong></p>
-<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>check-lint
+<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>lint.check-python
 </code></pre></div>
 <p><strong>Format docstrings:</strong></p>
-<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>docformat
+<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>format.check-docstrings
 </code></pre></div>
 <p><strong>Run all pre-commit checks:</strong></p>
 <div class="highlight"><pre><span></span><code>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
@@ -1910,16 +1941,16 @@ inv<span class="w"> </span>install<span class="w"> </span>--docs-deps
 <p><strong>Build documentation locally:</strong></p>
 <div class="highlight"><pre><span></span><code>mkdocs<span class="w"> </span>serve<span class="w"> </span>-f<span class="w"> </span>docs/mkdocs.yml
 </code></pre></div>
-<p>Then open http://127.0.0.1:8000 in your browser.</p>
+<p>Then open <a href="http://127.0.0.1:8000">http://127.0.0.1:8000</a> in your browser.</p>
 <p><strong>Build documentation without serving:</strong></p>
 <div class="highlight"><pre><span></span><code>mkdocs<span class="w"> </span>build<span class="w"> </span>-f<span class="w"> </span>docs/mkdocs.yml
 </code></pre></div>
 <p><strong>Run doctests:</strong></p>
-<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>doctest-src
+<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>test.doctest
 </code></pre></div>
 <h3 id="type-checking">Type Checking<a class="headerlink" href="#type-checking" title="Permanent link">&para;</a></h3>
 <p><code>plotmux</code> uses pyright for type checking. You can run type checking locally:</p>
-<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>check-types
+<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>types.check
 </code></pre></div>
 <h2 id="project-structure">Project Structure<a class="headerlink" href="#project-structure" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>plotmux/
@@ -1960,11 +1991,11 @@ inv<span class="w"> </span>install<span class="w"> </span>--docs-deps
 <h2 id="common-development-tasks">Common Development Tasks<a class="headerlink" href="#common-development-tasks" title="Permanent link">&para;</a></h2>
 <h3 id="adding-a-new-chart-type">Adding a New Chart Type<a class="headerlink" href="#adding-a-new-chart-type" title="Permanent link">&para;</a></h3>
 <ol>
-<li>
-<p><strong>Create a new branch:</strong>
-   <div class="highlight"><pre><span></span><code>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>feature/my-chart-type
-</code></pre></div></p>
-</li>
+<li><strong>Create a new branch:</strong></li>
+</ol>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>feature/my-chart-type
+</code></pre></div>
+<ol>
 <li>
 <p><strong>Add a spec</strong> in <code>src/plotmux/specs/</code>, subclassing <code>BaseSpec</code> as a frozen dataclass. Specs
    never import a plotting library.</p>
@@ -1986,30 +2017,30 @@ inv<span class="w"> </span>install<span class="w"> </span>--docs-deps
 <p><strong>Update documentation</strong> in <code>docs/docs/</code>.</p>
 </li>
 <li>
-<p><strong>Run tests and code quality checks:</strong>
-   <div class="highlight"><pre><span></span><code>inv<span class="w"> </span>unit-test<span class="w"> </span>--cov
-pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Commit and push:</strong>
-   <div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>.
-git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Add: brief description of the new chart type"</span>
-git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>feature/my-chart-type
-</code></pre></div></p>
+<p><strong>Run tests and code quality checks:</strong></p>
 </li>
 </ol>
+<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>test.unit<span class="w"> </span>--cov
+pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
+</code></pre></div>
+<ol>
+<li><strong>Commit and push:</strong></li>
+</ol>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>.
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Add: brief description of the new chart type"</span>
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>feature/my-chart-type
+</code></pre></div>
 <h3 id="adding-a-new-backend">Adding a New Backend<a class="headerlink" href="#adding-a-new-backend" title="Permanent link">&para;</a></h3>
 <p>See <a href="../../uguide/backends/#adding-a-third-party-backend">Adding a Third-Party Backend</a> for the
 plugin mechanism used by out-of-tree backends, and <code>src/plotmux/backends/matplotlib/</code> or
 <code>src/plotmux/backends/xy/</code> as a reference implementation for a built-in one.</p>
 <h3 id="fixing-a-bug">Fixing a Bug<a class="headerlink" href="#fixing-a-bug" title="Permanent link">&para;</a></h3>
 <ol>
-<li>
-<p><strong>Create a branch:</strong>
-   <div class="highlight"><pre><span></span><code>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>fix/bug-description
-</code></pre></div></p>
-</li>
+<li><strong>Create a branch:</strong></li>
+</ol>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>fix/bug-description
+</code></pre></div>
+<ol>
 <li>
 <p><strong>Write a failing test</strong> that reproduces the bug</p>
 </li>
@@ -2017,94 +2048,88 @@ plugin mechanism used by out-of-tree backends, and <code>src/plotmux/backends/ma
 <p><strong>Fix the bug</strong></p>
 </li>
 <li>
-<p><strong>Verify the test passes:</strong>
-   <div class="highlight"><pre><span></span><code>pytest<span class="w"> </span>tests/unit/path/to/test.py
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Run the full test suite:</strong>
-   <div class="highlight"><pre><span></span><code>inv<span class="w"> </span>unit-test<span class="w"> </span>--cov
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Commit and push:</strong>
-   <div class="highlight"><pre><span></span><code>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Fix: description of bug fix"</span>
-git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>fix/bug-description
-</code></pre></div></p>
+<p><strong>Verify the test passes:</strong></p>
 </li>
 </ol>
+<div class="highlight"><pre><span></span><code>pytest<span class="w"> </span>tests/unit/path/to/test.py
+</code></pre></div>
+<ol>
+<li><strong>Run the full test suite:</strong></li>
+</ol>
+<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>test.unit<span class="w"> </span>--cov
+</code></pre></div>
+<ol>
+<li><strong>Commit and push:</strong></li>
+</ol>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Fix: description of bug fix"</span>
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>fix/bug-description
+</code></pre></div>
 <h3 id="updating-dependencies">Updating Dependencies<a class="headerlink" href="#updating-dependencies" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>update
+<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>env.update
 </code></pre></div>
 <p>Dependencies are managed in <code>pyproject.toml</code> and locked in <code>uv.lock</code>.</p>
 <h2 id="testing-guidelines">Testing Guidelines<a class="headerlink" href="#testing-guidelines" title="Permanent link">&para;</a></h2>
 <h3 id="writing-good-tests">Writing Good Tests<a class="headerlink" href="#writing-good-tests" title="Permanent link">&para;</a></h3>
 <ol>
-<li>
-<p><strong>Use descriptive names:</strong>
-   <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">test_hist_returns_figure</span><span class="p">():</span> <span class="o">...</span>
+<li><strong>Use descriptive names:</strong></li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">test_hist_returns_figure</span><span class="p">():</span> <span class="o">...</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">test_hist_raises_error_for_non_positive_bins</span><span class="p">():</span> <span class="o">...</span>
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Test edge cases:</strong></p>
-<ul>
+</code></pre></div>
+<ol>
+<li><strong>Test edge cases:</strong></li>
 <li>Empty arrays</li>
 <li><code>None</code> values</li>
 <li>Invalid colors or ranges</li>
-<li>Every combination of chart type x backend x export format</li>
-</ul>
+<li>
+<p>Every combination of chart type x backend x export format</p>
 </li>
 <li>
-<p><strong>Use <code>plotmux.testing</code> fixtures to skip tests based on installed backends:</strong>
-   <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.testing</span><span class="w"> </span><span class="kn">import</span> <span class="n">matplotlib_available</span>
+<p><strong>Use <code>plotmux.testing</code> fixtures to skip tests based on installed backends:</strong></p>
+</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.testing</span><span class="w"> </span><span class="kn">import</span> <span class="n">matplotlib_available</span>
 
 
 <span class="nd">@matplotlib_available</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">test_hist_with_matplotlib_backend</span><span class="p">():</span>
     <span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">hist</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">backend</span><span class="o">=</span><span class="s2">"matplotlib"</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">fig</span><span class="o">.</span><span class="n">backend_name</span> <span class="o">==</span> <span class="s2">"matplotlib"</span>
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Test both success and failure cases:</strong>
-   <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">test_success_case</span><span class="p">():</span>
+</code></pre></div>
+<ol>
+<li><strong>Test both success and failure cases:</strong></li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">test_success_case</span><span class="p">():</span>
     <span class="k">assert</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">hist</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">test_failure_case</span><span class="p">():</span>
     <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="s2">"bins must be a positive integer"</span><span class="p">):</span>
         <span class="n">HistogramSpec</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-</code></pre></div></p>
-</li>
-</ol>
+</code></pre></div>
 <h2 id="continuous-integration">Continuous Integration<a class="headerlink" href="#continuous-integration" title="Permanent link">&para;</a></h2>
 <p>The project uses GitHub Actions for CI. Workflows are in <code>.github/workflows/</code>:</p>
 <ul>
-<li>
-<p><strong>CI</strong>: Runs on every push and PR</p>
-<ul>
+<li><strong>CI</strong>: Runs on every push and PR</li>
 <li>Linting</li>
 <li>Tests</li>
-<li>Coverage</li>
-</ul>
+<li>
+<p>Coverage</p>
 </li>
 <li>
 <p><strong>Documentation</strong>: Builds and deploys docs</p>
-<ul>
+</li>
 <li>Builds on every push</li>
-<li>Deploys on release</li>
-</ul>
+<li>
+<p>Deploys on release</p>
 </li>
 <li>
 <p><strong>Nightly Tests</strong>: Tests against latest dependencies</p>
-<ul>
+</li>
 <li>Runs daily</li>
 <li>Tests multiple Python versions</li>
-</ul>
-</li>
 </ul>
 <h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
 <ol>

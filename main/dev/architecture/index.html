@@ -1676,8 +1676,8 @@ full, up-to-date design document.</p>
 <h2 id="goal">Goal<a class="headerlink" href="#goal" title="Permanent link">&para;</a></h2>
 <p><code>plotmux</code> is a lightweight abstraction layer over Python's plotting libraries: users write plotting
 code once against <code>plotmux</code>'s unified API and choose the rendering backend (<code>matplotlib</code>, <code>xy</code>,
-<code>bokeh</code>, <code>altair</code>, <code>plotly</code>, ...) at runtime. Swapping backends should be a one-line configuration change, and
-adding a new backend or chart type should not require changing existing code.</p>
+<code>bokeh</code>, <code>altair</code>, <code>plotly</code>, ...) at runtime. Swapping backends should be a one-line configuration
+change, and adding a new backend or chart type should not require changing existing code.</p>
 <p>The unified API targets a small set of generic, broadly-useful chart types and figure-level concerns:
 the ones almost every plotting task needs (histograms, empirical CDFs, line charts, scatter
 plots, bar charts (plain and stacked), slope/abline annotations, layering them together, laying
@@ -1693,8 +1693,8 @@ spec.</p>
 <li><strong>Backends</strong> (<code>plotmux.backends</code>): one package per plotting library, responsible for turning a
    spec into that library's native figure object and for exporting it to a file.</li>
 </ol>
-<p>This mirrors the Vega-Lite/Altair split, and is what makes "swap backend in one line" true: because a
-spec cannot hold a Matplotlib <code>Axes</code> or an <code>xy.Chart</code>, switching backends can never leak
+<p>This mirrors the Vega-Lite/Altair split, and is what makes "swap backend in one line" true:
+because a spec cannot hold a Matplotlib <code>Axes</code> or an <code>xy.Chart</code>, switching backends can never leak
 library-specific state back into user code.</p>
 <h2 id="package-layout">Package Layout<a class="headerlink" href="#package-layout" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>src/plotmux/
@@ -1871,9 +1871,9 @@ them as parameters.</p>
 <p><code>LayerSpec.__post_init__</code> also assigns successive <code>DEFAULT_PALETTE</code> entries (see
 <a href="#color-parsing">Color Parsing</a>) to any child spec whose own <code>color</code> field is left <code>None</code>,
 skipping children that already set one explicitly. Matplotlib gets distinct per-child colors for
-free from its own <code>Axes</code> color cycle when children share an axes, but <code>xy</code>/<code>bokeh</code>/<code>altair</code>/<code>plotly</code> do
-not, so this assignment happens once, backend-agnostically, at the spec layer
-(<code>specs/layer.py::_assign_default_colors</code>), rather than every backend needing its own workaround.
+free from its own <code>Axes</code> color cycle when children share an axes, but
+<code>xy</code>/<code>bokeh</code>/<code>altair</code>/<code>plotly</code> do not, so this assignment happens once, backend-agnostically, at the
+spec layer (<code>specs/layer.py::_assign_default_colors</code>), rather than every backend needing its own workaround.
 <code>GridSpec</code> gets no such assignment: each cell is visually independent, so there is no
 shared-axes indistinguishability problem to solve there.</p>
 <p><code>xy</code>'s grid support is the one asymmetry across backends: <code>xy</code> has no composition primitive for
@@ -1932,7 +1932,7 @@ internally.</p>
 <li><code>plotmux.utils.range.find_range</code> implements quantile-or-explicit axis bounds (e.g. <code>xmin="q0.1"</code>)
   once, and is reused by every spec that needs it rather than reimplemented.</li>
 <li>Style conventions: <code>from __future__ import annotations</code>, explicit <code>__all__</code>, Google-style
-  docstrings with runnable <code>pycon</code> examples, <code>ruff</code>/<code>black</code>/<code>pyright</code> clean, tests split into
+  docstrings with runnable <code>pycon</code> examples, <code>ruff</code>/<code>pyright</code> clean, tests split into
   <code>tests/unit/</code> and <code>tests/integration/</code> mirroring <code>src/plotmux/</code>.</li>
 </ul>
 <h2 id="whats-next">What's Next<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>

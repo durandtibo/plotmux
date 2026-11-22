@@ -1437,12 +1437,12 @@ When the virtual environment is created, you can activate it with the following 
 <div class="highlight"><pre><span></span><code><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
 </code></pre></div>
 <p>Then, you should install the required packages to use <code>plotmux</code> with the following command:</p>
-<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>install<span class="w"> </span>--docs-deps
+<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>env.install
 </code></pre></div>
 <p>This command will install all the required packages. You can also use this command to update the
 required packages. This command will check if there is a more recent package available and will
 install it. Finally, you can test the installation with the following command:</p>
-<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>unit-test<span class="w"> </span>--cov
+<div class="highlight"><pre><span></span><code>inv<span class="w"> </span>test.unit<span class="w"> </span>--cov
 </code></pre></div>
 <h2 id="dependencies">Dependencies<a class="headerlink" href="#dependencies" title="Permanent link">&para;</a></h2>
 <p><code>plotmux</code> only has two hard dependencies: <a href="https://numpy.org/">NumPy</a> and

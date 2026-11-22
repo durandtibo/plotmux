@@ -1692,9 +1692,7 @@ legend_title="Series")</code> rendered via <code>plotmux.backends.get_backend(..
 <p>Any extra keyword argument not recognized by the unified API is forwarded as-is to the backend's
 renderer, letting you reach backend-specific options without leaving the unified API:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s2">"step"</span>
-<span class="gp">... </span><span class="p">)</span>  <span class="c1"># "histtype" is forwarded to Matplotlib</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">hist</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s2">"step"</span><span class="p">)</span>  <span class="c1"># "histtype" is forwarded to Matplotlib</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"histogram.png"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
 </code></pre></div>
 <h2 id="whats-next">What's Next<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>

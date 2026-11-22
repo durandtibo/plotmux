@@ -1362,8 +1362,8 @@ those three backends' own primitives. Every gap identified by this
 case study is closed:</p>
 <ul>
 <li><strong>Slope/abline annotation.</strong> <code>specs/slope.py::SlopeSpec(gradient,
-  intercept=0.0, color=None, linewidth=None, linestyle="solid",
-  alpha=None)</code>. Standalone (<code>plotmux.slope(...)</code>), it is matplotlib
+intercept=0.0, color=None, linewidth=None, linestyle="solid",
+alpha=None)</code>. Standalone (<code>plotmux.slope(...)</code>), it is matplotlib
   (<code>Axes.axline</code>) and bokeh (<code>fig.add_layout(bokeh.models.Slope(...))</code>)
   only, each with a native "line by slope, independent of data range"
   primitive matched almost one-to-one by <code>SlopeSpec</code>'s fields. altair
@@ -1415,7 +1415,7 @@ case study is closed:</p>
   <code>opacity</code>.</li>
 <li><strong><code>LineSpec</code> line width and dash style.</strong> The same
   <code>linewidth: float | None</code> / <code>linestyle: Literal["solid", "dashed",
-  "dotted", "dashdot"]</code> fields <code>SlopeSpec</code> already had, added to
+"dotted", "dashdot"]</code> fields <code>SlopeSpec</code> already had, added to
   <code>LineSpec</code> too, translated per backend the same way <code>xscale</code>/
   <code>yscale</code> are: matplotlib <code>linewidth</code>/<code>linestyle</code> passthrough; bokeh
   <code>line_width</code>/<code>line_dash</code>; altair <code>strokeWidth</code>/<code>strokeDash</code> (a
@@ -1429,7 +1429,7 @@ case study is closed:</p>
   alongside title/labels/scale/<code>ymin</code>/<code>ymax</code>: matplotlib
   <code>Axes.set_facecolor</code>; bokeh <code>figure.background_fill_color</code>; altair
   <code>Chart.properties(background=...)</code>; xy a <code>style={"backgroundColor":
-  ...}</code> entry on the <code>Chart</code> (xy's CSS-style-dict escape hatch, the
+...}</code> entry on the <code>Chart</code> (xy's CSS-style-dict escape hatch, the
   closest xy has to a background-color constructor argument).</li>
 <li><strong>Explicit y-axis bounds.</strong> <code>BaseSpec.ymin</code>/<code>ymax</code>: unlike
   <code>HistogramSpec.xmin</code>/<code>xmax</code> (<code>float | str | None</code>, resolved via
@@ -1443,10 +1443,10 @@ case study is closed:</p>
   individually on the default auto-fitting <code>DataRange1d</code>, so setting
   just one bound leaves the other autoscaled -- this is also what
   makes bokeh's <code>CdfSpec</code> renderer's own hardcoded <code>y_range =
-  Range1d(0, 1)</code>, set before <code>apply_common_style</code> runs, correctly
+Range1d(0, 1)</code>, set before <code>apply_common_style</code> runs, correctly
   overridable by an explicit <code>ymin</code>/<code>ymax</code>); altair
   <code>alt.Scale(domainMin=..., domainMax=...)</code>; xy <code>xy.y_axis(domain=
-  (ymin, ymax))</code> -- xy's <code>domain</code> takes both bounds together, no
+(ymin, ymax))</code> -- xy's <code>domain</code> takes both bounds together, no
   partial-bound form, so (unlike matplotlib/bokeh) only both explicit
   bounds set together are forwarded; either alone is left autoscaled.</li>
 </ul>
@@ -1496,7 +1496,7 @@ of it already is:</p>
   into the "no-fill marker" gap identified in the log plot case study,
   closed there by <code>ScatterSpec.fill</code>.</li>
 <li><strong>Two figures side by side.</strong> Already <code>plotmux.grid(fig1_spec,
-  fig2_spec, ncols=2)</code>.</li>
+fig2_spec, ncols=2)</code>.</li>
 </ul>
 <p>Two gaps were found, both new (not raised by the slope case study).
 Both are now closed:</p>
@@ -1515,7 +1515,7 @@ Both are now closed:</p>
   its own renderer already called the label-less <code>ax.legend()</code>) to
   avoid a spurious "no artists with labels found" warning otherwise;
   bokeh <code>fig.legend.title = ...</code>, guarded the same way (<code>if
-  fig.legend:</code>) since bokeh warns when setting a legend property with
+fig.legend:</code>) since bokeh warns when setting a legend property with
   no legend yet added; altair re-<code>encode</code>s <code>color</code> with
   <code>alt.Legend(title=...)</code>, replacing the hardcoded
   <code>legend=alt.Legend(title=None)</code> <code>color_encoding</code> sets on a labeled
@@ -1534,7 +1534,7 @@ Both are now closed:</p>
   every plotmux scatter series rendered as whatever each backend's own
   default marker shape is, with no way to request a square, triangle,
   cross, etc. Closed by <code>ScatterSpec.marker: Literal["circle", "square",
-  "triangle", "diamond", "cross", "x"] | None = None</code> (a small,
+"triangle", "diamond", "cross", "x"] | None = None</code> (a small,
   backend-portable set rather than passing through each backend's full
   native marker vocabulary, mirroring how <code>LineSpec.linestyle</code> exposes
   four portable names rather than every backend's native dash
@@ -1542,7 +1542,7 @@ Both are now closed:</p>
   <code>Axes.scatter(marker=...)</code> via a <code>MARKER_STYLE</code> table
   (<code>plotmux.backends.matplotlib.scatter.MARKER_STYLE</code>, mapping to
   <code>"o"</code>/<code>"s"</code>/<code>"^"</code>/<code>"D"</code>/<code>"+"</code>/<code>"x"</code>); bokeh <code>figure.scatter(marker=
-  ...)</code>, which accepts plotmux's own names directly, no table needed;
+...)</code>, which accepts plotmux's own names directly, no table needed;
   altair <code>mark_point(shape=...)</code> via
   <code>plotmux.backends.altair.style.MARKER_STYLE</code> (<code>"circle"</code>/<code>"square"</code>/
   <code>"triangle-up"</code>/<code>"diamond"</code>/<code>"cross"</code> -- no <code>"x"</code> entry, altair's
@@ -1612,8 +1612,8 @@ studies. All three are now closed:</p>
   once-open <code>legend_title</code> gap: <code>BaseSpec</code> had <code>legend_title</code> but
   nothing for legend <em>position</em>. Closed by a <code>BaseSpec</code>-level
   <code>legend_location: Literal["best", "top_left", "top_right",
-  "bottom_left", "bottom_right", "top", "bottom", "left", "right"] |
-  None = None</code> field, shipped alongside <code>legend_title</code> as one
+"bottom_left", "bottom_right", "top", "bottom", "left", "right"] |
+None = None</code> field, shipped alongside <code>legend_title</code> as one
   <code>legend_title</code>/<code>legend_location</code> pair rather than two unrelated
   additions, since both are set together in the bokeh original
   (<code>p.legend.title</code>/<code>p.legend.location</code>) and both apply post-hoc in the
@@ -1631,7 +1631,7 @@ studies. All three are now closed:</p>
   altair, a small, permanent per-backend asymmetry; <code>"best"</code> again has
   no altair equivalent and is left as a no-op); plotly
   <code>fig.update_layout(legend=dict(x=..., y=..., xanchor=..., yanchor=
-  ...))</code> via a name-to-fractional-coordinates table (plotly has no
+...))</code> via a name-to-fractional-coordinates table (plotly has no
   named corner enum, only <code>x</code>/<code>y</code>; <code>"best"</code> again a no-op); xy
   <code>xy.legend(loc=...)</code>, needing no translation table at all -- xy's own
   <code>legend_loc</code> validator underscore/space-tokenizes its input and
@@ -1640,7 +1640,7 @@ studies. All three are now closed:</p>
 <li><strong>Hollow (no-fill) marker as a portable concept.</strong> Distinct from the
   marker-<em>shape</em> gap in the legend case study: even with a circular
   marker, this example's <code>p.scatter(x, x**2, fill_color=None,
-  line_color="olivedrab")</code> had no reliable plotmux equivalent because
+line_color="olivedrab")</code> had no reliable plotmux equivalent because
   <code>ScatterSpec.color</code> has no "explicitly transparent" value distinct
   from "unset, use the backend default" -- <code>color=None</code> means the
   latter, and as the correction above notes, only bokeh's own default
@@ -1660,7 +1660,7 @@ studies. All three are now closed:</p>
   <code>go.Scatter(marker=dict(color="rgba(0, 0, 0, 0)"))</code> with the outline
   drawn via <code>marker.line</code> (already wired for <code>edgecolor</code>); xy
   <code>xy.scatter(color="rgba(0, 0, 0, 0)", stroke=&lt;outline&gt;,
-  stroke_width=1.0)</code> -- xy has no dedicated "no fill" mark property
+stroke_width=1.0)</code> -- xy has no dedicated "no fill" mark property
   either, so (like plotly) the fill is forced fully transparent and
   the outline carried by <code>stroke</code>.</li>
 </ul>
@@ -1726,7 +1726,7 @@ sits in the goal's stated non-goal territory for the rest.</p>
   <code>legend_title</code> and the log-plot case study's <code>legend_location</code>, that
   plotmux had no equivalent for. Closed as a third field in the same
   batch: <code>legend_orientation: Literal["vertical", "horizontal"] | None
-  = None</code>, applied in <code>apply_common_style</code>: matplotlib
+= None</code>, applied in <code>apply_common_style</code>: matplotlib
   <code>ax.legend(ncols=len(handles))</code> when <code>"horizontal"</code> (matplotlib has
   no direct orientation flag, only a column count, so horizontal is
   approximated as one row); bokeh <code>fig.legend.orientation = ...</code>
@@ -1739,7 +1739,7 @@ sits in the goal's stated non-goal territory for the rest.</p>
 stated non-goals:</p>
 <ul>
 <li><strong>Hover tooltips</strong> (<code>tools="hover", tooltips="$name @fruits:
-  @$name"</code>). An interactive, backend-specific power feature with no
+@$name"</code>). An interactive, backend-specific power feature with no
   meaning on matplotlib (a static image) and no obvious common
   vocabulary across bokeh/plotly's very different tooltip-templating
   systems and altair's own <code>tooltip</code> encoding channel; reachable per

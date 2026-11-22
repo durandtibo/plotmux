@@ -1481,7 +1481,6 @@ that needs it does.</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">backend</span><span class="p">(</span><span class="s2">"matplotlib"</span><span class="p">):</span>
 <span class="gp">... </span>    <span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">hist</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
-<span class="gp">...</span>
 </code></pre></div>
 <p>This is useful to render the same plotting code with several backends, e.g. to compare their
 output, without permanently changing the default:</p>
@@ -1489,7 +1488,6 @@ output, without permanently changing the default:</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"matplotlib"</span><span class="p">]:</span>  <span class="c1"># doctest: +SKIP</span>
 <span class="gp">... </span>    <span class="k">with</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">backend</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
 <span class="gp">... </span>        <span class="n">plotmux</span><span class="o">.</span><span class="n">line</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">])</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s2">"line_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.png"</span><span class="p">)</span>
-<span class="gp">...</span>
 </code></pre></div>
 <p>The default backend is stored in a <code>contextvars.ContextVar</code>, so it is thread/task-local: setting it
 in one thread or <code>asyncio</code> task never leaks into, or races with, another one, while still behaving
@@ -1539,8 +1537,8 @@ calls <code>register_backend(...)</code> at import time:</p>
 </code></pre></div>
 <p><code>plotmux</code> imports every module advertised this way once, when it starts up (<code>import plotmux</code>).
 Built-in backends, by contrast, are registered lazily: none of the five (<code>matplotlib</code>, <code>xy</code>,
-<code>bokeh</code>, <code>altair</code>, <code>plotly</code>) is imported at <code>import plotmux</code> time, only the first time that name is actually
-requested (e.g. via <code>backend="matplotlib"</code> or <code>plotmux.set_backend("matplotlib")</code>). So a
+<code>bokeh</code>, <code>altair</code>, <code>plotly</code>) is imported at <code>import plotmux</code> time, only the first time that name is
+actually requested (e.g. via <code>backend="matplotlib"</code> or <code>plotmux.set_backend("matplotlib")</code>). So a
 third-party plugin module runs before any built-in backend has necessarily registered itself, and
 can freely reuse a built-in name — the last one registered under a given name wins.</p>
 <p>A plugin module that fails to import because its own underlying library is missing (<code>ImportError</code>)
