@@ -337,6 +337,22 @@ blank lines):
 | `scene.py`, `primitives.py` | 0                              | 134 / 404                     |
 | `utils/slope.py`            | 32 / 76                        | removed                       |
 
+Render time after the redesign (warm, in milliseconds; 1,000,000 values for `hist` and `cdf` with
+`nbins=100`, 100,000 points for `line`), against the numbers measured on `main` before it (`hist` 8
+to 17 and `cdf` 7 to 17 on all five backends, `line` 0 to 5 on four backends and 3,421 on `altair`):
+
+| Backend      | `hist` | `cdf` | `line` |
+| ------------ | ------ | ----- | ------ |
+| `matplotlib` | 16     | 10    | 4      |
+| `xy`         | 7      | 7     | 0.2    |
+| `bokeh`      | 13     | 12    | 5      |
+| `altair`     | 8      | 8     | 100    |
+| `plotly`     | 10     | 9     | 2      |
+
+`build_scene` takes 10 ms for a histogram of 1,000,000 values and 4 ms for an exact CDF of 100,000
+values. `tests/integration/test_performance.py` guards the scene and the `altair` line with bounds
+about 20 times these times.
+
 ## 6. Why this shape
 
 - **Works for any backend, not just today's five.** Nothing outside a `backends/<name>/` subpackage
