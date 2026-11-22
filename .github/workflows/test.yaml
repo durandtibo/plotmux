@@ -48,11 +48,11 @@ jobs:
 
       - name: Run unit tests
         run: |
-          inv unit-test --cov
+          inv test.unit --cov
 
       - name: Run integration tests
         run: |
-          inv integration-test --cov
+          inv test.integration --cov
 
   # Test with minimal dependencies to ensure optional dependencies are truly optional
   min:
@@ -92,8 +92,8 @@ jobs:
 
       - name: Run unit tests
         run: |
-          inv unit-test --cov
+          inv test.unit --cov
 
       - name: Run integration tests
         run: |
-          inv integration-test --cov
+          inv test.integration --cov

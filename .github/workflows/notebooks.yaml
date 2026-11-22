@@ -29,4 +29,4 @@ jobs:
       # cell raises an error.
       - name: Run notebooks
         run: |
-          inv check-notebooks
+          inv test.check-notebooks

@@ -48,10 +48,10 @@ If you already have a virtual environment and just want to install dependencies:
 
 ```shell
 # Install core dependencies
-inv install --no-optional-deps
+inv env.install --no-optional-deps --groups ""
 
 # Install with documentation dependencies
-inv install --docs-deps
+inv env.install
 ```
 
 ### 4. Set Up Pre-commit Hooks
@@ -69,19 +69,19 @@ This will automatically run code quality checks before each commit.
 **Run all unit tests:**
 
 ```shell
-inv unit-test
+inv test.unit
 ```
 
 **Run unit tests with coverage:**
 
 ```shell
-inv unit-test --cov
+inv test.unit --cov
 ```
 
 **Run integration tests:**
 
 ```shell
-inv integration-test
+inv test.integration
 ```
 
 **Run a specific test file:**
@@ -96,24 +96,38 @@ pytest tests/unit/test_api.py
 pytest tests/unit/test_api.py::test_hist
 ```
 
-### Code Quality
+### Invoke Tasks
 
-**Format code with Black:**
+The predefined `inv` tasks come from [invoke-tasklib](https://github.com/durandtibo/invoke-tasklib),
+configured in `invoke.yaml` (`tasks.py` only calls `make_ns()` and adds the `test.check-notebooks`
+task). List the tasks and the resolved configuration with:
 
 ```shell
-inv check-format
+inv --list
+inv config.show
+```
+
+`inv check` runs the main read-only checks and `inv fix` fixes the lint and format issues.
+`invoke-tasklib` requires Python 3.11 or later, so it is only installed on those versions.
+
+### Code Quality
+
+**Check the code format (Ruff):**
+
+```shell
+inv format.check-python
 ```
 
 **Run the linter (Ruff):**
 
 ```shell
-inv check-lint
+inv lint.check-python
 ```
 
 **Format docstrings:**
 
 ```shell
-inv docformat
+inv format.check-docstrings
 ```
 
 **Run all pre-commit checks:**
@@ -141,7 +155,7 @@ mkdocs build -f docs/mkdocs.yml
 **Run doctests:**
 
 ```shell
-inv doctest-src
+inv test.doctest
 ```
 
 ### Type Checking
@@ -149,7 +163,7 @@ inv doctest-src
 `plotmux` uses pyright for type checking. You can run type checking locally:
 
 ```shell
-inv check-types
+inv types.check
 ```
 
 ## Project Structure
@@ -217,7 +231,7 @@ plotmux/
 
 7. **Run tests and code quality checks:**
    ```shell
-   inv unit-test --cov
+   inv test.unit --cov
    pre-commit run --all-files
    ```
 
@@ -252,7 +266,7 @@ plugin mechanism used by out-of-tree backends, and `src/plotmux/backends/matplot
 
 5. **Run the full test suite:**
    ```shell
-   inv unit-test --cov
+   inv test.unit --cov
    ```
 
 6. **Commit and push:**
@@ -264,7 +278,7 @@ plugin mechanism used by out-of-tree backends, and `src/plotmux/backends/matplot
 ### Updating Dependencies
 
 ```shell
-inv update
+inv env.update
 ```
 
 Dependencies are managed in `pyproject.toml` and locked in `uv.lock`.
