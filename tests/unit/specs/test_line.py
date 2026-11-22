@@ -132,3 +132,42 @@ def test_line_spec_x_y_coerced_from_lists() -> None:
     spec = LineSpec(x=cast("Any", [1, 2, 3]), y=cast("Any", [4, 5, 6]))
     assert isinstance(spec.x, np.ndarray)
     assert isinstance(spec.y, np.ndarray)
+
+
+def test_line_spec_does_not_alias_the_input_x() -> None:
+    x = np.arange(5, dtype=float)
+    spec = LineSpec(x=x, y=np.arange(5))
+    x[0] = 99
+    assert spec.x[0] == 0.0
+
+
+def test_line_spec_does_not_alias_the_input_y() -> None:
+    y = np.arange(5, dtype=float)
+    spec = LineSpec(x=np.arange(5), y=y)
+    y[0] = 99
+    assert spec.y[0] == 0.0
+
+
+def test_line_spec_x_is_read_only() -> None:
+    spec = LineSpec(x=np.arange(5), y=np.arange(5))
+    with pytest.raises(ValueError, match="read-only"):
+        spec.x[0] = 1
+
+
+def test_line_spec_y_is_read_only() -> None:
+    spec = LineSpec(x=np.arange(5), y=np.arange(5))
+    with pytest.raises(ValueError, match="read-only"):
+        spec.y[0] = 1
+
+
+def test_line_spec_equal() -> None:
+    assert LineSpec(x=np.arange(5), y=np.arange(5)) == LineSpec(x=np.arange(5), y=np.arange(5))
+
+
+def test_line_spec_not_equal_with_different_y() -> None:
+    assert LineSpec(x=np.arange(5), y=np.arange(5)) != LineSpec(x=np.arange(5), y=np.arange(1, 6))
+
+
+def test_line_spec_hash_raises() -> None:
+    with pytest.raises(TypeError, match="unhashable type: 'LineSpec'"):
+        hash(LineSpec(x=np.arange(5), y=np.arange(5)))

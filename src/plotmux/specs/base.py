@@ -2,7 +2,7 @@ r"""Contain the base class for backend-agnostic chart specifications."""
 
 from __future__ import annotations
 
-__all__ = ["BaseSpec", "XBoundSpec", "check_equal_length"]
+__all__ = ["BaseSpec", "Spec", "XBoundSpec", "check_equal_length"]
 
 # ``check_equal_length`` is a public, module-level helper, not a method on
 # ``BaseSpec``: unlike color, not every spec has an x/y pair (e.g.
@@ -11,20 +11,59 @@ __all__ = ["BaseSpec", "XBoundSpec", "check_equal_length"]
 # ``_normalize_color``) so a third-party spec pairing its own ``x``/``y``
 # arrays can reuse the same check/error message.
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from typing import TYPE_CHECKING, Literal
 
-import numpy as np
+from coola.equality import objects_are_equal
 
 from plotmux.colors import Color, parse_color
 from plotmux.exceptions import InvalidSpecError
+from plotmux.utils.array import to_readonly_array
 
 if TYPE_CHECKING:
+    import numpy as np
     from numpy.typing import ArrayLike
 
 
-@dataclass(frozen=True)
-class BaseSpec:
+@dataclass(frozen=True, eq=False)
+class Spec:
+    r"""Define the base class of the immutable value objects of the
+    specs.
+
+    A spec cannot change after its construction: the fields are
+    frozen and the arrays are copied and read-only (see
+    ``plotmux.utils.to_readonly_array``). Two specs are equal if they
+    have the same type and equal fields, where arrays are compared by
+    value (a plain dataclass ``==`` raises on an array field). A spec
+    holds arrays, so it is not hashable.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> from plotmux.specs import LineSpec
+        >>> LineSpec(x=np.arange(3), y=np.arange(3)) == LineSpec(x=np.arange(3), y=np.arange(3))
+        True
+        >>> LineSpec(x=np.arange(3), y=np.arange(3)) == LineSpec(x=np.arange(3), y=np.arange(1, 4))
+        False
+
+        ```
+    """
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Spec) or type(self) is not type(other):
+            return NotImplemented
+        return objects_are_equal(
+            {f.name: getattr(self, f.name) for f in fields(self)},
+            {f.name: getattr(other, f.name) for f in fields(other)},
+        )
+
+    def __hash__(self) -> int:
+        msg = f"unhashable type: '{type(self).__name__}'"
+        raise TypeError(msg)
+
+
+@dataclass(frozen=True, eq=False)
+class BaseSpec(Spec):
     r"""Define the base class for chart specifications.
 
     A spec is a plain, backend-agnostic description of *what* to
@@ -179,7 +218,7 @@ class BaseSpec:
             object.__setattr__(self, name, parse_color(value))
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class XBoundSpec(BaseSpec):
     r"""Add a plain, explicit-value-only ``xmin``/``xmax`` x-axis bound
     to ``BaseSpec``, for every chart type that does not need the data-
@@ -261,15 +300,16 @@ def check_equal_length(x: ArrayLike, y: ArrayLike) -> tuple[np.ndarray, np.ndarr
         y: The array of y values.
 
     Returns:
-        The ``(x, y)`` pair, each coerced to an ``np.ndarray``.
+        The ``(x, y)`` pair, each converted to a read-only copy (see
+            ``plotmux.utils.to_readonly_array``).
 
     Raises:
         InvalidSpecError: if ``x`` and ``y`` do not have the same
             length. Also a ``ValueError``, so existing ``except
             ValueError`` code keeps working unchanged.
     """
-    x = np.asarray(x)
-    y = np.asarray(y)
+    x = to_readonly_array(x)
+    y = to_readonly_array(y)
     if x.ndim != 1 or y.ndim != 1:
         msg = f"x and y must be 1-dimensional, but received shapes {x.shape} and {y.shape}"
         raise InvalidSpecError(msg)

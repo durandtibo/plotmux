@@ -101,3 +101,55 @@ def test_stacked_bar_spec_common_style() -> None:
     assert spec.title == "t"
     assert spec.xlabel == "x"
     assert spec.ylabel == "y"
+
+
+def test_stacked_bar_spec_does_not_alias_the_input_x() -> None:
+    x = np.array([0.0, 1.0, 2.0])
+    spec = StackedBarSpec(x=x, series=(BarSeries(y=np.arange(3)),))
+    x[0] = 99
+    assert spec.x[0] == 0.0
+
+
+def test_stacked_bar_spec_does_not_alias_the_input_series_y() -> None:
+    y = np.array([0.0, 1.0, 2.0])
+    spec = StackedBarSpec(x=np.arange(3), series=(BarSeries(y=y),))
+    y[0] = 99
+    assert spec.series[0].y[0] == 0.0
+
+
+def test_stacked_bar_spec_x_is_read_only() -> None:
+    spec = StackedBarSpec(x=np.arange(3), series=(BarSeries(y=np.arange(3)),))
+    with pytest.raises(ValueError, match="read-only"):
+        spec.x[0] = 1
+
+
+def test_stacked_bar_spec_series_y_is_read_only() -> None:
+    spec = StackedBarSpec(x=np.arange(3), series=(BarSeries(y=np.arange(3)),))
+    with pytest.raises(ValueError, match="read-only"):
+        spec.series[0].y[0] = 1
+
+
+def test_stacked_bar_spec_equal() -> None:
+    assert StackedBarSpec(x=np.arange(3), series=(BarSeries(y=np.arange(3), label="a"),)) == (
+        StackedBarSpec(x=np.arange(3), series=(BarSeries(y=np.arange(3), label="a"),))
+    )
+
+
+def test_stacked_bar_spec_not_equal_with_different_series() -> None:
+    assert StackedBarSpec(x=np.arange(3), series=(BarSeries(y=np.arange(3)),)) != (
+        StackedBarSpec(x=np.arange(3), series=(BarSeries(y=np.arange(1, 4)),))
+    )
+
+
+def test_stacked_bar_spec_hash_raises() -> None:
+    spec = StackedBarSpec(x=np.arange(3), series=(BarSeries(y=np.arange(3)),))
+    with pytest.raises(TypeError, match="unhashable type: 'StackedBarSpec'"):
+        hash(spec)
+
+
+def test_bar_series_equal() -> None:
+    assert BarSeries(y=np.arange(3), label="a") == BarSeries(y=np.arange(3), label="a")
+
+
+def test_bar_series_not_equal_with_different_y() -> None:
+    assert BarSeries(y=np.arange(3)) != BarSeries(y=np.arange(1, 4))

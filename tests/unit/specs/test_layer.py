@@ -114,3 +114,14 @@ def test_layer_spec_nested_layer_among_other_children_raises() -> None:
     other = ScatterSpec(x=np.arange(10), y=np.arange(10))
     with pytest.raises(ValueError, match="layers must not contain a LayerSpec"):
         LayerSpec(layers=(other, inner))
+
+
+def test_layer_spec_equal() -> None:
+    children = (HistogramSpec(values=np.arange(5)), LineSpec(x=np.arange(3), y=np.arange(3)))
+    assert LayerSpec(layers=children) == LayerSpec(layers=children)
+
+
+def test_layer_spec_not_equal_with_different_child_data() -> None:
+    assert LayerSpec(layers=(LineSpec(x=np.arange(3), y=np.arange(3)),)) != LayerSpec(
+        layers=(LineSpec(x=np.arange(3), y=np.arange(1, 4)),)
+    )

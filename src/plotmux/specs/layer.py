@@ -11,7 +11,7 @@ from plotmux.exceptions import InvalidSpecError
 from plotmux.specs.base import BaseSpec, XBoundSpec
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class LayerSpec(XBoundSpec):
     r"""Define a spec that draws multiple child specs on one shared
     axes.
