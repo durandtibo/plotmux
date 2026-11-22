@@ -288,4 +288,9 @@ forbidden_modules = ["plotmux.testing"]
 name = "Backends must not import the high-level API"
 type = "forbidden"
 source_modules = ["plotmux.backends"]
-forbidden_modules = ["plotmux.api", "plotmux.config", "plotmux.export", "plotmux.figure"]
+forbidden_modules = [
+  "plotmux.api",
+  "plotmux.config",
+  "plotmux.export",
+  "plotmux.figure",
+]
