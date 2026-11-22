@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import Mock, patch
 
 import pytest
 
-from plotmux.backends.base import Backend
+from plotmux.backends.base import BackendCapabilities
 from plotmux.backends.registry import (
     _BUILTIN_AVAILABILITY,
     _BUILTIN_BACKENDS,
@@ -25,10 +25,10 @@ from plotmux.testing.fixtures import (
     plotly_available,
     xy_available,
 )
+from tests.fakes import FakeBackend
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-    from pathlib import Path
 
 BUILTIN_BACKENDS = [
     pytest.param("altair", marks=altair_available),
@@ -37,17 +37,6 @@ BUILTIN_BACKENDS = [
     pytest.param("plotly", marks=plotly_available),
     pytest.param("xy", marks=xy_available),
 ]
-
-
-class FakeBackend(Backend):
-    name = "fake"
-
-    def render(self, spec: Any, **kwargs: Any) -> Any:
-        del kwargs
-        return spec
-
-    def save(self, native: Any, path: Path, fmt: str) -> None:
-        del native, path, fmt
 
 
 class PluginBackend(FakeBackend):
@@ -386,17 +375,14 @@ def test_available_backends_real_builtin() -> None:
 
 
 def test_capabilities_delegates_to_backend() -> None:
-    class RenderersBackend(Backend):
-        name = "renderers"
-        _RENDERERS: ClassVar[Any] = {int: str}
-
-        def save(self, native: Any, path: Path, fmt: str) -> None:
-            del native, path, fmt
-
-    register_backend(RenderersBackend())
-    caps = capabilities("renderers")
-    assert caps.backend_name == "renderers"
-    assert caps.spec_types == frozenset({int})
+    register_backend(FakeBackend())
+    assert capabilities("fake") == BackendCapabilities(
+        name="fake",
+        formats=frozenset({"png", "svg", "gz"}),
+        grid_formats=frozenset({"png"}),
+        legend_locations=frozenset({"top", "bottom"}),
+        markers=frozenset({"circle"}),
+    )
 
 
 def test_capabilities_missing_backend() -> None:

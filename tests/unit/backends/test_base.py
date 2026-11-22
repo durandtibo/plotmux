@@ -1,139 +1,180 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import Any, cast
 
+import numpy as np
 import pytest
 
-from plotmux.backends.base import Backend, make_renderer
+from plotmux.backends.base import Backend, BackendCapabilities
+from plotmux.exceptions import UnsupportedFormatError, UnsupportedSpecError
+from plotmux.primitives import Line, Points
+from plotmux.scene import AxesScene, GridScene, LegendStyle, build_scene
+from plotmux.specs import GridSpec, LineSpec, PanelSpec, ScatterSpec
+from tests.fakes import FakeBackend
 
-if TYPE_CHECKING:
-    from pathlib import Path
+CAPS = BackendCapabilities(
+    name="demo",
+    formats=frozenset({"png", "svg"}),
+    grid_formats=frozenset({"png"}),
+    legend_locations=frozenset({"top", "bottom"}),
+    markers=frozenset({"circle", "square"}),
+)
+LINE = LineSpec(x=np.arange(3), y=np.arange(3), label="a")
 
 
-class FakeBackend(Backend):
-    name = "fake"
-    supported_formats = frozenset({"png"})
+def _points(marker: str | None) -> Points:
+    return Points(x=np.arange(2.0), y=np.arange(2.0), marker=marker)
 
-    def render(self, spec: Any, **kwargs: Any) -> Any:
-        del kwargs
-        return spec
 
-    def save(self, native: Any, path: Path, fmt: str) -> None:
-        del native, path, fmt
+def _scene(location: str | None = None, *primitives: Any) -> AxesScene:
+    legend = None if location is None else LegendStyle(location=cast("Any", location))
+    return AxesScene(primitives=primitives, legend=legend)
+
+
+#####################################
+#     Tests for BackendCapabilities #
+#####################################
+
+
+def test_capabilities_check_accepts_a_supported_scene() -> None:
+    CAPS.check(_scene("top", _points("square")))
+
+
+def test_capabilities_check_accepts_no_legend_and_no_marker() -> None:
+    CAPS.check(_scene(None, _points(None), Line(x=np.arange(2.0), y=np.arange(2.0))))
+
+
+def test_capabilities_check_legend_without_location() -> None:
+    CAPS.check(AxesScene(primitives=(), legend=LegendStyle(title="t")))
+
+
+def test_capabilities_check_unsupported_legend_location_raises() -> None:
+    with pytest.raises(
+        UnsupportedSpecError,
+        match=r"The demo backend does not support legend_location='left': "
+        r"supported values are \['bottom', 'top'\]",
+    ):
+        CAPS.check(_scene("left"))
+
+
+def test_capabilities_check_unsupported_marker_raises() -> None:
+    with pytest.raises(
+        UnsupportedSpecError,
+        match=r"The demo backend does not support marker='x': "
+        r"supported values are \['circle', 'square'\]",
+    ):
+        CAPS.check(_scene(None, _points("x")))
+
+
+def test_capabilities_check_checks_every_panel_of_a_grid() -> None:
+    grid = GridScene(panels=(_scene("top"), _scene("left")))
+    with pytest.raises(UnsupportedSpecError, match="legend_location='left'"):
+        CAPS.check(grid)
+
+
+def test_capabilities_check_accepts_a_supported_grid() -> None:
+    CAPS.check(GridScene(panels=(_scene("top"), _scene("bottom"))))
+
+
+@pytest.mark.parametrize("fmt", ["png", "svg"])
+def test_capabilities_check_format_supported(fmt: str) -> None:
+    CAPS.check_format(fmt)
+
+
+def test_capabilities_check_format_unsupported_raises() -> None:
+    with pytest.raises(
+        UnsupportedFormatError,
+        match=r"The demo backend does not support exporting a figure to 'pdf': "
+        r"supported formats are \['png', 'svg'\]",
+    ):
+        CAPS.check_format("pdf")
+
+
+def test_capabilities_check_format_grid_supported() -> None:
+    CAPS.check_format("png", grid=True)
+
+
+def test_capabilities_check_format_grid_unsupported_raises() -> None:
+    with pytest.raises(
+        UnsupportedFormatError,
+        match=r"The demo backend does not support exporting a grid to 'svg': "
+        r"supported formats are \['png'\]",
+    ):
+        CAPS.check_format("svg", grid=True)
+
+
+def test_capabilities_are_immutable() -> None:
+    with pytest.raises(AttributeError):
+        cast("Any", CAPS).name = "other"
 
 
 ##############################
-#     Tests for Backend     #
+#     Tests for Backend      #
 ##############################
 
 
 def test_backend_name() -> None:
-    backend = FakeBackend()
-    assert backend.name == "fake"
+    assert FakeBackend().name == "fake"
 
 
-def test_backend_render() -> None:
-    backend = FakeBackend()
-    assert backend.render("spec") == "spec"
+def test_backend_is_abstract() -> None:
+    with pytest.raises(TypeError, match="abstract"):
+        cast("Any", Backend)()
 
 
-def test_backend_render_forwards_kwargs() -> None:
-    class KwargsBackend(Backend):
-        name = "kwargs"
+def test_backend_without_draw_is_abstract() -> None:
+    class NoDraw(Backend):
+        name = "nodraw"
 
-        def render(self, spec: Any, **kwargs: Any) -> Any:
-            del spec
-            return kwargs
+        def capabilities(self) -> BackendCapabilities:
+            return CAPS
 
-        def save(self, native: Any, path: Path, fmt: str) -> None:
+        def save(self, native: Any, path: Any, fmt: str) -> None:
             del native, path, fmt
 
-    backend = KwargsBackend()
-    assert backend.render("spec", alpha=0.5) == {"alpha": 0.5}
+    with pytest.raises(TypeError, match="abstract"):
+        cast("Any", NoDraw)()
+
+
+def test_backend_render_draws_the_scene_of_the_spec() -> None:
+    spec = PanelSpec(marks=(LINE,))
+    assert FakeBackend().render(spec) == build_scene(spec)
+
+
+def test_backend_render_grid() -> None:
+    spec = GridSpec(panels=(PanelSpec(marks=(LINE,)),))
+    assert FakeBackend().render(spec) == build_scene(spec)
+
+
+def test_backend_render_checks_before_drawing() -> None:
+    class CountingBackend(FakeBackend):
+        drawn = 0
+
+        def draw(self, scene: Any) -> Any:
+            type(self).drawn += 1
+            return scene
+
+    spec = PanelSpec(marks=(LINE,), legend_location="left")
+    with pytest.raises(UnsupportedSpecError, match="legend_location='left'"):
+        CountingBackend().render(spec)
+    assert CountingBackend.drawn == 0
+
+
+def test_backend_render_unsupported_marker_raises() -> None:
+    spec = PanelSpec(marks=(ScatterSpec(x=np.arange(2), y=np.arange(2), marker="x"),))
+    with pytest.raises(UnsupportedSpecError, match="marker='x'"):
+        FakeBackend().render(spec)
+
+
+def test_backend_render_does_not_take_keyword_arguments() -> None:
+    with pytest.raises(TypeError, match="unexpected keyword argument"):
+        cast("Any", FakeBackend()).render(PanelSpec(marks=(LINE,)), linewidth=2)
 
 
 def test_backend_save() -> None:
     backend = FakeBackend()
-    # Should not raise.
     backend.save("native", cast("Any", "path"), "png")
-
-
-def test_backend_is_abstract() -> None:
-    class IncompleteBackend(Backend):
-        name = "incomplete"
-
-    with pytest.raises(TypeError, match="abstract"):
-        cast("Any", IncompleteBackend)()
-
-
-def test_backend_supported_formats() -> None:
-    backend = FakeBackend()
-    assert backend.supported_formats == frozenset({"png"})
-
-
-def test_backend_capabilities_default_caveats() -> None:
-    class RenderersBackend(Backend):
-        name = "renderers"
-        _RENDERERS: ClassVar[Any] = {int: str, float: str}
-
-        def save(self, native: Any, path: Path, fmt: str) -> None:
-            del native, path, fmt
-
-    caps = RenderersBackend.capabilities()
-    assert caps.backend_name == "renderers"
-    assert caps.spec_types == frozenset({int, float})
-    assert caps.caveats == ()
-
-
-def test_backend_capabilities_with_caveats() -> None:
-    class CaveatBackend(Backend):
-        name = "caveat"
-        _RENDERERS: ClassVar[Any] = {int: str}
-        _CAVEATS: ClassVar[Any] = (
-            "int is only supported nested inside a LayerSpec, not standalone.",
-        )
-
-        def save(self, native: Any, path: Path, fmt: str) -> None:
-            del native, path, fmt
-
-    caps = CaveatBackend.capabilities()
-    assert caps.spec_types == frozenset({int})
-    assert caps.caveats == ("int is only supported nested inside a LayerSpec, not standalone.",)
-
-
-def test_backend_capabilities_is_instance_method_too() -> None:
-    class RenderersBackend(Backend):
-        name = "renderers"
-        _RENDERERS: ClassVar[Any] = {int: str}
-
-        def save(self, native: Any, path: Path, fmt: str) -> None:
-            del native, path, fmt
-
-    backend = RenderersBackend()
-    assert backend.capabilities() == RenderersBackend.capabilities()
-
-
-####################################
-#     Tests for make_renderer     #
-####################################
-
-
-def test_make_renderer_draws_then_styles() -> None:
-    calls = []
-
-    def chart_render(spec: Any, **kwargs: Any) -> str:
-        calls.append(("draw", spec, kwargs))
-        return "native"
-
-    def style(native: str, spec: Any) -> str:
-        calls.append(("style", native, spec))
-        return f"{native}-styled"
-
-    render = make_renderer(chart_render, style)
-    result = render("spec", alpha=0.5)
-
-    assert result == "native-styled"
-    assert calls == [("draw", "spec", {"alpha": 0.5}), ("style", "native", "spec")]
+    assert backend.saved == [("native", "path", "png")]
 
 
 ##################################

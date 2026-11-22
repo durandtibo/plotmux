@@ -7,9 +7,9 @@ import pytest
 
 import plotmux
 from plotmux.api import _as_panel, _merge_axes_options
-from plotmux.backends.base import Backend
 from plotmux.backends.registry import _REGISTRY, register_backend
 from plotmux.exceptions import InvalidSpecError
+from plotmux.scene import build_scene
 from plotmux.specs import (
     BarSeries,
     BarSpec,
@@ -22,24 +22,12 @@ from plotmux.specs import (
     SlopeSpec,
     StackedBarSpec,
 )
+from tests.fakes import FakeBackend
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-    from pathlib import Path
 
     from plotmux.figure import Figure
-
-
-class FakeBackend(Backend):
-    name = "fake"
-    supported_formats = frozenset({"png"})
-
-    def render(self, spec: Any, **kwargs: Any) -> Any:
-        del kwargs
-        return spec
-
-    def save(self, native: Any, path: Path, fmt: str) -> None:
-        del native, path, fmt
 
 
 @pytest.fixture(autouse=True)
@@ -77,7 +65,7 @@ def test_hist_returns_a_figure_of_the_backend() -> None:
 
 def test_hist_native_is_the_render_of_the_backend() -> None:
     fig = plotmux.hist(np.arange(11), backend="fake")
-    assert fig.native is fig.spec
+    assert fig.native == build_scene(fig.spec)
 
 
 def test_hist_uses_the_default_backend() -> None:
@@ -288,7 +276,7 @@ def test_scatter_mark_options() -> None:
             size=3,
             edgecolor="blue",
             alpha=0.5,
-            marker="square",
+            marker="circle",
             fill=False,
             backend="fake",
         )
@@ -297,7 +285,7 @@ def test_scatter_mark_options() -> None:
         "a",
         3,
         0.5,
-        "square",
+        "circle",
         False,
     )
 

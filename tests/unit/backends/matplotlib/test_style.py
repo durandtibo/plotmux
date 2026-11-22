@@ -2,349 +2,220 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, cast
 
-import numpy as np
 import pytest
 
-from plotmux.specs import HistogramSpec, ScatterSpec
+from plotmux.scene import AxesScene, LegendStyle
 from plotmux.testing.fixtures import matplotlib_available
 from plotmux.utils.imports import is_matplotlib_available
 
 if TYPE_CHECKING:
-    from matplotlib.legend import Legend
+    from matplotlib.axes import Axes
 
 if is_matplotlib_available():
-    import matplotlib.pyplot as plt
+    from matplotlib.figure import Figure
 
     from plotmux.backends.matplotlib.style import (
-        _apply_legend_style,
-        apply_common_style,
+        LEGEND_LOCATION,
+        MARKER_STYLE,
+        _apply_legend,
+        apply_style,
     )
 
-#########################################
-#     Tests for apply_common_style     #
-#########################################
+
+def _axes(*, label: str | None = None) -> Axes:
+    ax = Figure().subplots()
+    ax.plot([0, 1], [0, 1], label=label)
+    return ax
+
+
+def _legend(ax: Axes) -> Any:
+    legend = ax.get_legend()
+    assert legend is not None
+    return legend
+
+
+def _scene(**kwargs: Any) -> AxesScene:
+    return AxesScene(primitives=(), **kwargs)
+
+
+#################################
+#     Tests for apply_style     #
+#################################
 
 
 @matplotlib_available
-def test_apply_common_style_returns_axes() -> None:
-    fig, ax = plt.subplots()
-    spec = HistogramSpec(values=np.arange(101), bins=10)
-    out = apply_common_style(ax, spec)
-    assert out is ax
-    plt.close(fig)
-
-
-# --- title ---
+def test_apply_style_returns_the_axes() -> None:
+    ax = _axes()
+    assert apply_style(ax, _scene()) is ax
 
 
 @matplotlib_available
-def test_apply_common_style_title() -> None:
-    fig, ax = plt.subplots()
-    spec = HistogramSpec(values=np.arange(101), bins=10, title="my-title")
-    apply_common_style(ax, spec)
-    assert ax.get_title() == "my-title"
-    plt.close(fig)
+def test_apply_style_title() -> None:
+    assert apply_style(_axes(), _scene(title="t")).get_title() == "t"
 
 
 @matplotlib_available
-def test_apply_common_style_no_title() -> None:
-    fig, ax = plt.subplots()
-    spec = HistogramSpec(values=np.arange(101), bins=10)
-    apply_common_style(ax, spec)
-    assert ax.get_title() == ""
-    plt.close(fig)
-
-
-# --- labels ---
+def test_apply_style_no_title() -> None:
+    assert apply_style(_axes(), _scene()).get_title() == ""
 
 
 @matplotlib_available
-def test_apply_common_style_labels() -> None:
-    fig, ax = plt.subplots()
-    spec = HistogramSpec(values=np.arange(101), bins=10, xlabel="x", ylabel="y")
-    apply_common_style(ax, spec)
-    assert ax.get_xlabel() == "x"
-    assert ax.get_ylabel() == "y"
-    plt.close(fig)
+def test_apply_style_xlabel() -> None:
+    assert apply_style(_axes(), _scene(xlabel="x")).get_xlabel() == "x"
 
 
 @matplotlib_available
-def test_apply_common_style_no_labels() -> None:
-    fig, ax = plt.subplots()
-    spec = HistogramSpec(values=np.arange(101), bins=10)
-    apply_common_style(ax, spec)
-    assert ax.get_xlabel() == ""
-    assert ax.get_ylabel() == ""
-    plt.close(fig)
-
-
-# --- scale ---
+def test_apply_style_ylabel() -> None:
+    assert apply_style(_axes(), _scene(ylabel="y")).get_ylabel() == "y"
 
 
 @matplotlib_available
-def test_apply_common_style_default_scale_is_linear() -> None:
-    fig, ax = plt.subplots()
-    spec = HistogramSpec(values=np.arange(101), bins=10)
-    apply_common_style(ax, spec)
-    assert ax.get_xscale() == "linear"
-    assert ax.get_yscale() == "linear"
-    plt.close(fig)
-
-
-@pytest.mark.parametrize("scale", ["linear", "log"])
-@matplotlib_available
-def test_apply_common_style_xscale(scale: str) -> None:
-    fig, ax = plt.subplots()
-    spec = HistogramSpec(values=np.arange(1, 101), bins=10, xscale=cast("Any", scale))
-    apply_common_style(ax, spec)
-    assert ax.get_xscale() == scale
-    plt.close(fig)
-
-
-@pytest.mark.parametrize("scale", ["linear", "log"])
-@matplotlib_available
-def test_apply_common_style_yscale(scale: str) -> None:
-    fig, ax = plt.subplots()
-    spec = HistogramSpec(values=np.arange(1, 101), bins=10, yscale=cast("Any", scale))
-    apply_common_style(ax, spec)
-    assert ax.get_yscale() == scale
-    plt.close(fig)
+def test_apply_style_default_scales_are_linear() -> None:
+    ax = apply_style(_axes(), _scene())
+    assert (ax.get_xscale(), ax.get_yscale()) == ("linear", "linear")
 
 
 @matplotlib_available
-def test_apply_common_style_background_color() -> None:
-    fig, ax = plt.subplots()
-    spec = HistogramSpec(values=np.arange(1, 101), bins=10, background_color="red")
-    apply_common_style(ax, spec)
+def test_apply_style_xscale() -> None:
+    assert apply_style(_axes(), _scene(xscale="log")).get_xscale() == "log"
+
+
+@matplotlib_available
+def test_apply_style_yscale() -> None:
+    assert apply_style(_axes(), _scene(yscale="log")).get_yscale() == "log"
+
+
+@matplotlib_available
+def test_apply_style_background_color() -> None:
+    ax = apply_style(_axes(), _scene(background_color=(1.0, 0.0, 0.0, 1.0)))
     assert ax.get_facecolor() == (1.0, 0.0, 0.0, 1.0)
-    plt.close(fig)
 
 
 @matplotlib_available
-def test_apply_common_style_no_background_color() -> None:
-    fig, ax = plt.subplots()
-    spec = HistogramSpec(values=np.arange(1, 101), bins=10)
-    default_facecolor = ax.get_facecolor()
-    apply_common_style(ax, spec)
-    assert ax.get_facecolor() == default_facecolor
-    plt.close(fig)
+def test_apply_style_no_background_color_keeps_the_default() -> None:
+    assert apply_style(_axes(), _scene()).get_facecolor() == (1.0, 1.0, 1.0, 1.0)
 
 
 @matplotlib_available
-def test_apply_common_style_ymin_ymax() -> None:
-    fig, ax = plt.subplots()
-    spec = HistogramSpec(values=np.arange(1, 101), bins=10, ymin=0.0, ymax=5.0)
-    apply_common_style(ax, spec)
-    assert ax.get_ylim() == (0.0, 5.0)
-    plt.close(fig)
+def test_apply_style_xlim() -> None:
+    assert apply_style(_axes(), _scene(xlim=(2.0, 5.0))).get_xlim() == (2.0, 5.0)
 
 
 @matplotlib_available
-def test_apply_common_style_no_ymin_ymax() -> None:
-    fig, ax = plt.subplots()
-    spec = HistogramSpec(values=np.arange(1, 101), bins=10)
-    default_ylim = ax.get_ylim()
-    apply_common_style(ax, spec)
-    assert ax.get_ylim() == default_ylim
-    plt.close(fig)
-
-
-# --- xmin/xmax ---
+def test_apply_style_xlim_lower_bound_only() -> None:
+    assert apply_style(_axes(), _scene(xlim=(-3.0, None))).get_xlim()[0] == -3.0
 
 
 @matplotlib_available
-def test_apply_common_style_xmin_xmax() -> None:
-    fig, ax = plt.subplots()
-    # ``ScatterSpec`` rather than ``HistogramSpec``: ``HistogramSpec.xmin``/
-    # ``.xmax`` is a different, quantile-capable field (see
-    # ``plotmux.specs.base.XBoundSpec``), resolved and applied by
-    # ``render_histogram`` itself, not the plain, explicit-value-only
-    # ``BaseSpec``-shared ``xmin``/``xmax`` under test here.
-    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), xmin=0.0, xmax=5.0)
-    apply_common_style(ax, spec)
-    assert ax.get_xlim() == (0.0, 5.0)
-    plt.close(fig)
+def test_apply_style_xlim_upper_bound_only() -> None:
+    assert apply_style(_axes(), _scene(xlim=(None, 7.0))).get_xlim()[1] == 7.0
 
 
 @matplotlib_available
-def test_apply_common_style_no_xmin_xmax() -> None:
-    fig, ax = plt.subplots()
-    spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
-    default_xlim = ax.get_xlim()
-    apply_common_style(ax, spec)
-    assert ax.get_xlim() == default_xlim
-    plt.close(fig)
+def test_apply_style_ylim() -> None:
+    assert apply_style(_axes(), _scene(ylim=(2.0, 5.0))).get_ylim() == (2.0, 5.0)
 
 
 @matplotlib_available
-def test_apply_common_style_histogram_xbounds_not_reapplied() -> None:
-    # ``HistogramSpec``/``CdfSpec`` are not ``XBoundSpec`` (see
-    # ``plotmux.specs.base.XBoundSpec``): their own ``xmin``/``xmax`` may
-    # hold an unresolved quantile string, so ``apply_common_style`` must
-    # not read them -- doing so used to crash the moment either bound was
-    # set to a quantile string like ``"q0.1"``.
-    fig, ax = plt.subplots()
-    spec = HistogramSpec(values=np.arange(101), bins=10, xmin="q0.1", xmax="q0.9")
-    default_xlim = ax.get_xlim()
-    apply_common_style(ax, spec)
-    assert ax.get_xlim() == default_xlim
-    plt.close(fig)
-
-
-# --- legend_title ---
+def test_apply_style_no_limits_autoscale() -> None:
+    assert apply_style(_axes(), _scene()).get_xlim() == pytest.approx((-0.05, 1.05))
 
 
 @matplotlib_available
-def test_apply_common_style_legend_title() -> None:
-    fig, ax = plt.subplots()
-    ax.plot([1, 2], [3, 4], label="s")
-    ax.legend()
-    spec = HistogramSpec(values=np.arange(101), bins=10, legend_title="Lines")
-    apply_common_style(ax, spec)
-    assert cast("Legend", ax.get_legend()).get_title().get_text() == "Lines"
-    plt.close(fig)
+def test_apply_style_no_legend_in_the_scene_draws_none() -> None:
+    assert apply_style(_axes(label="a"), _scene()).get_legend() is None
 
 
 @matplotlib_available
-def test_apply_common_style_no_legend_title() -> None:
-    fig, ax = plt.subplots()
-    ax.plot([1, 2], [3, 4], label="s")
-    ax.legend()
-    spec = HistogramSpec(values=np.arange(101), bins=10)
-    apply_common_style(ax, spec)
-    assert cast("Legend", ax.get_legend()).get_title().get_text() == ""
-    plt.close(fig)
+def test_apply_style_legend() -> None:
+    assert apply_style(_axes(label="a"), _scene(legend=LegendStyle())).get_legend() is not None
+
+
+########################################
+#     Tests for _apply_legend          #
+########################################
 
 
 @matplotlib_available
-def test_apply_common_style_legend_title_no_legend_is_noop() -> None:
-    fig, ax = plt.subplots()
-    spec = HistogramSpec(values=np.arange(101), bins=10, legend_title="Lines")
-    apply_common_style(ax, spec)
+def test_apply_legend_without_legend_is_a_noop() -> None:
+    ax = _axes(label="a")
+    _apply_legend(ax, _scene())
     assert ax.get_legend() is None
-    plt.close(fig)
-
-
-# --- legend_location ---
 
 
 @matplotlib_available
-def test_apply_common_style_legend_location() -> None:
-    fig, ax = plt.subplots()
-    ax.plot([1, 2], [3, 4], label="s")
-    ax.legend()
-    spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="top_left")
-    apply_common_style(ax, spec)
-    assert cast("Any", ax.get_legend())._get_loc() == 2  # "upper left"
-    plt.close(fig)
+def test_apply_legend_title() -> None:
+    ax = _axes(label="a")
+    _apply_legend(ax, _scene(legend=LegendStyle(title="Lines")))
+    assert _legend(ax).get_title().get_text() == "Lines"
 
 
 @matplotlib_available
-def test_apply_common_style_legend_location_best_passthrough() -> None:
-    fig, ax = plt.subplots()
-    ax.plot([1, 2], [3, 4], label="s")
-    ax.legend()
-    spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="best")
-    apply_common_style(ax, spec)
-    assert cast("Any", ax.get_legend())._get_loc() == 0  # "best"
-    plt.close(fig)
+def test_apply_legend_no_title() -> None:
+    ax = _axes(label="a")
+    _apply_legend(ax, _scene(legend=LegendStyle()))
+    assert _legend(ax).get_title().get_text() == ""
+
+
+@pytest.mark.parametrize("location", sorted(LEGEND_LOCATION) if is_matplotlib_available() else [])
+@matplotlib_available
+def test_apply_legend_location(location: str) -> None:
+    ax = _axes(label="a")
+    _apply_legend(ax, _scene(legend=LegendStyle(location=cast("Any", location))))
+    assert (
+        _legend(ax)._loc
+        == {
+            "upper left": 2,
+            "upper right": 1,
+            "lower left": 3,
+            "lower right": 4,
+            "upper center": 9,
+            "lower center": 8,
+            "center left": 6,
+            "center right": 7,
+        }[LEGEND_LOCATION[location]]
+    )
 
 
 @matplotlib_available
-def test_apply_common_style_legend_location_no_legend_is_noop() -> None:
-    fig, ax = plt.subplots()
-    spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="top_left")
-    apply_common_style(ax, spec)
-    assert ax.get_legend() is None
-    plt.close(fig)
-
-
-# --- legend_orientation ---
+def test_apply_legend_horizontal_orientation_uses_one_row() -> None:
+    ax = Figure().subplots()
+    ax.plot([0, 1], [0, 1], label="a")
+    ax.plot([0, 1], [1, 0], label="b")
+    _apply_legend(ax, _scene(legend=LegendStyle(orientation="horizontal")))
+    assert _legend(ax)._ncols == 2
 
 
 @matplotlib_available
-def test_apply_common_style_legend_orientation_horizontal() -> None:
-    fig, ax = plt.subplots()
-    ax.plot([1, 2], [3, 4], label="s1")
-    ax.plot([1, 2], [5, 6], label="s2")
-    ax.legend()
-    spec = HistogramSpec(values=np.arange(101), bins=10, legend_orientation="horizontal")
-    apply_common_style(ax, spec)
-    assert cast("Any", ax.get_legend())._ncols == 2
-    plt.close(fig)
+def test_apply_legend_vertical_orientation_keeps_one_column() -> None:
+    ax = Figure().subplots()
+    ax.plot([0, 1], [0, 1], label="a")
+    ax.plot([0, 1], [1, 0], label="b")
+    _apply_legend(ax, _scene(legend=LegendStyle(orientation="vertical")))
+    assert _legend(ax)._ncols == 1
 
 
 @matplotlib_available
-def test_apply_common_style_no_legend_orientation() -> None:
-    fig, ax = plt.subplots()
-    ax.plot([1, 2], [3, 4], label="s")
-    ax.legend()
-    spec = HistogramSpec(values=np.arange(101), bins=10)
-    apply_common_style(ax, spec)
-    assert cast("Any", ax.get_legend())._ncols == 1
-    plt.close(fig)
-
-
-###########################################
-#     Tests for _apply_legend_style     #
-###########################################
-
-
-@matplotlib_available
-def test_apply_legend_style_title() -> None:
-    fig, ax = plt.subplots()
-    ax.plot([1, 2], [3, 4], label="s")
-    ax.legend()
-    _apply_legend_style(ax, HistogramSpec(values=np.arange(101), legend_title="Lines"))
-    assert cast("Legend", ax.get_legend()).get_title().get_text() == "Lines"
-    plt.close(fig)
+def test_legend_locations_whole_table() -> None:
+    assert LEGEND_LOCATION == {
+        "top_left": "upper left",
+        "top_right": "upper right",
+        "bottom_left": "lower left",
+        "bottom_right": "lower right",
+        "top": "upper center",
+        "bottom": "lower center",
+        "left": "center left",
+        "right": "center right",
+    }
 
 
 @matplotlib_available
-def test_apply_legend_style_location() -> None:
-    fig, ax = plt.subplots()
-    ax.plot([1, 2], [3, 4], label="s")
-    ax.legend()
-    _apply_legend_style(ax, HistogramSpec(values=np.arange(101), legend_location="top_left"))
-    assert cast("Any", ax.get_legend())._get_loc() == 2  # "upper left"
-    plt.close(fig)
-
-
-@matplotlib_available
-def test_apply_legend_style_horizontal_orientation() -> None:
-    fig, ax = plt.subplots()
-    ax.plot([1, 2], [3, 4], label="s1")
-    ax.plot([1, 2], [5, 6], label="s2")
-    ax.legend()
-    _apply_legend_style(ax, HistogramSpec(values=np.arange(101), legend_orientation="horizontal"))
-    assert cast("Any", ax.get_legend())._ncols == 2
-    plt.close(fig)
-
-
-@matplotlib_available
-def test_apply_legend_style_vertical_orientation_keeps_one_column() -> None:
-    fig, ax = plt.subplots()
-    ax.plot([1, 2], [3, 4], label="s1")
-    ax.plot([1, 2], [5, 6], label="s2")
-    ax.legend()
-    _apply_legend_style(ax, HistogramSpec(values=np.arange(101), legend_orientation="vertical"))
-    assert cast("Any", ax.get_legend())._ncols == 1
-    plt.close(fig)
-
-
-@matplotlib_available
-def test_apply_legend_style_no_legend_is_noop() -> None:
-    fig, ax = plt.subplots()
-    _apply_legend_style(ax, HistogramSpec(values=np.arange(101), legend_title="Lines"))
-    assert ax.get_legend() is None
-    plt.close(fig)
-
-
-@matplotlib_available
-def test_apply_legend_style_no_field_keeps_legend_title() -> None:
-    fig, ax = plt.subplots()
-    ax.plot([1, 2], [3, 4], label="s")
-    ax.legend(title="Original")
-    _apply_legend_style(ax, HistogramSpec(values=np.arange(101)))
-    assert cast("Legend", ax.get_legend()).get_title().get_text() == "Original"
-    plt.close(fig)
+def test_marker_style_whole_table() -> None:
+    assert MARKER_STYLE == {
+        "circle": "o",
+        "square": "s",
+        "triangle": "^",
+        "diamond": "D",
+        "cross": "+",
+        "x": "x",
+    }

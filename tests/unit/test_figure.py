@@ -6,30 +6,23 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 
-from plotmux.backends.base import Backend
 from plotmux.backends.registry import _REGISTRY, register_backend
 from plotmux.figure import Figure
-from plotmux.specs import HistogramSpec, PanelSpec
+from plotmux.specs import GridSpec, HistogramSpec, PanelSpec
+from tests.fakes import FakeBackend
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from pathlib import Path
 
 
-class FakeBackend(Backend):
-    name = "fake"
-    supported_formats = frozenset({"png", "svg"})
+class RecordingBackend(FakeBackend):
+    formats = frozenset({"png", "svg"})
+    grid_formats = frozenset({"png"})
 
     def __init__(self) -> None:
-        self.saved: list[tuple[Any, Path, str]] = []
+        super().__init__()
         self.shown: list[Any] = []
-
-    def render(self, spec: Any, **kwargs: Any) -> Any:
-        del kwargs
-        return spec
-
-    def save(self, native: Any, path: Path, fmt: str) -> None:
-        self.saved.append((native, path, fmt))
 
     def show(self, native: Any) -> None:
         self.shown.append(native)
@@ -38,16 +31,8 @@ class FakeBackend(Backend):
         return {"text/html": f"<b>{native}</b>", "image/png": "png"}
 
 
-class BareBackend(Backend):
+class BareBackend(FakeBackend):
     name = "bare"
-    supported_formats = frozenset({"png"})
-
-    def render(self, spec: Any, **kwargs: Any) -> Any:
-        del kwargs
-        return spec
-
-    def save(self, native: Any, path: Path, fmt: str) -> None:
-        del native, path, fmt
 
 
 @pytest.fixture(autouse=True)
@@ -75,7 +60,7 @@ def test_figure_to_native() -> None:
 
 
 def test_figure_show_delegates_to_backend() -> None:
-    backend = FakeBackend()
+    backend = RecordingBackend()
     register_backend(backend)
     spec = PanelSpec(marks=(HistogramSpec(values=np.array([1, 2, 3])),))
     Figure(spec=spec, backend_name="fake", native="native-object").show()
@@ -96,7 +81,7 @@ def test_figure_show_unsupported_backend() -> None:
 
 
 def test_figure_save(tmp_path: Path) -> None:
-    fake_backend = FakeBackend()
+    fake_backend = RecordingBackend()
     register_backend(fake_backend)
     spec = PanelSpec(marks=(HistogramSpec(values=np.array([1, 2, 3])),))
     fig = Figure(spec=spec, backend_name="fake", native="native-object")
@@ -105,7 +90,7 @@ def test_figure_save(tmp_path: Path) -> None:
 
 
 def test_figure_save_accepts_str_path(tmp_path: Path) -> None:
-    fake_backend = FakeBackend()
+    fake_backend = RecordingBackend()
     register_backend(fake_backend)
     spec = PanelSpec(marks=(HistogramSpec(values=np.array([1, 2, 3])),))
     fig = Figure(spec=spec, backend_name="fake", native="native-object")
@@ -119,10 +104,17 @@ def test_figure_save_accepts_str_path(tmp_path: Path) -> None:
 
 
 def test_figure_supported_formats() -> None:
-    register_backend(FakeBackend())
+    register_backend(RecordingBackend())
     spec = PanelSpec(marks=(HistogramSpec(values=np.array([1, 2, 3])),))
     fig = Figure(spec=spec, backend_name="fake", native="native-object")
     assert fig.supported_formats == frozenset({"png", "svg"})
+
+
+def test_figure_supported_formats_of_a_grid() -> None:
+    register_backend(RecordingBackend())
+    panel = PanelSpec(marks=(HistogramSpec(values=np.array([1, 2, 3])),))
+    fig = Figure(spec=GridSpec(panels=(panel,)), backend_name="fake", native="native-object")
+    assert fig.supported_formats == frozenset({"png"})
 
 
 #######################################
@@ -131,28 +123,28 @@ def test_figure_supported_formats() -> None:
 
 
 def test_figure_repr_mimebundle_delegates_to_backend() -> None:
-    register_backend(FakeBackend())
+    register_backend(RecordingBackend())
     spec = PanelSpec(marks=(HistogramSpec(values=np.array([1, 2, 3])),))
     fig = Figure(spec=spec, backend_name="fake", native="native-object")
     assert fig._repr_mimebundle_() == {"text/html": "<b>native-object</b>", "image/png": "png"}
 
 
 def test_figure_repr_mimebundle_include() -> None:
-    register_backend(FakeBackend())
+    register_backend(RecordingBackend())
     spec = PanelSpec(marks=(HistogramSpec(values=np.array([1, 2, 3])),))
     fig = Figure(spec=spec, backend_name="fake", native="native-object")
     assert fig._repr_mimebundle_(include={"image/png"}) == {"image/png": "png"}
 
 
 def test_figure_repr_mimebundle_exclude() -> None:
-    register_backend(FakeBackend())
+    register_backend(RecordingBackend())
     spec = PanelSpec(marks=(HistogramSpec(values=np.array([1, 2, 3])),))
     fig = Figure(spec=spec, backend_name="fake", native="native-object")
     assert fig._repr_mimebundle_(exclude={"image/png"}) == {"text/html": "<b>native-object</b>"}
 
 
 def test_figure_repr_mimebundle_include_and_exclude() -> None:
-    register_backend(FakeBackend())
+    register_backend(RecordingBackend())
     spec = PanelSpec(marks=(HistogramSpec(values=np.array([1, 2, 3])),))
     fig = Figure(spec=spec, backend_name="fake", native="native-object")
     assert fig._repr_mimebundle_(include={"image/png", "text/html"}, exclude={"image/png"}) == {

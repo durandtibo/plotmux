@@ -1,37 +1,24 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
 
-from plotmux.backends.base import Backend
 from plotmux.backends.registry import _REGISTRY, register_backend
+from plotmux.exceptions import UnsupportedFormatError
 from plotmux.export import save
 from plotmux.figure import Figure
-from plotmux.specs import HistogramSpec
+from plotmux.specs import GridSpec, HistogramSpec, PanelSpec
+from tests.fakes import FakeBackend
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from pathlib import Path
 
 
-class FakeBackend(Backend):
-    name = "fake"
-
-    def __init__(self) -> None:
-        self.saved: list[tuple[Any, Path, str]] = []
-
-    def render(self, spec: Any, **kwargs: Any) -> Any:
-        del kwargs
-        return spec
-
-    def save(self, native: Any, path: Path, fmt: str) -> None:
-        self.saved.append((native, path, fmt))
-
-
 class FakeBackendWithFormats(FakeBackend):
-    supported_formats = frozenset({"svg"})
+    formats = frozenset({"svg"})
 
 
 @pytest.fixture(autouse=True)
@@ -44,7 +31,9 @@ def _restore_registry() -> Iterator[None]:
 
 def _make_figure() -> Figure:
     return Figure(
-        spec=HistogramSpec(values=np.array([1, 2, 3])), backend_name="fake", native="native-object"
+        spec=PanelSpec(marks=(HistogramSpec(values=np.array([1, 2, 3])),)),
+        backend_name="fake",
+        native="native-object",
     )
 
 
@@ -83,10 +72,14 @@ def test_save_no_suffix_raises(tmp_path: Path) -> None:
 def test_save_unsupported_format_raises_before_creating_parent_dir(tmp_path: Path) -> None:
     register_backend(FakeBackendWithFormats())
     fig = Figure(
-        spec=HistogramSpec(values=np.array([1, 2, 3])), backend_name="fake", native="native-object"
+        spec=PanelSpec(marks=(HistogramSpec(values=np.array([1, 2, 3])),)),
+        backend_name="fake",
+        native="native-object",
     )
     target = tmp_path / "missing" / "out.png"
-    with pytest.raises(ValueError, match="Unsupported export format"):
+    with pytest.raises(
+        UnsupportedFormatError, match=r"does not support exporting a figure to 'png'"
+    ):
         save(fig, target)
     # The parent directory must not be created as a side effect of a
     # failed, unsupported-format save.
@@ -95,7 +88,9 @@ def test_save_unsupported_format_raises_before_creating_parent_dir(tmp_path: Pat
 
 def test_save_unknown_backend_raises(tmp_path: Path) -> None:
     fig = Figure(
-        spec=HistogramSpec(values=np.array([1, 2, 3])), backend_name="does-not-exist", native=None
+        spec=PanelSpec(marks=(HistogramSpec(values=np.array([1, 2, 3])),)),
+        backend_name="does-not-exist",
+        native=None,
     )
     with pytest.raises(RuntimeError, match="No backend registered"):
         save(fig, tmp_path / "out.png")
@@ -115,4 +110,23 @@ def test_save_existing_parent_directory(tmp_path: Path) -> None:
     fake_backend = FakeBackend()
     register_backend(fake_backend)
     save(_make_figure(), tmp_path / "out.png")
+    assert fake_backend.saved == [("native-object", tmp_path / "out.png", "png")]
+
+
+def test_save_grid_unsupported_format_raises_before_creating_parent_dir(tmp_path: Path) -> None:
+    register_backend(FakeBackend())
+    panel = PanelSpec(marks=(HistogramSpec(values=np.array([1, 2, 3])),))
+    fig = Figure(spec=GridSpec(panels=(panel,)), backend_name="fake", native="native-object")
+    target = tmp_path / "missing" / "out.svg"
+    with pytest.raises(UnsupportedFormatError, match=r"does not support exporting a grid to 'svg'"):
+        save(fig, target)
+    assert not target.parent.exists()
+
+
+def test_save_grid_supported_format(tmp_path: Path) -> None:
+    fake_backend = FakeBackend()
+    register_backend(fake_backend)
+    panel = PanelSpec(marks=(HistogramSpec(values=np.array([1, 2, 3])),))
+    fig = Figure(spec=GridSpec(panels=(panel,)), backend_name="fake", native="native-object")
+    save(fig, tmp_path / "out.png")
     assert fake_backend.saved == [("native-object", tmp_path / "out.png", "png")]

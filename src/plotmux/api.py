@@ -204,7 +204,7 @@ def hist(
     Example:
         ```pycon
         >>> import plotmux
-        >>> fig = plotmux.hist([1, 2, 2, 3], bins=3, backend="matplotlib")  # doctest: +SKIP
+        >>> fig = plotmux.hist([1, 2, 2, 3], bins=3, backend="matplotlib")
 
         ```
     """
@@ -251,7 +251,7 @@ def bar(
     Example:
         ```pycon
         >>> import plotmux
-        >>> fig = plotmux.bar(["a", "b"], [1, 2], backend="matplotlib")  # doctest: +SKIP
+        >>> fig = plotmux.bar(["a", "b"], [1, 2], backend="matplotlib")
 
         ```
     """
@@ -291,7 +291,7 @@ def stacked_bar(
         >>> from plotmux.specs import BarSeries
         >>> fig = plotmux.stacked_bar(
         ...     ["a", "b"], [BarSeries(y=[1, 2])], backend="matplotlib"
-        ... )  # doctest: +SKIP
+        ... )
 
         ```
     """
@@ -338,7 +338,7 @@ def cdf(
     Example:
         ```pycon
         >>> import plotmux
-        >>> fig = plotmux.cdf([1, 2, 2, 3], backend="matplotlib")  # doctest: +SKIP
+        >>> fig = plotmux.cdf([1, 2, 2, 3], backend="matplotlib")
 
         ```
     """
@@ -383,7 +383,7 @@ def line(
     Example:
         ```pycon
         >>> import plotmux
-        >>> fig = plotmux.line([1, 2, 3], [1, 4, 9], backend="matplotlib")  # doctest: +SKIP
+        >>> fig = plotmux.line([1, 2, 3], [1, 4, 9], backend="matplotlib")
 
         ```
     """
@@ -432,7 +432,7 @@ def scatter(
     Example:
         ```pycon
         >>> import plotmux
-        >>> fig = plotmux.scatter([1, 2, 3], [1, 4, 9], backend="matplotlib")  # doctest: +SKIP
+        >>> fig = plotmux.scatter([1, 2, 3], [1, 4, 9], backend="matplotlib")
 
         ```
     """
@@ -487,7 +487,7 @@ def slope(
     Example:
         ```pycon
         >>> import plotmux
-        >>> fig = plotmux.slope(2, 1, xmin=0, xmax=10, backend="matplotlib")  # doctest: +SKIP
+        >>> fig = plotmux.slope(2, 1, xmin=0, xmax=10, backend="matplotlib")
 
         ```
     """
@@ -507,7 +507,9 @@ def layer(*items: MarkSpec | Figure, **panel: Unpack[BoundedPanelOptions]) -> Fi
     r"""Draw several marks on one shared axes.
 
     A ``Figure`` of a single panel contributes its marks and its axes
-    options. For each axes option the call does not set, the unique
+    options. A mark with no data of its own (a ``SlopeSpec``) is given
+    as the mark, not as a figure: ``plotmux.slope`` alone needs
+    ``xmin`` and ``xmax``. For each axes option the call does not set, the unique
     non-default value of the figures is used.
 
     Args:
@@ -527,9 +529,10 @@ def layer(*items: MarkSpec | Figure, **panel: Unpack[BoundedPanelOptions]) -> Fi
     Example:
         ```pycon
         >>> import plotmux
+        >>> from plotmux.specs import SlopeSpec
         >>> fig = plotmux.layer(
-        ...     plotmux.line([1, 2], [1, 2]), plotmux.slope(1), backend="matplotlib"
-        ... )  # doctest: +SKIP
+        ...     plotmux.line([1, 2], [1, 2]), SlopeSpec(gradient=1), backend="matplotlib"
+        ... )
 
         ```
     """
@@ -572,7 +575,7 @@ def grid(
         >>> import plotmux
         >>> fig = plotmux.grid(
         ...     plotmux.hist([1, 2, 3]), plotmux.line([1, 2], [1, 2]), ncols=2, backend="matplotlib"
-        ... )  # doctest: +SKIP
+        ... )
 
         ```
     """
