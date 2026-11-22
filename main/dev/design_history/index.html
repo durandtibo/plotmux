@@ -1262,6 +1262,78 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#external-design-review-2026-09-02" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External design review (2026-09-02)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="External design review (2026-09-02)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#review-item-1-the-per-backend-translation-table-is-duplicated-by-hand-n-x-m-times-partly-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Review item 1 The per-backend translation table is duplicated by hand, N x M times -- partly done
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#review-item-2-apipy-is-900-lines-of-repeated-parameter-lists-and-docstrings-partly-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Review item 2 api.py is ~900 lines of repeated parameter lists and docstrings -- partly done
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#review-item-3-unsupported-combinations-surface-only-at-render-time-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Review item 3 Unsupported combinations surface only at render time -- done
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#review-item-4-kwargs-any-forwarded-to-the-underlying-library-is-a-silent-typo-trap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Review item 4 **kwargs: Any forwarded to the underlying library is a silent typo trap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#review-item-5-designmd-itself-is-becoming-two-documents-in-one-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Review item 5 DESIGN.md itself is becoming two documents in one -- done
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1285,7 +1357,7 @@
 <h1 id="plotmux-design-history">plotmux design history<a class="headerlink" href="#plotmux-design-history" title="Permanent link">&para;</a></h1>
 <p>This file is the historical companion to
 <a href="../../../DESIGN.md"><code>DESIGN.md</code></a> (repo root): <code>DESIGN.md</code> is kept as
-the current-state architecture reference (see its own §9.5 for why),
+the current-state architecture reference (see the last review item below for why),
 while this file keeps the chronological record of how it got there --
 the case studies that drove each round of gap-closing, and the
 cumulative status log each one produced. Nothing here describes
@@ -1758,6 +1830,201 @@ genuinely new spec type rather than a new field on an existing one;
 the categorical-x-axis fix was a prerequisite for stacking to be
 usable with string categories (this example's own case) even though it
 is independently useful for plain <code>BarSpec</code> too.</p>
+<h2 id="external-design-review-2026-09-02">External design review (2026-09-02)<a class="headerlink" href="#external-design-review-2026-09-02" title="Permanent link">&para;</a></h2>
+<p>The case studies in <a href="../../../DESIGN.md#8-candidate-future-work">8</a> drive plotmux's
+<em>feature</em> growth (new specs, new fields) reactively, one bokeh example
+at a time. The gaps below are different in kind: they are about the
+growth <em>process</em> itself -- how each new field/spec/backend gets paid
+for -- and were not surfaced by any single case study because each one
+only exercises one feature end to end, not the combinatorics of adding
+it everywhere. None of this contradicts <a href="../../../DESIGN.md#5-why-this-shape">5</a>; it is
+about the cost of keeping that shape's promise as the matrix grows.</p>
+<h3 id="review-item-1-the-per-backend-translation-table-is-duplicated-by-hand-n-x-m-times-partly-done">Review item 1 The per-backend translation table is duplicated by hand, N x M times -- partly done<a class="headerlink" href="#review-item-1-the-per-backend-translation-table-is-duplicated-by-hand-n-x-m-times-partly-done" title="Permanent link">&para;</a></h3>
+<p>Every mark-level field (<code>color</code>, <code>alpha</code>, <code>linewidth</code>, <code>linestyle</code>,
+<code>edgecolor</code>, ...) is translated from its canonical form to each
+backend's native call independently, in that backend's own
+<code>render_&lt;type&gt;.py</code> (see <a href="../../../DESIGN.md#49-specifying-colors-across-backends">4.9</a>
+and <a href="../../../DESIGN.md#81-partial-or-asymmetric-backend-support">8.1</a>). With 5
+backends x 9 spec types, a new common field (the last four case
+studies added <code>alpha</code>, <code>linewidth</code>/<code>linestyle</code>, <code>background_color</code>,
+<code>ymin</code>/<code>ymax</code>, <code>legend_title</code>, <code>legend_location</code>,
+<code>legend_orientation</code>, <code>edgecolor</code>, <code>fill</code>, <code>marker</code> -- nine fields in
+four case studies) means touching on the order of 10-20 call sites by
+hand, each a small, easy-to-get-subtly-wrong translation (e.g. bokeh's
+<code>alpha</code> rejecting <code>None</code>, altair's <code>strokeDash</code> needing a name-to-
+pixel-list table <code>SlopeSpec</code> and <code>LineSpec</code> both reach into). Nothing
+enforces that a field added to one backend's renderer is added to
+every other's; the only thing that currently catches an omission is
+the integration test matrix (chart-type x backend x format,
+<a href="../../../DESIGN.md#5-why-this-shape">5</a>), after the fact, not before.</p>
+<p>Proposal: factor each field's canonical-to-native translation into one
+small, named function per field, living beside <code>rgba_to_bokeh</code>/
+<code>rgba_to_altair</code>/<code>rgba_to_xy</code>/<code>rgba_to_plotly</code> in each backend's own
+<code>style.py</code> (<code>STROKE_DASH</code>, the alpha-omit-if-None pattern, and the
+<code>DASH_STYLE</code> map already are this, just not named or reused
+consistently). A renderer then reads as a short, declarative list of
+<code>(spec_field, native_kwarg, translator)</code> triples applied by one shared
+helper, instead of a bespoke <code>if spec.alpha is not None: kwargs["fill_alpha"]
+= spec.alpha</code> block repeated per mark type within a backend. This
+does not remove the N x M translation work (every backend genuinely
+does need its own encoding), but it turns "did every backend's every
+render function pick up the new field" from a question answered by
+grepping five directories into one checkable per-backend list, and
+makes the <em>pattern</em> (bokeh omits <code>None</code>, altair needs a name table,
+...) visible and reusable instead of rediscovered per spec type.</p>
+<p><strong>Partly done (2026-09-03).</strong> <code>plotmux.backends.bokeh.style</code> now
+defines <code>FieldRule</code> (<code>field</code>/<code>kwarg</code>/<code>translate</code>/<code>omit_if_none</code>) and
+<code>apply_fields(spec, rules, kwargs)</code>, plus named rules for the fields
+bokeh's renderers shared (<code>ALPHA</code>, <code>LABEL</code>, <code>LINEWIDTH</code>, <code>LINESTYLE</code>,
+<code>SIZE</code>, <code>MARKER</code>). Every bokeh <code>render_&lt;type&gt;.py</code>
+(<code>histogram</code>/<code>bar</code>/<code>cdf</code>/<code>line</code>/<code>scatter</code>/<code>slope</code>/<code>stacked_bar</code>) was
+migrated from its own repeated <code>if spec.field is not None:
+kwargs["..."] = spec.field</code> blocks to a single
+<code>apply_fields(spec, [...], kwargs)</code> call; <code>slope.py</code> also shows a
+field needing its own kwarg name (<code>line_alpha</code> instead of <code>alpha</code>,
+since <code>bokeh.models.Slope</code> is an annotation, not a glyph) as one extra
+<code>FieldRule</code>, not a bespoke branch. This is the bokeh backend only --
+altair/matplotlib/plotly/xy's <code>style.py</code> still hold their own
+<code>rgba_to_*</code>/<code>STROKE_DASH</code>/<code>DASH_STYLE</code> helpers but not yet the same
+<code>FieldRule</code>/<code>apply_fields</code> shape, so the N x M translation work itself
+is unchanged; what changed is that bokeh's own M-sized slice of it is
+now one checkable list per renderer instead of a scattered <code>if</code>
+per field, and the shape is there to copy into the other four
+backends' <code>style.py</code> next.</p>
+<h3 id="review-item-2-apipy-is-900-lines-of-repeated-parameter-lists-and-docstrings-partly-done">Review item 2 <code>api.py</code> is ~900 lines of repeated parameter lists and docstrings -- partly done<a class="headerlink" href="#review-item-2-apipy-is-900-lines-of-repeated-parameter-lists-and-docstrings-partly-done" title="Permanent link">&para;</a></h3>
+<p>Every public function (<code>hist</code>, <code>bar</code>, <code>stacked_bar</code>, <code>cdf</code>, <code>line</code>,
+<code>scatter</code>, <code>slope</code>, <code>layer</code>) redeclares the same seven
+<code>BaseSpec</code>-level parameters (<code>title</code>, <code>xlabel</code>, <code>ylabel</code>, <code>xscale</code>,
+<code>yscale</code>, <code>background_color</code>, <code>ymin</code>, <code>ymax</code>) with the same defaults,
+the same type union spelled out inline four times per function
+(<code>str | tuple[float, float, float] | tuple[float, float, float,
+float] | None</code> appears 9 times for <code>color</code> alone), and a docstring
+<code>Args:</code> block that repeats the same wording for each. This is
+consistent (a real strength: no function drifts from the others in
+naming or default), but it means every new <code>BaseSpec</code> field (the
+seven added across the four case studies) is a ~9-site edit to
+<code>api.py</code> alone, on top of the ~15-20 renderer sites in
+review item 1,
+and a docstring reviewer has to check nine near-identical copies stay
+in sync rather than one.</p>
+<p>Proposal: extract the shared <code>BaseSpec</code>-level parameters into one
+<code>TypedDict</code>/<code>dataclass</code>-backed shape (e.g. a <code>CommonKwargs</code> <code>TypedDict</code>
+with matching field-level docstrings written once), and have each
+public function accept <code>**common: Unpack[CommonKwargs]</code> (or, more
+conservatively, keep the explicit signatures for IDE-completion's
+sake but generate the repeated <code>Args:</code> docstring block instead of
+hand-copying it, the way <code>dev/generate_versions.py</code> already generates
+<code>dev/config/package_versions.json</code> rather than hand-maintaining it).
+Either approach turns "add a <code>BaseSpec</code> field" from a 9-site manual
+edit in <code>api.py</code> into a 1-site edit, without changing any call site's
+signature (<code>plotmux.hist(..., title=...)</code> keeps working identically
+either way) or losing the current strength of dedicated,
+autocompletable keyword arguments.</p>
+<p>Done (the conservative half): <code>plotmux.colors.Color</code> is now the one
+place the <code>str | tuple[float, float, float] | tuple[float, float,
+float, float] | None</code> union is spelled out -- every <code>color</code>,
+<code>edgecolor</code>, and <code>background_color</code> field/parameter across <code>specs/</code>
+and <code>api.py</code> (23 sites) now reads <code>Color</code> instead of repeating the
+union inline. And <code>api.py</code>'s <code>_COMMON_STYLE_ARGS</code> constant holds the
+<code>title</code>/<code>xlabel</code>/<code>ylabel</code>/<code>xscale</code>/<code>yscale</code>/<code>background_color</code>/
+<code>ymin</code>/<code>ymax</code>/<code>backend</code> <code>Args:</code> block, word for word, once; the
+<code>_with_common_style_args</code> decorator splices it into <code>hist</code>, <code>bar</code>,
+<code>line</code>, <code>scatter</code>, and <code>slope</code>'s docstrings (the five functions whose
+copies were identical) via <code>str.format</code>, the same "generate, don't
+hand-copy" move as <code>dev/generate_versions.py</code>. <code>cdf</code> (a different
+<code>ymin</code> note), <code>stacked_bar</code>/<code>layer</code> (a different <code>background_color</code>
+note, no <code>color</code> to refer back to), and <code>grid</code> (none of these fields)
+keep their own text since theirs already wasn't identical. Explicit
+signatures are untouched, so call sites and autocompletion are
+unaffected. Not done: the parameter <em>lists</em> themselves (as opposed to
+their docstrings) are still redeclared per function -- the
+<code>TypedDict</code>/<code>Unpack</code> half of the proposal, which would collapse the
+9-site signature edit itself, remains open.</p>
+<h3 id="review-item-3-unsupported-combinations-surface-only-at-render-time-done">Review item 3 Unsupported combinations surface only at render time -- done<a class="headerlink" href="#review-item-3-unsupported-combinations-surface-only-at-render-time-done" title="Permanent link">&para;</a></h3>
+<p><strong>Done (2026-09-04).</strong> Added <code>Backend.capabilities()</code> (instance and
+classmethod) returning a <code>BackendCapabilities(backend_name, spec_types,
+caveats)</code>, plus a module-level <code>plotmux.backends.capabilities(name)</code>
+convenience wrapping <code>get_backend(name).capabilities()</code>. <code>spec_types</code>
+is <code>frozenset(cls._RENDERERS)</code> -- no new bookkeeping. <code>caveats</code> is a
+new <code>Backend._CAVEATS: ClassVar[tuple[str, ...]]</code> (empty by default)
+that each backend overrides where a known partial-support caveat
+exists: altair and xy both record <code>SlopeSpec</code>-is-layer-only-support
+and their own respective caveat (<code>BarSpec.width</code> ignored for altair;
+<code>GridSpec</code> export HTML-only for xy), and plotly records the
+<code>SlopeSpec</code> caveat. matplotlib and bokeh have none. This is purely
+additive and read-only -- it does not change any render-time or
+export-time behavior -- and is covered by tests per backend (see
+<code>tests/unit/backends/*/test_backend.py::test_*_backend_capabilities</code>
+and <code>tests/unit/backends/test_base.py</code>/<code>test_registry.py</code>).</p>
+<p><code>resolve_renderer</code> (see <a href="../../../DESIGN.md#42-backend">4.2</a>) raises
+<code>UnsupportedSpecError</code> the moment an unsupported spec/backend
+combination is actually rendered, and <code>Figure.supported_formats</code> (see
+<a href="../../../DESIGN.md#43-figure">4.3</a>) lets a caller check export-format support ahead of
+<code>.save()</code> -- but there is no equivalent for spec-type or field-level
+support. A caller cannot ask "does this backend support <code>SlopeSpec</code>
+standalone?" or "does <code>BarSpec.width</code> do anything on altair?" (see
+<a href="../../../DESIGN.md#7-open-questions">7</a>'s last bullet) without either reading this
+document or triggering the failure. This matters more as the matrix
+grows: <code>SlopeSpec</code> is backend-standalone/layer-only-supported
+per-backend, <code>BarSpec.width</code> is silently ignored on one backend,
+xy's grid export is HTML-only, bokeh has no static image export --
+four different flavors of "partial support," each currently
+discoverable only by hitting it or reading DESIGN.md.</p>
+<p>Proposal: a small <code>Backend.capabilities()</code> (or a module-level
+<code>plotmux.backends.capabilities(backend_name)</code>) returning, at minimum,
+the set of spec types with a registered top-level renderer (already
+computable from <code>_RENDERERS.keys()</code> with no new bookkeeping) plus a
+short, explicit list of the known partial-support caveats that
+<code>_RENDERERS.keys()</code> alone can't express (layer-only <code>SlopeSpec</code>
+support, ignored <code>BarSpec.width</code>, HTML-only grid/export). This is
+strictly additive -- it does not change render-time behavior or any
+existing error -- and gives library authors building on top of
+plotmux (or a user picking a backend for a specific chart) a
+programmatic answer instead of a DESIGN.md search.</p>
+<h3 id="review-item-4-kwargs-any-forwarded-to-the-underlying-library-is-a-silent-typo-trap">Review item 4 <code>**kwargs: Any</code> forwarded to the underlying library is a silent typo trap<a class="headerlink" href="#review-item-4-kwargs-any-forwarded-to-the-underlying-library-is-a-silent-typo-trap" title="Permanent link">&para;</a></h3>
+<p>Every renderer and every public API function accepts <code>**kwargs: Any</code>
+and forwards it to the underlying plotting call (see
+<a href="../../../DESIGN.md#46-public-api-apipy">4.6</a>).
+This is the right escape hatch for a real backend-specific argument,
+but it also means a typo'd kwarg intended for one of plotmux's own
+named parameters (e.g. <code>plotmux.line(x, y, colour="red")</code>, a common
+British-spelling slip) is silently absorbed and forwarded instead of
+raising immediately: the failure, if any, happens deep inside
+matplotlib/bokeh/altair/plotly/xy with a traceback that does not
+mention plotmux at all, and on some backends a stray kwarg the
+underlying call happens to also accept silently changes behavior
+instead of erroring.</p>
+<p>Proposal: no change to the escape hatch's reach (it should keep
+forwarding anything not recognized), but each backend's renderer could
+cheaply check forwarded kwargs against the underlying call's own
+accepted parameter names via <code>inspect.signature</code> before forwarding,
+turning an unrecognized kwarg into a clear <code>InvalidSpecError</code> naming
+the closest match (<code>"colour" -&gt; did you mean "color"?</code>) instead of a
+deep, confusing traceback. Low priority relative to
+review item 1-review item 3,
+since it is a diagnostics improvement, not a correctness or
+extensibility one, but cheap once <code>inspect.signature</code> is memoized per
+underlying callable.</p>
+<h3 id="review-item-5-designmd-itself-is-becoming-two-documents-in-one-done">Review item 5 DESIGN.md itself is becoming two documents in one -- done<a class="headerlink" href="#review-item-5-designmd-itself-is-becoming-two-documents-in-one-done" title="Permanent link">&para;</a></h3>
+<p><strong>Done (2026-09-02).</strong> DESIGN.md used to mix two different kinds of
+content: the current-state architecture reference (<a href="../../../DESIGN.md#1-goal">1</a>-<a href="../../../DESIGN.md#6-candidate-future-backends">6</a>)
+a new contributor needs to read once, and a chronological log of case
+studies, closed gaps, and "nothing carried over from 8.x" bookkeeping,
+valuable as a <em>history</em> of why each field exists but not something a
+reader needs to re-derive every time. The status paragraph at the top
+of the file had itself grown into a dense, run-on changelog that was
+hard to skim precisely because it was trying to stay a single accurate
+sentence-per-fact across nine cumulative rounds of edits.</p>
+<p>The case-study log and the old status paragraph's history were split
+out into <a href="docs/docs/dev/design_history.md"><code>docs/docs/dev/design_history.md</code></a>,
+leaving DESIGN.md as the current-state reference plus
+<a href="../../../DESIGN.md#7-open-questions">7</a>/<a href="../../../DESIGN.md#8-candidate-future-work">8</a> (the <em>live</em>,
+forward-looking lists) and a short <a href="../../../DESIGN.md#81-partial-or-asymmetric-backend-support">8.1</a>
+summary of the asymmetries those case studies produced, with the full
+narrative linked from there rather than inlined.</p>
+<p>None of review items 1-4 are scheduled; each is additive/refactor-only and
+would become a new step once picked up, following the same convention
+as <a href="../../../DESIGN.md#8-candidate-future-work">8</a>.</p>
 
 
 
