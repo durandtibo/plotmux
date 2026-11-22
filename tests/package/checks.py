@@ -8,9 +8,9 @@ extras) are installed, so it does not import ``pytest``.
 
 Usage::
 
-    python tests/package_checks.py                    # no extra
-    python tests/package_checks.py --extra matplotlib # matplotlib is required
-    python tests/package_checks.py --extra all        # every extra is required
+    python tests/package/checks.py                    # no extra
+    python tests/package/checks.py --extra matplotlib # matplotlib is required
+    python tests/package/checks.py --extra all        # every extra is required
 
 An extra is checked by importing the library that it installs: a missing
 library is a failure only if the extra was requested with ``--extra``.

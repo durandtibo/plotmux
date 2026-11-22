@@ -74,7 +74,7 @@ jobs:
       contents: read
     uses: ./.github/workflows/ci-notebooks.yaml
 
-  # Check type annotations with pyright
+  # Check type annotations with ty and pyright
   type-checking:
     permissions:
       contents: read
