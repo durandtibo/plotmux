@@ -241,7 +241,7 @@ venvPath = "."
 venv = ".venv"
 
 [tool.ty.src]
-include = ["src", "dev"]
+include = ["src", "tests", "dev"]
 
 [tool.ty.environment]
 python-version = "3.11"

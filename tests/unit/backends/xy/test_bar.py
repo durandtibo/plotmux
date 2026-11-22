@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 
 from plotmux.specs import BarSpec
@@ -7,7 +9,7 @@ from plotmux.testing.fixtures import xy_available
 from plotmux.utils.imports import is_xy_available
 
 if is_xy_available():
-    from xy import Chart
+    from xy import Chart, Mark
 
     from plotmux.backends.xy.bar import render_bar
 
@@ -48,7 +50,7 @@ def test_render_bar_color() -> None:
 def test_render_bar_width() -> None:
     spec = BarSpec(x=np.arange(5), y=np.arange(5), width=0.3)
     chart = render_bar(spec)
-    assert chart.children[0].props["width"] == 0.3
+    assert cast("Mark", chart.children[0]).props["width"] == 0.3
 
 
 @xy_available
@@ -58,11 +60,11 @@ def test_render_bar_explicit_width_kwarg_not_overridden() -> None:
     # ``spec.width`` (``kwargs.setdefault("width", spec.width)`` in
     # ``render_bar``).
     chart = render_bar(spec, width=0.9)
-    assert chart.children[0].props["width"] == 0.9
+    assert cast("Mark", chart.children[0]).props["width"] == 0.9
 
 
 @xy_available
 def test_render_bar_alpha() -> None:
     spec = BarSpec(x=np.arange(5), y=np.arange(5), alpha=0.5)
     chart = render_bar(spec)
-    assert chart.children[0].props["opacity"] == 0.5
+    assert cast("Mark", chart.children[0]).props["opacity"] == 0.5

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pytest
@@ -140,7 +140,7 @@ def test_matplotlib_backend_render_forwards_kwargs(backend: MatplotlibBackend) -
 @matplotlib_available
 def test_matplotlib_backend_render_unsupported_spec(backend: MatplotlibBackend) -> None:
     with pytest.raises(NotImplementedError, match="No matplotlib renderer registered"):
-        backend.render(object())
+        backend.render(cast("Any", object()))
 
 
 @matplotlib_available

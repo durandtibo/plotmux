@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 
 from plotmux.specs import (
@@ -28,17 +30,17 @@ def test_resolve_slope_xrange_only_slope_specs_returns_none() -> None:
 
 def test_resolve_slope_xrange_line_spec() -> None:
     siblings = [LineSpec(x=np.arange(10), y=np.arange(10))]
-    assert resolve_slope_xrange(siblings) == (0.0, 9.0)
+    assert resolve_slope_xrange(cast("Any", siblings)) == (0.0, 9.0)
 
 
 def test_resolve_slope_xrange_histogram_spec() -> None:
     siblings = [HistogramSpec(values=np.arange(101), bins=10)]
-    assert resolve_slope_xrange(siblings) == (0.0, 100.0)
+    assert resolve_slope_xrange(cast("Any", siblings)) == (0.0, 100.0)
 
 
 def test_resolve_slope_xrange_cdf_spec() -> None:
     siblings = [CdfSpec(values=np.arange(101), nbins=10)]
-    assert resolve_slope_xrange(siblings) == (0.0, 100.0)
+    assert resolve_slope_xrange(cast("Any", siblings)) == (0.0, 100.0)
 
 
 def test_resolve_slope_xrange_sibling_with_neither_x_nor_values_is_skipped() -> None:
@@ -50,7 +52,7 @@ def test_resolve_slope_xrange_sibling_with_neither_x_nor_values_is_skipped() -> 
         pass
 
     siblings = [NeitherXNorValues(), LineSpec(x=np.arange(10), y=np.arange(10))]
-    assert resolve_slope_xrange(siblings) == (0.0, 9.0)
+    assert resolve_slope_xrange(cast("Any", siblings)) == (0.0, 9.0)
 
 
 def test_resolve_slope_xrange_two_values_based_siblings() -> None:
@@ -58,32 +60,32 @@ def test_resolve_slope_xrange_two_values_based_siblings() -> None:
         HistogramSpec(values=np.arange(101), bins=10),
         CdfSpec(values=np.arange(50, 151), nbins=10),
     ]
-    assert resolve_slope_xrange(siblings) == (0.0, 150.0)
+    assert resolve_slope_xrange(cast("Any", siblings)) == (0.0, 150.0)
 
 
 def test_resolve_slope_xrange_scatter_spec() -> None:
     siblings = [ScatterSpec(x=np.arange(10), y=np.arange(10))]
-    assert resolve_slope_xrange(siblings) == (0.0, 9.0)
+    assert resolve_slope_xrange(cast("Any", siblings)) == (0.0, 9.0)
 
 
 def test_resolve_slope_xrange_bar_spec() -> None:
     siblings = [BarSpec(x=np.arange(5), y=np.arange(5))]
-    assert resolve_slope_xrange(siblings) == (0.0, 4.0)
+    assert resolve_slope_xrange(cast("Any", siblings)) == (0.0, 4.0)
 
 
 def test_resolve_slope_xrange_cdf_spec_with_explicit_bounds() -> None:
     siblings = [CdfSpec(values=np.arange(101), nbins=10, xmin=20, xmax=80)]
-    assert resolve_slope_xrange(siblings) == (20.0, 80.0)
+    assert resolve_slope_xrange(cast("Any", siblings)) == (20.0, 80.0)
 
 
 def test_resolve_slope_xrange_negative_values() -> None:
     siblings = [LineSpec(x=np.array([-10.0, -5.0, -1.0]), y=np.arange(3))]
-    assert resolve_slope_xrange(siblings) == (-10.0, -1.0)
+    assert resolve_slope_xrange(cast("Any", siblings)) == (-10.0, -1.0)
 
 
 def test_resolve_slope_xrange_single_point_line() -> None:
     siblings = [LineSpec(x=np.array([5.0]), y=np.array([1.0]))]
-    assert resolve_slope_xrange(siblings) == (5.0, 5.0)
+    assert resolve_slope_xrange(cast("Any", siblings)) == (5.0, 5.0)
 
 
 def test_resolve_slope_xrange_combines_multiple_siblings() -> None:
@@ -92,4 +94,4 @@ def test_resolve_slope_xrange_combines_multiple_siblings() -> None:
         HistogramSpec(values=np.arange(101), bins=10),
         SlopeSpec(gradient=1.0, intercept=0.0),
     ]
-    assert resolve_slope_xrange(siblings) == (0.0, 100.0)
+    assert resolve_slope_xrange(cast("Any", siblings)) == (0.0, 100.0)

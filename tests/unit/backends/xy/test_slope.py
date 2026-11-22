@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from typing import cast
+
 from plotmux.specs import SlopeSpec
 from plotmux.testing.fixtures import xy_available
 from plotmux.utils.imports import is_xy_available
 
 if is_xy_available():
-    from xy import Chart
+    from xy import Chart, Mark
 
     from plotmux.backends.xy.slope import render_slope
 
@@ -46,21 +48,21 @@ def test_render_slope_color() -> None:
 def test_render_slope_alpha() -> None:
     spec = SlopeSpec(gradient=1.0, intercept=0.0, alpha=0.5)
     chart = render_slope(spec, xrange=(0.0, 10.0))
-    assert chart.children[0].props["opacity"] == 0.5
+    assert cast("Mark", chart.children[0]).props["opacity"] == 0.5
 
 
 @xy_available
 def test_render_slope_linewidth() -> None:
     spec = SlopeSpec(gradient=1.0, intercept=0.0, linewidth=3.0)
     chart = render_slope(spec, xrange=(0.0, 10.0))
-    assert chart.children[0].props["width"] == 3.0
+    assert cast("Mark", chart.children[0]).props["width"] == 3.0
 
 
 @xy_available
 def test_render_slope_linestyle() -> None:
     spec = SlopeSpec(gradient=1.0, intercept=0.0, linestyle="dashed")
     chart = render_slope(spec, xrange=(0.0, 10.0))
-    assert chart.children[0].props["dash"] == "dashed"
+    assert cast("Mark", chart.children[0]).props["dash"] == "dashed"
 
 
 @xy_available

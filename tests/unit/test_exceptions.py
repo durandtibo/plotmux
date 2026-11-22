@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 import pytest
 
@@ -73,9 +75,9 @@ def test_get_backend_unknown_raises_plotmux_error() -> None:
 
 def test_resolve_renderer_unknown_raises_plotmux_error() -> None:
     with pytest.raises(PlotmuxError):
-        resolve_renderer({}, object(), "test")
+        resolve_renderer({}, cast("Any", object()), "test")
     with pytest.raises(NotImplementedError):
-        resolve_renderer({}, object(), "test")
+        resolve_renderer({}, cast("Any", object()), "test")
 
 
 def test_check_export_format_unsupported_raises_plotmux_error() -> None:
@@ -101,7 +103,7 @@ def test_hist_invalid_bins_raises_plotmux_error() -> None:
 
 
 def test_export_no_suffix_raises_plotmux_error() -> None:
-    fig = Figure(spec=None, backend_name="does-not-matter", native=None)
+    fig = Figure(spec=cast("Any", None), backend_name="does-not-matter", native=None)
     with pytest.raises(PlotmuxError):
         save(fig, "no-suffix")
     with pytest.raises(ValueError, match="Cannot infer the export format"):

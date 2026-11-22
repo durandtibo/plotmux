@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pytest
@@ -157,7 +157,7 @@ def test_plotly_backend_render_log_scale(backend: PlotlyBackend) -> None:
 @plotly_available
 def test_plotly_backend_render_unsupported_spec(backend: PlotlyBackend) -> None:
     with pytest.raises(NotImplementedError, match="No plotly renderer registered"):
-        backend.render(object())
+        backend.render(cast("Any", object()))
 
 
 # --- save ---

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 import pytest
 
@@ -27,7 +29,7 @@ from plotmux.testing.fixtures import bokeh_available, matplotlib_available, xy_a
 def test_hist_returns_figure_with_matplotlib_backend() -> None:
     fig = plotmux.hist(np.arange(101), bins=10)
     assert fig.backend_name == "matplotlib"
-    assert fig.spec.bins == 10
+    assert cast("HistogramSpec", fig.spec).bins == 10
 
 
 @matplotlib_available
@@ -40,7 +42,7 @@ def test_hist_explicit_backend() -> None:
 def test_hist_explicit_xy_backend() -> None:
     fig = plotmux.hist(np.arange(101), bins=10, backend="xy")
     assert fig.backend_name == "xy"
-    assert fig.spec.bins == 10
+    assert cast("HistogramSpec", fig.spec).bins == 10
 
 
 def test_hist_unknown_backend_raises() -> None:
@@ -51,9 +53,9 @@ def test_hist_unknown_backend_raises() -> None:
 @matplotlib_available
 def test_hist_default_kwargs() -> None:
     fig = plotmux.hist(np.arange(101))
-    assert fig.spec.bins == 30
-    assert fig.spec.density is False
-    assert fig.spec.color is None
+    assert cast("HistogramSpec", fig.spec).bins == 30
+    assert cast("HistogramSpec", fig.spec).density is False
+    assert cast("HistogramSpec", fig.spec).color is None
 
 
 @matplotlib_available
@@ -127,7 +129,7 @@ def test_cdf_explicit_backend() -> None:
 def test_cdf_explicit_xy_backend() -> None:
     fig = plotmux.cdf(np.arange(101), nbins=10, backend="xy")
     assert fig.backend_name == "xy"
-    assert fig.spec.nbins == 10
+    assert cast("CdfSpec", fig.spec).nbins == 10
 
 
 def test_cdf_unknown_backend_raises() -> None:
@@ -138,8 +140,8 @@ def test_cdf_unknown_backend_raises() -> None:
 @matplotlib_available
 def test_cdf_default_kwargs() -> None:
     fig = plotmux.cdf(np.arange(101))
-    assert fig.spec.nbins is None
-    assert fig.spec.color is None
+    assert cast("CdfSpec", fig.spec).nbins is None
+    assert cast("CdfSpec", fig.spec).color is None
     assert fig.spec.ylabel == "cumulative probability"
 
 
@@ -323,8 +325,8 @@ def test_stacked_bar_returns_figure_with_matplotlib_backend() -> None:
 
 @matplotlib_available
 def test_stacked_bar_categorical_x() -> None:
-    fig = plotmux.stacked_bar(["Apples", "Pears"], [BarSeries(y=[2, 1])])
-    assert fig.spec.x.tolist() == ["Apples", "Pears"]
+    fig = plotmux.stacked_bar(["Apples", "Pears"], [BarSeries(y=np.array([2, 1]))])
+    assert cast("StackedBarSpec", fig.spec).x.tolist() == ["Apples", "Pears"]
 
 
 @xy_available
@@ -428,8 +430,12 @@ def test_layer_accepts_figure_items() -> None:
     # equivalent copy carrying a ``LayerSpec``-assigned default color (see
     # ``plotmux.specs.layer._assign_default_colors``), so identity is not
     # preserved, only the data.
-    np.testing.assert_array_equal(fig.spec.layers[0].x, line_fig.spec.x)
-    np.testing.assert_array_equal(fig.spec.layers[0].y, line_fig.spec.y)
+    np.testing.assert_array_equal(
+        cast("LineSpec", fig.spec.layers[0]).x, cast("LineSpec", line_fig.spec).x
+    )
+    np.testing.assert_array_equal(
+        cast("LineSpec", fig.spec.layers[0]).y, cast("LineSpec", line_fig.spec).y
+    )
     ax = fig.native.axes[0]
     assert len(ax.lines) == 1
     assert len(ax.collections) == 1
@@ -438,7 +444,7 @@ def test_layer_accepts_figure_items() -> None:
 @matplotlib_available
 def test_layer_single_item() -> None:
     fig = plotmux.layer(LineSpec(x=np.arange(10), y=np.arange(10)))
-    assert len(fig.spec.layers) == 1
+    assert len(cast("LayerSpec", fig.spec).layers) == 1
 
 
 @xy_available
@@ -517,7 +523,7 @@ def test_grid_accepts_figure_items() -> None:
 @matplotlib_available
 def test_grid_single_item() -> None:
     fig = plotmux.grid(LineSpec(x=np.arange(10), y=np.arange(10)))
-    assert len(fig.spec.cells) == 1
+    assert len(cast("GridSpec", fig.spec).cells) == 1
 
 
 @matplotlib_available
@@ -526,7 +532,7 @@ def test_grid_default_ncols_is_one() -> None:
         LineSpec(x=np.arange(10), y=np.arange(10)),
         ScatterSpec(x=np.arange(10), y=np.arange(10)),
     )
-    assert fig.spec.ncols == 1
+    assert cast("GridSpec", fig.spec).ncols == 1
     assert len(fig.native.axes) == 2
 
 

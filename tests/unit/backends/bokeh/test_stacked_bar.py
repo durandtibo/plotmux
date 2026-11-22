@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 
 from plotmux.specs import BarSeries, StackedBarSpec
@@ -55,14 +57,14 @@ def test_render_stacked_bar_no_label_no_legend() -> None:
 def test_render_stacked_bar_width() -> None:
     spec = StackedBarSpec(x=np.arange(5), series=(BarSeries(y=np.arange(5)),), width=0.3)
     fig = render_stacked_bar(figure(), spec)
-    assert fig.renderers[0].glyph.width == 0.3
+    assert cast("Any", fig.renderers[0]).glyph.width == 0.3
 
 
 @bokeh_available
 def test_render_stacked_bar_alpha() -> None:
     spec = StackedBarSpec(x=np.arange(5), series=(BarSeries(y=np.arange(5)),), alpha=0.5)
     fig = render_stacked_bar(figure(), spec)
-    assert fig.renderers[0].glyph.fill_alpha == 0.5
+    assert cast("Any", fig.renderers[0]).glyph.fill_alpha == 0.5
 
 
 ##########################################

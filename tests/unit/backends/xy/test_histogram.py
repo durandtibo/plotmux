@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 
 from plotmux.specs import HistogramSpec
@@ -7,7 +9,7 @@ from plotmux.testing.fixtures import xy_available
 from plotmux.utils.imports import is_xy_available
 
 if is_xy_available():
-    from xy import Chart
+    from xy import Chart, Mark
 
     from plotmux.backends.xy.histogram import render_histogram
 
@@ -76,4 +78,4 @@ def test_render_histogram_forwards_kwargs() -> None:
 def test_render_histogram_alpha() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, alpha=0.5)
     chart = render_histogram(spec)
-    assert chart.children[0].props["opacity"] == 0.5
+    assert cast("Mark", chart.children[0]).props["opacity"] == 0.5

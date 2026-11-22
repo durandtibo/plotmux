@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+import numpy as np
 import pytest
 
 from plotmux.backends.base import Backend
@@ -42,7 +43,9 @@ def _restore_registry() -> Iterator[None]:
 
 
 def _make_figure() -> Figure:
-    return Figure(spec=HistogramSpec(values=[1, 2, 3]), backend_name="fake", native="native-object")
+    return Figure(
+        spec=HistogramSpec(values=np.array([1, 2, 3])), backend_name="fake", native="native-object"
+    )
 
 
 ##########################
@@ -79,7 +82,9 @@ def test_save_no_suffix_raises(tmp_path: Path) -> None:
 
 def test_save_unsupported_format_raises_before_creating_parent_dir(tmp_path: Path) -> None:
     register_backend(FakeBackendWithFormats())
-    fig = Figure(spec=HistogramSpec(values=[1, 2, 3]), backend_name="fake", native="native-object")
+    fig = Figure(
+        spec=HistogramSpec(values=np.array([1, 2, 3])), backend_name="fake", native="native-object"
+    )
     target = tmp_path / "missing" / "out.png"
     with pytest.raises(ValueError, match="Unsupported export format"):
         save(fig, target)
@@ -89,7 +94,9 @@ def test_save_unsupported_format_raises_before_creating_parent_dir(tmp_path: Pat
 
 
 def test_save_unknown_backend_raises(tmp_path: Path) -> None:
-    fig = Figure(spec=HistogramSpec(values=[1, 2, 3]), backend_name="does-not-exist", native=None)
+    fig = Figure(
+        spec=HistogramSpec(values=np.array([1, 2, 3])), backend_name="does-not-exist", native=None
+    )
     with pytest.raises(RuntimeError, match="No backend registered"):
         save(fig, tmp_path / "out.png")
 

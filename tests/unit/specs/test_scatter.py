@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 import pytest
 
@@ -111,7 +113,7 @@ def test_scatter_spec_common_style() -> None:
 def test_scatter_spec_is_frozen() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
     with pytest.raises(AttributeError):
-        spec.label = "new-label"
+        cast("Any", spec).label = "new-label"
 
 
 def test_scatter_spec_mismatched_length() -> None:

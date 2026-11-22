@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 import pytest
 
@@ -90,7 +92,7 @@ def test_render_grid_each_cell_keeps_own_style() -> None:
 def test_render_grid_title_becomes_suptitle() -> None:
     spec = GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), title="overall")
     fig = render_grid(spec)
-    assert fig._suptitle.get_text() == "overall"
+    assert cast("Any", fig)._suptitle.get_text() == "overall"
 
 
 @matplotlib_available

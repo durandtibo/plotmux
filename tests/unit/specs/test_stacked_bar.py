@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 import pytest
 
@@ -85,7 +87,7 @@ def test_stacked_bar_spec_invalid_alpha(alpha: float) -> None:
 def test_stacked_bar_spec_is_frozen() -> None:
     spec = StackedBarSpec(x=np.arange(3), series=(BarSeries(y=np.arange(3)),))
     with pytest.raises(AttributeError):
-        spec.width = 0.5
+        cast("Any", spec).width = 0.5
 
 
 def test_stacked_bar_spec_common_style() -> None:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pytest
@@ -131,7 +131,7 @@ def test_altair_backend_render_log_scale(backend: AltairBackend) -> None:
 @altair_available
 def test_altair_backend_render_unsupported_spec(backend: AltairBackend) -> None:
     with pytest.raises(NotImplementedError, match="No altair renderer registered"):
-        backend.render(object())
+        backend.render(cast("Any", object()))
 
 
 # --- save ---
