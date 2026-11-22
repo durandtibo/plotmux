@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, cast
+
 import numpy as np
 import pytest
 
 from plotmux.specs import HistogramSpec, LineSpec, ScatterSpec
 from plotmux.testing.fixtures import bokeh_available
 from plotmux.utils.imports import is_bokeh_available
+
+if TYPE_CHECKING:
+    from bokeh.models import DataRange1d, Title
 
 if is_bokeh_available():
     from bokeh.plotting import figure
@@ -56,7 +61,7 @@ def test_apply_common_style_title() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, title="my-title")
     fig = figure()
     out = apply_common_style(fig, spec)
-    assert out.title.text == "my-title"
+    assert cast("Title", out.title).text == "my-title"
 
 
 @bokeh_available
@@ -64,7 +69,7 @@ def test_apply_common_style_no_title() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10)
     fig = figure()
     out = apply_common_style(fig, spec)
-    assert out.title.text == ""
+    assert cast("Title", out.title).text == ""
 
 
 @bokeh_available
@@ -115,8 +120,8 @@ def test_apply_common_style_ymin_ymax() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, ymin=0.0, ymax=10.0)
     fig = figure()
     out = apply_common_style(fig, spec)
-    assert out.y_range.start == 0.0
-    assert out.y_range.end == 10.0
+    assert cast("DataRange1d", out.y_range).start == 0.0
+    assert cast("DataRange1d", out.y_range).end == 10.0
 
 
 @bokeh_available
@@ -137,8 +142,8 @@ def test_apply_common_style_xmin_xmax() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), xmin=0.0, xmax=10.0)
     fig = figure()
     out = apply_common_style(fig, spec)
-    assert out.x_range.start == 0.0
-    assert out.x_range.end == 10.0
+    assert cast("DataRange1d", out.x_range).start == 0.0
+    assert cast("DataRange1d", out.x_range).end == 10.0
 
 
 @bokeh_available
@@ -244,7 +249,7 @@ def test_apply_common_style_no_legend_orientation() -> None:
 
 @bokeh_available
 def test_apply_fields_sets_translated_values() -> None:
-    spec = LineSpec(x=[0, 1], y=[0, 1], label="s", alpha=0.5, linewidth=2.0)
+    spec = LineSpec(x=np.array([0, 1]), y=np.array([0, 1]), label="s", alpha=0.5, linewidth=2.0)
     out = apply_fields(spec, [LABEL, ALPHA, LINEWIDTH, LINESTYLE])
     assert out == {
         "legend_label": "s",
@@ -256,7 +261,7 @@ def test_apply_fields_sets_translated_values() -> None:
 
 @bokeh_available
 def test_apply_fields_omits_none_by_default() -> None:
-    spec = LineSpec(x=[0, 1], y=[0, 1])
+    spec = LineSpec(x=np.array([0, 1]), y=np.array([0, 1]))
     out = apply_fields(spec, [LABEL, ALPHA, LINEWIDTH])
     assert out == {}
 
@@ -264,14 +269,14 @@ def test_apply_fields_omits_none_by_default() -> None:
 @bokeh_available
 def test_apply_fields_keeps_none_when_omit_if_none_is_false() -> None:
     rule = FieldRule("label", "legend_label", omit_if_none=False)
-    spec = LineSpec(x=[0, 1], y=[0, 1])
+    spec = LineSpec(x=np.array([0, 1]), y=np.array([0, 1]))
     out = apply_fields(spec, [rule])
     assert out == {"legend_label": None}
 
 
 @bokeh_available
 def test_apply_fields_does_not_override_existing_kwarg() -> None:
-    spec = LineSpec(x=[0, 1], y=[0, 1], alpha=0.5)
+    spec = LineSpec(x=np.array([0, 1]), y=np.array([0, 1]), alpha=0.5)
     out = apply_fields(spec, [ALPHA], {"alpha": 0.9})
     assert out == {"alpha": 0.9}
 
@@ -279,7 +284,7 @@ def test_apply_fields_does_not_override_existing_kwarg() -> None:
 @bokeh_available
 def test_apply_fields_applies_translate_callable() -> None:
     rule = FieldRule("alpha", "line_alpha", translate=lambda value: value * 2)
-    spec = LineSpec(x=[0, 1], y=[0, 1], alpha=0.25)
+    spec = LineSpec(x=np.array([0, 1]), y=np.array([0, 1]), alpha=0.25)
     out = apply_fields(spec, [rule])
     assert out == {"line_alpha": 0.5}
 

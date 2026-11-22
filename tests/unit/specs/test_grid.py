@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 import pytest
 
@@ -49,7 +51,7 @@ def test_grid_spec_common_style() -> None:
 def test_grid_spec_is_frozen() -> None:
     spec = GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),))
     with pytest.raises(AttributeError):
-        spec.cells = ()
+        cast("Any", spec).cells = ()
 
 
 def test_grid_spec_empty_cells_raises() -> None:
@@ -83,7 +85,7 @@ def test_grid_spec_negative_ncols_raises(ncols: int) -> None:
 
 def test_grid_spec_non_integer_ncols_raises() -> None:
     with pytest.raises(ValueError, match="ncols must be a positive integer"):
-        GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), ncols=2.5)
+        GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), ncols=cast("Any", 2.5))
 
 
 def test_grid_spec_bool_ncols_raises() -> None:
@@ -93,7 +95,9 @@ def test_grid_spec_bool_ncols_raises() -> None:
 
 
 def test_grid_spec_numpy_integer_ncols_accepted() -> None:
-    spec = GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), ncols=np.int64(3))
+    spec = GridSpec(
+        cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), ncols=cast("Any", np.int64(3))
+    )
     assert spec.ncols == 3
 
 

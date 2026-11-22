@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, cast
+
 import numpy as np
 import pytest
 
 from plotmux.specs import HistogramSpec
 from plotmux.testing.fixtures import matplotlib_available
 from plotmux.utils.imports import is_matplotlib_available
+
+if TYPE_CHECKING:
+    from matplotlib.patches import Rectangle
 
 if is_matplotlib_available():
     import matplotlib.pyplot as plt
@@ -67,7 +72,7 @@ def test_render_histogram_density() -> None:
     fig, ax = plt.subplots()
     spec = HistogramSpec(values=np.arange(101), bins=10, density=True)
     render_histogram(ax, spec)
-    heights = [patch.get_height() for patch in ax.patches]
+    heights = [cast("Rectangle", patch).get_height() for patch in ax.patches]
     assert sum(heights) * (100 / 10) == pytest.approx(1.0)
     plt.close(fig)
 

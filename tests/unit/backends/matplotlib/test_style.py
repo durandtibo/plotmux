@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any, cast
+
 import numpy as np
 import pytest
 
 from plotmux.specs import HistogramSpec, ScatterSpec
 from plotmux.testing.fixtures import matplotlib_available
 from plotmux.utils.imports import is_matplotlib_available
+
+if TYPE_CHECKING:
+    from matplotlib.legend import Legend
 
 if is_matplotlib_available():
     import matplotlib.pyplot as plt
@@ -92,7 +97,7 @@ def test_apply_common_style_default_scale_is_linear() -> None:
 @matplotlib_available
 def test_apply_common_style_xscale(scale: str) -> None:
     fig, ax = plt.subplots()
-    spec = HistogramSpec(values=np.arange(1, 101), bins=10, xscale=scale)
+    spec = HistogramSpec(values=np.arange(1, 101), bins=10, xscale=cast("Any", scale))
     apply_common_style(ax, spec)
     assert ax.get_xscale() == scale
     plt.close(fig)
@@ -102,7 +107,7 @@ def test_apply_common_style_xscale(scale: str) -> None:
 @matplotlib_available
 def test_apply_common_style_yscale(scale: str) -> None:
     fig, ax = plt.subplots()
-    spec = HistogramSpec(values=np.arange(1, 101), bins=10, yscale=scale)
+    spec = HistogramSpec(values=np.arange(1, 101), bins=10, yscale=cast("Any", scale))
     apply_common_style(ax, spec)
     assert ax.get_yscale() == scale
     plt.close(fig)
@@ -198,7 +203,7 @@ def test_apply_common_style_legend_title() -> None:
     ax.legend()
     spec = HistogramSpec(values=np.arange(101), bins=10, legend_title="Lines")
     apply_common_style(ax, spec)
-    assert ax.get_legend().get_title().get_text() == "Lines"
+    assert cast("Legend", ax.get_legend()).get_title().get_text() == "Lines"
     plt.close(fig)
 
 
@@ -209,7 +214,7 @@ def test_apply_common_style_no_legend_title() -> None:
     ax.legend()
     spec = HistogramSpec(values=np.arange(101), bins=10)
     apply_common_style(ax, spec)
-    assert ax.get_legend().get_title().get_text() == ""
+    assert cast("Legend", ax.get_legend()).get_title().get_text() == ""
     plt.close(fig)
 
 
@@ -232,7 +237,7 @@ def test_apply_common_style_legend_location() -> None:
     ax.legend()
     spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="top_left")
     apply_common_style(ax, spec)
-    assert ax.get_legend()._get_loc() == 2  # "upper left"
+    assert cast("Any", ax.get_legend())._get_loc() == 2  # "upper left"
     plt.close(fig)
 
 
@@ -243,7 +248,7 @@ def test_apply_common_style_legend_location_best_passthrough() -> None:
     ax.legend()
     spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="best")
     apply_common_style(ax, spec)
-    assert ax.get_legend()._get_loc() == 0  # "best"
+    assert cast("Any", ax.get_legend())._get_loc() == 0  # "best"
     plt.close(fig)
 
 
@@ -267,7 +272,7 @@ def test_apply_common_style_legend_orientation_horizontal() -> None:
     ax.legend()
     spec = HistogramSpec(values=np.arange(101), bins=10, legend_orientation="horizontal")
     apply_common_style(ax, spec)
-    assert ax.get_legend()._ncols == 2
+    assert cast("Any", ax.get_legend())._ncols == 2
     plt.close(fig)
 
 
@@ -278,7 +283,7 @@ def test_apply_common_style_no_legend_orientation() -> None:
     ax.legend()
     spec = HistogramSpec(values=np.arange(101), bins=10)
     apply_common_style(ax, spec)
-    assert ax.get_legend()._ncols == 1
+    assert cast("Any", ax.get_legend())._ncols == 1
     plt.close(fig)
 
 
@@ -293,7 +298,7 @@ def test_attach_repr_png_adds_working_method() -> None:
     fig.subplots().plot([1, 2, 3], [1, 4, 9])
     assert not hasattr(fig, "_repr_png_")
     attach_repr_png(fig)
-    png = fig._repr_png_()
+    png = cast("Any", fig)._repr_png_()
     assert isinstance(png, bytes)
     assert png.startswith(b"\x89PNG\r\n\x1a\n")
 
@@ -319,7 +324,7 @@ def test_apply_legend_style_title() -> None:
     ax.plot([1, 2], [3, 4], label="s")
     ax.legend()
     _apply_legend_style(ax, HistogramSpec(values=np.arange(101), legend_title="Lines"))
-    assert ax.get_legend().get_title().get_text() == "Lines"
+    assert cast("Legend", ax.get_legend()).get_title().get_text() == "Lines"
     plt.close(fig)
 
 
@@ -329,7 +334,7 @@ def test_apply_legend_style_location() -> None:
     ax.plot([1, 2], [3, 4], label="s")
     ax.legend()
     _apply_legend_style(ax, HistogramSpec(values=np.arange(101), legend_location="top_left"))
-    assert ax.get_legend()._get_loc() == 2  # "upper left"
+    assert cast("Any", ax.get_legend())._get_loc() == 2  # "upper left"
     plt.close(fig)
 
 
@@ -340,7 +345,7 @@ def test_apply_legend_style_horizontal_orientation() -> None:
     ax.plot([1, 2], [5, 6], label="s2")
     ax.legend()
     _apply_legend_style(ax, HistogramSpec(values=np.arange(101), legend_orientation="horizontal"))
-    assert ax.get_legend()._ncols == 2
+    assert cast("Any", ax.get_legend())._ncols == 2
     plt.close(fig)
 
 
@@ -351,7 +356,7 @@ def test_apply_legend_style_vertical_orientation_keeps_one_column() -> None:
     ax.plot([1, 2], [5, 6], label="s2")
     ax.legend()
     _apply_legend_style(ax, HistogramSpec(values=np.arange(101), legend_orientation="vertical"))
-    assert ax.get_legend()._ncols == 1
+    assert cast("Any", ax.get_legend())._ncols == 1
     plt.close(fig)
 
 
@@ -369,5 +374,5 @@ def test_apply_legend_style_no_field_keeps_legend_title() -> None:
     ax.plot([1, 2], [3, 4], label="s")
     ax.legend(title="Original")
     _apply_legend_style(ax, HistogramSpec(values=np.arange(101)))
-    assert ax.get_legend().get_title().get_text() == "Original"
+    assert cast("Legend", ax.get_legend()).get_title().get_text() == "Original"
     plt.close(fig)

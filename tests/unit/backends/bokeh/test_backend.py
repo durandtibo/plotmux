@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pytest
@@ -157,7 +157,7 @@ def test_bokeh_backend_render_log_scale(backend: BokehBackend) -> None:
 @bokeh_available
 def test_bokeh_backend_render_unsupported_spec(backend: BokehBackend) -> None:
     with pytest.raises(NotImplementedError, match="No bokeh renderer registered"):
-        backend.render(object())
+        backend.render(cast("Any", object()))
 
 
 # --- save ---

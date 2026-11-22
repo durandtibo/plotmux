@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any, cast
+
 import numpy as np
 import pytest
 
 from plotmux.specs import BarSpec, HistogramSpec, LineSpec
 from plotmux.testing.fixtures import altair_available
 from plotmux.utils.imports import is_altair_available
+
+if TYPE_CHECKING:
+    import altair as alt
 
 if is_altair_available():
     from plotmux.backends.altair.bar import render_bar
@@ -73,14 +78,14 @@ def test_color_encoding_no_label_returns_none() -> None:
 @altair_available
 def test_color_encoding_label_no_color() -> None:
     encoding = color_encoding(None, "my-label")
-    assert encoding.shorthand == "label:N"
+    assert cast("alt.Color", encoding).shorthand == "label:N"
 
 
 @altair_available
 def test_color_encoding_label_and_color() -> None:
     encoding = color_encoding("red", "my-label")
-    assert encoding.shorthand == "label:N"
-    assert encoding.to_dict()["scale"]["range"] == ["red"]
+    assert cast("alt.Color", encoding).shorthand == "label:N"
+    assert cast("Any", encoding).to_dict()["scale"]["range"] == ["red"]
 
 
 ####################################
@@ -114,7 +119,7 @@ def test_prepare_color_label_adds_field_and_encoding() -> None:
     kwargs = {}
     out_data, encoding = prepare_color(data, "my-label", "red", kwargs)
     assert out_data == [{"x": 1, "y": 1, "label": "my-label"}]
-    assert encoding.shorthand == "label:N"
+    assert cast("alt.Color", encoding).shorthand == "label:N"
     assert kwargs == {}
 
 

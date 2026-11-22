@@ -9,7 +9,7 @@
   `inv format.check-docstrings` run the same checks as CI). Fix the issues raised by ruff.
   Ignoring an issue (`noqa`, a changed rule set) is not fixing it.
 - Type check with `.venv/bin/ty check` and `.venv/bin/pyright` (`inv types.check --complete` runs both,
-  configured in `pyproject.toml`, they check `src`). Fix the issues raised by ty and pyright.
+  configured in `pyproject.toml`, ty checks `src`, `tests` and `dev`, pyright checks `src`). Fix the issues raised by ty and pyright.
   Ignoring an issue (`type: ignore`, `ty: ignore`, `pyright: ignore`, a cast that hides the problem)
   is not fixing it.
 - Run the unit tests of the packages you changed (for example

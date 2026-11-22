@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 
 from plotmux.specs import ScatterSpec
@@ -86,32 +88,32 @@ def test_render_scatter_alpha() -> None:
 def test_render_scatter_marker() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), marker="square")
     fig = render_scatter(figure(), spec)
-    assert fig.renderers[0].glyph.marker == "square"
+    assert cast("Any", fig.renderers[0]).glyph.marker == "square"
 
 
 @bokeh_available
 def test_render_scatter_no_marker_uses_backend_default() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
     fig = render_scatter(figure(), spec)
-    assert fig.renderers[0].glyph.marker == "circle"
+    assert cast("Any", fig.renderers[0]).glyph.marker == "circle"
 
 
 @bokeh_available
 def test_render_scatter_fill_false_no_fill_color() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red", fill=False)
     fig = render_scatter(figure(), spec)
-    assert fig.renderers[0].glyph.fill_color is None
+    assert cast("Any", fig.renderers[0]).glyph.fill_color is None
 
 
 @bokeh_available
 def test_render_scatter_fill_false_outline_uses_color() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red", fill=False)
     fig = render_scatter(figure(), spec)
-    assert fig.renderers[0].glyph.line_color is not None
+    assert cast("Any", fig.renderers[0]).glyph.line_color is not None
 
 
 @bokeh_available
 def test_render_scatter_fill_none_or_true_has_fill_color() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red")
     fig = render_scatter(figure(), spec)
-    assert fig.renderers[0].glyph.fill_color is not None
+    assert cast("Any", fig.renderers[0]).glyph.fill_color is not None

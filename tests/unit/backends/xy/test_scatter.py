@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 
 from plotmux.specs import ScatterSpec
@@ -7,7 +9,7 @@ from plotmux.testing.fixtures import xy_available
 from plotmux.utils.imports import is_xy_available
 
 if is_xy_available():
-    from xy import Chart
+    from xy import Chart, Mark
 
     from plotmux.backends.xy.scatter import render_scatter
 
@@ -71,15 +73,15 @@ def test_render_scatter_explicit_size_kwarg_not_overridden() -> None:
 def test_render_scatter_alpha() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), alpha=0.5)
     chart = render_scatter(spec)
-    assert chart.children[0].props["opacity"] == 0.5
+    assert cast("Mark", chart.children[0]).props["opacity"] == 0.5
 
 
 @xy_available
 def test_render_scatter_edgecolor() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), edgecolor="blue")
     chart = render_scatter(spec)
-    assert chart.children[0].props["stroke"] is not None
-    assert chart.children[0].props["stroke_width"] == 1.0
+    assert cast("Mark", chart.children[0]).props["stroke"] is not None
+    assert cast("Mark", chart.children[0]).props["stroke_width"] == 1.0
 
 
 @xy_available
@@ -93,40 +95,40 @@ def test_render_scatter_no_edgecolor() -> None:
 def test_render_scatter_marker() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), marker="square")
     chart = render_scatter(spec)
-    assert chart.children[0].props["symbol"] == "square"
+    assert cast("Mark", chart.children[0]).props["symbol"] == "square"
 
 
 @xy_available
 def test_render_scatter_no_marker_uses_backend_default() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
     chart = render_scatter(spec)
-    assert chart.children[0].props["symbol"] == "circle"
+    assert cast("Mark", chart.children[0]).props["symbol"] == "circle"
 
 
 @xy_available
 def test_render_scatter_fill_false_transparent_color() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red", fill=False)
     chart = render_scatter(spec)
-    assert chart.children[0].props["color"] == "rgba(0, 0, 0, 0)"
+    assert cast("Mark", chart.children[0]).props["color"] == "rgba(0, 0, 0, 0)"
 
 
 @xy_available
 def test_render_scatter_fill_false_outline_uses_color() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red", fill=False)
     chart = render_scatter(spec)
-    assert chart.children[0].props["stroke"] == "rgba(255, 0, 0, 1.0)"
-    assert chart.children[0].props["stroke_width"] == 1.0
+    assert cast("Mark", chart.children[0]).props["stroke"] == "rgba(255, 0, 0, 1.0)"
+    assert cast("Mark", chart.children[0]).props["stroke_width"] == 1.0
 
 
 @xy_available
 def test_render_scatter_fill_false_outline_prefers_edgecolor() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red", edgecolor="blue", fill=False)
     chart = render_scatter(spec)
-    assert chart.children[0].props["stroke"] == "rgba(0, 0, 255, 1.0)"
+    assert cast("Mark", chart.children[0]).props["stroke"] == "rgba(0, 0, 255, 1.0)"
 
 
 @xy_available
 def test_render_scatter_fill_none_or_true_keeps_color() -> None:
     spec = ScatterSpec(x=np.arange(10), y=np.arange(10), color="red")
     chart = render_scatter(spec)
-    assert chart.children[0].props["color"] == "rgba(255, 0, 0, 1.0)"
+    assert cast("Mark", chart.children[0]).props["color"] == "rgba(255, 0, 0, 1.0)"

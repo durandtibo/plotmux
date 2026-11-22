@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, cast
+
 import numpy as np
 import pytest
 
@@ -13,6 +15,9 @@ from plotmux.specs import (
 )
 from plotmux.testing.fixtures import bokeh_available
 from plotmux.utils.imports import is_bokeh_available
+
+if TYPE_CHECKING:
+    from bokeh.plotting import figure
 
 if is_bokeh_available():
     from bokeh.models import Column, GridPlot
@@ -55,7 +60,12 @@ def test_render_grid_draws_each_cell() -> None:
         )
     )
     grid = render_grid(spec)
-    figs = [child for row in grid.children for child in row if not isinstance(child, int)]
+    figs = [
+        cast("figure", child)
+        for row in cast("GridPlot", grid).children
+        for child in row
+        if not isinstance(child, int)
+    ]
     assert len(figs) == 2
     assert all(len(f.renderers) == 1 for f in figs)
 
@@ -73,7 +83,7 @@ def test_render_grid_accepts_layer_spec_cell() -> None:
         )
     )
     grid = render_grid(spec)
-    fig = grid.children[0][0]
+    fig = cast("figure", cast("GridPlot", grid).children[0][0])
     assert len(fig.renderers) == 2
 
 
@@ -81,7 +91,7 @@ def test_render_grid_accepts_layer_spec_cell() -> None:
 def test_render_grid_with_histogram() -> None:
     spec = GridSpec(cells=(HistogramSpec(values=np.arange(101), bins=10),))
     grid = render_grid(spec)
-    fig = grid.children[0][0]
+    fig = cast("figure", cast("GridPlot", grid).children[0][0])
     assert len(fig.renderers) == 1
 
 
@@ -89,7 +99,7 @@ def test_render_grid_with_histogram() -> None:
 def test_render_grid_supports_cdf_spec() -> None:
     spec = GridSpec(cells=(CdfSpec(values=np.arange(101), nbins=10),))
     grid = render_grid(spec)
-    fig = grid.children[0][0]
+    fig = cast("figure", cast("GridPlot", grid).children[0][0])
     assert len(fig.renderers) == 1
 
 

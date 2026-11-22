@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 import pytest
 
@@ -97,7 +99,7 @@ def test_line_spec_common_style() -> None:
 def test_line_spec_is_frozen() -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10))
     with pytest.raises(AttributeError):
-        spec.label = "new-label"
+        cast("Any", spec).label = "new-label"
 
 
 @pytest.mark.parametrize(
@@ -120,10 +122,13 @@ def test_line_spec_alpha_boundary_values(alpha: float) -> None:
 
 @pytest.mark.parametrize("linestyle", ["solid", "dashed", "dotted", "dashdot"])
 def test_line_spec_linestyle_values(linestyle: str) -> None:
-    assert LineSpec(x=np.arange(10), y=np.arange(10), linestyle=linestyle).linestyle == linestyle
+    assert (
+        LineSpec(x=np.arange(10), y=np.arange(10), linestyle=cast("Any", linestyle)).linestyle
+        == linestyle
+    )
 
 
 def test_line_spec_x_y_coerced_from_lists() -> None:
-    spec = LineSpec(x=[1, 2, 3], y=[4, 5, 6])
+    spec = LineSpec(x=cast("Any", [1, 2, 3]), y=cast("Any", [4, 5, 6]))
     assert isinstance(spec.x, np.ndarray)
     assert isinstance(spec.y, np.ndarray)

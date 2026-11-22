@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 import pytest
 
@@ -78,7 +80,7 @@ def test_apply_common_style_labels_and_scale() -> None:
     )
     chart = render_histogram(spec)
     out = apply_common_style(chart, spec)
-    x_axis, y_axis = out.children[1], out.children[2]
+    x_axis, y_axis = cast("xy.Axis", out.children[1]), cast("xy.Axis", out.children[2])
     assert x_axis.label == "x"
     assert x_axis.type_ == "log"
     assert y_axis.label == "y"
@@ -90,7 +92,7 @@ def test_apply_common_style_no_labels() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10)
     chart = render_histogram(spec)
     out = apply_common_style(chart, spec)
-    x_axis, y_axis = out.children[1], out.children[2]
+    x_axis, y_axis = cast("xy.Axis", out.children[1]), cast("xy.Axis", out.children[2])
     assert x_axis.label is None
     assert y_axis.label is None
 
@@ -110,7 +112,7 @@ def test_apply_common_style_ymin_ymax() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, ymin=0.0, ymax=5.0)
     chart = render_histogram(spec)
     out = apply_common_style(chart, spec)
-    y_axis = out.children[2]
+    y_axis = cast("xy.Axis", out.children[2])
     assert y_axis.domain == (0.0, 5.0)
 
 
@@ -119,7 +121,7 @@ def test_apply_common_style_single_ybound_ignored() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, ymin=0.0)
     chart = render_histogram(spec)
     out = apply_common_style(chart, spec)
-    y_axis = out.children[2]
+    y_axis = cast("xy.Axis", out.children[2])
     assert y_axis.domain is None
 
 
@@ -133,7 +135,7 @@ def test_apply_common_style_xmin_xmax() -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10), xmin=0.0, xmax=5.0)
     chart = render_line(spec)
     out = apply_common_style(chart, spec)
-    x_axis = out.children[1]
+    x_axis = cast("xy.Axis", out.children[1])
     assert x_axis.domain == (0.0, 5.0)
 
 
@@ -142,7 +144,7 @@ def test_apply_common_style_single_xbound_ignored() -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10), xmin=0.0)
     chart = render_line(spec)
     out = apply_common_style(chart, spec)
-    x_axis = out.children[1]
+    x_axis = cast("xy.Axis", out.children[1])
     assert x_axis.domain is None
 
 
@@ -156,7 +158,7 @@ def test_apply_common_style_histogram_xbounds_not_reapplied() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, xmin="q0.1", xmax="q0.9")
     chart = render_histogram(spec)
     out = apply_common_style(chart, spec)
-    x_axis = out.children[1]
+    x_axis = cast("xy.Axis", out.children[1])
     assert x_axis.domain is None
 
 
@@ -182,7 +184,7 @@ def test_apply_common_style_legend_title() -> None:
     chart = render_histogram(spec)
     out = apply_common_style(chart, spec)
     assert len(out.children) == len(chart.children) + 3
-    assert out.children[-1].title == "Lines"
+    assert cast("xy.Legend", out.children[-1]).title == "Lines"
 
 
 @xy_available
@@ -199,7 +201,7 @@ def test_apply_common_style_legend_location() -> None:
     chart = render_histogram(spec)
     out = apply_common_style(chart, spec)
     assert len(out.children) == len(chart.children) + 3
-    assert out.children[-1].loc == "top_left"
+    assert cast("xy.Legend", out.children[-1]).loc == "top_left"
 
 
 @xy_available
@@ -210,8 +212,8 @@ def test_apply_common_style_legend_title_and_location() -> None:
     chart = render_histogram(spec)
     out = apply_common_style(chart, spec)
     assert len(out.children) == len(chart.children) + 3
-    assert out.children[-1].title == "Lines"
-    assert out.children[-1].loc == "top_left"
+    assert cast("xy.Legend", out.children[-1]).title == "Lines"
+    assert cast("xy.Legend", out.children[-1]).loc == "top_left"
 
 
 @xy_available
@@ -219,7 +221,7 @@ def test_apply_common_style_legend_orientation_horizontal_sets_ncols() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, legend_orientation="horizontal")
     chart = xy.bar_chart(xy.bar([1, 2], [3, 4], name="a"), xy.bar([1, 2], [5, 6], name="b"))
     out = apply_common_style(chart, spec)
-    assert out.children[-1].ncols == 2
+    assert cast("xy.Legend", out.children[-1]).ncols == 2
 
 
 @xy_available
@@ -227,4 +229,4 @@ def test_apply_common_style_no_legend_orientation_default_ncols() -> None:
     spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="top_left")
     chart = render_histogram(spec)
     out = apply_common_style(chart, spec)
-    assert out.children[-1].ncols == 1
+    assert cast("xy.Legend", out.children[-1]).ncols == 1

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, cast
+
 import numpy as np
 import pytest
 
@@ -13,6 +15,9 @@ from plotmux.specs import (
 )
 from plotmux.testing.fixtures import matplotlib_available
 from plotmux.utils.imports import is_matplotlib_available
+
+if TYPE_CHECKING:
+    from matplotlib.legend import Legend
 
 if is_matplotlib_available():
     import matplotlib.pyplot as plt
@@ -58,7 +63,7 @@ def test_render_layer_combined_legend() -> None:
         )
     )
     render_layer(ax, spec)
-    labels = [text.get_text() for text in ax.get_legend().get_texts()]
+    labels = [text.get_text() for text in cast("Legend", ax.get_legend()).get_texts()]
     assert labels == ["line", "scatter"]
     plt.close(fig)
 
@@ -76,7 +81,7 @@ def test_render_layer_combined_legend_unlabeled_child_drawn_last() -> None:
         )
     )
     render_layer(ax, spec)
-    labels = [text.get_text() for text in ax.get_legend().get_texts()]
+    labels = [text.get_text() for text in cast("Legend", ax.get_legend()).get_texts()]
     assert labels == ["line"]
     plt.close(fig)
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 import pytest
 
 from plotmux.specs import SlopeSpec
@@ -76,7 +78,7 @@ def test_slope_spec_common_style() -> None:
 def test_slope_spec_is_frozen() -> None:
     spec = SlopeSpec(gradient=1)
     with pytest.raises(AttributeError):
-        spec.gradient = 2
+        cast("Any", spec).gradient = 2
 
 
 @pytest.mark.parametrize("alpha", [0.0, 1.0])

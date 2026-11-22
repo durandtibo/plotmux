@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import pytest
 
@@ -55,7 +55,7 @@ def test_backend_render_forwards_kwargs() -> None:
 def test_backend_save() -> None:
     backend = FakeBackend()
     # Should not raise.
-    backend.save("native", "path", "png")
+    backend.save("native", cast("Any", "path"), "png")
 
 
 def test_backend_is_abstract() -> None:
@@ -63,7 +63,7 @@ def test_backend_is_abstract() -> None:
         name = "incomplete"
 
     with pytest.raises(TypeError, match="abstract"):
-        IncompleteBackend()  # type: ignore[abstract]
+        cast("Any", IncompleteBackend)()
 
 
 def test_backend_supported_formats() -> None:

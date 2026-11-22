@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 import pytest
 
@@ -47,14 +49,14 @@ def test_cdf_spec_non_1d_values_raises() -> None:
 
 
 def test_cdf_spec_values_coerced_from_list() -> None:
-    spec = CdfSpec(values=[1, 2, 3])
+    spec = CdfSpec(values=cast("Any", [1, 2, 3]))
     assert isinstance(spec.values, np.ndarray)
     assert spec.values.tolist() == [1, 2, 3]
 
 
 def test_cdf_spec_nbins_non_integer_raises() -> None:
     with pytest.raises(ValueError, match="nbins must be a positive integer or None"):
-        CdfSpec(values=np.arange(101), nbins=2.5)
+        CdfSpec(values=np.arange(101), nbins=cast("Any", 2.5))
 
 
 @pytest.mark.parametrize("nbins", [0, -1, -10])
@@ -115,7 +117,7 @@ def test_cdf_spec_common_style() -> None:
 def test_cdf_spec_is_frozen() -> None:
     spec = CdfSpec(values=np.arange(101))
     with pytest.raises(AttributeError):
-        spec.nbins = 5
+        cast("Any", spec).nbins = 5
 
 
 def test_cdf_spec_xmin_equal_xmax_raises() -> None:
@@ -140,7 +142,9 @@ def test_cdf_spec_xmin_greater_than_xmax_raises_for_numpy_integers() -> None:
     # np.int64/np.int32 are not int subclasses, so the range check must
     # also recognize numpy integer scalars, not just built-in int/float.
     with pytest.raises(ValueError, match="xmin must be strictly less than xmax"):
-        CdfSpec(values=np.arange(101), xmin=np.int64(10), xmax=np.int64(5))
+        CdfSpec(
+            values=np.arange(101), xmin=cast("Any", np.int64(10)), xmax=cast("Any", np.int64(5))
+        )
 
 
 @pytest.mark.parametrize("alpha", [2.0, -0.1])

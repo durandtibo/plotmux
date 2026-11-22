@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal, cast
 
 import numpy as np
 import pytest
@@ -51,7 +51,7 @@ def test_base_spec_is_dataclass() -> None:
 def test_base_spec_is_frozen() -> None:
     spec = FakeSpec(value=42)
     with pytest.raises(AttributeError):
-        spec.value = 43
+        cast("Any", spec).value = 43
 
 
 def test_base_spec_default_style() -> None:
@@ -100,7 +100,7 @@ def test_base_spec_yscale_values(scale: Literal["linear", "log"]) -> None:
 
 def test_base_spec_style_fields_are_keyword_only() -> None:
     with pytest.raises(TypeError):
-        FakeSpec(0, "t")  # type: ignore[misc]
+        cast("Any", FakeSpec)(0, "t")
 
 
 def test_base_spec_equality() -> None:

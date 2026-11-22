@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 
 from plotmux.specs import LineSpec
@@ -7,7 +9,7 @@ from plotmux.testing.fixtures import xy_available
 from plotmux.utils.imports import is_xy_available
 
 if is_xy_available():
-    from xy import Chart
+    from xy import Chart, Mark
 
     from plotmux.backends.xy.line import render_line
 
@@ -55,18 +57,18 @@ def test_render_line_forwards_kwargs() -> None:
 def test_render_line_alpha() -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10), alpha=0.5)
     chart = render_line(spec)
-    assert chart.children[0].props["opacity"] == 0.5
+    assert cast("Mark", chart.children[0]).props["opacity"] == 0.5
 
 
 @xy_available
 def test_render_line_linewidth() -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10), linewidth=3.0)
     chart = render_line(spec)
-    assert chart.children[0].props["width"] == 3.0
+    assert cast("Mark", chart.children[0]).props["width"] == 3.0
 
 
 @xy_available
 def test_render_line_linestyle() -> None:
     spec = LineSpec(x=np.arange(10), y=np.arange(10), linestyle="dashed")
     chart = render_line(spec)
-    assert chart.children[0].props["dash"] == "dashed"
+    assert cast("Mark", chart.children[0]).props["dash"] == "dashed"
