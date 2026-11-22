@@ -168,7 +168,7 @@ class GridSpec(Spec):                        # independent panels
   set `flags.writeable = False`; `__eq__` is `coola.objects_are_equal` on the fields, written once.
   The spec is not hashable (it holds arrays); `Figure` hashes by identity.
 - **Validation lives in the specs** and raises `InvalidSpecError`: lengths, dimensions, finite
-  values for histograms and CDFs (decision D5), positive widths and sizes, color parsing, a
+  values for histograms and CDFs with a warning when some are dropped (decision D5), positive widths and sizes, color parsing, a
   `SlopeSpec` with no x extent (3.3), categorical `x` mixed with numeric marks in one panel.
 - **The extension point for a new chart type** is a `MarkSpec` subclass with `to_primitives`. If the
   chart is a composition of `Bars`, `Line` and `Points` (a box plot is: bars and lines), no backend
@@ -192,6 +192,7 @@ class Bars:  # histogram, bar, stacked bar (one Bars per series)
 class Line:  # line, CDF steps, slope (two endpoints)
     x: np.ndarray
     y: np.ndarray
+    infinite: tuple[float, float] | None  # (gradient, intercept) of a slope, else None
     color: RGBA
     alpha: float | None
     linewidth: float | None
@@ -255,21 +256,27 @@ Lowering of each mark (all in `plotmux.specs`, numpy only, unit-tested with lite
 The CDF is the empirical `P(X <= x)` over **all** the values; `xmin`/`xmax` restrict the vertices
 that are drawn and do not renormalize the curve (F3, decision D4).
 
-### 3.3 The slope, and why it needs no native primitive
+### 3.3 The slope: a segment everywhere, a native line where it exists
 
 Today a standalone slope exists on `matplotlib` (`Axes.axline`) and `bokeh` (`models.Slope`) only,
 and the other three need a layer and a data-bound sibling to find two endpoints (F2). The target
-removes the native primitives and uses the rule that already makes the layer case work, made
-backend independent:
+uses the rule that already makes the layer case work, made backend independent:
 
 > The x extent of a panel is its explicit `xmin`/`xmax` where given, else the extent of its
 > data-bound marks. A `SlopeSpec` with no extent (no `xmin`/`xmax` and no data-bound sibling) raises
 > `InvalidSpecError` when the panel is built.
 
-`plotmux.slope(1.0, xmin=0, xmax=10)` works on every backend, standalone, in a layer and in a grid;
-the two `slope.py` modules of `matplotlib` and `bokeh`, `resolve_slope_xrange`, the three copies of
-the "no sibling" block (F11) and the `SlopeSpec` caveats disappear. The cost is that the line is a
-segment and no longer follows an interactive zoom beyond the extent (decision D2).
+The lowering of a `SlopeSpec` is a `Line` with the two endpoints of the extent, so every backend can
+draw it with `draw_line` and no new primitive exists. `plotmux.slope(1.0, xmin=0, xmax=10)` works on
+every backend, standalone, in a layer and in a grid. The `Line` also carries
+`infinite=(gradient, intercept)`, and this is an **optional optimization of `draw_line`** (decision
+D2): a backend that has a native infinite line (`Axes.axline` on `matplotlib`, `models.Slope` on
+`bokeh`) draws it when `infinite` is set, which keeps the line following an interactive zoom beyond
+the extent; the other backends ignore the field and draw the segment. The two native lines are
+two branches inside `draw_line` of their backend, not modules: the two `slope.py` modules,
+`resolve_slope_xrange`, the three copies of the "no sibling" block (F11) and the `SlopeSpec` caveats
+still disappear. The extent still comes from the scene, so the autoscale and the conformance test
+see the same endpoints on every backend; the native line adds no data to the axes.
 
 ### 3.4 The backend contract
 
@@ -567,11 +574,15 @@ escape hatch is `to_native()`. Alternative: keep one explicit `backend_options: 
 the native figure after the render, with its own documentation per backend; more code, and it
 reintroduces the problem for the options it carries.
 
-**D2. Draw a slope as a segment on every backend?** _Recommended: yes._ One rule, five backends, in
-a layer and in a grid, no caveat. The cost: the line does not extend when the user zooms past the
-extent, which `Axes.axline` and `bokeh.models.Slope` do. Alternative: keep the two native
-primitives as an optional optimization of `draw_line` (a fourth primitive `AxLine` with a fallback);
-it keeps the interactivity and keeps two special cases.
+**D2. Draw a slope as a segment on every backend?** _Decided: no, keep the two native primitives as
+an optional optimization of `draw_line`._ The core lowers a slope to a `Line` with two endpoints (so
+the rule is one, in a layer and in a grid, with no caveat) and marks it with `infinite`;
+`matplotlib` (`Axes.axline`) and `bokeh` (`models.Slope`) draw the native line, which keeps the
+interactivity (the line extends when the user zooms past the extent), and `xy`, `plotly` and
+`altair` draw the segment. The cost: two special cases inside `draw_line`, and a conformance test
+that must compare the endpoints of the scene and not the data of the native infinite line on these
+two backends. Alternative (the first recommendation): the segment on every backend, no special case,
+no zoom beyond the extent.
 
 **D3. Always assign a palette color?** _Recommended: yes._ The first color of a single chart is
 `PRIMARY` on every backend instead of the library default, so the swap does not change the color
@@ -588,8 +599,12 @@ approximation with an arbitrary default.
 **D5. Policy for `NaN` and `inf`.** _Recommended:_ `HistogramSpec` and `CdfSpec` drop `NaN` and
 `inf` (documented) and raise `InvalidSpecError` if no finite value is left; `LineSpec` and
 `ScatterSpec` keep `NaN` (a gap in a line, no point) and reject `inf`; the quantile and the range
-use the finite values. Alternative: reject every non-finite value in every spec (strictest, and
-breaks a line with gaps).
+use the finite values. **When values are dropped, the spec emits a `UserWarning` that says that a
+`NaN` or `inf` was detected and filtered out, with the count** (once per spec, at construction, so
+it is not repeated on each render or backend swap); a test per case checks the warning and its
+message. A `NaN` kept in a line or a scatter is intended and does not warn. Alternative: reject
+every non-finite value in every spec (strictest, and breaks a line with gaps); or drop silently
+(no warning, as today).
 
 **D6. Drop `legend_location="best"`?** _Recommended: yes._ It is not portable (three backends have
 no automatic placement) and is a silent no-op there today (F3). `None` means the library default,
