@@ -31,7 +31,7 @@ def render_stacked_bar(ax: Axes, spec: StackedBarSpec, **kwargs: Any) -> Axes:
     """
     bottom = None
     for series in spec.series:
-        style = {
+        style: dict[str, Any] = {
             "width": spec.width,
             "label": series.label,
             "color": cast("tuple[float, float, float, float]", series.color),

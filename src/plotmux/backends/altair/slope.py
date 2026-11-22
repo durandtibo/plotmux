@@ -7,11 +7,16 @@ __all__ = ["render_slope"]
 
 from typing import TYPE_CHECKING, Any, cast
 
-import altair as alt
-
-from plotmux.backends.altair.style import STROKE_DASH, prepare_color, rgba_to_altair
+from plotmux.backends.altair.style import (
+    STROKE_DASH,
+    make_mark_chart,
+    prepare_color,
+    rgba_to_altair,
+)
 
 if TYPE_CHECKING:
+    import altair as alt
+
     from plotmux.specs import SlopeSpec
 
 
@@ -68,7 +73,7 @@ def render_slope(spec: SlopeSpec, xrange: tuple[float, float], **kwargs: Any) ->
     if spec.linestyle in STROKE_DASH:
         kwargs.setdefault("strokeDash", STROKE_DASH[spec.linestyle])
     data, encoding_color = prepare_color(data, spec.label, color, kwargs)
-    chart = alt.Chart(alt.Data(values=data)).mark_line(**kwargs).encode(x="x:Q", y="y:Q")
+    chart = make_mark_chart(data, "line", kwargs).encode(x="x:Q", y="y:Q")
     if encoding_color is not None:
         chart = chart.encode(color=encoding_color)
     return chart

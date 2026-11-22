@@ -4,7 +4,7 @@ from __future__ import annotations
 
 __all__ = ["render_grid"]
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 import altair as alt
 
@@ -76,11 +76,7 @@ def render_grid(spec: GridSpec, **kwargs: Any) -> alt.ConcatChart:
     for cell in spec.cells:
         renderer = resolve_renderer(_CELL_RENDERERS, cell, "altair")
         charts.append(apply_common_style(renderer(cell, **kwargs), cell))
-    # ``alt.concat(*charts, columns=...)``'s return type is declared as
-    # ``ConcatChart`` for this call shape; the cast mirrors
-    # ``plotmux.backends.altair.layer.render_layer``'s own narrowing of
-    # ``alt.layer(...)``'s broader declared return type.
-    grid = cast("alt.ConcatChart", alt.concat(*charts, columns=spec.ncols))
+    grid = alt.concat(*charts, columns=spec.ncols)
     if spec.title is not None:
         grid = grid.properties(title=spec.title)
     return grid

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import altair as alt
 
-from plotmux.backends.altair.style import rgba_to_altair
+from plotmux.backends.altair.style import make_mark_chart, rgba_to_altair
 from plotmux.utils.categorical import is_categorical
 
 if TYPE_CHECKING:
@@ -52,15 +52,9 @@ def render_stacked_bar(spec: StackedBarSpec, **kwargs: Any) -> alt.Chart:
         kwargs.setdefault("opacity", spec.alpha)
     x_type = "N" if is_categorical(spec.x) else "Q"
     legend = alt.Legend() if any(s.label is not None for s in spec.series) else None
-    return (
-        alt.Chart(alt.Data(values=data))
-        .mark_bar(**kwargs)
-        .encode(
-            x=f"x:{x_type}",
-            y="y:Q",
-            order="order:O",
-            color=alt.Color(
-                "series:N", scale=alt.Scale(domain=labels, range=colors), legend=legend
-            ),
-        )
+    return make_mark_chart(data, "bar", kwargs).encode(
+        x=f"x:{x_type}",
+        y="y:Q",
+        order="order:O",
+        color=alt.Color("series:N", scale=alt.Scale(domain=labels, range=colors), legend=legend),
     )

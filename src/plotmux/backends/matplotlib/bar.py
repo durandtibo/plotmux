@@ -28,7 +28,7 @@ def render_bar(ax: Axes, spec: BarSpec, **kwargs: Any) -> Axes:
     Returns:
         The ``Axes`` the bars were drawn onto.
     """
-    style = {
+    style: dict[str, Any] = {
         "width": spec.width,
         "label": spec.label,
         "color": spec.color,

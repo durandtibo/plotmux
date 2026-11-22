@@ -29,7 +29,7 @@ def render_line(ax: Axes, spec: LineSpec, **kwargs: Any) -> Axes:
     Returns:
         The ``Axes`` the line was drawn onto.
     """
-    style = {
+    style: dict[str, Any] = {
         "label": spec.label,
         "color": spec.color,
         "alpha": spec.alpha,

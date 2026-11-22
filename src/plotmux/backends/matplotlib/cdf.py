@@ -38,7 +38,7 @@ def render_cdf(ax: Axes, spec: CdfSpec, **kwargs: Any) -> Axes:
         The ``Axes`` the CDF was drawn onto.
     """
     xmin, xmax = find_range(spec.values, xmin=spec.xmin, xmax=spec.xmax)
-    style = {
+    style: dict[str, Any] = {
         "bins": spec.nbins,
         "range": (xmin, xmax),
         "label": spec.label,

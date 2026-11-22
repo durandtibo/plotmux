@@ -122,11 +122,15 @@ class HistogramSpec(BaseSpec):
         # Only checked when both bounds are already explicit numbers: a
         # quantile string (e.g. "q0.1") or ``None`` is resolved against the
         # data later by ``find_range``, so it cannot be range-checked here.
-        if isinstance(self.xmin, Real) and isinstance(self.xmax, Real) and self.xmin >= self.xmax:
-            msg = (
-                f"xmin must be strictly less than xmax, but received "
-                f"xmin={self.xmin} and xmax={self.xmax}"
-            )
+        xmin, xmax = self.xmin, self.xmax
+        if (
+            not isinstance(xmin, str)
+            and not isinstance(xmax, str)
+            and isinstance(xmin, Real)
+            and isinstance(xmax, Real)
+            and xmin >= xmax
+        ):
+            msg = f"xmin must be strictly less than xmax, but received xmin={xmin} and xmax={xmax}"
             raise InvalidSpecError(msg)
         self._normalize_color()
         self._validate_base()

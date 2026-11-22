@@ -12,7 +12,7 @@ from plotmux.backends.registry import known_backend_names
 from plotmux.exceptions import BackendNotFoundError
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator
 
 # A ``ContextVar`` rather than a plain module global: it gives each thread
 # and each ``asyncio`` task its own value, so ``set_backend``/``backend(...)``
@@ -68,7 +68,7 @@ def get_default_backend() -> str:
 
 
 @contextmanager
-def backend(name: str) -> Iterator[None]:
+def backend(name: str) -> Generator[None]:
     r"""Temporarily override the default backend.
 
     Args:

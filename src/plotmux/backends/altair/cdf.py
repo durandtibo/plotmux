@@ -6,13 +6,13 @@ __all__ = ["render_cdf"]
 
 from typing import TYPE_CHECKING, Any, cast
 
-import altair as alt
-
-from plotmux.backends.altair.style import prepare_color, rgba_to_altair
+from plotmux.backends.altair.style import make_mark_chart, prepare_color, rgba_to_altair
 from plotmux.utils.cdf import compute_cdf_steps
 from plotmux.utils.range import find_range
 
 if TYPE_CHECKING:
+    import altair as alt
+
     from plotmux.specs import CdfSpec
 
 #: The number of bins used to approximate the CDF when
@@ -58,7 +58,7 @@ def render_cdf(spec: CdfSpec, **kwargs: Any) -> alt.Chart:
     if spec.alpha is not None:
         kwargs.setdefault("opacity", spec.alpha)
     data, encoding_color = prepare_color(data, spec.label, color, kwargs)
-    chart = alt.Chart(alt.Data(values=data)).mark_line(**kwargs).encode(x="x:Q", y="y:Q")
+    chart = make_mark_chart(data, "line", kwargs).encode(x="x:Q", y="y:Q")
     if encoding_color is not None:
         chart = chart.encode(color=encoding_color)
     return chart
