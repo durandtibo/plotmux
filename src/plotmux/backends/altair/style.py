@@ -1,4 +1,5 @@
-r"""Apply the common figure-level style fields onto an altair ``Chart``.
+r"""Contain the altair helpers: the translation tables, the inline data
+and the encodings of an ``AxesScene``.
 
 This module is only imported when altair is installed (see
 ``plotmux.backends.altair.__init__``), so it can import altair
@@ -8,61 +9,43 @@ unconditionally.
 from __future__ import annotations
 
 __all__ = [
+    "LEGEND_LOCATION",
     "MARKER_STYLE",
     "STROKE_DASH",
-    "apply_common_style",
-    "color_encoding",
-    "make_mark_chart",
-    "prepare_color",
+    "axis_encodings",
+    "inline_data",
+    "legend_color",
     "rgba_to_altair",
-    "with_label_field",
 ]
 
-from typing import TYPE_CHECKING, Any, Literal, cast
+import math
+from typing import TYPE_CHECKING, Any, cast
 
 import altair as alt
 
-from plotmux.specs import XBoundSpec
-from plotmux.utils.categorical import is_categorical
-
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     import numpy as np
 
-    from plotmux.specs import BaseSpec
+    from plotmux.scene import AxesScene
 
-#: Maps a ``linestyle``'s matplotlib-style dash name (``LineSpec.linestyle``/
-#: ``SlopeSpec.linestyle``) to the explicit on/off pixel-length list
-#: altair's ``strokeDash`` expects. ``"solid"`` is deliberately absent: an
-#: empty/absent ``strokeDash`` is altair's own default, a solid line. Shared
-#: by ``plotmux.backends.altair.line`` and ``plotmux.backends.altair.slope``.
+#: The Vega-Lite ``strokeDash`` of each portable line style (a solid line
+#: has none).
 STROKE_DASH = {"dashed": [6, 4], "dotted": [1, 3], "dashdot": [6, 4, 1, 4]}
 
-#: Maps ``ScatterSpec.marker``'s portable shape name to altair's
-#: ``mark_point(shape=...)`` value. ``"x"`` is deliberately absent: altair
-#: has no native cross-hatch "x" point shape, the one likely per-backend
-#: asymmetry in this set (same pattern as ``BarSpec.width``'s altair gap,
-#: see ``plotmux.backends.altair.bar``) -- ``ScatterSpec(marker="x")``
-#: simply falls back to altair's own default shape (a circle) on this
-#: backend, same as leaving ``marker`` unset.
+#: The Vega-Lite ``shape`` of each portable marker name. The cross ``x``
+#: is a custom SVG path: Vega-Lite has no named shape for it.
 MARKER_STYLE = {
     "circle": "circle",
     "square": "square",
     "triangle": "triangle-up",
     "diamond": "diamond",
     "cross": "cross",
+    "x": "M-1,-1L1,1M-1,1L1,-1",
 }
 
-#: Maps ``BaseSpec.legend_location``'s portable position name to altair's
-#: ``alt.Legend(orient=...)`` value. altair's ``orient`` supports the four
-#: outer edges (``"top"``, ``"bottom"``, ``"left"``, ``"right"``) plus the
-#: four corners, all outside-the-chart placements -- unlike matplotlib's
-#: ``loc``, which places a legend *inside* the plot area at a given corner
-#: (see ``plotmux.backends.matplotlib.style.LEGEND_LOCATION``), so a
-#: ``legend_location`` chosen for parity across backends still renders in a
-#: visibly different spot on altair, a small, permanent per-backend
-#: asymmetry. ``"best"`` has no altair equivalent (altair has no
-#: auto-placement legend) and is deliberately absent, falling back to
-#: altair's own default position, same as ``legend_location`` unset.
+#: The Vega-Lite legend ``orient`` of each portable legend location.
 LEGEND_LOCATION = {
     "top_left": "top-left",
     "top_right": "top-right",
@@ -77,14 +60,6 @@ LEGEND_LOCATION = {
 
 def rgba_to_altair(color: tuple[float, float, float, float]) -> str:
     r"""Convert a canonical RGBA tuple to altair's native color string.
-
-    altair's mark ``color`` parameter accepts a CSS color string (e.g.
-    ``"rgba(255, 0, 0, 1)"``), so the canonical ``[0, 1]`` float RGBA
-    tuple produced by ``plotmux.colors.parse_color`` is converted to
-    that format here rather than in ``core/``, keeping ``core/`` free
-    of any single backend's native color representation -- same
-    pattern as ``plotmux.backends.xy.style.rgba_to_xy`` and
-    ``plotmux.backends.bokeh.style.rgba_to_bokeh``.
 
     Args:
         color: The color as an ``(r, g, b, a)`` tuple of floats in
@@ -107,262 +82,165 @@ def rgba_to_altair(color: tuple[float, float, float, float]) -> str:
     return f"rgba({round(r * 255)}, {round(g * 255)}, {round(b * 255)}, {a})"
 
 
-def make_mark_chart(
-    data: list[dict[str, Any]], mark: Literal["bar", "line", "point"], kwargs: dict[str, Any]
-) -> alt.Chart:
-    r"""Build a ``Chart`` of one ``mark`` type from inline records.
-
-    Same result as ``alt.Chart(alt.Data(values=data)).mark_<mark>(**kwargs)``,
-    but built through the ``mark`` argument of the ``Chart`` constructor:
-    the ``mark_*`` methods are wrapped by a decorator that type checkers
-    cannot resolve, which loses the type of the returned chart. Shared by
-    every per-type renderer of this backend.
+def _format_column(values: np.ndarray) -> list[str]:
+    r"""Format a column as the cells of a CSV file.
 
     Args:
-        data: The records (one per data point/bin) to plot.
-        mark: The mark type, e.g. ``"line"``, ``"bar"`` or ``"point"``.
-        kwargs: The mark properties, forwarded to ``alt.MarkDef``.
+        values: The column. A string column is quoted when needed, a
+            numeric column is written with ``repr`` (so it round-trips)
+            and ``NaN`` is an empty cell.
 
     Returns:
-        The chart with the mark set and no encoding yet.
+        One string per value.
 
     Example:
         ```pycon
-        >>> from plotmux.backends.altair.style import make_mark_chart
-        >>> chart = make_mark_chart([{"x": 0, "y": 1}], "line", {"strokeWidth": 2})
-        >>> chart.to_dict()["mark"]
-        {'type': 'line', 'strokeWidth': 2}
+        >>> import numpy as np
+        >>> from plotmux.backends.altair.style import _format_column
+        >>> _format_column(np.array([1.5, np.nan]))
+        ['1.5', '']
+        >>> _format_column(np.array(["a,b", "c"]))
+        ['"a,b"', 'c']
 
         ```
     """
-    return alt.Chart(alt.Data(values=data), mark=alt.MarkDef(type=mark, **kwargs))
+    if values.dtype.kind in "US":
+        cells = values.astype(str).tolist()
+        return [
+            '"' + cell.replace('"', '""') + '"' if any(c in cell for c in ',"\n\r') else cell
+            for cell in cells
+        ]
+    return ["" if math.isnan(value) else repr(value) for value in values.astype(float).tolist()]
 
 
-def with_label_field(data: list[dict[str, Any]], label: str | None) -> list[dict[str, Any]]:
-    r"""Attach a constant ``"label"`` field to every record when
-    ``label`` is set.
+def inline_data(columns: Mapping[str, np.ndarray]) -> alt.InlineData:
+    r"""Build the inline data of a chart from columns.
 
-    altair has no direct equivalent of matplotlib's/bokeh's
-    ``label=``/``legend_label=`` mark argument -- a legend entry only
-    appears for a *field-based* encoding channel (see
-    ``color_encoding``), so a series label has to be carried as data,
-    not as a mark option. Every per-type renderer in this backend
-    calls this right before building its ``Chart`` so the resulting
-    records carry a ``"label"`` field for ``color_encoding`` to bind
-    to.
-
-    Args:
-        data: The records (one per data point/bin) to plot.
-        label: The series label, or ``None`` for no legend entry.
-
-    Returns:
-        ``data`` unchanged if ``label`` is ``None``, otherwise a new
-            list of records each with a ``"label": label`` entry
-            added.
-    """
-    if label is None:
-        return data
-    return [{**row, "label": label} for row in data]
-
-
-def color_encoding(color: str | None, label: str | None) -> alt.Color | None:
-    r"""Build the ``color`` encoding channel for a labeled mark.
-
-    Returns ``None`` when ``label`` is ``None``: an explicit
-    ``color`` with no ``label`` is passed straight to the mark
-    constructor instead (e.g. ``mark_line(color=...)``), which needs
-    no encoding channel and adds no legend -- matching every other
-    backend's "no label -> no legend" behavior.
-
-    When ``label`` is set, a legend entry is only possible through a
-    field-based encoding channel (see ``with_label_field``), so this
-    binds ``color`` to that constant ``"label"`` field, fixing its
-    displayed color to ``color`` (or altair's own default when
-    ``color`` is ``None``) via an explicit ``Scale.range`` and hiding
-    the (redundant, always ``"label"``-titled) legend title.
+    The data is one CSV string with an explicit ``parse`` of each
+    column. altair validates a list of records against the Vega-Lite
+    schema row by row, which takes seconds for 100,000 points, and a
+    string is validated in constant time.
 
     Args:
-        color: The mark's CSS color string (already converted by
-            ``rgba_to_altair``), or ``None`` for the backend default.
-        label: The series label, or ``None`` for no legend entry.
+        columns: The columns, by field name. All have the same length.
 
     Returns:
-        The ``color`` encoding to pass to ``Chart.encode``, or
-            ``None`` if no legend entry is needed.
+        The ``InlineData`` holding the CSV text.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> from plotmux.backends.altair.style import inline_data
+        >>> data = inline_data({"x": np.array([1.0, 2.0]), "label": np.array(["a", "a"])})
+        >>> data.values
+        'x,label\n1.0,a\n2.0,a'
+        >>> data.format.parse
+        {'x': 'number', 'label': 'string'}
+
+        ```
     """
-    if label is None:
+    cells = [_format_column(column) for column in columns.values()]
+    lines = [",".join(columns), *(",".join(row) for row in zip(*cells, strict=True))]
+    parse = {
+        name: "string" if column.dtype.kind in "US" else "number"
+        for name, column in columns.items()
+    }
+    return alt.InlineData(
+        values="\n".join(lines),
+        format=alt.CsvDataFormat(type="csv", parse=parse),
+    )
+
+
+def legend_color(scene: AxesScene) -> alt.Color | None:
+    r"""Build the ``color`` encoding that draws the legend of a scene.
+
+    A legend entry exists only for a field-based color encoding, so the
+    labeled primitives carry a constant ``"label"`` field bound to one
+    scale of the whole axes: its domain is the labels and its range is
+    their colors. Every layer uses the same encoding, so Vega-Lite merges
+    them into one legend.
+
+    Args:
+        scene: The scene whose labeled primitives to list.
+
+    Returns:
+        The ``color`` encoding, or ``None`` if the scene has no legend.
+
+    Example:
+        ```pycon
+        >>> from plotmux.backends.altair.style import legend_color
+        >>> from plotmux.scene import AxesScene
+        >>> legend_color(AxesScene(primitives=())) is None
+        True
+
+        ```
+    """
+    if scene.legend is None:
         return None
-    scale = alt.Scale(range=[color]) if color is not None else alt.Undefined
-    return alt.Color("label:N", scale=scale, legend=alt.Legend(title=None))
-
-
-def prepare_color(
-    data: list[dict[str, Any]], label: str | None, color: str | None, kwargs: dict[str, Any]
-) -> tuple[list[dict[str, Any]], alt.Color | None]:
-    r"""Resolve how a mark's color and legend label should be applied.
-
-    Every per-type renderer in this backend needs the same
-    label-dependent choice: no label means the color (if any) is
-    passed straight to the mark constructor and no legend entry is
-    added; a label means the mark needs a field-based ``color``
-    encoding instead (see ``with_label_field``/``color_encoding``),
-    since that is the only way altair shows a legend. Factored here
-    once so ``render_histogram``/``render_line``/``render_scatter``
-    each only call this instead of repeating the branch.
-
-    Args:
-        data: The records (one per data point/bin) to plot.
-        label: The series label, or ``None`` for no legend entry.
-        color: The mark's CSS color string (already converted by
-            ``rgba_to_altair``), or ``None`` for the backend default.
-        kwargs: The caller's mark keyword arguments; mutated in place
-            with a ``color`` default when ``label`` is ``None`` and
-            ``color`` is set.
-
-    Returns:
-        A ``(data, color_encoding)`` pair: ``data`` with a ``"label"``
-            field added when ``label`` is set (unchanged otherwise),
-            and the ``color`` encoding channel to pass to
-            ``Chart.encode`` (``None`` if no legend entry is needed).
-    """
-    if label is None:
-        if color is not None:
-            kwargs.setdefault("color", color)
-        return data, None
-    return with_label_field(data, label), color_encoding(color, label)
-
-
-def apply_common_style(chart: alt.typing.ChartType, spec: BaseSpec) -> alt.typing.ChartType:
-    r"""Apply the common figure-level style fields onto an altair
-    ``Chart``.
-
-    Applies ``title``/``xlabel``/``ylabel``/``xscale``/``yscale`` from
-    ``spec`` (defined on ``BaseSpec``, shared by every chart type).
-    Called once per backend, right after the chart-specific renderer
-    has built its mark, so a new chart type gets title/label/scale
-    support for free.
-
-    Every per-type renderer in this backend (``render_histogram``/
-    ``render_line``/``render_scatter``) encodes its quantitative
-    channels under the fixed field names ``"x"``/``"y"`` (see each
-    renderer's own docstring), so this can re-``encode`` those two
-    channels -- with a title and a ``Scale`` -- generically, without
-    knowing which chart type built ``chart``. Vega-Lite's shared
-    top-level encoding on a layered spec (``alt.Chart.encode`` also
-    works on the ``LayerChart`` produced by ``render_layer``'s ``+``)
-    is what lets one call here style every child of a ``LayerSpec`` at
-    once, mirroring how xy's ``apply_common_style`` appends one shared
-    ``x_axis``/``y_axis`` pair after combining marks (see
-    ``plotmux.backends.xy.style.apply_common_style``) instead of
-    restyling each child individually.
-
-    ``title``/``xlabel``/``ylabel`` are passed to ``alt.X``/``alt.Y``
-    even when ``None`` (rather than omitted) so Vega-Lite explicitly
-    hides the axis title; omitting the argument entirely would instead
-    fall back to Vega-Lite's own default of showing the capitalized
-    field name (``"X"``/``"Y"``), which would not match every other
-    backend's "no label set -> no title shown" behavior.
-
-    Args:
-        chart: The altair ``Chart`` (or ``LayerChart``) to style.
-        spec: The spec whose common style fields to apply.
-
-    Returns:
-        The styled chart.
-    """
-    # ``alt.Scale``'s ``domainMin``/``domainMax`` use altair's own
-    # ``alt.Undefined`` sentinel for "unset" (not ``None``, which altair
-    # instead serializes as an explicit ``null`` bound), so ``spec.ymin``/
-    # ``spec.ymax``/``spec.xmin``/``spec.xmax`` are only passed through when
-    # actually set.
-    # ``BarSpec``/``StackedBarSpec`` (the only specs whose ``x`` may hold
-    # strings, see ``plotmux.backends.altair.bar.render_bar``) encode ``x``
-    # as ``:N`` (nominal) rather than ``:Q`` (quantitative) for a
-    # categorical x-axis -- unconditionally re-``encode``-ing ``x`` as
-    # ``"x:Q"`` below would clobber that field type back to quantitative,
-    # producing invalid data for a string field. A nominal field also has
-    # no ``xscale``/``xmin``/``xmax`` equivalent (those are quantitative
-    # scale concepts), so it gets no ``alt.Scale`` at all.
-    spec_x = cast("np.ndarray | None", getattr(spec, "x", None))
-    categorical_x = spec_x is not None and is_categorical(spec_x)
-    x_scale_kwargs: dict[str, Any] = {"type": spec.xscale}
-    # Gated on ``XBoundSpec``: ``HistogramSpec``/``CdfSpec`` are not
-    # ``XBoundSpec`` (their own ``xmin``/``xmax`` accept a quantile string,
-    # resolved and applied by their own renderer -- see
-    # ``plotmux.specs.base.XBoundSpec``).
-    if isinstance(spec, XBoundSpec):
-        if spec.xmin is not None:
-            x_scale_kwargs["domainMin"] = spec.xmin
-        if spec.xmax is not None:
-            x_scale_kwargs["domainMax"] = spec.xmax
-    y_scale_kwargs: dict[str, Any] = {"type": spec.yscale}
-    if spec.ymin is not None:
-        y_scale_kwargs["domainMin"] = spec.ymin
-    if spec.ymax is not None:
-        y_scale_kwargs["domainMax"] = spec.ymax
-    x_encoding = (
-        alt.X("x:N", title=spec.xlabel)
-        if categorical_x
-        else alt.X("x:Q", title=spec.xlabel, scale=alt.Scale(**x_scale_kwargs))
+    entries = {
+        p.label: rgba_to_altair(p.color)
+        for p in scene.primitives
+        if p.label is not None and p.color is not None
+    }
+    legend: dict[str, Any] = {"title": scene.legend.title}
+    if scene.legend.location is not None:
+        legend["orient"] = LEGEND_LOCATION[scene.legend.location]
+    if scene.legend.orientation is not None:
+        legend["direction"] = scene.legend.orientation
+    return alt.Color(
+        "label:N",
+        scale=alt.Scale(domain=list(entries), range=list(entries.values())),
+        legend=alt.Legend(**cast("Any", legend)),
     )
-    chart = chart.encode(
-        x=x_encoding,
-        y=alt.Y("y:Q", title=spec.ylabel, scale=alt.Scale(**y_scale_kwargs)),
-    )
-    if spec.title is not None:
-        chart = chart.properties(title=spec.title)
-    if spec.background_color is not None:
-        # ``spec.background_color``, once set, is already a canonical RGBA
-        # tuple: it went through ``parse_color`` in
-        # ``BaseSpec._validate_base``. ``Chart.properties(background=...)``
-        # sets the whole chart's (not just the plot area's) background,
-        # matching bokeh's ``background_fill_color``/matplotlib's
-        # ``Axes.set_facecolor`` closely enough for this figure-level field.
-        chart = chart.properties(
-            background=rgba_to_altair(
-                cast("tuple[float, float, float, float]", spec.background_color)
-            )
-        )
-    return _apply_legend_style(chart, spec)
 
 
-def _apply_legend_style(chart: alt.typing.ChartType, spec: BaseSpec) -> alt.typing.ChartType:
-    r"""Apply the legend style fields of ``spec`` onto an altair chart.
+def axis_encodings(
+    scene: AxesScene, *, x_field: str = "x", y_field: str = "y", x2_field: str | None = None
+) -> dict[str, Any]:
+    r"""Build the ``x`` and ``y`` encodings of the axes of a scene.
 
-    Factored out of ``apply_common_style`` to keep its complexity under
-    the linter's limit.
+    The title, the scale and the limits are the same for every layer of
+    the axes, so Vega-Lite merges the axes. A ``None`` label is passed
+    explicitly: it hides the axis title, while omitting it would show
+    the name of the field.
 
     Args:
-        chart: The altair ``Chart`` (or ``LayerChart``) to style.
-        spec: The spec whose legend style fields to apply.
+        scene: The scene whose axes to encode.
+        x_field: The field of the x channel.
+        y_field: The field of the y channel.
+        x2_field: The field of the ``x2`` channel of a bar over an
+            interval, or ``None``.
 
     Returns:
-        The styled chart.
+        The keyword arguments of ``Chart.encode``. A categorical x-axis
+            is nominal and ordered like ``scene.categories``.
+
+    Example:
+        ```pycon
+        >>> from plotmux.backends.altair.style import axis_encodings
+        >>> from plotmux.scene import AxesScene
+        >>> sorted(axis_encodings(AxesScene(primitives=())))
+        ['x', 'y']
+
+        ```
     """
-    if spec.legend_title is not None:
-        # ``color_encoding`` (see above) hardcodes ``alt.Legend(title=None)``
-        # on every labeled mark's ``color`` encoding, hiding the redundant
-        # (always ``"label"``-titled) default legend title -- this
-        # re-``encode``s ``color`` with the caller's title instead,
-        # replacing that ``None``. A chart with no labeled mark at all has
-        # no ``color`` encoding to override, so this is a no-op then, same
-        # as every other backend's "no label -> no legend" behavior.
-        chart = chart.encode(color=alt.Color(legend=alt.Legend(title=spec.legend_title)))
-    if spec.legend_location is not None and spec.legend_location in LEGEND_LOCATION:
-        # Same "no labeled mark -> no ``color`` encoding to override -> no-op"
-        # shape as ``legend_title`` above. ``"best"`` has no altair
-        # equivalent (see ``LEGEND_LOCATION``'s docstring) and is excluded
-        # by the membership check, falling back to altair's own default
-        # position.
-        chart = chart.encode(
-            color=alt.Color(
-                legend=alt.Legend(orient=cast("Any", LEGEND_LOCATION[spec.legend_location]))
-            )
-        )
-    if spec.legend_orientation is not None:
-        # Same "no labeled mark -> no ``color`` encoding to override -> no-op"
-        # shape as ``legend_title``/``legend_location`` above.
-        chart = chart.encode(
-            color=alt.Color(legend=alt.Legend(direction=cast("Any", spec.legend_orientation)))
-        )
-    return chart
+    y_scale: dict[str, Any] = {"type": scene.yscale}
+    if scene.ylim[0] is not None:
+        y_scale["domainMin"] = scene.ylim[0]
+    if scene.ylim[1] is not None:
+        y_scale["domainMax"] = scene.ylim[1]
+    encodings: dict[str, Any] = {
+        "y": alt.Y(f"{y_field}:Q", title=scene.ylabel, scale=alt.Scale(**y_scale), stack=None)
+    }
+    if scene.categories is not None:
+        encodings["x"] = alt.X(f"{x_field}:N", title=scene.xlabel, sort=list(scene.categories))
+        return encodings
+    x_scale: dict[str, Any] = {"type": scene.xscale}
+    if scene.xlim[0] is not None:
+        x_scale["domainMin"] = scene.xlim[0]
+    if scene.xlim[1] is not None:
+        x_scale["domainMax"] = scene.xlim[1]
+    encodings["x"] = alt.X(f"{x_field}:Q", title=scene.xlabel, scale=alt.Scale(**x_scale))
+    if x2_field is not None:
+        encodings["x2"] = alt.X2(f"{x2_field}:Q")
+    return encodings

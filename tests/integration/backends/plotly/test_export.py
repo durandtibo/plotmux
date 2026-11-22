@@ -76,5 +76,5 @@ def test_save_chart_type_format_matrix(
 @plotly_available
 def test_save_unsupported_format(tmp_path: Path) -> None:
     fig = _hist()
-    with pytest.raises(ValueError, match="Unsupported export format"):
+    with pytest.raises(ValueError, match=r"does not support exporting a figure to 'png'"):
         fig.save(tmp_path / "fig.png")

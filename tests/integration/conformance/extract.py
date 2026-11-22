@@ -7,8 +7,18 @@ same numbers as ``plotmux.scene.build_scene``.
 
 from __future__ import annotations
 
-__all__ = ["Drawn", "expected", "extract_matplotlib", "extract_xy"]
+__all__ = [
+    "Drawn",
+    "expected",
+    "extract_altair",
+    "extract_bokeh",
+    "extract_matplotlib",
+    "extract_plotly",
+    "extract_xy",
+]
 
+import csv
+import io
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -112,4 +122,92 @@ def extract_xy(chart: Any) -> Drawn:
             drawn.lines.append((np.asarray(mark.x), np.asarray(mark.y), None))
         elif mark.kind == "scatter":
             drawn.points.append((np.asarray(mark.x), np.asarray(mark.y)))
+    return drawn
+
+
+def extract_bokeh(fig: Any) -> Drawn:
+    r"""Read the primitives drawn on a bokeh ``figure``."""
+    drawn = Drawn()
+    for renderer in fig.renderers:
+        glyph = renderer.glyph
+        data = renderer.data_source.data
+        kind = type(glyph).__name__
+        if kind == "VBar":
+            x = np.asarray(data["x"])
+            n = len(x)
+            top, bottom = np.asarray(data["top"]), np.asarray(data["bottom"])
+            width = data.get("width", glyph.width)
+            drawn.bars.append(
+                (x, top - bottom, bottom, np.broadcast_to(np.asarray(width, dtype=float), (n,)))
+            )
+        elif kind == "Line":
+            drawn.lines.append((np.asarray(data["x"]), np.asarray(data["y"]), None))
+        elif kind == "Scatter":
+            drawn.points.append((np.asarray(data["x"]), np.asarray(data["y"])))
+    for annotation in fig.center:
+        if type(annotation).__name__ == "Slope":
+            drawn.lines.append((None, None, (annotation.gradient, annotation.y_intercept)))
+    return drawn
+
+
+def extract_plotly(traces: Any) -> Drawn:
+    r"""Read the primitives drawn by plotly traces."""
+    drawn = Drawn()
+    for trace in traces:
+        if type(trace).__name__ == "Bar":
+            x = np.asarray(trace.x)
+            n = len(x)
+            height = np.asarray(trace.y, dtype=float)
+            drawn.bars.append(
+                (
+                    x,
+                    height,
+                    np.broadcast_to(np.asarray(trace.base, dtype=float), (n,)),
+                    np.broadcast_to(np.asarray(trace.width, dtype=float), (n,)),
+                )
+            )
+        elif trace.mode == "lines":
+            drawn.lines.append((np.asarray(trace.x), np.asarray(trace.y), None))
+        else:
+            drawn.points.append((np.asarray(trace.x), np.asarray(trace.y)))
+    return drawn
+
+
+def _read_csv(text: str) -> dict[str, list[str]]:
+    r"""Read the columns of a CSV text."""
+    rows = list(csv.DictReader(io.StringIO(text)))
+    return {name: [row[name] for row in rows] for name in (rows[0] if rows else {})}
+
+
+def extract_altair(spec: dict[str, Any], datasets: dict[str, str]) -> Drawn:
+    r"""Read the primitives drawn by the layers of an altair chart (a
+    ``to_dict()`` of one view, with the ``datasets`` of the chart)."""
+    drawn = Drawn()
+    for layer in spec.get("layer", [spec]):
+        columns = _read_csv(datasets[layer["data"]["name"]])
+        mark = layer["mark"]["type"]
+        if mark == "bar":
+            top = np.array(columns["y"], dtype=float)
+            base = np.array(columns["y2"], dtype=float)
+            if "x2" in columns:
+                lo = np.array(columns["x"], dtype=float)
+                hi = np.array(columns["x2"], dtype=float)
+                drawn.bars.append(((lo + hi) / 2, top - base, base, hi - lo))
+            else:
+                width = layer["mark"]["width"]["band"]
+                drawn.bars.append(
+                    (np.array(columns["x"]), top - base, base, np.full(len(top), width))
+                )
+        else:
+            x = columns["x"]
+            x_values = (
+                np.array(x)
+                if layer["encoding"]["x"]["type"] == "nominal"
+                else np.array(x, dtype=float)
+            )
+            y_values = np.array([float(v) if v else np.nan for v in columns["y"]])
+            if mark == "line":
+                drawn.lines.append((x_values, y_values, None))
+            else:
+                drawn.points.append((x_values, y_values))
     return drawn
