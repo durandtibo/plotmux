@@ -6,11 +6,16 @@ __all__ = ["render_scatter"]
 
 from typing import TYPE_CHECKING, Any, cast
 
-import altair as alt
-
-from plotmux.backends.altair.style import MARKER_STYLE, prepare_color, rgba_to_altair
+from plotmux.backends.altair.style import (
+    MARKER_STYLE,
+    make_mark_chart,
+    prepare_color,
+    rgba_to_altair,
+)
 
 if TYPE_CHECKING:
+    import altair as alt
+
     from plotmux.specs import ScatterSpec
 
 
@@ -74,7 +79,7 @@ def render_scatter(spec: ScatterSpec, **kwargs: Any) -> alt.Chart:
     if spec.marker is not None and spec.marker in MARKER_STYLE:
         kwargs.setdefault("shape", MARKER_STYLE[spec.marker])
     data, encoding_color = prepare_color(data, spec.label, color, kwargs)
-    chart = alt.Chart(alt.Data(values=data)).mark_point(**kwargs).encode(x="x:Q", y="y:Q")
+    chart = make_mark_chart(data, "point", kwargs).encode(x="x:Q", y="y:Q")
     if encoding_color is not None:
         chart = chart.encode(color=encoding_color)
     return chart

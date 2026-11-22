@@ -12,12 +12,13 @@ __all__ = [
     "STROKE_DASH",
     "apply_common_style",
     "color_encoding",
+    "make_mark_chart",
     "prepare_color",
     "rgba_to_altair",
     "with_label_field",
 ]
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import altair as alt
 
@@ -104,6 +105,37 @@ def rgba_to_altair(color: tuple[float, float, float, float]) -> str:
     """
     r, g, b, a = color
     return f"rgba({round(r * 255)}, {round(g * 255)}, {round(b * 255)}, {a})"
+
+
+def make_mark_chart(
+    data: list[dict[str, Any]], mark: Literal["bar", "line", "point"], kwargs: dict[str, Any]
+) -> alt.Chart:
+    r"""Build a ``Chart`` of one ``mark`` type from inline records.
+
+    Same result as ``alt.Chart(alt.Data(values=data)).mark_<mark>(**kwargs)``,
+    but built through the ``mark`` argument of the ``Chart`` constructor:
+    the ``mark_*`` methods are wrapped by a decorator that type checkers
+    cannot resolve, which loses the type of the returned chart. Shared by
+    every per-type renderer of this backend.
+
+    Args:
+        data: The records (one per data point/bin) to plot.
+        mark: The mark type, e.g. ``"line"``, ``"bar"`` or ``"point"``.
+        kwargs: The mark properties, forwarded to ``alt.MarkDef``.
+
+    Returns:
+        The chart with the mark set and no encoding yet.
+
+    Example:
+        ```pycon
+        >>> from plotmux.backends.altair.style import make_mark_chart
+        >>> chart = make_mark_chart([{"x": 0, "y": 1}], "line", {"strokeWidth": 2})
+        >>> chart.to_dict()["mark"]
+        {'type': 'line', 'strokeWidth': 2}
+
+        ```
+    """
+    return alt.Chart(alt.Data(values=data), mark=alt.MarkDef(type=mark, **kwargs))
 
 
 def with_label_field(data: list[dict[str, Any]], label: str | None) -> list[dict[str, Any]]:

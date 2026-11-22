@@ -4,5 +4,3 @@ tasklib:
   groups:
     install: dev,docs,jupyter
     update: dev,docs,jupyter
-  types:
-    checker: pyright

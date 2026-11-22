@@ -74,7 +74,7 @@ class XyBackend(Backend):
     # has no separate figure/axes object to construct first (unlike
     # matplotlib's/bokeh's own local ``_make_renderer``), so it shares this
     # helper with the ``altair`` backend rather than defining its own.
-    _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., xy.Chart]]] = {
+    _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., xy.Chart | XyGrid]]] = {
         HistogramSpec: make_renderer(render_histogram, apply_common_style),
         BarSpec: make_renderer(render_bar, apply_common_style),
         StackedBarSpec: make_renderer(render_stacked_bar, apply_common_style),

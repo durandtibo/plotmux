@@ -44,7 +44,7 @@ def render_scatter(ax: Axes, spec: ScatterSpec, **kwargs: Any) -> Axes:
     Returns:
         The ``Axes`` the markers were drawn onto.
     """
-    style = {
+    style: dict[str, Any] = {
         "label": spec.label,
         "color": spec.color,
         "s": spec.size,

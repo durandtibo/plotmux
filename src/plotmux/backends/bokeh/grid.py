@@ -33,7 +33,7 @@ from plotmux.specs import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from bokeh.models import LayoutDOM
+    from bokeh.models import LayoutDOM, UIElement
     from bokeh.plotting import figure
 
     from plotmux.specs import GridSpec
@@ -91,14 +91,16 @@ def render_grid(spec: GridSpec, **kwargs: Any) -> LayoutDOM:
         NotImplementedError: if ``spec.cells`` contains a spec type
             with no bokeh renderer registered here.
     """
-    figs = []
+    figs: list[UIElement | None] = []
     for cell in spec.cells:
         fig = bokeh_figure(x_axis_type=cell.xscale, y_axis_type=cell.yscale)
         renderer = resolve_renderer(_FIG_RENDERERS, cell, "bokeh")
         renderer(fig, cell, **kwargs)
         apply_common_style(fig, cell)
         figs.append(fig)
-    rows = [figs[i : i + spec.ncols] for i in range(0, len(figs), spec.ncols)]
+    rows: list[list[UIElement | None]] = [
+        figs[i : i + spec.ncols] for i in range(0, len(figs), spec.ncols)
+    ]
     grid = gridplot(rows)
     if spec.title is not None:
         return column(Div(text=f"<h2>{escape(spec.title)}</h2>"), grid)

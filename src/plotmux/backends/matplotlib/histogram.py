@@ -31,7 +31,7 @@ def render_histogram(ax: Axes, spec: HistogramSpec, **kwargs: Any) -> Axes:
         The ``Axes`` the histogram was drawn onto.
     """
     xmin, xmax = find_range(spec.values, xmin=spec.xmin, xmax=spec.xmax)
-    style = {
+    style: dict[str, Any] = {
         "bins": spec.bins,
         "range": (xmin, xmax),
         "label": spec.label,

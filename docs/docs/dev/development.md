@@ -159,11 +159,13 @@ inv test.doctest
 
 ### Type Checking
 
-`plotmux` uses pyright for type checking. You can run type checking locally:
+`plotmux` uses ty and pyright for type checking. You can run both locally:
 
 ```shell
-inv types.check
+inv types.check --complete
 ```
+
+`inv types.check` runs only ty, which is faster.
 
 ## Project Structure
 

@@ -81,6 +81,6 @@ def render_layer(ax: Axes, spec: LayerSpec, **kwargs: Any) -> Axes:
     for child in spec.layers:
         renderer = resolve_renderer(_AX_RENDERERS, child, "matplotlib")
         renderer(ax, child, **kwargs)
-    if any(child.label is not None for child in spec.layers):
+    if any(getattr(child, "label", None) is not None for child in spec.layers):
         ax.legend()
     return ax
