@@ -1158,6 +1158,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#plotmux.specs.base.Spec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spec
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#plotmux.specs.base.XBoundSpec" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1594,6 +1605,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#plotmux.specs.base.Spec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spec
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#plotmux.specs.base.XBoundSpec" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1954,6 +1976,13 @@
 
 
     <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.Spec
+
+
+  
+      dataclass
+  " href="#plotmux.specs.base.Spec">Spec</a></code></p>
 
 
 
@@ -2253,6 +2282,74 @@ default to <code>"linear"</code> rather than <code>None</code>: an axis always h
 
 
 
+<h3 id="plotmux.specs.base.Spec" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">plotmux.specs.base.Spec</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#plotmux.specs.base.Spec" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Define the base class of the immutable value objects of the
+specs.</p>
+<p>A spec cannot change after its construction: the fields are
+frozen and the arrays are copied and read-only (see
+<code>plotmux.utils.to_readonly_array</code>). Two specs are equal if they
+have the same type and equal fields, where arrays are compared by
+value (a plain dataclass <code>==</code> raises on an array field). A spec
+holds arrays, so it is not hashable.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">LineSpec</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span> <span class="o">==</span> <span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span> <span class="o">==</span> <span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="go">False</span>
+</code></pre></div>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
 <h3 id="plotmux.specs.base.XBoundSpec" class="doc doc-heading">
             <span class="doc doc-object-name doc-class-name">plotmux.specs.base.XBoundSpec</span>
 
@@ -2495,7 +2592,8 @@ inputs before construction.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The <code>(x, y)</code> pair, each coerced to an <code>np.ndarray</code>.</p>
+                <p>The <code>(x, y)</code> pair, each converted to a read-only copy (see
+<code>plotmux.utils.to_readonly_array</code>).</p>
               </div>
             </td>
           </tr>
@@ -4185,6 +4283,13 @@ the backend's default (usually fully opaque).</p>
 
 
     <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.Spec
+
+
+  
+      dataclass
+  " href="#plotmux.specs.base.Spec">Spec</a></code></p>
 
 
 
