@@ -10,18 +10,17 @@ __all__ = [
 ]
 
 from functools import cache
-from typing import TYPE_CHECKING, Any, Never, TypeVar
+from typing import TYPE_CHECKING, Never, ParamSpec, TypeVar
 
-from coola.utils.imports.universal import (
-    decorator_package_available,
-    package_available,
-    raise_package_missing_error,
-)
+from coola.utils.imports import package_available, raise_package_missing_error
+
+from plotmux.utils.imports.package import decorator_package_available
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-F = TypeVar("F", bound="Callable[..., Any]")
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 def check_plotly() -> None:
@@ -58,7 +57,7 @@ def is_plotly_available() -> bool:
     return package_available("plotly")
 
 
-def plotly_available(fn: F) -> F:
+def plotly_available(fn: Callable[P, R]) -> Callable[P, R | None]:
     r"""Implement a decorator to execute a function only if ``plotly``
     is installed.
 
@@ -98,4 +97,4 @@ def raise_plotly_missing_error() -> Never:
 
         ```
     """
-    raise_package_missing_error("plotly", "plotly")
+    raise_package_missing_error("plotly", install="plotly")
