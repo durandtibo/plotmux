@@ -2,77 +2,74 @@ r"""Contain the backend-agnostic grid-layout specification."""
 
 from __future__ import annotations
 
-__all__ = ["GridSpec"]
+__all__ = ["FigureSpec", "GridSpec"]
 
 from dataclasses import dataclass
 from numbers import Integral
+from typing import TypeAlias
 
 from plotmux.exceptions import InvalidSpecError
-from plotmux.specs.base import BaseSpec, XBoundSpec
+from plotmux.specs.base import Spec
+from plotmux.specs.panel import PanelSpec
 
 
 @dataclass(frozen=True, eq=False)
-class GridSpec(XBoundSpec):
-    r"""Define a spec that lays out multiple child specs as independent
-    panels in a grid.
+class GridSpec(Spec):
+    r"""Define a grid of independent panels.
 
-    Unlike ``LayerSpec`` (multiple specs drawn onto *one* shared axes,
-    see ``plotmux.specs.LayerSpec``), each child here gets its own,
-    independent panel -- the backend-agnostic equivalent of
-    matplotlib's ``pyplot.subplots``. A child may itself be a
-    ``LayerSpec`` (several series sharing one panel's axes); a nested
-    ``GridSpec`` is rejected for the same reason ``LayerSpec`` rejects
-    nesting: layout is one flat pass over ``cells``, so callers must
-    flatten nested grids themselves.
+    Each panel is its own axes with its own marks and style, the
+    backend-agnostic equivalent of matplotlib's ``pyplot.subplots``.
+    A grid holds panels, and a panel holds marks, so neither a grid in
+    a grid nor a panel in a panel can be built.
 
     Args:
-        cells: The child specs to draw, one independent panel per
-            spec, in row-major order (left to right, top to bottom).
-            Must be non-empty.
-        ncols: The number of columns in the grid. Rows are filled
-            left to right; the last row is left short (its remaining
-            panels left empty) when ``len(cells)`` is not a multiple
-            of ``ncols``. Must be a positive integer.
-        title: An optional figure-level title, shown once above the
-            whole grid (not any individual cell). Inherited from
-            ``BaseSpec``.
-
-    ``xlabel``/``ylabel``/``xscale``/``yscale``, also inherited from
-    ``BaseSpec``, have no meaning at the grid level -- each cell keeps
-    its own -- so every backend's grid renderer ignores them.
+        panels: The panels to draw, in row-major order (left to right,
+            top to bottom). Must be non-empty.
+        ncols: The number of columns in the grid. The last row is left
+            short when ``len(panels)`` is not a multiple of ``ncols``.
+            Must be a positive integer.
+        title: An optional title shown once above the whole grid.
 
     Raises:
-        ValueError: if ``cells`` is empty, contains a ``GridSpec``,
-            or ``ncols`` is not a positive integer.
+        InvalidSpecError: if ``panels`` is empty or holds an object
+            that is not a ``PanelSpec``, or ``ncols`` is not a
+            positive integer. Also a ``ValueError``.
 
     Example:
         ```pycon
         >>> import numpy as np
-        >>> from plotmux.specs import GridSpec, HistogramSpec, LineSpec
+        >>> from plotmux.specs import GridSpec, HistogramSpec, LineSpec, PanelSpec
         >>> spec = GridSpec(
-        ...     cells=(
-        ...         HistogramSpec(values=np.arange(101), bins=10),
-        ...         LineSpec(x=np.arange(10), y=np.arange(10)),
+        ...     panels=(
+        ...         PanelSpec(marks=(HistogramSpec(values=np.arange(101), bins=10),)),
+        ...         PanelSpec(marks=(LineSpec(x=np.arange(10), y=np.arange(10)),)),
         ...     ),
         ...     ncols=2,
         ... )
-        >>> len(spec.cells)
+        >>> len(spec.panels)
         2
 
         ```
     """
 
-    cells: tuple[BaseSpec, ...]
+    panels: tuple[PanelSpec, ...]
     ncols: int = 1
+    title: str | None = None
 
     def __post_init__(self) -> None:
-        if not self.cells:
-            msg = "cells must contain at least one spec"
+        panels = tuple(self.panels)
+        if not panels:
+            msg = "panels must contain at least one panel"
             raise InvalidSpecError(msg)
-        if any(isinstance(child, GridSpec) for child in self.cells):
-            msg = "cells must not contain a GridSpec (nesting is not supported)"
-            raise InvalidSpecError(msg)
+        for panel in panels:
+            if not isinstance(panel, PanelSpec):
+                msg = f"panels must hold PanelSpec objects, but received {type(panel).__name__}"
+                raise InvalidSpecError(msg)
+        object.__setattr__(self, "panels", panels)
         if not isinstance(self.ncols, Integral) or isinstance(self.ncols, bool) or self.ncols <= 0:
             msg = f"ncols must be a positive integer, but received {self.ncols}"
             raise InvalidSpecError(msg)
-        self._validate_base()
+
+
+#: The spec of a figure: one panel, or a grid of panels.
+FigureSpec: TypeAlias = PanelSpec | GridSpec

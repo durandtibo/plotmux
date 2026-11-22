@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from plotmux.exceptions import InvalidSpecError
+from plotmux.primitives import Bars
 from plotmux.specs import HistogramSpec
 from plotmux.utils import find_range
 
@@ -88,22 +89,6 @@ def test_histogram_spec_invalid_color() -> None:
 # --- common style ---
 
 
-def test_histogram_spec_common_style() -> None:
-    spec = HistogramSpec(
-        values=np.arange(101),
-        title="t",
-        xlabel="x",
-        ylabel="y",
-        xscale="log",
-        yscale="log",
-    )
-    assert spec.title == "t"
-    assert spec.xlabel == "x"
-    assert spec.ylabel == "y"
-    assert spec.xscale == "log"
-    assert spec.yscale == "log"
-
-
 # --- frozen / error cases ---
 
 
@@ -172,11 +157,6 @@ def test_histogram_spec_xmin_only_explicit_does_not_raise() -> None:
     spec = HistogramSpec(values=np.arange(101), xmin=5)
     assert spec.xmin == 5
     assert spec.xmax is None
-
-
-def test_histogram_spec_ymin_greater_than_ymax_raises() -> None:
-    with pytest.raises(ValueError, match="ymin must not be greater than ymax"):
-        HistogramSpec(values=np.arange(101), ymin=10, ymax=0)
 
 
 def test_histogram_spec_does_not_alias_the_input_values() -> None:
@@ -287,3 +267,80 @@ def test_histogram_spec_equal_after_filtering() -> None:
     with pytest.warns(UserWarning, match="NaN or inf"):
         a = HistogramSpec(values=np.array([1.0, np.nan, 3.0]))
     assert a == HistogramSpec(values=np.array([1.0, 3.0]))
+
+
+############################################
+#     Tests for HistogramSpec lowering     #
+############################################
+
+
+def test_histogram_spec_to_primitives() -> None:
+    spec = HistogramSpec(
+        values=np.array([0.0, 1.0, 2.0, 3.0, 4.0, 4.0]),
+        bins=2,
+        label="a",
+        color="#ff0000",
+        alpha=0.5,
+    )
+    assert spec.to_primitives(None) == (
+        Bars(
+            x=np.array([1.0, 3.0]),
+            height=np.array([2.0, 4.0]),
+            base=np.array([0.0, 0.0]),
+            width=np.array([2.0, 2.0]),
+            color=(1.0, 0.0, 0.0, 1.0),
+            alpha=0.5,
+            label="a",
+        ),
+    )
+
+
+def test_histogram_spec_to_primitives_density() -> None:
+    primitive = cast(
+        "Bars",
+        HistogramSpec(values=np.array([0.0, 1.0, 2.0, 3.0]), bins=2, density=True).to_primitives(
+            None
+        )[0],
+    )
+    assert primitive.height.tolist() == [0.3333333333333333, 0.3333333333333333]
+
+
+def test_histogram_spec_to_primitives_explicit_range() -> None:
+    spec = HistogramSpec(values=np.arange(11.0), bins=2, xmin=0, xmax=4)
+    primitive = cast("Bars", spec.to_primitives(None)[0])
+    assert primitive.x.tolist() == [1.0, 3.0]
+
+
+def test_histogram_spec_to_primitives_range_drops_the_values_outside() -> None:
+    spec = HistogramSpec(values=np.arange(11.0), bins=2, xmin=0, xmax=4)
+    primitive = cast("Bars", spec.to_primitives(None)[0])
+    assert primitive.height.tolist() == [2.0, 3.0]
+
+
+def test_histogram_spec_to_primitives_quantile_range() -> None:
+    spec = HistogramSpec(values=np.arange(101.0), bins=2, xmin="q0.1", xmax="q0.9")
+    primitive = cast("Bars", spec.to_primitives(None)[0])
+    assert primitive.x.tolist() == [30.0, 70.0]
+
+
+def test_histogram_spec_to_primitives_single_value() -> None:
+    primitive = cast("Bars", HistogramSpec(values=np.array([5.0]), bins=1).to_primitives(None)[0])
+    assert primitive.height.tolist() == [1.0]
+
+
+def test_histogram_spec_to_primitives_does_not_change_the_values() -> None:
+    spec = HistogramSpec(values=np.array([3.0, 1.0, 2.0]), bins=2)
+    spec.to_primitives(None)
+    assert spec.values.tolist() == [3.0, 1.0, 2.0]
+
+
+def test_histogram_spec_x_extent() -> None:
+    assert HistogramSpec(values=np.array([3.0, 1.0, 2.0])).x_extent() == (1.0, 3.0)
+
+
+def test_histogram_spec_x_extent_explicit_range() -> None:
+    assert HistogramSpec(values=np.arange(11.0), xmin=2, xmax=4).x_extent() == (2.0, 4.0)
+
+
+def test_histogram_spec_is_categorical() -> None:
+    assert HistogramSpec(values=np.arange(3)).is_categorical() is False

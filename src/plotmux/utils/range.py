@@ -2,9 +2,13 @@ r"""Contain utility functions to manage ranges of values."""
 
 from __future__ import annotations
 
-__all__ = ["find_range"]
+__all__ = ["check_range_bounds", "find_range"]
+
+from numbers import Real
 
 import numpy as np
+
+from plotmux.exceptions import InvalidSpecError
 
 
 def find_range(
@@ -119,3 +123,37 @@ def _parse_quantile(value: str) -> float:
         msg = f"Invalid quantile string {value!r}: quantile must be in the range [0, 1]"
         raise ValueError(msg)
     return quantile
+
+
+def check_range_bounds(xmin: float | str | None, xmax: float | str | None) -> None:
+    r"""Check the bounds of the range of a histogram or a CDF.
+
+    The check only applies when both bounds are explicit numbers: a
+    quantile string (e.g. ``"q0.1"``) or ``None`` is resolved against
+    the data later by ``find_range``.
+
+    Args:
+        xmin: The lower bound.
+        xmax: The upper bound.
+
+    Raises:
+        InvalidSpecError: if both bounds are numbers and
+            ``xmin >= xmax``. Also a ``ValueError``.
+
+    Example:
+        ```pycon
+        >>> from plotmux.utils.range import check_range_bounds
+        >>> check_range_bounds(0, 1)
+        >>> check_range_bounds("q0.1", 0)
+
+        ```
+    """
+    if (
+        not isinstance(xmin, str)
+        and not isinstance(xmax, str)
+        and isinstance(xmin, Real)
+        and isinstance(xmax, Real)
+        and xmin >= xmax
+    ):
+        msg = f"xmin must be strictly less than xmax, but received xmin={xmin} and xmax={xmax}"
+        raise InvalidSpecError(msg)

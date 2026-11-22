@@ -7,45 +7,44 @@ __all__ = ["BarSpec"]
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+import numpy as np
+
+from plotmux.colors import parse_optional_color
 from plotmux.exceptions import InvalidSpecError
-from plotmux.specs.base import XBoundSpec, check_equal_length
+from plotmux.primitives import Bars
+from plotmux.specs.base import MarkSpec
+from plotmux.utils.array import to_paired_arrays
+from plotmux.utils.categorical import is_categorical
+from plotmux.utils.extent import finite_extent
 
 if TYPE_CHECKING:
-    import numpy as np
-
-    from plotmux.colors import Color
+    from plotmux.primitives import Primitive
 
 
 @dataclass(frozen=True, eq=False)
-class BarSpec(XBoundSpec):
-    r"""Define a backend-agnostic bar-chart specification.
+class BarSpec(MarkSpec):
+    r"""Define a backend-agnostic bar-chart mark.
 
     Args:
         x: The array of bar positions. Either numeric (evenly or
             unevenly spaced positions) or an array of strings, drawn
             as a categorical x-axis (e.g. ``x=["Apples", "Pears",
-            "Nectarines"]``). See ``plotmux.utils.categorical.
-            is_categorical``, used by the bokeh/altair renderers to
-            special-case this -- matplotlib/plotly accept a string
-            ``x`` natively and need no such check.
+            "Nectarines"]``).
         y: The array of bar heights. Must have the same length as
             ``x``.
-        label: An optional label used e.g. in the legend.
-        color: An optional color for the bars. It can be a hex
-            string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
-            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
-            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
-            backend's default color. See
-            ``plotmux.colors.parse_color`` for the exact semantics.
-        width: The width of each bar, in ``x`` data units. Must be a
-            positive number.
-        alpha: An optional bar opacity, in ``[0, 1]``. ``None`` uses
-            the backend's default (usually fully opaque).
+        width: The width of each bar, in ``x`` data units (a fraction
+            of the band for a categorical ``x``). Must be a positive
+            number.
+
+    ``label``, ``color`` and ``alpha`` are inherited from
+    ``MarkSpec``.
 
     Raises:
-        ValueError: if ``x`` and ``y`` do not have the same length,
-            ``width`` is not a positive number, ``alpha`` is not in
-            ``[0, 1]``, or ``color`` is not a valid color.
+        InvalidSpecError: if ``x`` and ``y`` do not have the same
+            length, ``width`` is not a positive number, or ``alpha`` is
+            not in ``[0, 1]``. Also a ``ValueError``.
+        InvalidColorError: if ``color`` is not a valid color. Also a
+            ``ValueError``.
 
     Example:
         ```pycon
@@ -60,20 +59,34 @@ class BarSpec(XBoundSpec):
 
     x: np.ndarray
     y: np.ndarray
-    label: str | None = None
-    color: Color = None
     width: float = 0.8
-    alpha: float | None = None
 
     def __post_init__(self) -> None:
-        x, y = check_equal_length(self.x, self.y)
+        super().__post_init__()
+        x, y = to_paired_arrays(self.x, self.y)
         object.__setattr__(self, "x", x)
         object.__setattr__(self, "y", y)
         if self.width <= 0:
             msg = f"width must be a positive number, but received {self.width}"
             raise InvalidSpecError(msg)
-        if self.alpha is not None and not 0.0 <= self.alpha <= 1.0:
-            msg = f"alpha must be in the range [0, 1], but received {self.alpha}"
-            raise InvalidSpecError(msg)
-        self._normalize_color()
-        self._validate_base()
+
+    def x_extent(self) -> tuple[float, float] | None:
+        return finite_extent(self.x, pad=self.width / 2)
+
+    def is_categorical(self) -> bool | None:
+        return is_categorical(self.x)
+
+    def to_primitives(self, extent: tuple[float, float] | None) -> tuple[Primitive, ...]:
+        del extent  # the mark has data of its own
+        height = self.y.astype(float)
+        return (
+            Bars(
+                x=self.x,
+                height=height,
+                base=np.zeros_like(height),
+                width=self.width,
+                color=parse_optional_color(self.color),
+                alpha=self.alpha,
+                label=self.label,
+            ),
+        )

@@ -5,70 +5,58 @@ from __future__ import annotations
 __all__ = ["HistogramSpec"]
 
 from dataclasses import dataclass, field
-from numbers import Integral, Real
+from numbers import Integral
 from typing import TYPE_CHECKING
 
+import numpy as np
+
+from plotmux.colors import parse_optional_color
 from plotmux.exceptions import InvalidSpecError
-from plotmux.specs.base import BaseSpec
+from plotmux.primitives import Bars
+from plotmux.specs.base import MarkSpec
 from plotmux.utils.array import to_readonly_array
 from plotmux.utils.finite import drop_non_finite
+from plotmux.utils.range import check_range_bounds, find_range
 
 if TYPE_CHECKING:
-    import numpy as np
-
-    from plotmux.colors import Color
+    from plotmux.primitives import Primitive
 
 
 @dataclass(frozen=True, eq=False)
-class HistogramSpec(BaseSpec):
-    r"""Define a backend-agnostic histogram specification.
+class HistogramSpec(MarkSpec):
+    r"""Define a backend-agnostic histogram mark.
 
     Args:
         values: The array of values to plot.
         bins: The number of histogram bins. Must be a positive
             integer.
-        xmin: Specifies the lower bound of the x-axis range. It can
-            be an explicit value, a quantile string such as
-            ``"q0.1"``, or ``None`` to use the minimum of ``values``.
-            See ``plotmux.utils.range.find_range`` for the exact
-            semantics.
-        xmax: Specifies the upper bound of the x-axis range. Same
-            semantics as ``xmin`` but for the upper bound.
-        label: An optional label used e.g. in the legend.
-        density: If ``True``, draw and return a probability
-            density: each bin will display the bin's raw count
-            divided by the total number of counts and the bin
-            width, so that the area under the histogram integrates
-            to 1. Defaults to ``False``.
-        color: An optional color for the bars. It can be a hex
-            string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
-            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
-            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
-            backend's default color. See
-            ``plotmux.colors.parse_color`` for the exact
-            semantics.
-        alpha: An optional bar opacity, in ``[0, 1]``. ``None`` uses
-            the backend's default (usually fully opaque).
-        title: An optional figure title. Inherited from ``BaseSpec``.
-        xlabel: An optional x-axis label. Inherited from
-            ``BaseSpec``.
-        ylabel: An optional y-axis label. Inherited from
-            ``BaseSpec``.
-        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
-            Inherited from ``BaseSpec``.
-        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
-            Inherited from ``BaseSpec``.
+        xmin: Specifies the lower bound of the range of the values
+            that are binned. It can be an explicit value, a quantile
+            string such as ``"q0.1"``, or ``None`` to use the minimum
+            of ``values``. See ``plotmux.utils.range.find_range`` for
+            the exact semantics. It is not an axis limit (see
+            ``PanelSpec.xmin``): the axes autoscale on the bars.
+        xmax: Specifies the upper bound of the range of the values
+            that are binned. Same semantics as ``xmin`` but for the
+            upper bound.
+        density: If ``True``, each bin displays the bin's raw count
+            divided by the total number of counts and the bin width,
+            so that the area under the histogram integrates to 1.
 
-    ``NaN`` and ``inf`` values of ``values`` are dropped, and a
-    ``UserWarning`` with their count is emitted once, when the spec is
-    built. The quantile bounds (``xmin``/``xmax``) are computed on the
+    ``label``, ``color`` and ``alpha`` are inherited from
+    ``MarkSpec``. ``NaN`` and ``inf`` values of ``values`` are
+    dropped, and a ``UserWarning`` with their count is emitted once,
+    when the spec is built. The quantile bounds are computed on the
     finite values.
 
     Raises:
-        ValueError: if ``bins`` is not a positive integer, ``values``
-            is not 1-dimensional, is empty, is not numeric or has no
-            finite value, ``color`` is not a valid color, or ``xmin`` and ``xmax`` are both explicit
-            numeric values with ``xmin >= xmax``.
+        InvalidSpecError: if ``bins`` is not a positive integer,
+            ``values`` is not 1-dimensional, is empty, is not numeric
+            or has no finite value, or ``xmin`` and ``xmax`` are both
+            explicit numeric values with ``xmin >= xmax``. Also a
+            ``ValueError``.
+        InvalidColorError: if ``color`` is not a valid color. Also a
+            ``ValueError``.
 
     Example:
         ```pycon
@@ -83,41 +71,15 @@ class HistogramSpec(BaseSpec):
 
     values: np.ndarray
     bins: int = 30
-    # ``kw_only=True``: ``BaseSpec`` also declares a plain, explicit-value-
-    # only ``xmin``/``xmax`` pair (kw_only there too, see
-    # ``plotmux.specs.base.BaseSpec``), and a same-named field redeclared
-    # by a subclass keeps the *base* class's position in the dataclass's
-    # generated ``__init__`` signature, not this class's -- without
-    # ``kw_only=True`` here as well, that would reinsert this quantile-
-    # capable ``xmin``/``xmax`` pair ahead of ``values`` (a required,
-    # non-default field), breaking the dataclass's "no non-default field
-    # after a default field" rule the same way ``BaseSpec``'s own kw-only
-    # fields avoid it (see that class's module comment). Every call site
-    # already passes ``xmin``/``xmax`` by keyword (``plotmux.hist(...,
-    # xmin=...)``), so this changes no call site. ``HistogramSpec`` inherits
-    # ``BaseSpec`` directly (not ``XBoundSpec``, see
-    # ``plotmux.specs.base.XBoundSpec``), so this is a fresh declaration,
-    # not an override of an inherited, narrower-typed field -- no
-    # ``reportIncompatibleVariableOverride`` to silence.
     xmin: float | str | None = field(default=None, kw_only=True)
     xmax: float | str | None = field(default=None, kw_only=True)
-    label: str | None = None
     density: bool = False
-    color: Color = None
-    alpha: float | None = None
 
     def __post_init__(self) -> None:
-        if self.alpha is not None and not 0.0 <= self.alpha <= 1.0:
-            msg = f"alpha must be in the range [0, 1], but received {self.alpha}"
-            raise InvalidSpecError(msg)
+        super().__post_init__()
         if not isinstance(self.bins, Integral) or isinstance(self.bins, bool) or self.bins <= 0:
             msg = f"bins must be a positive integer, but received {self.bins}"
             raise InvalidSpecError(msg)
-        # Coerced with ``np.asarray`` so a spec can be constructed directly
-        # (e.g. ``HistogramSpec(values=[1, 2, 3])``) and not only through
-        # ``plotmux.hist``, which already converts its input before
-        # construction (see ``plotmux.specs.base.check_equal_length``,
-        # which does the same for ``LineSpec``/``ScatterSpec``).
         values = to_readonly_array(self.values)
         if values.ndim != 1:
             msg = f"values must be 1-dimensional, but received shape {values.shape}"
@@ -128,18 +90,30 @@ class HistogramSpec(BaseSpec):
         values = drop_non_finite(values, owner="HistogramSpec")
         values.flags.writeable = False
         object.__setattr__(self, "values", values)
-        # Only checked when both bounds are already explicit numbers: a
-        # quantile string (e.g. "q0.1") or ``None`` is resolved against the
-        # data later by ``find_range``, so it cannot be range-checked here.
-        xmin, xmax = self.xmin, self.xmax
-        if (
-            not isinstance(xmin, str)
-            and not isinstance(xmax, str)
-            and isinstance(xmin, Real)
-            and isinstance(xmax, Real)
-            and xmin >= xmax
-        ):
-            msg = f"xmin must be strictly less than xmax, but received xmin={xmin} and xmax={xmax}"
-            raise InvalidSpecError(msg)
-        self._normalize_color()
-        self._validate_base()
+        check_range_bounds(self.xmin, self.xmax)
+
+    def x_extent(self) -> tuple[float, float] | None:
+        return find_range(self.values, self.xmin, self.xmax)
+
+    def is_categorical(self) -> bool | None:
+        return False
+
+    def to_primitives(self, extent: tuple[float, float] | None) -> tuple[Primitive, ...]:
+        del extent  # the mark has data of its own
+        counts, edges = np.histogram(
+            self.values,
+            bins=self.bins,
+            range=find_range(self.values, self.xmin, self.xmax),
+            density=self.density,
+        )
+        return (
+            Bars(
+                x=(edges[:-1] + edges[1:]) / 2,
+                height=counts.astype(float),
+                base=np.zeros(counts.shape),
+                width=np.diff(edges),
+                color=parse_optional_color(self.color),
+                alpha=self.alpha,
+                label=self.label,
+            ),
+        )

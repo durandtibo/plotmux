@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from plotmux.exceptions import InvalidSpecError
+from plotmux.primitives import Points
 from plotmux.specs import ScatterSpec
 
 ##################################
@@ -89,23 +90,6 @@ def test_scatter_spec_invalid_color() -> None:
 
 
 # --- common style ---
-
-
-def test_scatter_spec_common_style() -> None:
-    spec = ScatterSpec(
-        x=np.arange(10),
-        y=np.arange(10),
-        title="t",
-        xlabel="x",
-        ylabel="y",
-        xscale="log",
-        yscale="log",
-    )
-    assert spec.title == "t"
-    assert spec.xlabel == "x"
-    assert spec.ylabel == "y"
-    assert spec.xscale == "log"
-    assert spec.yscale == "log"
 
 
 # --- frozen / error cases ---
@@ -218,3 +202,61 @@ def test_scatter_spec_inf_in_y_raises(value: float) -> None:
 def test_scatter_spec_inf_in_x_raises(value: float) -> None:
     with pytest.raises(InvalidSpecError, match=r"ScatterSpec: x must not contain inf"):
         ScatterSpec(x=np.array([1.0, value, 3.0]), y=np.arange(3))
+
+
+##########################################
+#     Tests for ScatterSpec lowering     #
+##########################################
+
+
+def test_scatter_spec_to_primitives() -> None:
+    spec = ScatterSpec(
+        x=np.array([0.0, 1.0]),
+        y=np.array([2.0, 3.0]),
+        label="a",
+        color="#ff0000",
+        size=4.0,
+        edgecolor="#00ff00",
+        alpha=0.5,
+        marker="square",
+        fill=False,
+    )
+    assert spec.to_primitives(None) == (
+        Points(
+            x=np.array([0.0, 1.0]),
+            y=np.array([2.0, 3.0]),
+            color=(1.0, 0.0, 0.0, 1.0),
+            alpha=0.5,
+            size=4.0,
+            marker="square",
+            fill=False,
+            edgecolor=(0.0, 1.0, 0.0, 1.0),
+            label="a",
+        ),
+    )
+
+
+def test_scatter_spec_to_primitives_defaults() -> None:
+    primitive = cast("Points", ScatterSpec(x=np.arange(2), y=np.arange(2)).to_primitives(None)[0])
+    assert (primitive.color, primitive.size, primitive.marker, primitive.fill) == (
+        None,
+        None,
+        None,
+        None,
+    )
+
+
+def test_scatter_spec_x_extent() -> None:
+    assert ScatterSpec(x=np.array([3.0, -1.0]), y=np.arange(2)).x_extent() == (-1.0, 3.0)
+
+
+def test_scatter_spec_x_extent_categorical() -> None:
+    assert ScatterSpec(x=np.array(["a", "b"]), y=np.arange(2)).x_extent() is None
+
+
+def test_scatter_spec_is_categorical_numeric() -> None:
+    assert ScatterSpec(x=np.arange(2), y=np.arange(2)).is_categorical() is False
+
+
+def test_scatter_spec_is_categorical_strings() -> None:
+    assert ScatterSpec(x=np.array(["a", "b"]), y=np.arange(2)).is_categorical() is True

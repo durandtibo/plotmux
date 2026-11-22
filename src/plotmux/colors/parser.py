@@ -10,7 +10,7 @@ expects (see ``plotmux.backends.matplotlib.style`` and
 
 from __future__ import annotations
 
-__all__ = ["Color", "parse_color"]
+__all__ = ["Color", "parse_color", "parse_optional_color"]
 
 from plotmux.colors.named import NAMED_COLORS
 from plotmux.exceptions import InvalidColorError
@@ -59,6 +59,33 @@ def parse_color(
         return _parse_tuple(color)
     msg = f"Invalid color {color!r}: expected a str or a tuple of floats"
     raise InvalidColorError(msg)
+
+
+def parse_optional_color(color: Color) -> tuple[float, float, float, float] | None:
+    r"""Parse a color that may be unset.
+
+    Args:
+        color: The color to parse, or ``None``.
+
+    Returns:
+        ``None`` if ``color`` is ``None``, else the RGBA tuple of
+            ``parse_color``.
+
+    Raises:
+        ValueError: if ``color`` is not ``None`` and not a valid
+            color.
+
+    Example:
+        ```pycon
+        >>> from plotmux.colors import parse_optional_color
+        >>> parse_optional_color(None) is None
+        True
+        >>> parse_optional_color("#ff0000")
+        (1.0, 0.0, 0.0, 1.0)
+
+        ```
+    """
+    return None if color is None else parse_color(color)
 
 
 def _parse_str(color: str) -> tuple[float, float, float, float]:

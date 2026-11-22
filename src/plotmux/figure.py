@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from collections.abc import Collection
     from pathlib import Path
 
-    from plotmux.specs import BaseSpec
+    from plotmux.specs import FigureSpec
 
 
 @dataclass(slots=True)
@@ -34,7 +34,7 @@ class Figure:
             matplotlib ``Figure``).
     """
 
-    spec: BaseSpec
+    spec: FigureSpec
     backend_name: str
     native: Any
 

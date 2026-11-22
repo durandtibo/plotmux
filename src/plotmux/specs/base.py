@@ -1,32 +1,22 @@
-r"""Contain the base class for backend-agnostic chart specifications."""
+r"""Contain the base classes of the backend-agnostic marks."""
 
 from __future__ import annotations
 
-__all__ = ["BaseSpec", "Spec", "XBoundSpec", "check_equal_length"]
+__all__ = ["MarkSpec", "Spec"]
 
-# ``check_equal_length`` is a public, module-level helper, not a method on
-# ``BaseSpec``: unlike color, not every spec has an x/y pair (e.g.
-# ``HistogramSpec`` has neither), so it does not belong on the shared base
-# class the way ``_normalize_color`` does. It is public (unlike
-# ``_normalize_color``) so a third-party spec pairing its own ``x``/``y``
-# arrays can reuse the same check/error message.
-
-from dataclasses import dataclass, field, fields
-from typing import TYPE_CHECKING, Literal
-
-from coola.equality import objects_are_equal
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, ClassVar
 
 from plotmux.colors import Color, parse_color
 from plotmux.exceptions import InvalidSpecError
-from plotmux.utils.array import to_readonly_array
+from plotmux.utils.equality import ValueObject
 
 if TYPE_CHECKING:
-    import numpy as np
-    from numpy.typing import ArrayLike
+    from plotmux.primitives import Primitive
 
 
 @dataclass(frozen=True, eq=False)
-class Spec:
+class Spec(ValueObject):
     r"""Define the base class of the immutable value objects of the
     specs.
 
@@ -49,271 +39,92 @@ class Spec:
         ```
     """
 
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Spec) or type(self) is not type(other):
-            return NotImplemented
-        return objects_are_equal(
-            {f.name: getattr(self, f.name) for f in fields(self)},
-            {f.name: getattr(other, f.name) for f in fields(other)},
-        )
-
-    def __hash__(self) -> int:
-        msg = f"unhashable type: '{type(self).__name__}'"
-        raise TypeError(msg)
-
 
 @dataclass(frozen=True, eq=False)
-class BaseSpec(Spec):
-    r"""Define the base class for chart specifications.
+class MarkSpec(Spec):
+    r"""Define the base class of the marks: what is drawn on an axes.
 
-    A spec is a plain, backend-agnostic description of *what* to
-    plot (data + encoding + style). It must never import or hold a
-    reference to a plotting library object. Turning a spec into a
-    native figure is the responsibility of a backend (see
-    ``plotmux.backends``).
+    A mark is plain, backend-agnostic data (the data and the style of
+    one chart type). It never holds a plotting-library object. The
+    axes (title, labels, scales, limits, legend) belong to a
+    ``PanelSpec``, not to the mark. A mark turns itself into drawing
+    primitives (see ``to_primitives``), so a new chart type is one
+    subclass of ``MarkSpec`` and needs no change in a backend when it
+    is a composition of ``Bars``, ``Line`` and ``Points``.
 
-    Subclasses are expected to be frozen dataclasses and may use
-    ``__post_init__`` to validate their fields.
+    A subclass that has its own ``__post_init__`` must call
+    ``super().__post_init__()``.
 
     Args:
-        title: An optional figure title.
-        xlabel: An optional x-axis label.
-        ylabel: An optional y-axis label.
-        xscale: The x-axis scale, ``"linear"`` or ``"log"``.
-        yscale: The y-axis scale, ``"linear"`` or ``"log"``.
-        background_color: An optional figure background color. It
-            can be a hex string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
-            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
-            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
-            backend's default (usually white/transparent). See
-            ``plotmux.colors.parse_color`` for the exact semantics.
-        ymin: An optional lower bound for the y-axis. Unlike
-            ``HistogramSpec.xmin``/``CdfSpec.xmin`` (see
-            ``plotmux.utils.range.find_range``), this is an explicit
-            value only, not a quantile string: it is figure-level
-            (every chart type has a y-axis; not every chart type has
-            a single data array to resolve a quantile against), so it
-            is applied as a plain axis bound after the mark is drawn,
-            rather than folded into any one renderer's own data
-            processing. ``None`` leaves the axis autoscaled.
-        ymax: An optional upper bound for the y-axis. Same semantics
-            as ``ymin`` but for the upper bound.
-        legend_title: An optional heading for the legend box itself,
-            independent of ``title`` (the figure/axes title). ``None``
-            leaves the legend untitled (every backend's own default).
-            Only meaningful when at least one mark carries a
-            ``label`` -- a spec with ``legend_title`` set but no
-            labeled mark simply draws no legend at all, same as
-            today.
-        legend_location: An optional legend position, one of a small,
-            backend-portable set of named corners/edges (mirroring how
-            ``ScatterSpec.marker`` exposes a portable shape set rather
-            than every backend's native vocabulary). ``None`` leaves
-            the legend at the backend's own default position. Only
-            meaningful when at least one mark carries a ``label``,
-            same caveat as ``legend_title``.
-        legend_orientation: An optional legend layout, ``"vertical"``
-            or ``"horizontal"`` (entries side by side in one row).
-            ``None`` leaves the backend's own default (usually
-            ``"vertical"``). Only meaningful when at least one mark
-            carries a ``label``, same caveat as ``legend_title``.
-
-    These are figure-level concerns shared by every chart type, so
-    they live here rather than being redeclared per chart type. Every
-    backend applies them the same way, in one shared
-    ``apply_common_style`` helper, right after drawing the
-    chart-specific mark (see e.g.
-    ``plotmux.backends.matplotlib.style.apply_common_style``).
-    Unlike ``title``/``xlabel``/``ylabel``, ``xscale``/``yscale``
-    default to ``"linear"`` rather than ``None``: an axis always has
-    *some* scale, so there is no meaningful "unset" state to skip.
+        label: An optional label used in the legend.
+        color: An optional color. It can be a hex string
+            (``"#rrggbb"`` or ``"#rrggbbaa"``), a CSS/matplotlib named
+            color (e.g. ``"tab:blue"``), or an RGB(A) tuple of floats
+            in ``[0, 1]``. ``None`` takes the next color of
+            ``plotmux.colors.palette.DEFAULT_PALETTE`` (see
+            ``plotmux.scene.build_scene``), the same on every backend.
+        alpha: An optional opacity, in ``[0, 1]``. ``None`` uses the
+            backend's default (fully opaque).
 
     Raises:
-        ValueError: if ``background_color`` is not a valid color, or
-            ``ymin``/``ymax`` are both set with ``ymin > ymax``.
+        InvalidSpecError: if ``alpha`` is not in ``[0, 1]``. Also a
+            ``ValueError``.
+        InvalidColorError: if ``color`` is not a valid color. Also a
+            ``ValueError``.
     """
 
-    # ``kw_only=True`` so these figure-level fields (all defaulted) can
-    # precede a subclass's own required fields (e.g. ``HistogramSpec.values``)
-    # without violating the dataclass "no non-default field after a default
-    # field" rule -- callers already pass them by keyword (`plotmux.hist(...,
-    # title=...)`), so this changes no call site.
-    title: str | None = field(default=None, kw_only=True)
-    xlabel: str | None = field(default=None, kw_only=True)
-    ylabel: str | None = field(default=None, kw_only=True)
-    xscale: Literal["linear", "log"] = field(default="linear", kw_only=True)
-    yscale: Literal["linear", "log"] = field(default="linear", kw_only=True)
-    background_color: Color = field(default=None, kw_only=True)
-    ymin: float | None = field(default=None, kw_only=True)
-    ymax: float | None = field(default=None, kw_only=True)
-    legend_title: str | None = field(default=None, kw_only=True)
-    legend_location: (
-        Literal[
-            "best",
-            "top_left",
-            "top_right",
-            "bottom_left",
-            "bottom_right",
-            "top",
-            "bottom",
-            "left",
-            "right",
-        ]
-        | None
-    ) = field(default=None, kw_only=True)
-    legend_orientation: Literal["vertical", "horizontal"] | None = field(default=None, kw_only=True)
+    #: ``True`` if the mark cannot be lowered without the x extent of
+    #: its panel (a slope has no data of its own).
+    requires_extent: ClassVar[bool] = False
 
-    def _validate_base(self) -> None:
-        r"""Validate/normalize the figure-level fields shared by every
-        spec: ``background_color``, ``ymin``, ``ymax``.
+    # ``kw_only=True`` so these defaulted fields can precede the required
+    # fields of a subclass (e.g. ``HistogramSpec.values``).
+    label: str | None = field(default=None, kw_only=True)
+    color: Color = field(default=None, kw_only=True)
+    alpha: float | None = field(default=None, kw_only=True)
 
-        A dataclass does not chain subclass/base ``__post_init__``
-        automatically, so this is not itself a ``__post_init__`` --
-        every subclass's own ``__post_init__`` calls this once,
-        alongside its usual ``self._normalize_color()`` call, the same
-        way every color-carrying spec already calls
-        ``_normalize_color`` instead of reimplementing it.
-
-        Raises:
-            ValueError: if ``background_color`` is not a valid color,
-                or ``ymin``/``ymax`` are both set with
-                ``ymin > ymax``, or ``xmin``/``xmax`` are both set
-                with ``xmin > xmax``.
-        """
-        self._normalize_color("background_color")
-        if self.ymin is not None and self.ymax is not None and self.ymin > self.ymax:
-            msg = (
-                f"ymin must not be greater than ymax, but received "
-                f"ymin={self.ymin} and ymax={self.ymax}"
-            )
+    def __post_init__(self) -> None:
+        if self.alpha is not None and not 0.0 <= self.alpha <= 1.0:
+            msg = f"alpha must be in the range [0, 1], but received {self.alpha}"
             raise InvalidSpecError(msg)
+        if self.color is not None:
+            object.__setattr__(self, "color", parse_color(self.color))
 
-    def _normalize_color(self, name: str = "color") -> None:
-        r"""Normalize a ``str | tuple | None`` color field to its
-        canonical RGBA representation, in place.
+    def x_extent(self) -> tuple[float, float] | None:
+        r"""Return the x extent of the data of the mark.
 
-        Every color-carrying spec (``HistogramSpec``, ``LineSpec``,
-        ``ScatterSpec``, ...) repeats the same two lines in its own
-        ``__post_init__``: parse the field via ``parse_color`` and
-        write it back with ``object.__setattr__`` (required because
-        specs are frozen dataclasses). Factored here once so a new
-        color-carrying spec only has to call
-        ``self._normalize_color()`` from its own ``__post_init__``
-        rather than reimplementing this.
+        Returns:
+            The ``(min, max)`` of the x data, or ``None`` if the mark
+                has no numeric x data of its own (a slope, a
+                categorical x, no value).
+        """
+        return None
 
-        A field value of ``None`` is left untouched: it means "use
-        the backend's default color" and is meaningful on its own,
-        not something to normalize.
+    def is_categorical(self) -> bool | None:
+        r"""Tell whether the mark draws on a categorical x-axis.
+
+        Returns:
+            ``True`` for a categorical (string) x, ``False`` for a
+                numeric x, and ``None`` if the mark has no x data of
+                its own (a slope).
+        """
+        return None
+
+    def to_primitives(self, extent: tuple[float, float] | None) -> tuple[Primitive, ...]:
+        r"""Lower the mark to drawing primitives.
 
         Args:
-            name: The name of the color field to normalize. Defaults
-                to ``"color"``, the name used by every current
-                color-carrying spec.
+            extent: The resolved x extent of the panel (see
+                ``PanelSpec.x_extent``), or ``None`` if the panel has
+                none. Only a mark with ``requires_extent`` uses it.
+
+        Returns:
+            The primitives to draw, in drawing order. A primitive
+                whose color is ``None`` gets a palette color from
+                ``plotmux.scene.build_scene``.
 
         Raises:
-            ValueError: if the field's value is not a valid color.
+            NotImplementedError: always, a subclass must override it.
         """
-        value = getattr(self, name)
-        if value is not None:
-            object.__setattr__(self, name, parse_color(value))
-
-
-@dataclass(frozen=True, eq=False)
-class XBoundSpec(BaseSpec):
-    r"""Add a plain, explicit-value-only ``xmin``/``xmax`` x-axis bound
-    to ``BaseSpec``, for every chart type that does not need the data-
-    scoped, quantile-capable form.
-
-    ``HistogramSpec``/``CdfSpec`` are the only two chart types that
-    need ``xmin``/``xmax`` to also accept a quantile string (e.g.
-    ``"q0.1"``, see ``plotmux.utils.range.find_range``) resolved
-    against their own data; every other chart type only ever needs a
-    plain bound applied to the axis after the mark is drawn (see
-    ``plotmux.backends.matplotlib.style.apply_common_style`` and its
-    per-backend equivalents). Splitting that pair out of ``BaseSpec``
-    into this subclass -- rather than declaring a ``float | None``
-    pair on ``BaseSpec`` and having ``HistogramSpec``/``CdfSpec``
-    redeclare it with a wider ``float | str | None`` type -- keeps
-    every chart type's ``xmin``/``xmax`` an honest, single type: a
-    subclass redeclaring an inherited field with an incompatible type
-    is a real Liskov substitution violation (a caller holding a
-    ``BaseSpec``/``XBoundSpec`` reference could dereference ``xmin``
-    expecting a ``float`` and get a ``str``), not merely a type
-    checker nitpick to silence -- see e.g. the bug this exact
-    shadowing produced, fixed alongside this split: every backend's
-    ``apply_common_style`` used to reapply ``spec.xmin``/``spec.xmax``
-    to the axis unconditionally, which raised at render time for a
-    ``HistogramSpec``/``CdfSpec`` constructed with a quantile-string
-    bound.
-
-    Args:
-        xmin: An optional lower bound for the x-axis. Like
-            ``ymin``/``ymax``, this is a plain, explicit-value-only
-            figure-level override, applied as a plain axis bound
-            after the mark is drawn. ``None`` leaves the axis
-            autoscaled.
-        xmax: An optional upper bound for the x-axis. Same semantics
-            as ``xmin`` but for the upper bound.
-
-    Raises:
-        ValueError: if ``xmin``/``xmax`` are both set with
-            ``xmin > xmax``, on top of every ``ValueError`` ``BaseSpec``
-            itself may raise.
-    """
-
-    xmin: float | None = field(default=None, kw_only=True)
-    xmax: float | None = field(default=None, kw_only=True)
-
-    def _validate_base(self) -> None:
-        r"""Validate/normalize the figure-level fields shared by every
-        ``XBoundSpec``: everything ``BaseSpec._validate_base`` already
-        covers, plus ``xmin``/``xmax``.
-
-        Raises:
-            ValueError: if ``xmin``/``xmax`` are both set with
-                ``xmin > xmax``, on top of every ``ValueError``
-                ``BaseSpec._validate_base`` itself may raise.
-        """
-        super()._validate_base()
-        if self.xmin is not None and self.xmax is not None and self.xmin > self.xmax:
-            msg = (
-                f"xmin must not be greater than xmax, but received "
-                f"xmin={self.xmin} and xmax={self.xmax}"
-            )
-            raise InvalidSpecError(msg)
-
-
-def check_equal_length(x: ArrayLike, y: ArrayLike) -> tuple[np.ndarray, np.ndarray]:
-    r"""Coerce ``x`` and ``y`` to ``np.ndarray`` and check that they have
-    the same length.
-
-    Shared by every spec that pairs an ``x`` array with a ``y`` array
-    (``LineSpec``, ``ScatterSpec``, ...), so the check and its error
-    message are written once. ``x``/``y`` are coerced with
-    ``np.asarray`` first so a spec can be constructed directly (e.g.
-    ``LineSpec(x=[1, 2, 3], y=[1, 2, 3])``) and not only through
-    ``plotmux.line``/``plotmux.scatter``, which already convert their
-    inputs before construction.
-
-    Args:
-        x: The array of x values.
-        y: The array of y values.
-
-    Returns:
-        The ``(x, y)`` pair, each converted to a read-only copy (see
-            ``plotmux.utils.to_readonly_array``).
-
-    Raises:
-        InvalidSpecError: if ``x`` and ``y`` do not have the same
-            length. Also a ``ValueError``, so existing ``except
-            ValueError`` code keeps working unchanged.
-    """
-    x = to_readonly_array(x)
-    y = to_readonly_array(y)
-    if x.ndim != 1 or y.ndim != 1:
-        msg = f"x and y must be 1-dimensional, but received shapes {x.shape} and {y.shape}"
-        raise InvalidSpecError(msg)
-    if x.shape[0] != y.shape[0]:
-        msg = f"x and y must have the same length, but received {x.shape[0]} and {y.shape[0]}"
-        raise InvalidSpecError(msg)
-    return x, y
+        msg = f"{type(self).__name__} must implement to_primitives"
+        raise NotImplementedError(msg)

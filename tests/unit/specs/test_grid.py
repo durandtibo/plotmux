@@ -5,113 +5,67 @@ from typing import Any, cast
 import numpy as np
 import pytest
 
-from plotmux.specs import GridSpec, HistogramSpec, LayerSpec, LineSpec, ScatterSpec
+from plotmux.exceptions import InvalidSpecError
+from plotmux.specs import GridSpec, HistogramSpec, LineSpec, PanelSpec
+
+PANEL = PanelSpec(marks=(LineSpec(x=np.arange(3), y=np.arange(3)),))
+OTHER = PanelSpec(marks=(HistogramSpec(values=np.arange(11.0)),))
 
 ###############################
-#     Tests for GridSpec     #
+#     Tests for GridSpec      #
 ###############################
 
 
-def test_grid_spec_cells() -> None:
-    hist_spec = HistogramSpec(values=np.arange(101), bins=10)
-    line_spec = LineSpec(x=np.arange(10), y=np.arange(10))
-    spec = GridSpec(cells=(hist_spec, line_spec))
-    assert spec.cells == (hist_spec, line_spec)
+def test_grid_spec_defaults() -> None:
+    spec = GridSpec(panels=(PANEL,))
+    assert (spec.ncols, spec.title) == (1, None)
 
 
-def test_grid_spec_default_ncols() -> None:
-    spec = GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),))
-    assert spec.ncols == 1
+def test_grid_spec_custom() -> None:
+    spec = GridSpec(panels=(PANEL, OTHER), ncols=2, title="t")
+    assert (spec.panels, spec.ncols, spec.title) == ((PANEL, OTHER), 2, "t")
 
 
-def test_grid_spec_explicit_ncols() -> None:
-    children = tuple(ScatterSpec(x=np.arange(10), y=np.arange(10)) for _ in range(5))
-    spec = GridSpec(cells=children, ncols=2)
-    assert spec.ncols == 2
-    assert len(spec.cells) == 5
-
-
-def test_grid_spec_accepts_layer_spec_cell() -> None:
-    inner = LayerSpec(layers=(LineSpec(x=np.arange(10), y=np.arange(10)),))
-    spec = GridSpec(cells=(inner, ScatterSpec(x=np.arange(10), y=np.arange(10))))
-    assert spec.cells[0] is inner
-
-
-def test_grid_spec_common_style() -> None:
-    spec = GridSpec(
-        cells=(LineSpec(x=np.arange(10), y=np.arange(10)),),
-        title="t",
-    )
-    assert spec.title == "t"
-
-
-# --- frozen / error cases ---
+def test_grid_spec_panels_list_becomes_tuple() -> None:
+    assert GridSpec(panels=cast("Any", [PANEL])).panels == (PANEL,)
 
 
 def test_grid_spec_is_frozen() -> None:
-    spec = GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),))
     with pytest.raises(AttributeError):
-        cast("Any", spec).cells = ()
-
-
-def test_grid_spec_empty_cells_raises() -> None:
-    with pytest.raises(ValueError, match="cells must contain at least one spec"):
-        GridSpec(cells=())
-
-
-def test_grid_spec_nested_grid_raises() -> None:
-    inner = GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),))
-    with pytest.raises(ValueError, match="cells must not contain a GridSpec"):
-        GridSpec(cells=(inner,))
-
-
-def test_grid_spec_nested_grid_among_other_children_raises() -> None:
-    inner = GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),))
-    other = ScatterSpec(x=np.arange(10), y=np.arange(10))
-    with pytest.raises(ValueError, match="cells must not contain a GridSpec"):
-        GridSpec(cells=(other, inner))
-
-
-def test_grid_spec_non_positive_ncols_raises() -> None:
-    with pytest.raises(ValueError, match="ncols must be a positive integer"):
-        GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), ncols=0)
-
-
-@pytest.mark.parametrize("ncols", [-1, -10])
-def test_grid_spec_negative_ncols_raises(ncols: int) -> None:
-    with pytest.raises(ValueError, match="ncols must be a positive integer"):
-        GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), ncols=ncols)
-
-
-def test_grid_spec_non_integer_ncols_raises() -> None:
-    with pytest.raises(ValueError, match="ncols must be a positive integer"):
-        GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), ncols=cast("Any", 2.5))
-
-
-def test_grid_spec_bool_ncols_raises() -> None:
-    # bool is an Integral subclass, but it must not be accepted as ncols.
-    with pytest.raises(ValueError, match="ncols must be a positive integer"):
-        GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), ncols=True)
-
-
-def test_grid_spec_numpy_integer_ncols_accepted() -> None:
-    spec = GridSpec(
-        cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), ncols=cast("Any", np.int64(3))
-    )
-    assert spec.ncols == 3
-
-
-def test_grid_spec_ncols_larger_than_cells_does_not_raise() -> None:
-    spec = GridSpec(cells=(LineSpec(x=np.arange(10), y=np.arange(10)),), ncols=5)
-    assert spec.ncols == 5
-    assert len(spec.cells) == 1
+        cast("Any", GridSpec(panels=(PANEL,))).ncols = 2
 
 
 def test_grid_spec_equal() -> None:
-    cells = (HistogramSpec(values=np.arange(5)), LineSpec(x=np.arange(3), y=np.arange(3)))
-    assert GridSpec(cells=cells, ncols=2) == GridSpec(cells=cells, ncols=2)
+    assert GridSpec(panels=(PANEL,)) == GridSpec(panels=(PANEL,))
 
 
 def test_grid_spec_not_equal_with_different_ncols() -> None:
-    cells = (HistogramSpec(values=np.arange(5)), LineSpec(x=np.arange(3), y=np.arange(3)))
-    assert GridSpec(cells=cells, ncols=2) != GridSpec(cells=cells, ncols=1)
+    assert GridSpec(panels=(PANEL, PANEL), ncols=1) != GridSpec(panels=(PANEL, PANEL), ncols=2)
+
+
+def test_grid_spec_empty_panels_raises() -> None:
+    with pytest.raises(InvalidSpecError, match="panels must contain at least one panel"):
+        GridSpec(panels=())
+
+
+def test_grid_spec_grid_in_a_grid_raises() -> None:
+    inner = GridSpec(panels=(PANEL,))
+    with pytest.raises(
+        InvalidSpecError, match="panels must hold PanelSpec objects, but received GridSpec"
+    ):
+        GridSpec(panels=cast("Any", (inner,)))
+
+
+def test_grid_spec_mark_is_not_a_panel() -> None:
+    with pytest.raises(InvalidSpecError, match="but received LineSpec"):
+        GridSpec(panels=cast("Any", (LineSpec(x=np.arange(3), y=np.arange(3)),)))
+
+
+@pytest.mark.parametrize("ncols", [0, -1, 1.5, True])
+def test_grid_spec_invalid_ncols_raises(ncols: Any) -> None:
+    with pytest.raises(InvalidSpecError, match="ncols must be a positive integer"):
+        GridSpec(panels=(PANEL,), ncols=ncols)
+
+
+def test_grid_spec_numpy_integer_ncols() -> None:
+    assert GridSpec(panels=(PANEL,), ncols=cast("Any", np.int64(2))).ncols == 2

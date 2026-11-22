@@ -5,7 +5,8 @@ import math
 import numpy as np
 import pytest
 
-from plotmux.utils.range import find_range
+from plotmux.exceptions import InvalidSpecError
+from plotmux.utils.range import check_range_bounds, find_range
 
 ################################
 #     Tests for find_range     #
@@ -108,3 +109,24 @@ def test_find_range_lo_greater_than_hi_quantiles_raises() -> None:
 def test_find_range_lo_equal_hi_does_not_raise() -> None:
     # Equal bounds are a valid (degenerate) range, not an error.
     assert find_range(np.arange(101), xmin=50, xmax=50) == (50, 50)
+
+
+#######################################
+#     Tests for check_range_bounds    #
+#######################################
+
+
+@pytest.mark.parametrize(("xmin", "xmax"), [(0, 1), (None, 1), (0, None), (None, None)])
+def test_check_range_bounds_valid(xmin: float | None, xmax: float | None) -> None:
+    check_range_bounds(xmin, xmax)
+
+
+@pytest.mark.parametrize(("xmin", "xmax"), [("q0.1", 0), (5, "q0.9"), ("q0.9", "q0.1")])
+def test_check_range_bounds_quantile_is_not_checked(xmin: float | str, xmax: float | str) -> None:
+    check_range_bounds(xmin, xmax)
+
+
+@pytest.mark.parametrize(("xmin", "xmax"), [(1, 1), (2, 1), (np.int64(2), np.int64(1))])
+def test_check_range_bounds_invalid_raises(xmin: float, xmax: float) -> None:
+    with pytest.raises(InvalidSpecError, match="xmin must be strictly less than xmax"):
+        check_range_bounds(xmin, xmax)

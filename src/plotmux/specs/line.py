@@ -7,46 +7,42 @@ __all__ = ["LineSpec"]
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
-from plotmux.exceptions import InvalidSpecError
-from plotmux.specs.base import XBoundSpec, check_equal_length
+from plotmux.colors import parse_optional_color
+from plotmux.primitives import Line
+from plotmux.specs.base import MarkSpec
+from plotmux.utils.array import to_paired_arrays
+from plotmux.utils.categorical import is_categorical
+from plotmux.utils.extent import finite_extent
 from plotmux.utils.finite import check_no_inf
 
 if TYPE_CHECKING:
     import numpy as np
 
-    from plotmux.colors import Color
+    from plotmux.primitives import Primitive
 
 
 @dataclass(frozen=True, eq=False)
-class LineSpec(XBoundSpec):
-    r"""Define a backend-agnostic line-chart specification.
+class LineSpec(MarkSpec):
+    r"""Define a backend-agnostic line mark.
 
     Args:
         x: The array of x values.
         y: The array of y values. Must have the same length as
             ``x``.
-        label: An optional label used e.g. in the legend.
-        color: An optional color for the line. It can be a hex
-            string (``"#rrggbb"`` or ``"#rrggbbaa"``), a
-            CSS/matplotlib named color (e.g. ``"tab:blue"``), or an
-            RGB(A) tuple of floats in ``[0, 1]``. ``None`` uses the
-            backend's default color. See
-            ``plotmux.colors.parse_color`` for the exact semantics.
-        alpha: An optional line opacity, in ``[0, 1]``. ``None`` uses
-            the backend's default (usually fully opaque).
         linewidth: An optional line width. ``None`` uses the
-            backend's default width. Same field name/semantics as
-            ``SlopeSpec.linewidth``.
-        linestyle: The line's dash style. Same field name/semantics
-            as ``SlopeSpec.linestyle``.
+            backend's default width.
+        linestyle: The line's dash style.
 
-    ``NaN`` values are kept (a gap in the line, no point for a
-    scatter plot). ``inf`` and ``-inf`` values are rejected.
+    ``label``, ``color`` and ``alpha`` are inherited from
+    ``MarkSpec``. ``NaN`` values are kept (a gap in the line).
+    ``inf`` and ``-inf`` values are rejected.
 
     Raises:
-        ValueError: if ``x`` and ``y`` do not have the same length,
-            ``x`` or ``y`` has an infinite value, ``alpha`` is not in
-            ``[0, 1]``, or ``color`` is not a valid color.
+        InvalidSpecError: if ``x`` and ``y`` do not have the same
+            length, ``x`` or ``y`` has an infinite value, or ``alpha`` is
+            not in ``[0, 1]``. Also a ``ValueError``.
+        InvalidColorError: if ``color`` is not a valid color. Also a
+            ``ValueError``.
 
     Example:
         ```pycon
@@ -61,20 +57,33 @@ class LineSpec(XBoundSpec):
 
     x: np.ndarray
     y: np.ndarray
-    label: str | None = None
-    color: Color = None
-    alpha: float | None = None
     linewidth: float | None = None
     linestyle: Literal["solid", "dashed", "dotted", "dashdot"] = "solid"
 
     def __post_init__(self) -> None:
-        x, y = check_equal_length(self.x, self.y)
-        object.__setattr__(self, "x", x)
-        object.__setattr__(self, "y", y)
+        super().__post_init__()
+        x, y = to_paired_arrays(self.x, self.y)
         check_no_inf(x, owner="LineSpec", name="x")
         check_no_inf(y, owner="LineSpec", name="y")
-        if self.alpha is not None and not 0.0 <= self.alpha <= 1.0:
-            msg = f"alpha must be in the range [0, 1], but received {self.alpha}"
-            raise InvalidSpecError(msg)
-        self._normalize_color()
-        self._validate_base()
+        object.__setattr__(self, "x", x)
+        object.__setattr__(self, "y", y)
+
+    def x_extent(self) -> tuple[float, float] | None:
+        return finite_extent(self.x)
+
+    def is_categorical(self) -> bool | None:
+        return is_categorical(self.x)
+
+    def to_primitives(self, extent: tuple[float, float] | None) -> tuple[Primitive, ...]:
+        del extent  # the mark has data of its own
+        return (
+            Line(
+                x=self.x,
+                y=self.y,
+                color=parse_optional_color(self.color),
+                alpha=self.alpha,
+                linewidth=self.linewidth,
+                linestyle=self.linestyle,
+                label=self.label,
+            ),
+        )
