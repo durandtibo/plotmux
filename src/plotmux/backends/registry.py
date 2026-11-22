@@ -163,8 +163,9 @@ def capabilities(name: str) -> BackendCapabilities:
     r"""Get a registered backend's capabilities by name.
 
     A thin convenience wrapper around ``get_backend(name).capabilities()``
-    for a caller that wants to check spec-type/caveat support without
-    otherwise needing the backend instance itself.
+    for a caller that wants to know the export formats, the legend
+    locations and the markers of a backend without otherwise needing the
+    backend instance itself.
 
     Args:
         name: The name of the backend to query.

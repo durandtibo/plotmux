@@ -188,12 +188,12 @@ class MatplotlibBackend(Backend):
     r"""Implement the matplotlib rendering backend.
 
     The figure is built with the ``matplotlib.figure.Figure``
-    constructor rather than ``pyplot.subplots()``: the latter
-    registers the figure with pyplot's global figure manager, so
-    figures created that way are never garbage-collected until
-    ``plt.close()`` is called on them explicitly, a real memory leak
-    for code that renders many figures. A figure built directly is a
-    plain, independently garbage-collectable object.
+    constructor rather than ``pyplot.subplots()``: the latter registers
+    the figure with pyplot's global figure manager, so figures created
+    that way are never garbage-collected until ``plt.close()`` is called
+    on them explicitly, a real memory leak for code that renders many
+    figures. A figure built directly is a plain, independently garbage-
+    collectable object.
     """
 
     name: ClassVar[str] = "matplotlib"

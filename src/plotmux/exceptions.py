@@ -54,16 +54,17 @@ class BackendRegistrationError(PlotmuxError, ValueError):
 
 
 class UnsupportedSpecError(PlotmuxError, NotImplementedError):
-    r"""Raised when a backend has no renderer registered for a spec type.
+    r"""Raised when a backend cannot honor a request of a spec (a legend
+    location or a marker it does not support).
 
-    See ``plotmux.backends.base.resolve_renderer``.
+    See ``plotmux.backends.base.BackendCapabilities.check``.
     """
 
 
 class UnsupportedFormatError(PlotmuxError, ValueError):
     r"""Raised when a backend does not support a requested export format.
 
-    See ``plotmux.backends.base.check_export_format``.
+    See ``plotmux.backends.base.BackendCapabilities.check_format``.
     """
 
 

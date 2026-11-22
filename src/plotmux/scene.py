@@ -4,8 +4,8 @@ primitives.
 ``build_scene`` owns every decision that changes the numbers on the
 screen (ranges, bins, steps, stacking, default colors, extents). A
 backend only translates the three primitives (``Bars``, ``Line``,
-``Points``) and the axes style of an ``AxesScene`` into one library,
-so it cannot draw a different histogram than another backend.
+``Points``) and the axes style of an ``AxesScene`` into one library, so
+it cannot draw a different histogram than another backend.
 """
 
 from __future__ import annotations
