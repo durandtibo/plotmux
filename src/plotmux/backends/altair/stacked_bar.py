@@ -45,8 +45,8 @@ def render_stacked_bar(spec: StackedBarSpec, **kwargs: Any) -> alt.Chart:
     ]
     data = [
         {"x": x, "y": y, "series": label, "order": i}
-        for i, (label, series) in enumerate(zip(labels, spec.series))
-        for x, y in zip(spec.x, series.y)
+        for i, (label, series) in enumerate(zip(labels, spec.series, strict=True))
+        for x, y in zip(spec.x, series.y, strict=True)
     ]
     if spec.alpha is not None:
         kwargs.setdefault("opacity", spec.alpha)

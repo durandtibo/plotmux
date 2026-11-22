@@ -50,7 +50,7 @@ def render_histogram(spec: HistogramSpec, **kwargs: Any) -> alt.Chart:
     )
     data = [
         {"x": left, "x2": right, "y": count}
-        for left, right, count in zip(edges[:-1], edges[1:], counts)
+        for left, right, count in zip(edges[:-1], edges[1:], counts, strict=True)
     ]
     # ``spec.color``, once set, is already a canonical RGBA tuple: it went
     # through ``parse_color`` in ``HistogramSpec.__post_init__``.

@@ -8,7 +8,6 @@ from plotmux.testing.fixtures import bokeh_available
 from plotmux.utils.imports import is_bokeh_available
 
 if is_bokeh_available():
-    from bokeh.colors import RGB
     from bokeh.plotting import figure
 
     from plotmux.backends.bokeh.style import (
@@ -31,18 +30,19 @@ def _rgba_to_bokeh_cases() -> list:
     if not is_bokeh_available():
         return []
     return [
-        pytest.param((1.0, 0.0, 0.0, 1.0), RGB(255, 0, 0, 1.0), id="opaque"),
-        pytest.param((0.0, 0.0, 0.0, 0.0), RGB(0, 0, 0, 0.0), id="transparent"),
-        pytest.param((0.5, 0.5, 0.5, 0.5), RGB(128, 128, 128, 0.5), id="rounding"),
-        pytest.param((1.0, 1.0, 1.0, 1.0), RGB(255, 255, 255, 1.0), id="white"),
+        pytest.param((1.0, 0.0, 0.0, 1.0), (255, 0, 0, 1.0), id="opaque"),
+        pytest.param((0.0, 0.0, 0.0, 0.0), (0, 0, 0, 0.0), id="transparent"),
+        pytest.param((0.5, 0.5, 0.5, 0.5), (128, 128, 128, 0.5), id="rounding"),
+        pytest.param((1.0, 1.0, 1.0, 1.0), (255, 255, 255, 1.0), id="white"),
     ]
 
 
 @pytest.mark.parametrize(("color", "expected"), _rgba_to_bokeh_cases())
 @bokeh_available
-def test_rgba_to_bokeh(color: tuple[float, float, float, float], expected: RGB) -> None:
-    out = rgba_to_bokeh(color)
-    assert (out.r, out.g, out.b, out.a) == (expected.r, expected.g, expected.b, expected.a)
+def test_rgba_to_bokeh(
+    color: tuple[float, float, float, float], expected: tuple[int, int, int, float]
+) -> None:
+    assert rgba_to_bokeh(color) == expected
 
 
 #########################################

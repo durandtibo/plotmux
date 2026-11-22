@@ -122,7 +122,7 @@ def make_renderer(
     return render
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class BackendCapabilities:
     r"""Report what a backend supports, for querying ahead of a render or
     export call instead of discovering it via an exception.
