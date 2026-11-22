@@ -1771,33 +1771,33 @@ figure.py           Figure(spec, backend_name, native)
    ▼
 user code           fig.show() / fig.save("out.png") / fig.to_native()
 </code></pre></div>
-<p>Backend registration is lazy, not eager: <code>plotmux/__init__.py</code> does <em>not</em> import any of the five
-built-in backend subpackages (<code>matplotlib</code>, <code>xy</code>, <code>bokeh</code>, <code>altair</code>, <code>plotly</code>) at <code>import plotmux</code>
-time. Instead, <code>backends/registry.py</code> holds a <code>{name: module path}</code> map, and <code>get_backend(name)</code>
-imports the matching submodule the first time that name is actually requested (e.g. via
-<code>backend="matplotlib"</code>, or the first <code>plotmux.hist(...)</code> call after <code>plotmux.set_backend("xy")</code>);
-each subpackage's <code>__init__.py</code> still calls <code>register_backend(...)</code> as an import-time side effect,
-guarded by that library's <code>is_*_available()</code> check, only now triggered later. This means a process
-that only ever renders with <code>matplotlib</code> never imports <code>xy</code>, <code>bokeh</code>, <code>altair</code>, or <code>plotly</code> (or
-their underlying libraries) even if all four happen to be installed alongside it.</p>
-<p><code>plotmux/__init__.py</code> additionally calls <code>plotmux.backends.registry.load_entry_point_backends()</code>
-once, at import time: this imports every third-party backend advertised via the <code>plotmux.backends</code>
-entry-point group (see
-<a href="../../uguide/backends/#adding-a-third-party-backend">Adding a Third-Party Backend</a>). Since none of
-the five built-ins are imported yet at that point either, a third-party plugin can freely register
-under any name, built-in or not — whichever registers last for a given name wins. A plugin module
-that fails to import because its own underlying library isn't installed is silently skipped
-(<code>ImportError</code>); any other exception it raises while loading is caught and turned into a
-<code>RuntimeWarning</code> instead of propagating, so a broken third-party plugin can only fail to register
-itself, never crash <code>import plotmux</code> for every user.</p>
-<p><code>api.py</code> never triggers registration itself: it only calls <code>get_backend(name)</code>, which is what
-actually imports a built-in submodule lazily, or raises <code>BackendNotFoundError</code> if <code>name</code> isn't
-registered (typically because its library isn't installed). <code>config.set_backend()</code>/<code>backend()</code>
+<p>Backend loading is lazy, not eager: <code>import plotmux</code> imports no backend module, no plotting library
+and no plugin. <code>backends/registry.py</code> finds a backend by name, in this order: an instance given to
+<code>register_backend(backend, *, replace=False)</code>, the built-in table (<code>{name: "module:Class"}</code> for
+<code>matplotlib</code>, <code>xy</code>, <code>bokeh</code>, <code>altair</code> and <code>plotly</code>), then the <code>plotmux.backends</code> entry-point group.
+<code>get_backend(name)</code> imports only the module of that name the first time it is requested (e.g. via
+<code>backend="matplotlib"</code>, or the first <code>plotmux.hist(...)</code> call after <code>plotmux.set_backend("xy")</code>),
+instantiates the class once and caches the instance. A process that only ever renders with
+<code>matplotlib</code> never imports <code>xy</code>, <code>bokeh</code>, <code>altair</code>, or <code>plotly</code> (or their underlying libraries) even
+if all four are installed. The <code>plotmux.backends.&lt;name&gt;</code> subpackages register nothing at import time.</p>
+<p>A third-party backend is a <code>Backend</code> subclass advertised by an entry point whose value is
+<code>package.module:BackendClass</code> (see
+<a href="../../uguide/backends/#adding-a-third-party-backend">Adding a Third-Party Backend</a>). The registry
+reads the entry-point <em>names</em> from the installed metadata (nothing is imported) and loads the plugin
+on its first use. A plugin cannot take over a built-in name by being installed: <code>register_backend</code>
+raises <code>BackendRegistrationError</code> for a name already registered or built in, unless
+<code>replace=True</code>. A backend whose library cannot be imported raises <code>BackendNotFoundError</code> naming the
+extra to install (<code>pip install "plotmux[matplotlib]"</code>), with the <code>ImportError</code> as its cause.
+<code>available_backends()</code> lists the registered backends, the built-in backends whose library is
+installed and the names advertised by plugins, without importing anything.</p>
+<p><code>api.py</code> never loads a backend itself: it only calls <code>get_backend(name)</code>, which is what actually
+imports a backend lazily, or raises <code>BackendNotFoundError</code> if <code>name</code> isn't known or its library isn't
+installed. <code>config.set_backend()</code>/<code>backend()</code>
 additionally reject a name that isn't even <em>known</em> — neither a built-in name, an
 entry-point-advertised name, nor already registered — immediately, at the call site, without
 importing anything (<code>backends/registry.py::known_backend_names()</code>); a name that is known but not
-yet registered still only fails later, at render time, since validating that would require the
-same import laziness was introduced to avoid.</p>
+yet loaded still only fails later, at render time, since validating that would require the import
+laziness was introduced to avoid (<code>available_backends()</code> tells which libraries are installed).</p>
 <h2 id="key-components">Key Components<a class="headerlink" href="#key-components" title="Permanent link">&para;</a></h2>
 <h3 id="basespec"><code>BaseSpec</code><a class="headerlink" href="#basespec" title="Permanent link">&para;</a></h3>
 <p>Holds the figure-level fields every chart type inherits (<code>title</code>, <code>xlabel</code>, <code>ylabel</code>, <code>xscale</code>,
@@ -1839,9 +1839,9 @@ other specs, <code>CdfSpec.ylabel</code> defaults to <code>"cumulative probabili
 <code>resolve_renderer()</code> and <code>check_export_format()</code> in <code>backends/base.py</code> factor out the
 lookup-or-raise dispatch logic (<code>{spec_type: renderer}</code> lookup, <code>{format}</code> membership check) shared
 by every backend, so a backend only owns its dict of renderers, not the dispatch mechanics around
-it. <code>backends/registry.py</code> maps a backend name to its registered instance, and raises a
-<code>BackendNotFoundError</code> (also a <code>RuntimeError</code>) listing available backends when an unregistered name
-is requested, typically because its underlying plotting library is not installed.</p>
+it. <code>backends/registry.py</code> maps a backend name to its instance, and raises a <code>BackendNotFoundError</code>
+(also a <code>RuntimeError</code>) listing the known backends when an unknown name is requested, or naming the
+extra to install when its underlying plotting library is not installed.</p>
 <p><code>Backend.capabilities()</code> (and the module-level <code>plotmux.backends.capabilities(name)</code>) returns a
 <code>BackendCapabilities(backend_name, spec_types, caveats)</code>: <code>spec_types</code> is simply
 <code>frozenset(cls._RENDERERS)</code>, no new bookkeeping, and <code>caveats</code> is a short, per-backend tuple of
@@ -1906,9 +1906,10 @@ standalone on those three backends, or inside a <code>layer()</code> with no dat
 range from, raises <code>UnsupportedSpecError</code>.</p>
 <h3 id="figure"><code>Figure</code><a class="headerlink" href="#figure" title="Permanent link">&para;</a></h3>
 <p>The object returned to the user by every public plotting function. It is a thin wrapper holding
-<code>spec</code>, <code>backend_name</code>, and <code>native</code>, plus three convenience methods: <code>show()</code>, <code>save(path)</code>
-(delegating to <code>plotmux.export.save</code>), and <code>to_native()</code>, the escape hatch to backend-specific
-functionality not exposed by the unified API.</p>
+<code>spec</code>, <code>backend_name</code>, and <code>native</code>, plus three convenience methods: <code>show()</code> (delegating to
+<code>Backend.show</code>), <code>save(path)</code> (delegating to <code>plotmux.export.save</code>), and <code>to_native()</code>, the escape
+hatch to backend-specific functionality not exposed by the unified API. Its Jupyter display
+(<code>_repr_mimebundle_</code>) delegates to <code>Backend.mimebundle</code>.</p>
 <h3 id="config"><code>config</code><a class="headerlink" href="#config" title="Permanent link">&para;</a></h3>
 <p>The current default backend is stored in a <code>contextvars.ContextVar</code> rather than a plain module
 global, so it is thread/task-local: <code>set_backend()</code>/<code>backend(...)</code> in one thread or <code>asyncio</code> task

@@ -1516,12 +1516,14 @@ Check <code>fig.supported_formats</code> ahead of time to avoid relying on that 
 <p><code>plotmux.export.save()</code> is the underlying function called by <code>Figure.save()</code>, if you need to call it
 directly with a <code>Figure</code> you already have.</p>
 <h2 id="displaying-a-figure-in-jupyter">Displaying a Figure in Jupyter<a class="headerlink" href="#displaying-a-figure-in-jupyter" title="Permanent link">&para;</a></h2>
-<p><code>Figure</code> displays itself automatically as the last expression of a Jupyter cell, exactly as its
-<code>native</code> object would on its own: it forwards the IPython/Jupyter rich-display dunder methods
-(<code>_repr_html_</code>, <code>_repr_mimebundle_</code>, <code>_repr_svg_</code>, <code>_repr_jpeg_</code>, <code>_repr_png_</code>) to <code>native</code>, so no
-extra call is needed beyond leaving <code>fig</code> as a cell's last expression. This forwarding is
-restricted to that fixed set of methods, so a typo like <code>fig.sav(...)</code> still raises a clear
-<code>AttributeError</code> instead of silently forwarding to <code>native</code>.</p>
+<p><code>Figure</code> displays itself automatically as the last expression of a Jupyter cell, so no extra call is
+needed beyond leaving <code>fig</code> as a cell's last expression. The display comes from the backend that
+rendered the figure (<code>Backend.mimebundle</code>): a PNG for <code>matplotlib</code>, and the HTML or mime bundle of
+the native object for the other backends. <code>Figure</code> forwards no other attribute to the native
+object, so a typo like <code>fig.sav(...)</code> raises a plain <code>AttributeError</code>.</p>
+<p><code>fig.show()</code> displays the figure with the viewer of its backend, and works on every backend:
+<code>matplotlib</code> opens a window (<code>pyplot.show</code>), <code>bokeh</code> calls <code>bokeh.io.show</code>, <code>altair</code> and <code>plotly</code>
+call the <code>show</code> of their native figure, and <code>xy</code> opens the HTML of the figure in the web browser.</p>
 <h2 id="escaping-to-the-native-figure">Escaping to the Native Figure<a class="headerlink" href="#escaping-to-the-native-figure" title="Permanent link">&para;</a></h2>
 <p><code>Figure.to_native()</code> returns the backend's native figure object, the escape hatch to reach
 backend-specific functionality not exposed by the unified API:</p>

@@ -1142,17 +1142,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#plotmux.figure.Figure.__getattr__" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        __getattr__
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#plotmux.figure.Figure.save" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1375,17 +1364,6 @@
     <span class="md-ellipsis">
       
         supported_formats
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#plotmux.figure.Figure.__getattr__" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        __getattr__
       
     </span>
   </a>
@@ -1662,118 +1640,6 @@ instead of discovering it via a <code>ValueError</code> from <code>save</code>.<
 <div class="doc doc-object doc-function">
 
 
-<h4 id="plotmux.figure.Figure.__getattr__" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">plotmux.figure.Figure.__getattr__</span>
-
-
-<a href="#plotmux.figure.Figure.__getattr__" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__getattr__</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Any">Any</span></span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Forward IPython/Jupyter rich-display lookups to <code>native</code>.</p>
-<p>This is what makes a <code>Figure</code> display itself automatically
-as the last expression of a Jupyter cell, exactly as its
-<code>native</code> object would on its own -- without every backend
-having to reimplement its own <code>_repr_html_</code>/... wrapper,
-and without <code>Figure</code> hardcoding which of those methods a
-given backend's native object happens to define.</p>
-<p>Only called by Python when normal attribute lookup on
-<code>Figure</code> itself fails, so it never shadows a real
-<code>Figure</code> attribute or method. Restricted to the fixed
-<code>_REPR_METHODS</code> set (rather than forwarding any missing
-attribute) so a typo in user code (e.g. <code>fig.sav(...)</code>)
-still raises a clear <code>AttributeError</code> instead of silently
-forwarding to <code>native</code> and failing there with a confusing
-error.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>name</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The attribute name that was looked up.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="typing.Any">Any</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The bound method of the same name on <code>native</code>.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="AttributeError">AttributeError</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>if <code>name</code> is not a known rich-display
-method, or <code>native</code> does not define it.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
 <h4 id="plotmux.figure.Figure.save" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">plotmux.figure.Figure.save</span>
 
@@ -1879,8 +1745,8 @@ format cannot be inferred.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>if the backend's native figure
-object does not expose a <code>show</code> method.</p>
+                <p>if the backend does not support
+<code>show</code> (see <code>Backend.show</code>).</p>
               </div>
             </td>
           </tr>
