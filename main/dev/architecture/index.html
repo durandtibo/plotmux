@@ -1925,10 +1925,9 @@ internally.</p>
 <li><code>coola</code>'s optional-dependency pattern (<code>is_*_available</code>, <code>*_available</code>, <code>raise_*_missing_error</code>)
   is reused as-is by <code>plotmux.utils.imports</code>. New backends follow the same pattern instead of
   introducing a new one.</li>
-<li><code>matplotlib</code>, <code>xy</code>, <code>bokeh</code>, <code>altair</code>, and <code>plotly</code> are optional extras (<code>xy</code> is further gated to
-  <code>python_version &gt;= '3.11'</code> in its extra marker). Only <code>numpy</code> and <code>coola</code> are hard dependencies,
-  so the core package (specs, registry, config, public API) must import cleanly with no plotting
-  library installed.</li>
+<li><code>matplotlib</code>, <code>xy</code>, <code>bokeh</code>, <code>altair</code>, and <code>plotly</code> are optional extras. Only <code>numpy</code> and
+  <code>coola</code> are hard dependencies, so the core package (specs, registry, config, public API) must
+  import cleanly with no plotting library installed.</li>
 <li><code>plotmux.utils.range.find_range</code> implements quantile-or-explicit axis bounds (e.g. <code>xmin="q0.1"</code>)
   once, and is reused by every spec that needs it rather than reimplemented.</li>
 <li>Style conventions: <code>from __future__ import annotations</code>, explicit <code>__all__</code>, Google-style

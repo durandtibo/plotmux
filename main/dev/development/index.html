@@ -1863,7 +1863,7 @@
 <p>This guide covers setting up your development environment and common development tasks.</p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Python 3.10 or higher</li>
+<li>Python 3.11 or higher</li>
 <li><a href="https://docs.astral.sh/uv/"><code>uv</code></a> for dependency management</li>
 <li>Git for version control</li>
 <li>Basic knowledge of Python and testing</li>
@@ -1922,8 +1922,7 @@ task). List the tasks and the resolved configuration with:</p>
 <div class="highlight"><pre><span></span><code>inv<span class="w"> </span>--list
 inv<span class="w"> </span>config.show
 </code></pre></div>
-<p><code>inv check</code> runs the main read-only checks and <code>inv fix</code> fixes the lint and format issues.
-<code>invoke-tasklib</code> requires Python 3.11 or later, so it is only installed on those versions.</p>
+<p><code>inv check</code> runs the main read-only checks and <code>inv fix</code> fixes the lint and format issues.</p>
 <h3 id="code-quality">Code Quality<a class="headerlink" href="#code-quality" title="Permanent link">&para;</a></h3>
 <p><strong>Check the code format (Ruff):</strong></p>
 <div class="highlight"><pre><span></span><code>inv<span class="w"> </span>format.check-python
