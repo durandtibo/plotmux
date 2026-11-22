@@ -2746,7 +2746,7 @@ requires-dist = [
     { name = "matplotlib", marker = "extra == 'matplotlib'", specifier = ">=3.10,<4.0" },
     { name = "numpy", specifier = ">=2.0,<3.0" },
     { name = "plotly", marker = "extra == 'plotly'", specifier = ">=7.0,<8.0" },
-    { name = "xy", marker = "extra == 'xy'", specifier = ">=0.0.6,<1.0" },
+    { name = "xy", marker = "extra == 'xy'", specifier = ">=0.0.9,<1.0" },
 ]
 provides-extras = ["altair", "bokeh", "matplotlib", "plotly", "xy"]
 
