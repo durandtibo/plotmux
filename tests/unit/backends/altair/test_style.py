@@ -1,372 +1,281 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 
 import numpy as np
 import pytest
 
-from plotmux.specs import BarSpec, HistogramSpec, LineSpec
+from plotmux.primitives import Line
+from plotmux.scene import AxesScene, LegendStyle
 from plotmux.testing.fixtures import altair_available
 from plotmux.utils.imports import is_altair_available
 
-if TYPE_CHECKING:
-    import altair as alt
-
 if is_altair_available():
-    from plotmux.backends.altair.bar import render_bar
-    from plotmux.backends.altair.histogram import render_histogram
-    from plotmux.backends.altair.line import render_line
     from plotmux.backends.altair.style import (
-        _apply_legend_style,
-        apply_common_style,
-        color_encoding,
-        make_mark_chart,
-        prepare_color,
+        LEGEND_LOCATION,
+        MARKER_STYLE,
+        STROKE_DASH,
+        _format_column,
+        axis_encodings,
+        inline_data,
+        legend_color,
         rgba_to_altair,
-        with_label_field,
     )
 
-######################################
-#     Tests for rgba_to_altair     #
-######################################
+RED = (1.0, 0.0, 0.0, 1.0)
 
 
-def _rgba_to_altair_cases() -> list:
-    return [
+def _color(scene: AxesScene) -> Any:
+    return legend_color(scene)
+
+
+def _scene(**kwargs: Any) -> AxesScene:
+    return AxesScene(primitives=(), **kwargs)
+
+
+def _line(label: str | None = None, color: Any = RED) -> Line:
+    return Line(x=np.arange(2.0), y=np.arange(2.0), label=label, color=color)
+
+
+###################################
+#     Tests for rgba_to_altair    #
+###################################
+
+
+@pytest.mark.parametrize(
+    ("color", "expected"),
+    [
         pytest.param((1.0, 0.0, 0.0, 1.0), "rgba(255, 0, 0, 1.0)", id="opaque"),
         pytest.param((0.0, 0.0, 0.0, 0.0), "rgba(0, 0, 0, 0.0)", id="transparent"),
         pytest.param((0.5, 0.5, 0.5, 0.5), "rgba(128, 128, 128, 0.5)", id="rounding"),
-        pytest.param((1.0, 1.0, 1.0, 1.0), "rgba(255, 255, 255, 1.0)", id="white"),
-    ]
-
-
-@pytest.mark.parametrize(("color", "expected"), _rgba_to_altair_cases())
+    ],
+)
 @altair_available
-def test_rgba_to_altair(color: tuple[float, float, float, float], expected: str) -> None:
-    assert rgba_to_altair(color) == expected
-
-
-##########################################
-#     Tests for with_label_field     #
-##########################################
-
-
-@altair_available
-def test_with_label_field_none_returns_same_data() -> None:
-    data = [{"x": 1, "y": 1}]
-    assert with_label_field(data, None) is data
-
-
-@altair_available
-def test_with_label_field_adds_field() -> None:
-    data = [{"x": 1, "y": 1}, {"x": 2, "y": 2}]
-    out = with_label_field(data, "my-label")
-    assert out == [{"x": 1, "y": 1, "label": "my-label"}, {"x": 2, "y": 2, "label": "my-label"}]
-
-
-########################################
-#     Tests for color_encoding     #
-########################################
-
-
-@altair_available
-def test_color_encoding_no_label_returns_none() -> None:
-    assert color_encoding("red", None) is None
-    assert color_encoding(None, None) is None
-
-
-@altair_available
-def test_color_encoding_label_no_color() -> None:
-    encoding = color_encoding(None, "my-label")
-    assert cast("alt.Color", encoding).shorthand == "label:N"
-
-
-@altair_available
-def test_color_encoding_label_and_color() -> None:
-    encoding = color_encoding("red", "my-label")
-    assert cast("alt.Color", encoding).shorthand == "label:N"
-    assert cast("Any", encoding).to_dict()["scale"]["range"] == ["red"]
+def test_rgba_to_altair(color: tuple[float, ...], expected: str) -> None:
+    assert rgba_to_altair(cast("Any", color)) == expected
 
 
 ####################################
-#     Tests for prepare_color     #
+#     Tests for _format_column     #
 ####################################
 
 
 @altair_available
-def test_prepare_color_no_label_no_color() -> None:
-    data = [{"x": 1, "y": 1}]
-    kwargs = {}
-    out_data, encoding = prepare_color(data, None, None, kwargs)
-    assert out_data is data
-    assert encoding is None
-    assert kwargs == {}
+def test_format_column_float() -> None:
+    assert _format_column(np.array([1.5, 2.0])) == ["1.5", "2.0"]
 
 
 @altair_available
-def test_prepare_color_no_label_with_color_sets_kwarg() -> None:
-    data = [{"x": 1, "y": 1}]
-    kwargs = {}
-    out_data, encoding = prepare_color(data, None, "red", kwargs)
-    assert out_data is data
-    assert encoding is None
-    assert kwargs == {"color": "red"}
+def test_format_column_integer_is_written_as_float() -> None:
+    assert _format_column(np.array([1, 2])) == ["1.0", "2.0"]
 
 
 @altair_available
-def test_prepare_color_label_adds_field_and_encoding() -> None:
-    data = [{"x": 1, "y": 1}]
-    kwargs = {}
-    out_data, encoding = prepare_color(data, "my-label", "red", kwargs)
-    assert out_data == [{"x": 1, "y": 1, "label": "my-label"}]
-    assert cast("alt.Color", encoding).shorthand == "label:N"
-    assert kwargs == {}
-
-
-#########################################
-#     Tests for apply_common_style     #
-#########################################
+def test_format_column_nan_is_an_empty_cell() -> None:
+    assert _format_column(np.array([1.0, np.nan])) == ["1.0", ""]
 
 
 @altair_available
-def test_apply_common_style_title() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10, title="my-title")
-    chart = render_histogram(spec)
-    out = apply_common_style(chart, spec)
-    assert out.to_dict()["title"] == "my-title"
+def test_format_column_float_round_trips() -> None:
+    value = 0.1 + 0.2
+    assert float(_format_column(np.array([value]))[0]) == value
 
 
 @altair_available
-def test_apply_common_style_no_title() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10)
-    chart = render_histogram(spec)
-    out = apply_common_style(chart, spec)
-    assert "title" not in out.to_dict()
+def test_format_column_large_float_round_trips() -> None:
+    assert float(_format_column(np.array([1.2345678901234567e300]))[0]) == 1.2345678901234567e300
 
 
 @altair_available
-def test_apply_common_style_labels_and_scale() -> None:
-    spec = LineSpec(
-        x=np.arange(10), y=np.arange(10), xlabel="x", ylabel="y", xscale="log", yscale="linear"
+def test_format_column_strings() -> None:
+    assert _format_column(np.array(["a", "b"])) == ["a", "b"]
+
+
+@pytest.mark.parametrize("text", ["a,b", "line\nbreak", "cr\rhere"])
+@altair_available
+def test_format_column_quotes_the_special_characters(text: str) -> None:
+    assert _format_column(np.array([text])) == [f'"{text}"']
+
+
+@altair_available
+def test_format_column_escapes_a_quote() -> None:
+    assert _format_column(np.array(['a"b'])) == ['"a""b"']
+
+
+@altair_available
+def test_format_column_bytes() -> None:
+    assert _format_column(np.array([b"a", b"b"])) == ["a", "b"]
+
+
+@altair_available
+def test_format_column_empty() -> None:
+    assert _format_column(np.array([])) == []
+
+
+##################################
+#     Tests for inline_data      #
+##################################
+
+
+@altair_available
+def test_inline_data_values() -> None:
+    data = inline_data({"x": np.array([1.0, 2.0]), "y": np.array([3.0, np.nan])})
+    assert data.values == "x,y\n1.0,3.0\n2.0,"
+
+
+@altair_available
+def test_inline_data_format() -> None:
+    data = inline_data({"x": np.array([1.0]), "name": np.array(["a"])})
+    assert data.format.to_dict() == {"parse": {"x": "number", "name": "string"}, "type": "csv"}
+
+
+@altair_available
+def test_inline_data_categories_that_look_like_numbers_stay_strings() -> None:
+    assert inline_data({"x": np.array(["1", "2"])}).format.parse == {"x": "string"}
+
+
+@altair_available
+def test_inline_data_one_row() -> None:
+    assert inline_data({"x": np.array([1.0])}).values == "x\n1.0"
+
+
+@altair_available
+def test_inline_data_does_not_change_the_columns() -> None:
+    x = np.array([1.0, np.nan])
+    inline_data({"x": x})
+    assert np.isnan(x[1])
+
+
+@altair_available
+def test_inline_data_different_lengths_raise() -> None:
+    with pytest.raises(ValueError, match="zip"):
+        inline_data({"x": np.array([1.0, 2.0]), "y": np.array([1.0])})
+
+
+###################################
+#     Tests for legend_color      #
+###################################
+
+
+@altair_available
+def test_legend_color_without_legend_is_none() -> None:
+    assert legend_color(_scene()) is None
+
+
+@altair_available
+def test_legend_color_scale() -> None:
+    scene = AxesScene(
+        primitives=(_line("a"), _line(None), _line("b", (0.0, 0.0, 1.0, 1.0))),
+        legend=LegendStyle(),
     )
-    chart = render_line(spec)
-    out = apply_common_style(chart, spec)
-    encoding = out.to_dict()["encoding"]
-    assert encoding["x"]["title"] == "x"
-    assert encoding["x"]["scale"]["type"] == "log"
-    assert encoding["y"]["title"] == "y"
-    assert encoding["y"]["scale"]["type"] == "linear"
+    scale = _color(scene).to_dict()["scale"]
+    assert scale == {
+        "domain": ["a", "b"],
+        "range": ["rgba(255, 0, 0, 1.0)", "rgba(0, 0, 255, 1.0)"],
+    }
 
 
 @altair_available
-def test_apply_common_style_no_labels() -> None:
-    # ``title=None`` is passed explicitly (rather than omitted) so Vega-Lite
-    # hides the axis title instead of falling back to its own default
-    # (the capitalized field name, e.g. "X") -- see
-    # ``apply_common_style``'s docstring.
-    spec = LineSpec(x=np.arange(10), y=np.arange(10))
-    chart = render_line(spec)
-    out = apply_common_style(chart, spec)
-    encoding = out.to_dict()["encoding"]
-    assert encoding["x"]["title"] is None
-    assert encoding["y"]["title"] is None
+def test_legend_color_field() -> None:
+    color = _color(AxesScene(primitives=(_line("a"),), legend=LegendStyle()))
+    assert color.to_dict()["field"] == "label"
 
 
 @altair_available
-def test_apply_common_style_ymin_ymax() -> None:
-    spec = LineSpec(x=np.arange(10), y=np.arange(10), ymin=0.0, ymax=5.0)
-    chart = render_line(spec)
-    out = apply_common_style(chart, spec)
-    scale = out.to_dict()["encoding"]["y"]["scale"]
-    assert scale["domainMin"] == 0.0
-    assert scale["domainMax"] == 5.0
+def test_legend_color_hides_the_default_title() -> None:
+    color = _color(AxesScene(primitives=(_line("a"),), legend=LegendStyle()))
+    assert color.to_dict()["legend"] == {"title": None}
 
 
 @altair_available
-def test_apply_common_style_no_ymin_ymax() -> None:
-    spec = LineSpec(x=np.arange(10), y=np.arange(10))
-    chart = render_line(spec)
-    out = apply_common_style(chart, spec)
-    scale = out.to_dict()["encoding"]["y"]["scale"]
-    assert "domainMin" not in scale
-    assert "domainMax" not in scale
+def test_legend_color_title() -> None:
+    color = _color(AxesScene(primitives=(_line("a"),), legend=LegendStyle(title="Lines")))
+    assert color.to_dict()["legend"]["title"] == "Lines"
+
+
+@pytest.mark.parametrize("location", sorted(LEGEND_LOCATION) if is_altair_available() else [])
+@altair_available
+def test_legend_color_location(location: str) -> None:
+    scene = AxesScene(primitives=(_line("a"),), legend=LegendStyle(location=cast("Any", location)))
+    assert _color(scene).to_dict()["legend"]["orient"] == LEGEND_LOCATION[location]
+
+
+@pytest.mark.parametrize("orientation", ["vertical", "horizontal"])
+@altair_available
+def test_legend_color_orientation(orientation: str) -> None:
+    scene = AxesScene(
+        primitives=(_line("a"),), legend=LegendStyle(orientation=cast("Any", orientation))
+    )
+    assert _color(scene).to_dict()["legend"]["direction"] == orientation
+
+
+###################################
+#     Tests for axis_encodings    #
+###################################
 
 
 @altair_available
-def test_apply_common_style_xmin_xmax() -> None:
-    spec = LineSpec(x=np.arange(10), y=np.arange(10), xmin=0.0, xmax=5.0)
-    chart = render_line(spec)
-    out = apply_common_style(chart, spec)
-    scale = out.to_dict()["encoding"]["x"]["scale"]
-    assert scale["domainMin"] == 0.0
-    assert scale["domainMax"] == 5.0
+def test_axis_encodings_keys() -> None:
+    assert sorted(axis_encodings(_scene())) == ["x", "y"]
 
 
 @altair_available
-def test_apply_common_style_no_xmin_xmax() -> None:
-    spec = LineSpec(x=np.arange(10), y=np.arange(10))
-    chart = render_line(spec)
-    out = apply_common_style(chart, spec)
-    scale = out.to_dict()["encoding"]["x"]["scale"]
-    assert "domainMin" not in scale
-    assert "domainMax" not in scale
+def test_axis_encodings_x2_key() -> None:
+    assert sorted(axis_encodings(_scene(), x2_field="x2")) == ["x", "x2", "y"]
 
 
 @altair_available
-def test_apply_common_style_histogram_xbounds_not_reapplied() -> None:
-    # ``HistogramSpec``/``CdfSpec`` are not ``XBoundSpec`` (see
-    # ``plotmux.specs.base.XBoundSpec``): their own ``xmin``/``xmax`` may
-    # hold an unresolved quantile string, so ``apply_common_style`` must
-    # not read them -- doing so used to crash the moment either bound was
-    # set to a quantile string like ``"q0.1"``.
-    spec = HistogramSpec(values=np.arange(101), bins=10, xmin="q0.1", xmax="q0.9")
-    chart = render_histogram(spec)
-    out = apply_common_style(chart, spec)
-    scale = out.to_dict()["encoding"]["x"]["scale"]
-    assert "domainMin" not in scale
-    assert "domainMax" not in scale
+def test_axis_encodings_whole_encoding() -> None:
+    encodings = axis_encodings(_scene(xlabel="x", ylabel="y", xscale="log", yscale="log"))
+    assert {k: v.to_dict() for k, v in encodings.items()} == {
+        "x": {"field": "x", "scale": {"type": "log"}, "title": "x", "type": "quantitative"},
+        "y": {
+            "field": "y",
+            "scale": {"type": "log"},
+            "stack": None,
+            "title": "y",
+            "type": "quantitative",
+        },
+    }
 
 
 @altair_available
-def test_apply_common_style_background_color() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10, background_color="red")
-    chart = render_histogram(spec)
-    out = apply_common_style(chart, spec)
-    assert out.to_dict()["background"] == "rgba(255, 0, 0, 1.0)"
+def test_axis_encodings_no_label_hides_the_title() -> None:
+    assert axis_encodings(_scene())["x"].to_dict()["title"] is None
 
 
 @altair_available
-def test_apply_common_style_no_background_color() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10)
-    chart = render_histogram(spec)
-    out = apply_common_style(chart, spec)
-    assert "background" not in out.to_dict()
+def test_axis_encodings_limits() -> None:
+    encodings = axis_encodings(_scene(xlim=(1.0, 2.0), ylim=(3.0, 4.0)))
+    assert (encodings["x"].to_dict()["scale"], encodings["y"].to_dict()["scale"]) == (
+        {"domainMax": 2.0, "domainMin": 1.0, "type": "linear"},
+        {"domainMax": 4.0, "domainMin": 3.0, "type": "linear"},
+    )
 
 
 @altair_available
-def test_apply_common_style_legend_title() -> None:
-    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s", legend_title="Lines")
-    chart = render_line(spec)
-    out = apply_common_style(chart, spec)
-    assert out.to_dict()["encoding"]["color"]["legend"]["title"] == "Lines"
+def test_axis_encodings_single_bound() -> None:
+    encodings = axis_encodings(_scene(xlim=(None, 2.0)))
+    assert encodings["x"].to_dict()["scale"] == {"domainMax": 2.0, "type": "linear"}
 
 
 @altair_available
-def test_apply_common_style_no_legend_title() -> None:
-    spec = LineSpec(x=np.arange(10), y=np.arange(10))
-    chart = render_line(spec)
-    out = apply_common_style(chart, spec)
-    assert "color" not in out.to_dict()["encoding"]
+def test_axis_encodings_categorical_x_is_nominal_and_ordered() -> None:
+    x = axis_encodings(_scene(categories=("b", "a"), xlabel="x"))["x"].to_dict()
+    assert x == {"field": "x", "sort": ["b", "a"], "title": "x", "type": "nominal"}
 
 
 @altair_available
-def test_apply_common_style_legend_location() -> None:
-    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s", legend_location="top_left")
-    chart = render_line(spec)
-    out = apply_common_style(chart, spec)
-    assert out.to_dict()["encoding"]["color"]["legend"]["orient"] == "top-left"
+def test_axis_encodings_categorical_x_has_no_x2() -> None:
+    assert "x2" not in axis_encodings(_scene(categories=("a",)), x2_field="x2")
 
 
 @altair_available
-def test_apply_common_style_legend_location_best_is_noop() -> None:
-    # altair has no "best" auto-placement legend (see ``LEGEND_LOCATION``'s
-    # docstring), so ``legend_location="best"`` falls back to altair's own
-    # default position, leaving no explicit ``orient`` set.
-    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s", legend_location="best")
-    chart = render_line(spec)
-    out = apply_common_style(chart, spec)
-    assert "orient" not in out.to_dict()["encoding"]["color"]["legend"]
+def test_axis_encodings_fields() -> None:
+    encodings = axis_encodings(_scene(), x_field="x0", y_field="top")
+    assert (encodings["x"].to_dict()["field"], encodings["y"].to_dict()["field"]) == ("x0", "top")
 
 
 @altair_available
-def test_apply_common_style_no_legend_location() -> None:
-    spec = LineSpec(x=np.arange(10), y=np.arange(10))
-    chart = render_line(spec)
-    out = apply_common_style(chart, spec)
-    assert "color" not in out.to_dict()["encoding"]
-
-
-@altair_available
-def test_apply_common_style_legend_orientation() -> None:
-    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s", legend_orientation="horizontal")
-    chart = render_line(spec)
-    out = apply_common_style(chart, spec)
-    assert out.to_dict()["encoding"]["color"]["legend"]["direction"] == "horizontal"
-
-
-@altair_available
-def test_apply_common_style_no_legend_orientation() -> None:
-    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s")
-    chart = render_line(spec)
-    out = apply_common_style(chart, spec)
-    assert "direction" not in out.to_dict()["encoding"]["color"]["legend"]
-
-
-@altair_available
-def test_apply_common_style_categorical_x_keeps_nominal_type() -> None:
-    spec = BarSpec(x=np.array(["Apples", "Pears", "Nectarines"]), y=np.array([2, 1, 4]))
-    chart = render_bar(spec)
-    out = apply_common_style(chart, spec)
-    assert out.to_dict()["encoding"]["x"]["type"] == "nominal"
-
-
-###########################################
-#     Tests for _apply_legend_style     #
-###########################################
-
-
-@altair_available
-def test_apply_legend_style_title() -> None:
-    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s", legend_title="Lines")
-    out = _apply_legend_style(render_line(spec), spec)
-    assert out.to_dict()["encoding"]["color"]["legend"]["title"] == "Lines"
-
-
-@altair_available
-def test_apply_legend_style_location() -> None:
-    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s", legend_location="top_left")
-    out = _apply_legend_style(render_line(spec), spec)
-    assert out.to_dict()["encoding"]["color"]["legend"]["orient"] == "top-left"
-
-
-@altair_available
-def test_apply_legend_style_location_best_is_noop() -> None:
-    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s", legend_location="best")
-    out = _apply_legend_style(render_line(spec), spec)
-    assert "orient" not in out.to_dict()["encoding"]["color"]["legend"]
-
-
-@altair_available
-def test_apply_legend_style_orientation() -> None:
-    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s", legend_orientation="horizontal")
-    out = _apply_legend_style(render_line(spec), spec)
-    assert out.to_dict()["encoding"]["color"]["legend"]["direction"] == "horizontal"
-
-
-@altair_available
-def test_apply_legend_style_no_field_returns_chart_unchanged() -> None:
-    spec = LineSpec(x=np.arange(10), y=np.arange(10), label="s")
-    chart = render_line(spec)
-    assert _apply_legend_style(chart, spec) is chart
-
-
-########################################
-#     Tests for make_mark_chart     #
-########################################
-
-
-@altair_available
-def test_make_mark_chart_no_kwargs() -> None:
-    assert make_mark_chart([{"x": 0, "y": 1}], "line", {}).to_dict()["mark"] == {"type": "line"}
-
-
-@altair_available
-def test_make_mark_chart_kwargs() -> None:
-    chart = make_mark_chart([{"x": 0, "y": 1}], "bar", {"opacity": 0.5})
-    assert chart.to_dict()["mark"] == {"opacity": 0.5, "type": "bar"}
-
-
-@altair_available
-def test_make_mark_chart_inline_data() -> None:
-    chart = make_mark_chart([{"x": 0, "y": 1}], "point", {})
-    assert chart.to_dict()["data"]["values"] == [{"x": 0, "y": 1}]
+def test_tables() -> None:
+    assert (STROKE_DASH["dashed"], MARKER_STYLE["x"]) == ([6, 4], "M-1,-1L1,1M-1,1L1,-1")

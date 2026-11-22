@@ -7,146 +7,237 @@ unconditionally.
 
 from __future__ import annotations
 
-__all__ = ["BokehBackend"]
+__all__ = ["BokehBackend", "draw_bars", "draw_line", "draw_points"]
 
+import math
+from html import escape
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from bokeh.io import show as bokeh_show
-from bokeh.models import Title
+from bokeh.layouts import column, gridplot
+from bokeh.models import Div, Slope, Title
 from bokeh.plotting import figure as bokeh_figure, save as bokeh_save
 from bokeh.resources import CDN
 
-from plotmux.backends.base import Backend, check_export_format
-from plotmux.backends.bokeh.bar import bar_figure_kwargs, render_bar
-from plotmux.backends.bokeh.cdf import render_cdf
-from plotmux.backends.bokeh.grid import render_grid
-from plotmux.backends.bokeh.histogram import render_histogram
-from plotmux.backends.bokeh.layer import render_layer
-from plotmux.backends.bokeh.line import render_line
-from plotmux.backends.bokeh.scatter import render_scatter
-from plotmux.backends.bokeh.slope import render_slope
-from plotmux.backends.bokeh.stacked_bar import (
-    render_stacked_bar,
-    stacked_bar_figure_kwargs,
-)
-from plotmux.backends.bokeh.style import apply_common_style
-from plotmux.specs import (
-    BarSpec,
-    BaseSpec,
-    CdfSpec,
-    GridSpec,
-    HistogramSpec,
-    LayerSpec,
-    LineSpec,
-    ScatterSpec,
-    SlopeSpec,
-    StackedBarSpec,
-)
+from plotmux.backends.base import Backend, BackendCapabilities
+from plotmux.backends.bokeh.style import LEGEND_LOCATIONS, MARKERS, apply_style, rgba_to_bokeh
+from plotmux.primitives import Bars, Line
+from plotmux.scene import AxesScene, GridScene
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from pathlib import Path
 
-    from bokeh.models import LayoutDOM
+    from bokeh.models import LayoutDOM, UIElement
     from bokeh.plotting import figure as Figure  # noqa: N812
 
+    from plotmux.primitives import Points, Primitive
 
-def _make_renderer(
-    fig_render: Callable[..., Figure],
-    figure_kwargs: Callable[[BaseSpec], dict[str, Any]] | None = None,
-) -> Callable[..., Figure]:
-    r"""Build a ``render(spec, **kwargs) -> Figure`` function from a
-    ``fig_render(fig, spec, **kwargs) -> Figure`` function.
 
-    Every entry in ``_RENDERERS`` shares the same three steps: create
-    a ``figure``, draw the spec-specific glyph onto it via
-    ``fig_render``, then apply the fields common to every chart type
-    (title, labels) via ``apply_common_style``. Factoring that out
-    here means adding a new chart type to this backend is exactly one
-    ``_RENDERERS`` entry -- ``_make_renderer(render_x)`` -- rather
-    than a new hand-written wrapper function that repeats the same
-    three lines. Mirrors
-    ``plotmux.backends.matplotlib.backend._make_renderer``.
-
-    ``x_axis_type``/``y_axis_type`` are passed to the ``figure``
-    constructor here, from ``spec.xscale``/``spec.yscale``, rather
-    than being applied by ``apply_common_style`` afterwards: unlike
-    matplotlib's ``Axes.set_xscale``, bokeh's axis type is a
-    construction-time argument of ``bokeh.plotting.figure``, not a
-    property that can be changed once glyphs have been added (see
-    ``plotmux.backends.bokeh.style.apply_common_style``).
+def draw_bars(fig: Figure, bars: Bars) -> None:
+    r"""Draw a ``Bars`` primitive onto a bokeh ``figure``.
 
     Args:
-        fig_render: The chart-specific ``(fig, spec, **kwargs) ->
-            Figure`` renderer to wrap, e.g. ``render_histogram``.
-        figure_kwargs: An optional ``(spec) -> dict`` hook returning
-            extra keyword arguments to pass to the ``figure``
-            constructor, merged after (so able to override)
-            ``x_axis_type``/``y_axis_type``. Every chart type but bar
-            needs none: this exists for ``BarSpec``/
-            ``StackedBarSpec``'s categorical x-axis, which needs a
-            ``figure(x_range=list(spec.x))`` constructed with a
-            ``FactorRange`` *before* any glyph is drawn (bokeh raises
-            otherwise) -- a bar-specific need the generic path above
-            has no reason to carry for every other chart type. See
-            ``plotmux.backends.bokeh.bar.bar_figure_kwargs``.
+        fig: The bokeh ``figure`` to draw onto.
+        bars: The bars to draw.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> from bokeh.plotting import figure
+        >>> from plotmux.backends.bokeh.backend import draw_bars
+        >>> from plotmux.primitives import Bars
+        >>> fig = figure()
+        >>> draw_bars(fig, Bars(x=np.arange(3.0), height=np.ones(3), base=np.zeros(3), width=0.8))
+        >>> len(fig.renderers)
+        1
+
+        ```
+    """
+    style: dict[str, Any] = {}
+    if bars.color is not None:
+        style["fill_color"] = style["line_color"] = rgba_to_bokeh(bars.color)
+    if bars.alpha is not None:
+        style["alpha"] = bars.alpha
+    if bars.label is not None:
+        style["legend_label"] = bars.label
+    fig.vbar(
+        x=bars.x,
+        bottom=bars.base,
+        top=bars.base + bars.height,
+        width=bars.width,
+        **style,
+    )
+
+
+def draw_line(fig: Figure, line: Line) -> None:
+    r"""Draw a ``Line`` primitive onto a bokeh ``figure``.
+
+    A line with ``infinite`` set (a slope) is drawn with
+    ``bokeh.models.Slope``, which keeps extending when the view changes.
+    A ``Slope`` has no legend entry, so a labeled slope is drawn as the
+    segment of its vertices. Any other line is a ``figure.line``.
+
+    Args:
+        fig: The bokeh ``figure`` to draw onto.
+        line: The line to draw.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> from bokeh.plotting import figure
+        >>> from plotmux.backends.bokeh.backend import draw_line
+        >>> from plotmux.primitives import Line
+        >>> fig = figure()
+        >>> draw_line(fig, Line(x=np.arange(3.0), y=np.arange(3.0)))
+        >>> len(fig.renderers)
+        1
+
+        ```
+    """
+    style: dict[str, Any] = {"line_dash": line.linestyle}
+    if line.color is not None:
+        style["line_color"] = rgba_to_bokeh(line.color)
+    if line.linewidth is not None:
+        style["line_width"] = line.linewidth
+    if line.infinite is not None and line.label is None:
+        gradient, intercept = line.infinite
+        if line.alpha is not None:
+            style["line_alpha"] = line.alpha
+        fig.add_layout(Slope(gradient=gradient, y_intercept=intercept, **style))
+        return
+    if line.alpha is not None:
+        style["alpha"] = line.alpha
+    if line.label is not None:
+        style["legend_label"] = line.label
+    fig.line(x=line.x, y=line.y, **style)
+
+
+def draw_points(fig: Figure, points: Points) -> None:
+    r"""Draw a ``Points`` primitive onto a bokeh ``figure``.
+
+    Args:
+        fig: The bokeh ``figure`` to draw onto.
+        points: The markers to draw.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> from bokeh.plotting import figure
+        >>> from plotmux.backends.bokeh.backend import draw_points
+        >>> from plotmux.primitives import Points
+        >>> fig = figure()
+        >>> draw_points(fig, Points(x=np.arange(3.0), y=np.arange(3.0)))
+        >>> len(fig.renderers)
+        1
+
+        ```
+    """
+    color = None if points.color is None else rgba_to_bokeh(points.color)
+    edgecolor = color if points.edgecolor is None else rgba_to_bokeh(points.edgecolor)
+    style: dict[str, Any] = {
+        "fill_color": None if points.fill is False else color,
+        "line_color": edgecolor,
+    }
+    if points.size is not None:
+        style["size"] = points.size
+    if points.alpha is not None:
+        style["alpha"] = points.alpha
+    if points.marker is not None:
+        style["marker"] = points.marker
+    if points.label is not None:
+        style["legend_label"] = points.label
+    fig.scatter(x=points.x, y=points.y, **style)
+
+
+def _draw_primitive(fig: Figure, primitive: Primitive) -> None:
+    r"""Draw one primitive onto a bokeh ``figure``.
+
+    Args:
+        fig: The bokeh ``figure`` to draw onto.
+        primitive: The primitive to draw.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> from bokeh.plotting import figure
+        >>> from plotmux.backends.bokeh.backend import _draw_primitive
+        >>> from plotmux.primitives import Line
+        >>> fig = figure()
+        >>> _draw_primitive(fig, Line(x=np.arange(3.0), y=np.arange(3.0)))
+        >>> len(fig.renderers)
+        1
+
+        ```
+    """
+    if isinstance(primitive, Bars):
+        draw_bars(fig, primitive)
+    elif isinstance(primitive, Line):
+        draw_line(fig, primitive)
+    else:
+        draw_points(fig, primitive)
+
+
+def _draw_axes(scene: AxesScene) -> Figure:
+    r"""Draw a scene into a styled bokeh ``figure``.
+
+    The axis scales and a categorical x-range are construction-time
+    arguments of ``bokeh.plotting.figure``, so the figure is created
+    here, with the scales and the categories of the scene.
+
+    Args:
+        scene: The scene of one axes.
 
     Returns:
-        A ``(spec, **kwargs) -> Figure`` renderer suitable for
-            ``_RENDERERS``.
+        The styled bokeh ``figure``.
+
+    Example:
+        ```pycon
+        >>> from plotmux.backends.bokeh.backend import _draw_axes
+        >>> from plotmux.scene import AxesScene
+        >>> _draw_axes(AxesScene(primitives=(), title="t")).title.text
+        't'
+
+        ```
     """
-
-    def render(spec: BaseSpec, **kwargs: Any) -> Figure:
-        fig_kwargs: dict[str, Any] = {"x_axis_type": spec.xscale, "y_axis_type": spec.yscale}
-        if figure_kwargs is not None:
-            fig_kwargs.update(figure_kwargs(spec))
-        fig = bokeh_figure(**fig_kwargs)
-        fig_render(fig, spec, **kwargs)
-        apply_common_style(fig, spec)
-        return fig
-
-    return render
+    kwargs: dict[str, Any] = {"x_axis_type": scene.xscale, "y_axis_type": scene.yscale}
+    if scene.categories is not None:
+        kwargs = {"x_range": list(scene.categories), "y_axis_type": scene.yscale}
+    fig = bokeh_figure(**kwargs)
+    for primitive in scene.primitives:
+        _draw_primitive(fig, primitive)
+    return apply_style(fig, scene)
 
 
 class BokehBackend(Backend):
     r"""Implement the bokeh rendering backend.
 
-    One renderer function is registered per supported spec type in
-    ``_RENDERERS``. Adding a new chart type to this backend means
-    adding one entry here; it never grows an if/elif chain.
+    A grid is a ``bokeh.layouts.gridplot`` of independent figures,
+    under a heading ``Div`` when the grid has a title. bokeh exports
+    to HTML only: static image export needs an extra, environment
+    specific dependency.
     """
 
     name: ClassVar[str] = "bokeh"
-    # Only ``html`` is supported: static image export (``png``/``svg``) goes
-    # through bokeh's ``export_png``/``export_svg``, which additionally
-    # require a Selenium webdriver (a browser binary, not a pip-installable
-    # Python package) at runtime -- a heavier, environment-specific
-    # dependency than "pip install bokeh". ``html`` is bokeh's own native,
-    # dependency-free export path (``bokeh.plotting.save``) and is also the
-    # format that best matches why a bokeh backend is worth having (see
-    # DESIGN.md 6.1): interactive, standalone HTML output.
-    supported_formats: ClassVar[frozenset[str]] = frozenset({"html"})
 
-    _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., Figure | LayoutDOM]]] = {
-        HistogramSpec: _make_renderer(render_histogram),
-        BarSpec: _make_renderer(render_bar, bar_figure_kwargs),
-        StackedBarSpec: _make_renderer(render_stacked_bar, stacked_bar_figure_kwargs),
-        CdfSpec: _make_renderer(render_cdf),
-        LineSpec: _make_renderer(render_line),
-        ScatterSpec: _make_renderer(render_scatter),
-        SlopeSpec: _make_renderer(render_slope),
-        LayerSpec: _make_renderer(render_layer),
-        # ``render_grid`` builds and arranges its own independent
-        # per-cell ``figure``s into a layout rather than drawing onto one
-        # shared ``figure`` -- it does not fit ``_make_renderer``'s
-        # "one figure, one fig_render call" shape, so it is registered
-        # directly instead of wrapped.
-        GridSpec: render_grid,
-    }
+    def capabilities(self) -> BackendCapabilities:
+        return BackendCapabilities(
+            name=self.name,
+            formats=frozenset({"html"}),
+            grid_formats=frozenset({"html"}),
+            legend_locations=frozenset(LEGEND_LOCATIONS),
+            markers=frozenset(MARKERS),
+        )
 
-    # ``render`` is inherited from ``Backend``: it dispatches on
-    # ``type(spec)`` against ``_RENDERERS`` above, so this backend does not
-    # need its own copy of that dispatch body.
+    def draw(self, scene: AxesScene | GridScene) -> Figure | LayoutDOM:
+        if not isinstance(scene, GridScene):
+            return _draw_axes(scene)
+        figs: list[UIElement | None] = [_draw_axes(panel) for panel in scene.panels]
+        nrows = math.ceil(len(figs) / scene.ncols)
+        rows = [figs[i * scene.ncols : (i + 1) * scene.ncols] for i in range(nrows)]
+        grid = gridplot(rows)
+        if scene.title is not None:
+            return column(Div(text=f"<h2>{escape(scene.title)}</h2>"), grid)
+        return grid
 
     def show(self, native: Figure | LayoutDOM) -> None:
         r"""Display a bokeh figure or layout with ``bokeh.io.show``.
@@ -157,31 +248,17 @@ class BokehBackend(Backend):
         bokeh_show(native)
 
     def save(self, native: Figure | LayoutDOM, path: Path, fmt: str) -> None:
-        r"""Export a bokeh ``figure`` to a file.
+        r"""Export a bokeh ``figure`` or layout to an HTML file.
 
         Args:
-            native: The bokeh ``figure`` to export.
+            native: The bokeh ``figure`` or layout to export.
             path: The path where to save the figure.
             fmt: The export format. Only ``"html"`` is supported (see
-                ``supported_formats``).
-
-        Raises:
-            ValueError: if ``fmt`` is not a supported export format.
+                ``capabilities``).
         """
-        check_export_format(fmt, self.supported_formats, self.name)
-        # ``native.title`` only exists on a plain ``figure`` (typed
-        # ``Title | str | None`` -- bokeh accepts a bare string as shorthand
-        # when *setting* it, but always returns a ``Title`` instance when
-        # *read back*, per ``apply_common_style`` only ever assigning a
-        # ``str``); a ``GridSpec``'s layout (``gridplot``/``column``, see
-        # ``plotmux.backends.bokeh.grid.render_grid``) has no such
-        # attribute at all, hence ``getattr(..., None)`` rather than
-        # ``native.title`` directly.
+        del fmt
         title = getattr(native, "title", None)
         title_text = str(title.text) if isinstance(title, Title) else title
-        # ``resources=CDN`` and an explicit ``title`` are passed so bokeh
-        # doesn't emit "no resources/title supplied" warnings -- this is the
-        # standalone-HTML-with-CDN-assets export path, not bokeh's server mode.
         bokeh_save(
             native,
             filename=str(path),

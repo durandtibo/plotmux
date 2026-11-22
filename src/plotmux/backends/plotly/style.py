@@ -1,4 +1,4 @@
-r"""Apply the common figure-level style fields onto a plotly ``Figure``.
+r"""Apply the style of an ``AxesScene`` onto a plotly ``Figure``.
 
 This module is only imported when plotly is installed (see
 ``plotmux.backends.plotly.__init__``), so it can import plotly
@@ -7,22 +7,25 @@ unconditionally.
 
 from __future__ import annotations
 
-__all__ = ["DASH_STYLE", "MARKER_STYLE", "apply_common_style", "rgba_to_plotly"]
+__all__ = [
+    "DASH_STYLE",
+    "LEGEND_LOCATION",
+    "MARKER_STYLE",
+    "apply_legend",
+    "apply_style",
+    "axis_range",
+    "rgba_to_plotly",
+]
 
-from typing import TYPE_CHECKING, Any, cast
-
-from plotmux.specs import XBoundSpec
+import math
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from plotly.graph_objects import Figure
 
-    from plotmux.specs import BaseSpec
+    from plotmux.scene import AxesScene
 
-#: Maps plotmux's dash-style names (shared by ``LineSpec``/``SlopeSpec``)
-#: to plotly's own ``line.dash`` values. Only ``"dotted"`` differs
-#: from plotmux's name (plotly calls it ``"dot"``); the rest match
-#: plotmux's own vocabulary already, unlike e.g. altair's pixel-list
-#: ``strokeDash`` (see ``plotmux.backends.altair.style.STROKE_DASH``).
+#: The plotly ``line.dash`` of each portable line style.
 DASH_STYLE: dict[str, str] = {
     "solid": "solid",
     "dashed": "dash",
@@ -30,10 +33,7 @@ DASH_STYLE: dict[str, str] = {
     "dashdot": "dashdot",
 }
 
-#: Maps ``ScatterSpec.marker``'s portable shape name to plotly's
-#: ``go.Scatter(marker_symbol=...)`` value. Every one of plotmux's six
-#: portable names has a direct plotly equivalent, unlike altair (see
-#: ``plotmux.backends.altair.style.MARKER_STYLE``).
+#: The plotly marker symbol of each portable marker name.
 MARKER_STYLE: dict[str, str] = {
     "circle": "circle",
     "square": "square",
@@ -43,15 +43,7 @@ MARKER_STYLE: dict[str, str] = {
     "x": "x",
 }
 
-#: Maps ``BaseSpec.legend_location``'s portable position name to plotly's
-#: ``layout.legend`` fractional ``x``/``y``/``xanchor``/``yanchor``
-#: coordinates -- plotly has no named corner enum the way bokeh does (see
-#: ``plotmux.backends.bokeh.style``), only free-floating coordinates, so
-#: this candidate's name set is translated to a fixed, near-the-edge
-#: ``(x, y)`` position for each. ``"best"`` has no plotly equivalent
-#: (plotly has no auto-placement legend) and is deliberately absent,
-#: falling back to plotly's own default position, same as
-#: ``legend_location`` unset.
+#: The plotly ``legend`` layout of each portable legend location.
 LEGEND_LOCATION: dict[str, dict[str, Any]] = {
     "top_left": {"x": 0.01, "y": 0.99, "xanchor": "left", "yanchor": "top"},
     "top_right": {"x": 0.99, "y": 0.99, "xanchor": "right", "yanchor": "top"},
@@ -65,15 +57,7 @@ LEGEND_LOCATION: dict[str, dict[str, Any]] = {
 
 
 def rgba_to_plotly(color: tuple[float, float, float, float]) -> str:
-    r"""Convert a canonical RGBA tuple to plotly's native color type.
-
-    plotly's trace/marker color parameters accept a CSS-style
-    ``"rgba(r, g, b, a)"`` string, so the canonical ``[0, 1]`` float
-    RGBA tuple produced by ``plotmux.colors.parse_color`` is converted
-    to that format here rather than in ``core/``, keeping ``core/``
-    free of any single backend's native color representation -- same
-    pattern as ``plotmux.backends.bokeh.style.rgba_to_bokeh``/
-    ``plotmux.backends.xy.style.rgba_to_xy``.
+    r"""Convert a canonical RGBA tuple to plotly's native color string.
 
     Args:
         color: The color as an ``(r, g, b, a)`` tuple of floats in
@@ -96,91 +80,134 @@ def rgba_to_plotly(color: tuple[float, float, float, float]) -> str:
     return f"rgba({round(r * 255)}, {round(g * 255)}, {round(b * 255)}, {a})"
 
 
-def apply_common_style(fig: Figure, spec: BaseSpec) -> Figure:
-    r"""Apply the common figure-level style fields onto a plotly
-    ``Figure``.
+def axis_range(limits: tuple[float | None, float | None], scale: str) -> list[float] | None:
+    r"""Return the ``range`` of a plotly axis from the limits of a scene.
 
-    Applies ``title``/``xlabel``/``ylabel``/``xscale``/``yscale``/
-    ``background_color``/``ymin``/``ymax``/``xmin``/``xmax``/
-    ``legend_title``/``legend_location``/``legend_orientation`` from
-    ``spec`` (defined on
-    ``BaseSpec``, shared by every chart type).
-    Called once per
-    standalone figure or ``LayerSpec``, right after every trace has
-    been added, via ``fig.update_layout`` -- unlike bokeh's
-    per-``figure`` axis type (a construction-time argument), plotly's
-    axis type can be set after the fact, so this needs no
-    backend-specific construction-time wiring the way
-    ``plotmux.backends.bokeh.backend._make_renderer`` does.
+    plotly takes both bounds together, and the range of a log axis in
+    powers of 10.
 
-    A ``GridSpec`` cell is styled differently, per-subplot, by
-    ``plotmux.backends.plotly.grid.render_grid`` (``update_xaxes``/
-    ``update_yaxes`` with an explicit ``row``/``col``, and the title
-    folded into ``make_subplots(subplot_titles=...)``, since plotly
-    has only one figure-level ``title``): this function is not reused
-    there.
+    Args:
+        limits: The ``(lower, upper)`` limits of the scene.
+        scale: ``"linear"`` or ``"log"``.
+
+    Returns:
+        The range if both bounds are set, else ``None`` (the axis is
+            autoscaled).
+
+    Example:
+        ```pycon
+        >>> from plotmux.backends.plotly.style import axis_range
+        >>> axis_range((1.0, 100.0), "linear")
+        [1.0, 100.0]
+        >>> axis_range((1.0, 100.0), "log")
+        [0.0, 2.0]
+        >>> axis_range((1.0, None), "linear") is None
+        True
+
+        ```
+    """
+    lower, upper = limits
+    if lower is None or upper is None:
+        return None
+    if scale == "log":
+        return [math.log10(lower), math.log10(upper)]
+    return [lower, upper]
+
+
+def apply_style(
+    fig: Figure, scene: AxesScene, *, row: int | None = None, col: int | None = None
+) -> None:
+    r"""Apply the axes style of a scene onto a plotly ``Figure``.
+
+    The labels, the scales, the limits and the background are set on
+    the axes of the subplot ``(row, col)``, or on the only axes of the
+    figure when ``row`` and ``col`` are ``None``. plotly has one plot
+    background per figure, so the background of a subplot is a
+    rectangle drawn below its traces.
 
     Args:
         fig: The plotly ``Figure`` to style.
-        spec: The spec whose common style fields to apply.
+        scene: The scene whose axes style to apply.
+        row: The 1-indexed subplot row, or ``None``.
+        col: The 1-indexed subplot column, or ``None``.
 
-    Returns:
-        The ``Figure`` that was styled.
+    Example:
+        ```pycon
+        >>> import plotly.graph_objects as go
+        >>> from plotmux.backends.plotly.style import apply_style
+        >>> from plotmux.scene import AxesScene
+        >>> fig = go.Figure()
+        >>> apply_style(fig, AxesScene(primitives=(), xlabel="x"))
+        >>> fig.layout.xaxis.title.text
+        'x'
+
+        ```
     """
-    layout: dict[str, Any] = {"xaxis_type": spec.xscale, "yaxis_type": spec.yscale}
-    if spec.title is not None:
-        layout["title"] = spec.title
-    if spec.xlabel is not None:
-        layout["xaxis_title"] = spec.xlabel
-    if spec.ylabel is not None:
-        layout["yaxis_title"] = spec.ylabel
-    if spec.background_color is not None:
-        layout["plot_bgcolor"] = rgba_to_plotly(
-            cast("tuple[float, float, float, float]", spec.background_color)
+    fig.update_xaxes(
+        type=scene.xscale,
+        title_text=scene.xlabel,
+        range=axis_range(scene.xlim, scene.xscale),
+        row=row,
+        col=col,
+    )
+    fig.update_yaxes(
+        type=scene.yscale,
+        title_text=scene.ylabel,
+        range=axis_range(scene.ylim, scene.yscale),
+        row=row,
+        col=col,
+    )
+    if scene.background_color is None:
+        return
+    color = rgba_to_plotly(scene.background_color)
+    if row is None and col is None:
+        fig.update_layout(plot_bgcolor=color)
+    else:
+        fig.add_shape(
+            type="rect",
+            xref="x domain",
+            yref="y domain",
+            x0=0,
+            x1=1,
+            y0=0,
+            y1=1,
+            fillcolor=color,
+            line_width=0,
+            layer="below",
+            row=row,
+            col=col,
         )
-    # plotly's ``yaxis.range`` takes both bounds together (``[ymin,
-    # ymax]``); unlike matplotlib's ``Axes.set_ylim``/bokeh's
-    # ``y_range.start``/``.end``, there is no way to pin one bound and
-    # leave the other autoscaled, so (same as
-    # ``plotmux.backends.xy.style.apply_common_style``) only both
-    # explicit bounds set together are forwarded.
-    if spec.ymin is not None and spec.ymax is not None:
-        layout["yaxis_range"] = [spec.ymin, spec.ymax]
-    # Same "both bounds together, or neither" shape as ``yaxis_range`` above,
-    # for the x-axis. Gated on ``XBoundSpec``: ``HistogramSpec``/``CdfSpec``
-    # are not ``XBoundSpec`` (their own ``xmin``/``xmax`` accept a quantile
-    # string, resolved and applied by their own renderer -- see
-    # ``plotmux.specs.base.XBoundSpec``).
-    if isinstance(spec, XBoundSpec) and spec.xmin is not None and spec.xmax is not None:
-        layout["xaxis_range"] = [spec.xmin, spec.xmax]
-    if spec.legend_title is not None:
-        layout["legend_title_text"] = spec.legend_title
-    legend = _legend_layout(spec)
-    if legend:
-        layout["legend"] = legend
-    fig.update_layout(**layout)
-    return fig
 
 
-def _legend_layout(spec: BaseSpec) -> dict[str, Any]:
-    r"""Build the ``legend`` layout dict from the legend style fields.
+def apply_legend(fig: Figure, scene: AxesScene) -> None:
+    r"""Apply the legend style of a scene onto a plotly ``Figure``.
 
-    Factored out of ``apply_common_style`` to keep its complexity under
-    the linter's limit.
+    plotly has one legend per figure.
 
     Args:
-        spec: The spec whose ``legend_location``/``legend_orientation``
-            to translate.
+        fig: The plotly ``Figure`` whose legend to style.
+        scene: The scene whose legend style to apply.
 
-    Returns:
-        The plotly ``legend`` layout entries, empty when neither field
-        is set (or when the location has no plotly equivalent).
+    Example:
+        ```pycon
+        >>> import plotly.graph_objects as go
+        >>> from plotmux.backends.plotly.style import apply_legend
+        >>> from plotmux.scene import AxesScene, LegendStyle
+        >>> fig = go.Figure()
+        >>> apply_legend(fig, AxesScene(primitives=(), legend=LegendStyle(title="t")))
+        >>> fig.layout.legend.title.text
+        't'
+
+        ```
     """
+    if scene.legend is None:
+        return
     legend: dict[str, Any] = {}
-    if spec.legend_location is not None and spec.legend_location in LEGEND_LOCATION:
-        legend.update(LEGEND_LOCATION[spec.legend_location])
-    if spec.legend_orientation is not None:
-        # plotly spells orientation ``"h"``/``"v"`` rather than
-        # plotmux's own ``"horizontal"``/``"vertical"``.
-        legend["orientation"] = "h" if spec.legend_orientation == "horizontal" else "v"
-    return legend
+    if scene.legend.title is not None:
+        legend["title"] = {"text": scene.legend.title}
+    if scene.legend.location is not None:
+        legend.update(LEGEND_LOCATION[scene.legend.location])
+    if scene.legend.orientation is not None:
+        legend["orientation"] = "h" if scene.legend.orientation == "horizontal" else "v"
+    if legend:
+        fig.update_layout(legend=legend)

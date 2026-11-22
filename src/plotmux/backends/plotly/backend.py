@@ -7,133 +7,275 @@ unconditionally.
 
 from __future__ import annotations
 
-__all__ = ["PlotlyBackend"]
+__all__ = ["PlotlyBackend", "trace_bars", "trace_line", "trace_points"]
 
+import math
+from html import escape
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
-from plotmux.backends.base import Backend, check_export_format
-from plotmux.backends.plotly.bar import render_bar
-from plotmux.backends.plotly.cdf import render_cdf
-from plotmux.backends.plotly.grid import render_grid
-from plotmux.backends.plotly.histogram import render_histogram
-from plotmux.backends.plotly.layer import render_layer
-from plotmux.backends.plotly.line import render_line
-from plotmux.backends.plotly.scatter import render_scatter
-from plotmux.backends.plotly.stacked_bar import render_stacked_bar
-from plotmux.backends.plotly.style import apply_common_style
-from plotmux.specs import (
-    BarSpec,
-    BaseSpec,
-    CdfSpec,
-    GridSpec,
-    HistogramSpec,
-    LayerSpec,
-    LineSpec,
-    ScatterSpec,
-    StackedBarSpec,
+from plotmux.backends.base import Backend, BackendCapabilities
+from plotmux.backends.plotly.style import (
+    DASH_STYLE,
+    LEGEND_LOCATION,
+    MARKER_STYLE,
+    apply_legend,
+    apply_style,
+    rgba_to_plotly,
 )
+from plotmux.primitives import Bars, Line
+from plotmux.scene import AxesScene, GridScene
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from pathlib import Path
 
     from plotly.graph_objects import Figure
 
+    from plotmux.primitives import Points, Primitive
 
-def _make_renderer(
-    fig_render: Callable[..., Figure],
-) -> Callable[..., Figure]:
-    r"""Build a ``render(spec, **kwargs) -> Figure`` function from a
-    ``fig_render(fig, spec, **kwargs) -> Figure`` function.
 
-    Every entry in ``_RENDERERS`` shares the same three steps: create
-    a ``go.Figure``, draw the spec-specific trace(s) onto it via
-    ``fig_render``, then apply the fields common to every chart type
-    (title, labels, scale, ...) via ``apply_common_style``. Factoring
-    that out here means adding a new chart type to this backend is
-    exactly one ``_RENDERERS`` entry -- ``_make_renderer(render_x)``
-    -- rather than a new hand-written wrapper function that repeats
-    the same three lines. Mirrors
-    ``plotmux.backends.bokeh.backend._make_renderer``. Unlike bokeh's
-    axis type (a construction-time argument of ``bokeh.plotting.figure``),
-    plotly's ``xaxis_type``/``yaxis_type`` can be set after the trace
-    is drawn, via ``apply_common_style``'s own ``fig.update_layout``
-    call, so no axis-type wiring is needed here at construction time.
+def _legend_style(label: str | None, alpha: float | None) -> dict[str, Any]:
+    r"""Return the trace options shared by every primitive.
 
     Args:
-        fig_render: The chart-specific ``(fig, spec, **kwargs) ->
-            Figure`` renderer to wrap, e.g. ``render_histogram``.
+        label: The legend label, or ``None``.
+        alpha: The opacity, or ``None``.
 
     Returns:
-        A ``(spec, **kwargs) -> Figure`` renderer suitable for
-            ``_RENDERERS``.
+        The ``name``/``showlegend`` options when there is a label, and
+            the ``opacity`` when there is an alpha.
+
+    Example:
+        ```pycon
+        >>> from plotmux.backends.plotly.backend import _legend_style
+        >>> _legend_style("a", 0.5)
+        {'name': 'a', 'showlegend': True, 'opacity': 0.5}
+        >>> _legend_style(None, None)
+        {}
+
+        ```
     """
+    options: dict[str, Any] = {}
+    if label is not None:
+        options["name"] = label
+        options["showlegend"] = True
+    if alpha is not None:
+        options["opacity"] = alpha
+    return options
 
-    def render(spec: BaseSpec, **kwargs: Any) -> Figure:
-        fig = go.Figure()
-        fig_render(fig, spec, **kwargs)
-        apply_common_style(fig, spec)
-        return fig
 
-    return render
+def trace_bars(bars: Bars) -> go.Bar:
+    r"""Turn a ``Bars`` primitive into a plotly ``Bar`` trace.
+
+    Args:
+        bars: The bars to draw.
+
+    Returns:
+        The ``Bar`` trace, with the base of each bar.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> from plotmux.backends.plotly.backend import trace_bars
+        >>> from plotmux.primitives import Bars
+        >>> trace_bars(Bars(x=np.arange(3.0), height=np.ones(3), base=np.zeros(3), width=0.8)).width
+        0.8
+
+        ```
+    """
+    return go.Bar(
+        x=bars.x,
+        y=bars.height,
+        base=bars.base,
+        width=bars.width,
+        marker_color=None if bars.color is None else rgba_to_plotly(bars.color),
+        **_legend_style(bars.label, bars.alpha),
+    )
+
+
+def trace_line(line: Line) -> go.Scatter:
+    r"""Turn a ``Line`` primitive into a plotly ``Scatter`` trace.
+
+    plotly has no infinite line: a slope is drawn as the segment of
+    ``line.x``, ``line.y``.
+
+    Args:
+        line: The line to draw.
+
+    Returns:
+        The ``Scatter`` trace in ``"lines"`` mode.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> from plotmux.backends.plotly.backend import trace_line
+        >>> from plotmux.primitives import Line
+        >>> trace_line(Line(x=np.arange(3.0), y=np.arange(3.0))).mode
+        'lines'
+
+        ```
+    """
+    style: dict[str, Any] = {"dash": DASH_STYLE[line.linestyle]}
+    if line.color is not None:
+        style["color"] = rgba_to_plotly(line.color)
+    if line.linewidth is not None:
+        style["width"] = line.linewidth
+    return go.Scatter(
+        x=line.x, y=line.y, mode="lines", line=style, **_legend_style(line.label, line.alpha)
+    )
+
+
+def trace_points(points: Points) -> go.Scatter:
+    r"""Turn a ``Points`` primitive into a plotly ``Scatter`` trace.
+
+    Args:
+        points: The markers to draw.
+
+    Returns:
+        The ``Scatter`` trace in ``"markers"`` mode.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> from plotmux.backends.plotly.backend import trace_points
+        >>> from plotmux.primitives import Points
+        >>> trace_points(Points(x=np.arange(3.0), y=np.arange(3.0))).mode
+        'markers'
+
+        ```
+    """
+    color = None if points.color is None else rgba_to_plotly(points.color)
+    edgecolor = color if points.edgecolor is None else rgba_to_plotly(points.edgecolor)
+    marker: dict[str, Any] = {}
+    if color is not None:
+        marker["color"] = color
+    if points.size is not None:
+        marker["size"] = points.size
+    if edgecolor is not None:
+        marker["line"] = {"color": edgecolor, "width": 1}
+    if points.fill is False:
+        marker["color"] = "rgba(0, 0, 0, 0)"
+        marker.setdefault("line", {"color": color, "width": 1})
+    if points.marker is not None:
+        marker["symbol"] = MARKER_STYLE[points.marker]
+    return go.Scatter(
+        x=points.x,
+        y=points.y,
+        mode="markers",
+        marker=marker,
+        **_legend_style(points.label, points.alpha),
+    )
+
+
+def _trace(primitive: Primitive) -> go.Bar | go.Scatter:
+    r"""Turn a primitive into a plotly trace.
+
+    Args:
+        primitive: The primitive to draw.
+
+    Returns:
+        The plotly trace.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> from plotmux.backends.plotly.backend import _trace
+        >>> from plotmux.primitives import Line
+        >>> type(_trace(Line(x=np.arange(3.0), y=np.arange(3.0)))).__name__
+        'Scatter'
+
+        ```
+    """
+    if isinstance(primitive, Bars):
+        return trace_bars(primitive)
+    if isinstance(primitive, Line):
+        return trace_line(primitive)
+    return trace_points(primitive)
+
+
+def _add_axes(
+    fig: Figure, scene: AxesScene, *, row: int | None = None, col: int | None = None
+) -> None:
+    r"""Add the traces of a scene to a plotly ``Figure`` and style them.
+
+    Args:
+        fig: The plotly ``Figure`` to draw onto.
+        scene: The scene of one axes.
+        row: The 1-indexed subplot row, or ``None``.
+        col: The 1-indexed subplot column, or ``None``.
+
+    Example:
+        ```pycon
+        >>> import numpy as np
+        >>> import plotly.graph_objects as go
+        >>> from plotmux.backends.plotly.backend import _add_axes
+        >>> from plotmux.primitives import Line
+        >>> from plotmux.scene import AxesScene
+        >>> fig = go.Figure()
+        >>> _add_axes(fig, AxesScene(primitives=(Line(x=np.arange(3.0), y=np.arange(3.0)),)))
+        >>> len(fig.data)
+        1
+
+        ```
+    """
+    for primitive in scene.primitives:
+        fig.add_trace(_trace(primitive), row=row, col=col)
+    apply_style(fig, scene, row=row, col=col)
+    if scene.categories is not None:
+        fig.update_xaxes(
+            categoryorder="array", categoryarray=list(scene.categories), row=row, col=col
+        )
 
 
 class PlotlyBackend(Backend):
     r"""Implement the plotly rendering backend.
 
-    One renderer function is registered per supported spec type in
-    ``_RENDERERS``. Adding a new chart type to this backend means
-    adding one entry here; it never grows an if/elif chain.
-
-    ``SlopeSpec`` is deliberately absent: unlike matplotlib/bokeh,
-    plotly has no native "line by slope, independent of data range"
-    primitive, so (same as altair/xy) it is only supported as a
-    ``LayerSpec`` child -- see ``plotmux.backends.plotly.slope`` and
-    DESIGN.md, section 8.1.
+    A grid is one ``Figure`` of ``make_subplots``. plotly has one
+    legend and one title per figure: a grid takes the legend style of
+    its first panel that has a legend, and the title of the grid, while
+    the title of each panel is a subplot title. The bars of a panel
+    overlay each other (``barmode="overlay"``) and carry their own
+    base, so a stacked bar is a stack of overlaid bars.
     """
 
     name: ClassVar[str] = "plotly"
-    # ``html``: plotly's own native, dependency-free export path
-    # (``Figure.write_html``), the format that best matches why a plotly
-    # backend is worth having -- interactive, standalone HTML output, same
-    # rationale as bokeh's ``html``-only ``supported_formats`` (see
-    # ``plotmux.backends.bokeh.backend.BokehBackend``). Static image export
-    # (``png``/``svg``/``pdf``) goes through ``Figure.write_image``, which
-    # additionally requires the ``kaleido`` package -- a heavier,
-    # environment-specific dependency than "pip install plotly", mirroring
-    # bokeh's Selenium-webdriver gap and altair's ``vl-convert-python`` gap.
-    # ``json``: plotly's other dependency-free export path
-    # (``Figure.write_json``), same rationale as altair's ``json`` format.
-    supported_formats: ClassVar[frozenset[str]] = frozenset({"html", "json"})
 
-    # See ``Backend._CAVEATS``/``capabilities()``. Documents in
-    # machine-readable form the ``SlopeSpec``-absence rationale already
-    # given in this class's docstring above.
-    _CAVEATS: ClassVar[tuple[str, ...]] = (
-        "SlopeSpec is only supported nested inside a LayerSpec, not standalone.",
-    )
+    def capabilities(self) -> BackendCapabilities:
+        return BackendCapabilities(
+            name=self.name,
+            formats=frozenset({"html", "json"}),
+            grid_formats=frozenset({"html", "json"}),
+            legend_locations=frozenset(LEGEND_LOCATION),
+            markers=frozenset(MARKER_STYLE),
+        )
 
-    _RENDERERS: ClassVar[dict[type[BaseSpec], Callable[..., Figure]]] = {
-        HistogramSpec: _make_renderer(render_histogram),
-        BarSpec: _make_renderer(render_bar),
-        StackedBarSpec: _make_renderer(render_stacked_bar),
-        CdfSpec: _make_renderer(render_cdf),
-        LineSpec: _make_renderer(render_line),
-        ScatterSpec: _make_renderer(render_scatter),
-        LayerSpec: _make_renderer(render_layer),
-        # ``render_grid`` builds its own ``Figure`` via
-        # ``plotly.subplots.make_subplots`` rather than drawing onto one
-        # figure built here -- it does not fit ``_make_renderer``'s "one
-        # figure, one fig_render call" shape, so it is registered directly
-        # instead of wrapped.
-        GridSpec: render_grid,
-    }
-
-    # ``render`` is inherited from ``Backend``: it dispatches on
-    # ``type(spec)`` against ``_RENDERERS`` above, so this backend does not
-    # need its own copy of that dispatch body.
+    def draw(self, scene: AxesScene | GridScene) -> Figure:
+        if not isinstance(scene, GridScene):
+            fig = go.Figure()
+            _add_axes(fig, scene)
+            apply_legend(fig, scene)
+            fig.update_layout(barmode="overlay")
+            if scene.title is not None:
+                fig.update_layout(title=scene.title)
+            return fig
+        nrows = math.ceil(len(scene.panels) / scene.ncols)
+        fig = make_subplots(
+            rows=nrows,
+            cols=scene.ncols,
+            subplot_titles=[escape(p.title) if p.title is not None else "" for p in scene.panels],
+        )
+        for i, panel in enumerate(scene.panels):
+            _add_axes(fig, panel, row=i // scene.ncols + 1, col=i % scene.ncols + 1)
+        for panel in scene.panels:
+            if panel.legend is not None:
+                apply_legend(fig, panel)
+                break
+        fig.update_layout(barmode="overlay")
+        if scene.title is not None:
+            fig.update_layout(title=scene.title)
+        return fig
 
     def show(self, native: Figure) -> None:
         r"""Display a plotly ``Figure`` with ``Figure.show``.
@@ -149,13 +291,8 @@ class PlotlyBackend(Backend):
         Args:
             native: The plotly ``Figure`` to export.
             path: The path where to save the figure.
-            fmt: The export format. ``"html"`` or ``"json"`` (see
-                ``supported_formats``).
-
-        Raises:
-            ValueError: if ``fmt`` is not a supported export format.
+            fmt: The export format, ``"html"`` or ``"json"``.
         """
-        check_export_format(fmt, self.supported_formats, self.name)
         if fmt == "html":
             native.write_html(str(path))
         else:

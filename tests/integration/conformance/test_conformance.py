@@ -27,11 +27,20 @@ from plotmux.specs import (
     SlopeSpec,
     StackedBarSpec,
 )
-from plotmux.testing.fixtures import matplotlib_available, xy_available
+from plotmux.testing.fixtures import (
+    altair_available,
+    bokeh_available,
+    matplotlib_available,
+    plotly_available,
+    xy_available,
+)
 from tests.integration.conformance.extract import (
     Drawn,
     expected,
+    extract_altair,
+    extract_bokeh,
     extract_matplotlib,
+    extract_plotly,
     extract_xy,
 )
 
@@ -93,9 +102,37 @@ def _axes_xy(native: Any) -> list[Drawn]:
     return [extract_xy(chart) for chart in charts]
 
 
+def _figures_bokeh(native: Any) -> list[Any]:
+    if type(native).__name__ == "figure":
+        return [native]
+    if type(native).__name__ == "Column":
+        return _figures_bokeh(native.children[-1])
+    return [child[0] for child in native.children if child[0] is not None]
+
+
+def _axes_bokeh(native: Any) -> list[Drawn]:
+    return [extract_bokeh(fig) for fig in _figures_bokeh(native)]
+
+
+def _axes_plotly(native: Any) -> list[Drawn]:
+    panels: dict[str, list[Any]] = {}
+    for trace in native.data:
+        panels.setdefault(trace.xaxis or "x", []).append(trace)
+    return [extract_plotly(traces) for traces in panels.values()]
+
+
+def _axes_altair(native: Any) -> list[Drawn]:
+    spec = native.to_dict()
+    views = spec.get("concat", [spec])
+    return [extract_altair(view, spec["datasets"]) for view in views]
+
+
 BACKENDS = [
     pytest.param("matplotlib", _axes_matplotlib, marks=matplotlib_available),
     pytest.param("xy", _axes_xy, marks=xy_available),
+    pytest.param("bokeh", _axes_bokeh, marks=bokeh_available),
+    pytest.param("plotly", _axes_plotly, marks=plotly_available),
+    pytest.param("altair", _axes_altair, marks=altair_available),
 ]
 
 

@@ -1,341 +1,201 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+import math
+from typing import Any, cast
 
-import numpy as np
 import pytest
 
-from plotmux.specs import HistogramSpec, LineSpec, ScatterSpec
+from plotmux.scene import AxesScene, LegendStyle
 from plotmux.testing.fixtures import bokeh_available
 from plotmux.utils.imports import is_bokeh_available
 
-if TYPE_CHECKING:
-    from bokeh.models import DataRange1d, Title
-
 if is_bokeh_available():
+    from bokeh.models import Legend
     from bokeh.plotting import figure
 
     from plotmux.backends.bokeh.style import (
-        ALPHA,
-        LABEL,
-        LINESTYLE,
-        LINEWIDTH,
-        FieldRule,
-        _apply_legend_style,
-        apply_common_style,
-        apply_fields,
+        LEGEND_LOCATIONS,
+        MARKERS,
+        _apply_legend,
+        apply_style,
         rgba_to_bokeh,
     )
 
-######################################
-#     Tests for rgba_to_bokeh     #
-######################################
+
+def _fig(*, label: str | None = None, **kwargs: Any) -> Any:
+    fig = figure(**kwargs)
+    fig.line([0, 1], [0, 1], legend_label=label) if label else fig.line([0, 1], [0, 1])
+    return fig
 
 
-def _rgba_to_bokeh_cases() -> list:
-    if not is_bokeh_available():
-        return []
-    return [
+def _styled(fig: Any, scene: AxesScene) -> Any:
+    return apply_style(fig, scene)
+
+
+def _scene(**kwargs: Any) -> AxesScene:
+    return AxesScene(primitives=(), **kwargs)
+
+
+##################################
+#     Tests for rgba_to_bokeh    #
+##################################
+
+
+@pytest.mark.parametrize(
+    ("color", "expected"),
+    [
         pytest.param((1.0, 0.0, 0.0, 1.0), (255, 0, 0, 1.0), id="opaque"),
         pytest.param((0.0, 0.0, 0.0, 0.0), (0, 0, 0, 0.0), id="transparent"),
         pytest.param((0.5, 0.5, 0.5, 0.5), (128, 128, 128, 0.5), id="rounding"),
-        pytest.param((1.0, 1.0, 1.0, 1.0), (255, 255, 255, 1.0), id="white"),
-    ]
-
-
-@pytest.mark.parametrize(("color", "expected"), _rgba_to_bokeh_cases())
+    ],
+)
 @bokeh_available
-def test_rgba_to_bokeh(
-    color: tuple[float, float, float, float], expected: tuple[int, int, int, float]
-) -> None:
-    assert rgba_to_bokeh(color) == expected
+def test_rgba_to_bokeh(color: tuple[float, ...], expected: tuple[float, ...]) -> None:
+    assert rgba_to_bokeh(cast("Any", color)) == expected
 
 
-#########################################
-#     Tests for apply_common_style     #
-#########################################
+################################
+#     Tests for apply_style    #
+################################
 
 
 @bokeh_available
-def test_apply_common_style_title() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10, title="my-title")
-    fig = figure()
-    out = apply_common_style(fig, spec)
-    assert cast("Title", out.title).text == "my-title"
+def test_apply_style_returns_the_figure() -> None:
+    fig = _fig()
+    assert apply_style(fig, _scene()) is fig
 
 
 @bokeh_available
-def test_apply_common_style_no_title() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10)
-    fig = figure()
-    out = apply_common_style(fig, spec)
-    assert cast("Title", out.title).text == ""
+def test_apply_style_title() -> None:
+    assert _styled(_fig(), _scene(title="t")).title.text == "t"
 
 
 @bokeh_available
-def test_apply_common_style_labels() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10, xlabel="x", ylabel="y")
-    fig = figure()
-    out = apply_common_style(fig, spec)
-    assert out.xaxis.axis_label == "x"
-    assert out.yaxis.axis_label == "y"
+def test_apply_style_no_title() -> None:
+    assert _styled(_fig(), _scene()).title.text == ""
 
 
 @bokeh_available
-def test_apply_common_style_no_labels() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10)
-    fig = figure()
-    out = apply_common_style(fig, spec)
-    assert out.xaxis.axis_label is None
-    assert out.yaxis.axis_label is None
+def test_apply_style_xlabel() -> None:
+    assert _styled(_fig(), _scene(xlabel="x")).xaxis.axis_label == "x"
 
 
 @bokeh_available
-def test_apply_common_style_returns_same_figure() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10)
-    fig = figure()
-    out = apply_common_style(fig, spec)
-    assert out is fig
+def test_apply_style_ylabel() -> None:
+    assert _styled(_fig(), _scene(ylabel="y")).yaxis.axis_label == "y"
 
 
 @bokeh_available
-def test_apply_common_style_background_color() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10, background_color="red")
-    fig = figure()
-    out = apply_common_style(fig, spec)
-    assert out.background_fill_color is not None
+def test_apply_style_no_labels() -> None:
+    fig = _styled(_fig(), _scene())
+    assert (fig.xaxis.axis_label, fig.yaxis.axis_label) == (None, None)
 
 
 @bokeh_available
-def test_apply_common_style_no_background_color() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10)
-    fig = figure()
-    default_color = fig.background_fill_color
-    out = apply_common_style(fig, spec)
-    assert out.background_fill_color == default_color
+def test_apply_style_background_color() -> None:
+    fig = _styled(_fig(), _scene(background_color=(1.0, 0.0, 0.0, 1.0)))
+    assert fig.background_fill_color == "rgb(255, 0, 0)"
 
 
 @bokeh_available
-def test_apply_common_style_ymin_ymax() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10, ymin=0.0, ymax=10.0)
-    fig = figure()
-    out = apply_common_style(fig, spec)
-    assert cast("DataRange1d", out.y_range).start == 0.0
-    assert cast("DataRange1d", out.y_range).end == 10.0
+def test_apply_style_no_background_color_keeps_the_default() -> None:
+    assert _styled(_fig(), _scene()).background_fill_color == "#ffffff"
 
 
 @bokeh_available
-def test_apply_common_style_no_ymin_ymax() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10)
-    fig = figure()
-    out = apply_common_style(fig, spec)
-    assert isinstance(out, figure)
+def test_apply_style_xlim() -> None:
+    fig = _styled(_fig(), _scene(xlim=(1.0, 2.0)))
+    assert (fig.x_range.start, fig.x_range.end) == (1.0, 2.0)
 
 
 @bokeh_available
-def test_apply_common_style_xmin_xmax() -> None:
-    # ``ScatterSpec`` rather than ``HistogramSpec``: ``HistogramSpec.xmin``/
-    # ``.xmax`` is a different, quantile-capable field (see
-    # ``plotmux.specs.base.XBoundSpec``), resolved and applied by
-    # ``render_histogram`` itself, not the plain, explicit-value-only
-    # ``BaseSpec``-shared ``xmin``/``xmax`` under test here.
-    spec = ScatterSpec(x=np.arange(10), y=np.arange(10), xmin=0.0, xmax=10.0)
-    fig = figure()
-    out = apply_common_style(fig, spec)
-    assert cast("DataRange1d", out.x_range).start == 0.0
-    assert cast("DataRange1d", out.x_range).end == 10.0
+def test_apply_style_xlim_lower_bound_only() -> None:
+    fig = _styled(_fig(), _scene(xlim=(1.0, None)))
+    assert fig.x_range.start == 1.0
 
 
 @bokeh_available
-def test_apply_common_style_no_xmin_xmax() -> None:
-    spec = ScatterSpec(x=np.arange(10), y=np.arange(10))
-    fig = figure()
-    out = apply_common_style(fig, spec)
-    assert isinstance(out, figure)
+def test_apply_style_xlim_upper_bound_only() -> None:
+    fig = _styled(_fig(), _scene(xlim=(None, 2.0)))
+    assert fig.x_range.end == 2.0
 
 
 @bokeh_available
-def test_apply_common_style_histogram_xbounds_not_reapplied() -> None:
-    # ``HistogramSpec``/``CdfSpec`` are not ``XBoundSpec`` (see
-    # ``plotmux.specs.base.XBoundSpec``): their own ``xmin``/``xmax`` may
-    # hold an unresolved quantile string, so ``apply_common_style`` must
-    # not read them -- doing so used to crash the moment either bound was
-    # set to a quantile string like ``"q0.1"``.
-    spec = HistogramSpec(values=np.arange(101), bins=10, xmin="q0.1", xmax="q0.9")
-    fig = figure()
-    out = apply_common_style(fig, spec)
-    assert isinstance(out, figure)
+def test_apply_style_ylim() -> None:
+    fig = _styled(_fig(), _scene(ylim=(1.0, 2.0)))
+    assert (fig.y_range.start, fig.y_range.end) == (1.0, 2.0)
 
 
 @bokeh_available
-def test_apply_common_style_legend_title() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10, legend_title="Lines")
-    fig = figure()
-    fig.circle([1, 2], [3, 4], legend_label="s")
-    out = apply_common_style(fig, spec)
-    assert out.legend[0].title == "Lines"
+def test_apply_style_categorical_x_range_is_kept() -> None:
+    fig = _styled(_fig(x_range=["a", "b"]), _scene(categories=("a", "b"), xlim=(1.0, 2.0)))
+    assert list(fig.x_range.factors) == ["a", "b"]
 
 
 @bokeh_available
-def test_apply_common_style_no_legend_title() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10)
-    fig = figure()
-    fig.circle([1, 2], [3, 4], legend_label="s")
-    out = apply_common_style(fig, spec)
-    assert out.legend[0].title is None
+def test_apply_style_no_limits_autoscale() -> None:
+    fig = _styled(_fig(), _scene())
+    assert math.isnan(fig.x_range.start)
 
 
 @bokeh_available
-def test_apply_common_style_legend_title_no_legend_is_noop() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10, legend_title="Lines")
-    fig = figure()
-    out = apply_common_style(fig, spec)
-    assert len(out.legend) == 0
-
-
-@bokeh_available
-def test_apply_common_style_legend_location() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="top_left")
-    fig = figure()
-    fig.circle([1, 2], [3, 4], legend_label="s")
-    out = apply_common_style(fig, spec)
-    assert out.legend[0].location == "top_left"
-
-
-@bokeh_available
-def test_apply_common_style_legend_location_best_is_noop() -> None:
-    # bokeh has no "best" auto-placement location (see
-    # ``apply_common_style``'s own comment), so ``legend_location="best"``
-    # leaves bokeh's own default location untouched.
-    spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="best")
-    fig = figure()
-    fig.circle([1, 2], [3, 4], legend_label="s")
-    default_location = fig.legend[0].location
-    out = apply_common_style(fig, spec)
-    assert out.legend[0].location == default_location
-
-
-@bokeh_available
-def test_apply_common_style_legend_location_no_legend_is_noop() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10, legend_location="top_left")
-    fig = figure()
-    out = apply_common_style(fig, spec)
-    assert len(out.legend) == 0
-
-
-@bokeh_available
-def test_apply_common_style_legend_orientation() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10, legend_orientation="horizontal")
-    fig = figure()
-    fig.circle([1, 2], [3, 4], legend_label="s")
-    out = apply_common_style(fig, spec)
-    assert out.legend[0].orientation == "horizontal"
-
-
-@bokeh_available
-def test_apply_common_style_no_legend_orientation() -> None:
-    spec = HistogramSpec(values=np.arange(101), bins=10)
-    fig = figure()
-    fig.circle([1, 2], [3, 4], legend_label="s")
-    default_orientation = fig.legend[0].orientation
-    out = apply_common_style(fig, spec)
-    assert out.legend[0].orientation == default_orientation
-
-
-###################################
-#     Tests for apply_fields     #
-###################################
-
-
-@bokeh_available
-def test_apply_fields_sets_translated_values() -> None:
-    spec = LineSpec(x=np.array([0, 1]), y=np.array([0, 1]), label="s", alpha=0.5, linewidth=2.0)
-    out = apply_fields(spec, [LABEL, ALPHA, LINEWIDTH, LINESTYLE])
-    assert out == {
-        "legend_label": "s",
-        "alpha": 0.5,
-        "line_width": 2.0,
-        "line_dash": "solid",
-    }
-
-
-@bokeh_available
-def test_apply_fields_omits_none_by_default() -> None:
-    spec = LineSpec(x=np.array([0, 1]), y=np.array([0, 1]))
-    out = apply_fields(spec, [LABEL, ALPHA, LINEWIDTH])
-    assert out == {}
-
-
-@bokeh_available
-def test_apply_fields_keeps_none_when_omit_if_none_is_false() -> None:
-    rule = FieldRule("label", "legend_label", omit_if_none=False)
-    spec = LineSpec(x=np.array([0, 1]), y=np.array([0, 1]))
-    out = apply_fields(spec, [rule])
-    assert out == {"legend_label": None}
-
-
-@bokeh_available
-def test_apply_fields_does_not_override_existing_kwarg() -> None:
-    spec = LineSpec(x=np.array([0, 1]), y=np.array([0, 1]), alpha=0.5)
-    out = apply_fields(spec, [ALPHA], {"alpha": 0.9})
-    assert out == {"alpha": 0.9}
-
-
-@bokeh_available
-def test_apply_fields_applies_translate_callable() -> None:
-    rule = FieldRule("alpha", "line_alpha", translate=lambda value: value * 2)
-    spec = LineSpec(x=np.array([0, 1]), y=np.array([0, 1]), alpha=0.25)
-    out = apply_fields(spec, [rule])
-    assert out == {"line_alpha": 0.5}
-
-
-###########################################
-#     Tests for _apply_legend_style     #
-###########################################
-
-
-@bokeh_available
-def test_apply_legend_style_title() -> None:
-    fig = figure()
-    fig.circle([1, 2], [3, 4], legend_label="s")
-    _apply_legend_style(fig, HistogramSpec(values=np.arange(101), legend_title="Lines"))
+def test_apply_style_legend() -> None:
+    fig = _styled(_fig(label="a"), _scene(legend=LegendStyle(title="Lines")))
     assert fig.legend[0].title == "Lines"
 
 
-@bokeh_available
-def test_apply_legend_style_location() -> None:
-    fig = figure()
-    fig.circle([1, 2], [3, 4], legend_label="s")
-    _apply_legend_style(fig, HistogramSpec(values=np.arange(101), legend_location="top_left"))
-    assert fig.legend[0].location == "top_left"
+#################################
+#     Tests for _apply_legend   #
+#################################
 
 
 @bokeh_available
-def test_apply_legend_style_location_best_keeps_default() -> None:
-    fig = figure()
-    fig.circle([1, 2], [3, 4], legend_label="s")
-    _apply_legend_style(fig, HistogramSpec(values=np.arange(101), legend_location="best"))
-    assert fig.legend[0].location == "top_right"
-
-
-@bokeh_available
-def test_apply_legend_style_orientation() -> None:
-    fig = figure()
-    fig.circle([1, 2], [3, 4], legend_label="s")
-    _apply_legend_style(fig, HistogramSpec(values=np.arange(101), legend_orientation="horizontal"))
-    assert fig.legend[0].orientation == "horizontal"
-
-
-@bokeh_available
-def test_apply_legend_style_no_field_keeps_defaults() -> None:
-    fig = figure()
-    fig.circle([1, 2], [3, 4], legend_label="s")
-    _apply_legend_style(fig, HistogramSpec(values=np.arange(101)))
+def test_apply_legend_without_legend_in_the_scene_is_a_noop() -> None:
+    fig = _fig(label="a")
+    _apply_legend(fig, _scene())
     assert fig.legend[0].title is None
 
 
 @bokeh_available
-def test_apply_legend_style_no_legend_is_noop() -> None:
-    fig = figure()
-    _apply_legend_style(fig, HistogramSpec(values=np.arange(101), legend_title="Lines"))
-    assert len(fig.legend) == 0
+def test_apply_legend_without_labeled_glyph_is_a_noop() -> None:
+    _apply_legend(_fig(), _scene(legend=LegendStyle(title="t")))
+
+
+@bokeh_available
+def test_apply_legend_title() -> None:
+    fig = _fig(label="a")
+    _apply_legend(fig, _scene(legend=LegendStyle(title="Lines")))
+    assert fig.legend[0].title == "Lines"
+
+
+@bokeh_available
+def test_apply_legend_no_title_keeps_the_default() -> None:
+    fig = _fig(label="a")
+    _apply_legend(fig, _scene(legend=LegendStyle()))
+    assert fig.legend[0].title is None
+
+
+@pytest.mark.parametrize("location", LEGEND_LOCATIONS)
+@bokeh_available
+def test_apply_legend_location(location: str) -> None:
+    fig = _fig(label="a")
+    _apply_legend(fig, _scene(legend=LegendStyle(location=cast("Any", location))))
+    assert fig.legend[0].location == location
+
+
+@pytest.mark.parametrize("orientation", ["vertical", "horizontal"])
+@bokeh_available
+def test_apply_legend_orientation(orientation: str) -> None:
+    fig = _fig(label="a")
+    _apply_legend(fig, _scene(legend=LegendStyle(orientation=cast("Any", orientation))))
+    assert fig.legend[0].orientation == orientation
+
+
+@bokeh_available
+def test_apply_legend_is_a_legend_model() -> None:
+    assert isinstance(_fig(label="a").legend[0], Legend)
+
+
+@bokeh_available
+def test_markers() -> None:
+    assert MARKERS == ("circle", "square", "triangle", "diamond", "cross", "x")
