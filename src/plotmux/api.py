@@ -114,6 +114,41 @@ class BoundedPanelOptions(PanelOptions, total=False):
     xmax: float | None
 
 
+_PANEL_KEYS = PanelOptions.__optional_keys__
+_BOUNDED_PANEL_KEYS = BoundedPanelOptions.__optional_keys__
+
+
+def _check_options(function: str, options: Mapping[str, Any], allowed: frozenset[str]) -> None:
+    r"""Check that the keyword options of a plotting function are known.
+
+    The axes options are collected by ``**panel`` and forwarded to
+    ``PanelSpec``, so an unknown keyword is checked here to be a
+    ``TypeError`` of the function the user called, with the valid names.
+
+    Args:
+        function: The name of the plotting function, used in the message.
+        options: The keyword options collected by ``**panel``.
+        allowed: The names of the axes options of the function.
+
+    Raises:
+        TypeError: if ``options`` has a key that is not in ``allowed``.
+
+    Example:
+        ```pycon
+        >>> from plotmux.api import _check_options
+        >>> _check_options("hist", {"title": "t"}, frozenset({"title"}))
+
+        ```
+    """
+    for key in options:
+        if key not in allowed:
+            msg = (
+                f"{function}() got an unexpected keyword argument {key!r}. "
+                f"The axes options are: {', '.join(sorted(allowed))}"
+            )
+            raise TypeError(msg)
+
+
 def _render(spec: PanelSpec | GridSpec, backend: str | None) -> Figure:
     r"""Render a spec through a backend and wrap the result in a
     ``Figure``.
@@ -207,6 +242,7 @@ def hist(
 
         ```
     """
+    _check_options("hist", panel, _PANEL_KEYS)
     mark = HistogramSpec(
         values=np.asarray(values),
         bins=bins,
@@ -254,6 +290,7 @@ def bar(
 
         ```
     """
+    _check_options("bar", panel, _BOUNDED_PANEL_KEYS)
     mark = BarSpec(
         x=np.asarray(x), y=np.asarray(y), width=width, label=label, color=color, alpha=alpha
     )
@@ -294,6 +331,7 @@ def stacked_bar(
 
         ```
     """
+    _check_options("stacked_bar", panel, _BOUNDED_PANEL_KEYS)
     mark = StackedBarSpec(x=np.asarray(x), series=tuple(series), width=width, alpha=alpha)
     return _render_mark(mark, panel)
 
@@ -341,6 +379,7 @@ def cdf(
 
         ```
     """
+    _check_options("cdf", panel, _PANEL_KEYS)
     mark = CdfSpec(
         values=np.asarray(values),
         nbins=nbins,
@@ -386,6 +425,7 @@ def line(
 
         ```
     """
+    _check_options("line", panel, _BOUNDED_PANEL_KEYS)
     mark = LineSpec(
         x=np.asarray(x),
         y=np.asarray(y),
@@ -435,6 +475,7 @@ def scatter(
 
         ```
     """
+    _check_options("scatter", panel, _BOUNDED_PANEL_KEYS)
     mark = ScatterSpec(
         x=np.asarray(x),
         y=np.asarray(y),
@@ -490,6 +531,7 @@ def slope(
 
         ```
     """
+    _check_options("slope", panel, _BOUNDED_PANEL_KEYS)
     mark = SlopeSpec(
         gradient=gradient,
         intercept=intercept,
@@ -535,6 +577,7 @@ def layer(*items: MarkSpec | Figure, **panel: Unpack[BoundedPanelOptions]) -> Fi
 
         ```
     """
+    _check_options("layer", panel, _BOUNDED_PANEL_KEYS)
     marks: list[MarkSpec] = []
     figure_panels: list[PanelSpec] = []
     for item in items:

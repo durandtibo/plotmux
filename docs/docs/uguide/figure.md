@@ -62,10 +62,12 @@ One exception to this table: a `plotmux.grid(..., backend="xy")` figure only sup
 even though the `xy` backend otherwise supports the full row above. `xy` has no primitive for
 composing arbitrary, already-built panels side by side, so a grid is laid out at export time as
 sandboxed HTML iframes rather than a rasterizable native object; see [Grid Layouts](grid.md) for
-details.
+details. The formats of a grid are declared apart from those of a single panel
+(`BackendCapabilities.grid_formats`).
 
-Requesting an unsupported format raises a `ValueError` listing the formats the backend supports.
-Check `fig.supported_formats` ahead of time to avoid relying on that error for control flow:
+Requesting an unsupported format raises an `UnsupportedFormatError` (also a `ValueError`) that names
+the backend and lists the formats it supports, **before** any file or directory is created. Check
+`fig.supported_formats` ahead of time to avoid relying on that error for control flow:
 
 ```pycon
 >>> import plotmux
@@ -107,24 +109,26 @@ rather than growing the common API to the union of every backend.
 
 ## Checking What a Backend Supports Ahead of Time
 
-Not every backend supports every spec type or field identically (e.g. `plotmux.slope()` is
-matplotlib/bokeh-only standalone, see [The Plotting API](api.md)). `plotmux.backends.capabilities()`
-answers this without triggering the failure:
+A backend declares what it supports as data, in its `BackendCapabilities`: the export formats of a
+figure and of a grid, the legend locations and the scatter markers. Every chart type works
+standalone, in a layer and in a grid on every backend, so the differences between the backends are
+only these four sets. `plotmux.backends.capabilities()` answers without triggering the failure:
 
 ```pycon
 >>> import plotmux
 >>> caps = plotmux.backends.capabilities("altair")
->>> caps.backend_name
+>>> caps.name
 'altair'
->>> caps.caveats  # doctest: +SKIP
-(...)
+>>> sorted(caps.formats)
+['html', 'json']
+>>> sorted(caps.markers)
+['circle', 'cross', 'diamond', 'square', 'triangle', 'x']
 
 ```
 
-`caps.spec_types` is the set of spec types the backend has a top-level renderer for, and
-`caps.caveats` is a short, human-readable list of known partial-support gaps (e.g. `BarSpec.width`
-being ignored, or `SlopeSpec` only being supported as a `layer()` child) that aren't otherwise
-expressible from `spec_types` alone.
+A request outside these sets (a legend location or a marker that the backend does not honor) raises
+an `UnsupportedSpecError` naming the backend and the supported values, before anything is drawn,
+instead of being silently ignored.
 
 ## What's Next
 

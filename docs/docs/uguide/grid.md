@@ -5,10 +5,10 @@ a grid.
 
 ## Overview
 
-`plotmux.grid()` accepts any number of child specs, or already-rendered `Figure`s, and lays each one
+`plotmux.grid()` accepts any number of panels, marks, or single-panel `Figure`s, and lays each one
 out in its own, independent panel (the backend-agnostic equivalent of Matplotlib's
-`pyplot.subplots()`). This is different from [`plotmux.layer()`](layer.md), which draws every child
-onto one _shared_ set of axes: with `grid`, each child keeps its own axes.
+`pyplot.subplots()`). This is different from [`plotmux.layer()`](layer.md), which draws every item
+onto one _shared_ set of axes: with `grid`, each item keeps its own axes.
 
 ```pycon
 >>> import numpy as np
@@ -16,7 +16,7 @@ onto one _shared_ set of axes: with `grid`, each child keeps its own axes.
 >>> from plotmux.specs import HistogramSpec
 >>> fig = plotmux.grid(
 ...     HistogramSpec(values=np.arange(101), bins=10),
-...     plotmux.line([0, 100], [0, 5]),
+...     plotmux.line([0, 100], [0, 5], title="a line"),
 ...     ncols=2,
 ...     title="Two independent panels",
 ... )
@@ -24,12 +24,25 @@ onto one _shared_ set of axes: with `grid`, each child keeps its own axes.
 
 ```
 
-A `Figure` passed as an item, such as `plotmux.line(...)` above, is shorthand for its `.spec`: only
-the spec is reused. The earlier native figure is discarded and everything is re-rendered together,
-since two independent native figures can't be merged after the fact in either backend.
+A mark (such as the histogram above) is wrapped in a default panel. A `Figure` passed as an item,
+such as `plotmux.line(...)` above, contributes its panel with its own title, labels, scales and
+limits. The earlier native figure is discarded and everything is re-rendered together.
 
-An item may itself be built with [`plotmux.layer()`](layer.md), since layering and gridding are
-independent, composable concerns: a panel can contain several series sharing one set of axes.
+A panel may hold several marks, since layering and gridding are independent, composable concerns: a
+panel can contain several series sharing one set of axes, whatever the marks (a slope and a stacked
+bar included):
+
+```pycon
+>>> import plotmux
+>>> fig = plotmux.grid(
+...     plotmux.layer(plotmux.line([1, 2, 3], [1, 2, 3]), plotmux.scatter([1, 2, 3], [1, 2, 3])),
+...     plotmux.slope(1, 0, xmin=0, xmax=3),
+...     ncols=2,
+... )
+>>> len(fig.spec.panels)
+2
+
+```
 
 ## Arranging Panels
 
@@ -54,14 +67,18 @@ items is not a multiple of `ncols`:
 Unlike `hist`, `line`, `scatter`, and `layer`, `grid` only accepts `title` and `backend`, plus
 `ncols`. `title` is shown once above the whole grid, not any individual panel. `xlabel`, `ylabel`,
 `xscale`, `yscale`, and `color` have no meaning at the grid level since each panel keeps its own
-style: set those on the child specs themselves instead.
+style: set those on the panels themselves instead (a misspelled or unsupported keyword is a
+`TypeError`).
+
+The legend and the plot background are per panel on `matplotlib`, `bokeh`, `altair` and `xy`. `plotly`
+has one legend per figure, so a grid takes the legend style of its first panel that has a legend; the
+background of a panel is a rectangle below its traces.
 
 ## Restrictions
 
-`grid` does not support nesting: passing a `GridSpec` (or a `Figure` built from one) as one of its
-items raises a `ValueError`. Layout is one flat pass over `cells`, so flatten nested grids yourself
-before calling `grid` rather than relying on recursive dispatch. `grid` also requires at least one
-item, and `ncols` must be a positive integer.
+A grid holds panels, and a panel holds marks, so a grid cannot be nested in the type: passing a
+`GridSpec` (or a `Figure` built from one) as one of the items raises an `InvalidSpecError`. `grid`
+also requires at least one item, and `ncols` must be a positive integer.
 
 ## The `xy` Backend Is HTML-Only for Grids
 
@@ -69,10 +86,10 @@ item, and `ncols` must be a positive integer.
 `facet_chart` repeats one fixed chart per value of a data column, which is a different thing), so
 `grid(..., backend="xy")` lays out each panel's standalone chart as a sandboxed HTML `<iframe>`
 at export time instead of producing a single rasterizable native figure. As a result,
-`fig.save(...)` only accepts an `.html` path for an `xy` grid; every other format `xy` otherwise
-supports (`png`, `svg`, `pdf`, ...) raises a `ValueError` for this one figure shape. Every other
-backend (`matplotlib`, `bokeh`, `altair`, `plotly`) supports its full usual set of formats for
-`grid()` too.
+`fig.save(...)` only accepts an `.html` path for an `xy` grid, and every other format raises an
+`UnsupportedFormatError` before any file or directory is created. This is declared in
+`Backend.capabilities().grid_formats`, and `fig.supported_formats` of a grid reads it. Every other
+backend supports its full usual set of formats for `grid()` too.
 See [The Figure Object](figure.md#saving-a-figure) for the full per-backend format table.
 
 ## What's Next

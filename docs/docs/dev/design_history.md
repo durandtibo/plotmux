@@ -10,6 +10,55 @@ open work; every gap below is closed unless the entry says otherwise.
 For what's still open, see `DESIGN.md`'s own "Open questions" and
 "Candidate future work" sections.
 
+> **Note on the links to `DESIGN.md`.** The sections of `DESIGN.md` that this file refers to (for
+> example `8.1 Partial or asymmetric backend support` or `4.8 Layering`) are those of the document
+> before the core-model redesign of 2026-11-22 (see below). `DESIGN.md` was rewritten as the
+> current-state reference of the new design; the old text is in the git history (`git log --
+DESIGN.md`).
+
+## Core-model redesign (2026-11-22)
+
+The case studies below and the external design review closed gaps one at a time, and each new field,
+spec or backend was paid for in every backend. The redesign of `review/target_state.md` removed the
+cause: **specs are plain data, the core turns them into three drawing primitives (`Bars`, `Line`,
+`Points`), a backend only draws those primitives.** It was done in ten steps, one pull request each:
+
+1. the documentation fixed (five backends everywhere, `DESIGN.md` split) (#167);
+2. immutable specs with value equality (#168);
+3. `Figure.show` and the display owned by the backend (#169);
+4. the lazy registry and the plugin contract (#170);
+5. the input policy of `NaN` and `inf` (#171);
+6. the core model: `MarkSpec`, `PanelSpec`, `GridSpec`, `plotmux.primitives`, `plotmux.scene`, the
+   exact CDF and the rewritten `api.py` (#173);
+7. `matplotlib` and `xy` ported, `Backend` and `BackendCapabilities` rewritten, the conformance test
+   (#174);
+8. `bokeh`, `altair` and `plotly` ported (#175);
+9. the leftovers removed and the gates run (#176);
+10. the documentation, the notebooks and the migration page.
+
+What it closed:
+
+- **F1**: a spec mixed the mark and the axes. The axes are on `PanelSpec` once; `LayerSpec`,
+  `XBoundSpec` and the ignored fields of `GridSpec` are gone.
+- **F2**: the support matrix was irregular. A slope and a stacked bar work standalone, in a layer and
+  in a grid on every backend (the slope is a segment over the x extent of the panel).
+- **F3**: the same spec drew different things (the default number of CDF bins, a CDF renormalized by
+  its range, `BarSpec.width` ignored on altair, `marker="x"`, a library default first color). The
+  CDF is exact, every uncolored primitive gets a palette color, and the width and the marker work on
+  every backend.
+- **F4**: the same statistic was computed by up to five code paths. Bins, steps, ranges and stacking
+  are computed once, in the core.
+- **F7**: the `**kwargs` pass-through is removed; a typo is a `TypeError` of `plotmux`.
+- **F9**: the capabilities are data (`BackendCapabilities`), queryable and checked before drawing.
+- **F11**: the boilerplate of `api.py` and of the backends. The package is 2,505 lines smaller
+  (26%), and the five backends went from 60 modules to 16.
+- **F12**: `altair` took 3.4 s to render a line of 100,000 points (the schema validation of the
+  records); its data is now one CSV string and the render takes 55 ms.
+
+The old asymmetries recorded in the cumulative status log below (a standalone slope on two
+backends, `BarSpec.width` on altair, `legend_location="best"`, `marker="x"` on altair) no longer
+exist, and the old open questions about `LayerSpec` are void.
+
 ## Cumulative status log
 
 Core abstraction, eight chart specs (histogram, cdf, line, scatter,

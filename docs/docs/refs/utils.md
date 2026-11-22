@@ -4,6 +4,12 @@
 
 ::: plotmux.utils.categorical
 
-::: plotmux.utils.slope
+::: plotmux.utils.array
+
+::: plotmux.utils.equality
+
+::: plotmux.utils.extent
+
+::: plotmux.utils.finite
 
 ::: plotmux.utils.imports
