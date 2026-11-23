@@ -699,6 +699,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrating to the Primitives-Based Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1207,6 +1235,34 @@
     
   
     Figure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene
   
 
     
@@ -1749,7 +1805,7 @@ each one also derives from) applies.</p>
 
 
         <p>Raised when a backend does not support a requested export format.</p>
-<p>See <code>plotmux.backends.base.check_export_format</code>.</p>
+<p>See <code>plotmux.backends.base.BackendCapabilities.check_format</code>.</p>
 
 
 
@@ -1780,8 +1836,9 @@ each one also derives from) applies.</p>
 
 
 
-        <p>Raised when a backend has no renderer registered for a spec type.</p>
-<p>See <code>plotmux.backends.base.resolve_renderer</code>.</p>
+        <p>Raised when a backend cannot honor a request of a spec (a legend
+location or a marker it does not support).</p>
+<p>See <code>plotmux.backends.base.BackendCapabilities.check</code>.</p>
 
 
 

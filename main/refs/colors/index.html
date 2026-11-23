@@ -699,6 +699,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrating to the Primitives-Based Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1017,6 +1045,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#plotmux.colors.parser.parse_optional_color" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        parse_optional_color
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1141,6 +1180,34 @@
     
   
     Figure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene
   
 
     
@@ -1313,6 +1380,17 @@
     <span class="md-ellipsis">
       
         parse_color
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.colors.parser.parse_optional_color" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        parse_optional_color
       
     </span>
   </a>
@@ -1506,6 +1584,117 @@ RGB(A) tuple of floats in <code>[0, 1]</code>.</p>
 <span class="go">(1.0, 0.0, 0.0, 1.0)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">parse_color</span><span class="p">((</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">))</span>
 <span class="go">(0.5, 0.5, 0.5, 1.0)</span>
+</code></pre></div>
+</details>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="plotmux.colors.parser.parse_optional_color" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.colors.parser.parse_optional_color</span>
+
+
+<a href="#plotmux.colors.parser.parse_optional_color" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">parse_optional_color</span><span class="p">(</span>
+    <span class="n">color</span><span class="p">:</span> <span class="n"><span title="plotmux.colors.parser.Color">Color</span></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Parse a color that may be unset.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>color</code>
+            </td>
+            <td>
+                  <code><span title="plotmux.colors.parser.Color">Color</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The color to parse, or <code>None</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>, <span title="float">float</span>, <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>None</code> if <code>color</code> is <code>None</code>, else the RGBA tuple of
+<code>parse_color</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>if <code>color</code> is not <code>None</code> and not a valid
+color.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.colors</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_optional_color</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">parse_optional_color</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">parse_optional_color</span><span class="p">(</span><span class="s2">"#ff0000"</span><span class="p">)</span>
+<span class="go">(1.0, 0.0, 0.0, 1.0)</span>
 </code></pre></div>
 </details>
 

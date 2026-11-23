@@ -14,7 +14,7 @@
         <link rel="prev" href="../layer/">
       
       
-        <link rel="next" href="../../dev/development/">
+        <link rel="next" href="../migration/">
       
       
         
@@ -815,6 +815,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrating to the Primitives-Based Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1192,6 +1220,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/scene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/specs/" class="md-nav__link">
         
   
@@ -1419,26 +1475,36 @@
 <p><img alt="📖" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/1f4d6.svg" title=":book:" /> This page describes <code>plotmux.grid()</code>, which lays out several charts as independent panels in
 a grid.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p><code>plotmux.grid()</code> accepts any number of child specs, or already-rendered <code>Figure</code>s, and lays each one
+<p><code>plotmux.grid()</code> accepts any number of panels, marks, or single-panel <code>Figure</code>s, and lays each one
 out in its own, independent panel (the backend-agnostic equivalent of Matplotlib's
-<code>pyplot.subplots()</code>). This is different from <a href="../layer/"><code>plotmux.layer()</code></a>, which draws every child
-onto one <em>shared</em> set of axes: with <code>grid</code>, each child keeps its own axes.</p>
+<code>pyplot.subplots()</code>). This is different from <a href="../layer/"><code>plotmux.layer()</code></a>, which draws every item
+onto one <em>shared</em> set of axes: with <code>grid</code>, each item keeps its own axes.</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">HistogramSpec</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="n">HistogramSpec</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">101</span><span class="p">),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span>
-<span class="gp">... </span>    <span class="n">plotmux</span><span class="o">.</span><span class="n">line</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">]),</span>
+<span class="gp">... </span>    <span class="n">plotmux</span><span class="o">.</span><span class="n">line</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">"a line"</span><span class="p">),</span>
 <span class="gp">... </span>    <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">title</span><span class="o">=</span><span class="s2">"Two independent panels"</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"grid.png"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
 </code></pre></div>
-<p>A <code>Figure</code> passed as an item, such as <code>plotmux.line(...)</code> above, is shorthand for its <code>.spec</code>: only
-the spec is reused. The earlier native figure is discarded and everything is re-rendered together,
-since two independent native figures can't be merged after the fact in either backend.</p>
-<p>An item may itself be built with <a href="../layer/"><code>plotmux.layer()</code></a>, since layering and gridding are
-independent, composable concerns: a panel can contain several series sharing one set of axes.</p>
+<p>A mark (such as the histogram above) is wrapped in a default panel. A <code>Figure</code> passed as an item,
+such as <code>plotmux.line(...)</code> above, contributes its panel with its own title, labels, scales and
+limits. The earlier native figure is discarded and everything is re-rendered together.</p>
+<p>A panel may hold several marks, since layering and gridding are independent, composable concerns: a
+panel can contain several series sharing one set of axes, whatever the marks (a slope and a stacked
+bar included):</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">plotmux</span><span class="o">.</span><span class="n">layer</span><span class="p">(</span><span class="n">plotmux</span><span class="o">.</span><span class="n">line</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]),</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">scatter</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])),</span>
+<span class="gp">... </span>    <span class="n">plotmux</span><span class="o">.</span><span class="n">slope</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">xmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">xmax</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">fig</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">panels</span><span class="p">)</span>
+<span class="go">2</span>
+</code></pre></div>
 <h2 id="arranging-panels">Arranging Panels<a class="headerlink" href="#arranging-panels" title="Permanent link">&para;</a></h2>
 <p><code>ncols</code> controls the number of columns. Panels fill left to right, top to bottom, in the order the
 items were given; the last row is left short (its remaining panels left empty) when the number of
@@ -1456,21 +1522,24 @@ items is not a multiple of <code>ncols</code>:</p>
 <p>Unlike <code>hist</code>, <code>line</code>, <code>scatter</code>, and <code>layer</code>, <code>grid</code> only accepts <code>title</code> and <code>backend</code>, plus
 <code>ncols</code>. <code>title</code> is shown once above the whole grid, not any individual panel. <code>xlabel</code>, <code>ylabel</code>,
 <code>xscale</code>, <code>yscale</code>, and <code>color</code> have no meaning at the grid level since each panel keeps its own
-style: set those on the child specs themselves instead.</p>
+style: set those on the panels themselves instead (a misspelled or unsupported keyword is a
+<code>TypeError</code>).</p>
+<p>The legend and the plot background are per panel on <code>matplotlib</code>, <code>bokeh</code>, <code>altair</code> and <code>xy</code>. <code>plotly</code>
+has one legend per figure, so a grid takes the legend style of its first panel that has a legend; the
+background of a panel is a rectangle below its traces.</p>
 <h2 id="restrictions">Restrictions<a class="headerlink" href="#restrictions" title="Permanent link">&para;</a></h2>
-<p><code>grid</code> does not support nesting: passing a <code>GridSpec</code> (or a <code>Figure</code> built from one) as one of its
-items raises a <code>ValueError</code>. Layout is one flat pass over <code>cells</code>, so flatten nested grids yourself
-before calling <code>grid</code> rather than relying on recursive dispatch. <code>grid</code> also requires at least one
-item, and <code>ncols</code> must be a positive integer.</p>
+<p>A grid holds panels, and a panel holds marks, so a grid cannot be nested in the type: passing a
+<code>GridSpec</code> (or a <code>Figure</code> built from one) as one of the items raises an <code>InvalidSpecError</code>. <code>grid</code>
+also requires at least one item, and <code>ncols</code> must be a positive integer.</p>
 <h2 id="the-xy-backend-is-html-only-for-grids">The <code>xy</code> Backend Is HTML-Only for Grids<a class="headerlink" href="#the-xy-backend-is-html-only-for-grids" title="Permanent link">&para;</a></h2>
 <p><code>xy</code> has no primitive for arranging arbitrary, already-built, independent panels side by side (its
 <code>facet_chart</code> repeats one fixed chart per value of a data column, which is a different thing), so
 <code>grid(..., backend="xy")</code> lays out each panel's standalone chart as a sandboxed HTML <code>&lt;iframe&gt;</code>
 at export time instead of producing a single rasterizable native figure. As a result,
-<code>fig.save(...)</code> only accepts an <code>.html</code> path for an <code>xy</code> grid; every other format <code>xy</code> otherwise
-supports (<code>png</code>, <code>svg</code>, <code>pdf</code>, ...) raises a <code>ValueError</code> for this one figure shape. Every other
-backend (<code>matplotlib</code>, <code>bokeh</code>, <code>altair</code>, <code>plotly</code>) supports its full usual set of formats for
-<code>grid()</code> too.
+<code>fig.save(...)</code> only accepts an <code>.html</code> path for an <code>xy</code> grid, and every other format raises an
+<code>UnsupportedFormatError</code> before any file or directory is created. This is declared in
+<code>Backend.capabilities().grid_formats</code>, and <code>fig.supported_formats</code> of a grid reads it. Every other
+backend supports its full usual set of formats for <code>grid()</code> too.
 See <a href="../figure/#saving-a-figure">The Figure Object</a> for the full per-backend format table.</p>
 <h2 id="whats-next">What's Next<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>
 <ul>

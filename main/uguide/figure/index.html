@@ -826,6 +826,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrating to the Primitives-Based Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1203,6 +1231,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/scene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/specs/" class="md-nav__link">
         
   
@@ -1505,9 +1561,11 @@ formats depend on the backend:</p>
 even though the <code>xy</code> backend otherwise supports the full row above. <code>xy</code> has no primitive for
 composing arbitrary, already-built panels side by side, so a grid is laid out at export time as
 sandboxed HTML iframes rather than a rasterizable native object; see <a href="../grid/">Grid Layouts</a> for
-details.</p>
-<p>Requesting an unsupported format raises a <code>ValueError</code> listing the formats the backend supports.
-Check <code>fig.supported_formats</code> ahead of time to avoid relying on that error for control flow:</p>
+details. The formats of a grid are declared apart from those of a single panel
+(<code>BackendCapabilities.grid_formats</code>).</p>
+<p>Requesting an unsupported format raises an <code>UnsupportedFormatError</code> (also a <code>ValueError</code>) that names
+the backend and lists the formats it supports, <strong>before</strong> any file or directory is created. Check
+<code>fig.supported_formats</code> ahead of time to avoid relying on that error for control flow:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">hist</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s2">"matplotlib"</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">sorted</span><span class="p">(</span><span class="n">fig</span><span class="o">.</span><span class="n">supported_formats</span><span class="p">)</span>
@@ -1534,20 +1592,22 @@ backend-specific functionality not exposed by the unified API:</p>
 <p>Use this when you need a backend-specific feature that <code>plotmux</code>'s unified API does not cover,
 rather than growing the common API to the union of every backend.</p>
 <h2 id="checking-what-a-backend-supports-ahead-of-time">Checking What a Backend Supports Ahead of Time<a class="headerlink" href="#checking-what-a-backend-supports-ahead-of-time" title="Permanent link">&para;</a></h2>
-<p>Not every backend supports every spec type or field identically (e.g. <code>plotmux.slope()</code> is
-matplotlib/bokeh-only standalone, see <a href="../api/">The Plotting API</a>). <code>plotmux.backends.capabilities()</code>
-answers this without triggering the failure:</p>
+<p>A backend declares what it supports as data, in its <code>BackendCapabilities</code>: the export formats of a
+figure and of a grid, the legend locations and the scatter markers. Every chart type works
+standalone, in a layer and in a grid on every backend, so the differences between the backends are
+only these four sets. <code>plotmux.backends.capabilities()</code> answers without triggering the failure:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">caps</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">backends</span><span class="o">.</span><span class="n">capabilities</span><span class="p">(</span><span class="s2">"altair"</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">caps</span><span class="o">.</span><span class="n">backend_name</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">caps</span><span class="o">.</span><span class="n">name</span>
 <span class="go">'altair'</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">caps</span><span class="o">.</span><span class="n">caveats</span>  <span class="c1"># doctest: +SKIP</span>
-<span class="go">(...)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">sorted</span><span class="p">(</span><span class="n">caps</span><span class="o">.</span><span class="n">formats</span><span class="p">)</span>
+<span class="go">['html', 'json']</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">sorted</span><span class="p">(</span><span class="n">caps</span><span class="o">.</span><span class="n">markers</span><span class="p">)</span>
+<span class="go">['circle', 'cross', 'diamond', 'square', 'triangle', 'x']</span>
 </code></pre></div>
-<p><code>caps.spec_types</code> is the set of spec types the backend has a top-level renderer for, and
-<code>caps.caveats</code> is a short, human-readable list of known partial-support gaps (e.g. <code>BarSpec.width</code>
-being ignored, or <code>SlopeSpec</code> only being supported as a <code>layer()</code> child) that aren't otherwise
-expressible from <code>spec_types</code> alone.</p>
+<p>A request outside these sets (a legend location or a marker that the backend does not honor) raises
+an <code>UnsupportedSpecError</code> naming the backend and the supported values, before anything is drawn,
+instead of being silently ignored.</p>
 <h2 id="whats-next">What's Next<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../api/">The Plotting API</a>: the functions that return a <code>Figure</code></li>

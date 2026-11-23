@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://durandtibo.github.io/plotmux/main/dev/development/">
       
       
-        <link rel="prev" href="../../uguide/grid/">
+        <link rel="prev" href="../../uguide/migration/">
       
       
         <link rel="next" href="../architecture/">
@@ -686,6 +686,34 @@
     
   
     Grid Layouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrating to the Primitives-Based Design
   
 
     
@@ -1414,6 +1442,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/scene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/specs/" class="md-nav__link">
         
   
@@ -1967,9 +2023,11 @@ inv<span class="w"> </span>config.show
 │   ├── figure.py                # Figure wrapper
 │   ├── export.py                # Figure export utilities
 │   ├── exceptions.py            # PlotmuxError hierarchy
-│   ├── specs/                  # Backend-agnostic chart specifications
+│   ├── specs/                  # Backend-agnostic marks, panels and grids
+│   ├── primitives.py           # The three drawing primitives (Bars, Line, Points)
+│   ├── scene.py                # build_scene(): lowers a spec to primitives
 │   ├── backends/                # One package per rendering backend
-│   │   ├── base.py             # Backend interface + dispatch helpers + BackendCapabilities
+│   │   ├── base.py             # Backend interface + BackendCapabilities
 │   │   ├── registry.py         # Backend registration/lookup
 │   │   ├── matplotlib/         # Matplotlib backend
 │   │   ├── xy/                 # xy backend
@@ -1990,6 +2048,9 @@ inv<span class="w"> </span>config.show
 </code></pre></div>
 <h2 id="common-development-tasks">Common Development Tasks<a class="headerlink" href="#common-development-tasks" title="Permanent link">&para;</a></h2>
 <h3 id="adding-a-new-chart-type">Adding a New Chart Type<a class="headerlink" href="#adding-a-new-chart-type" title="Permanent link">&para;</a></h3>
+<p>A chart type is one <strong>mark</strong>: a <code>MarkSpec</code> subclass that lowers itself to the primitives (<code>Bars</code>,
+<code>Line</code>, <code>Points</code>). If the chart is a composition of those primitives (a box plot is bars and lines),
+no backend changes.</p>
 <ol>
 <li><strong>Create a new branch:</strong></li>
 </ol>
@@ -1997,21 +2058,31 @@ inv<span class="w"> </span>config.show
 </code></pre></div>
 <ol>
 <li>
-<p><strong>Add a spec</strong> in <code>src/plotmux/specs/</code>, subclassing <code>BaseSpec</code> as a frozen dataclass. Specs
-   never import a plotting library.</p>
+<p><strong>Add a mark</strong> in <code>src/plotmux/specs/</code>, subclassing <code>MarkSpec</code> as a frozen dataclass
+   (<code>@dataclass(frozen=True, eq=False)</code>). Specs never import a plotting library. Validate the input
+   in <code>__post_init__</code> (call <code>super().__post_init__()</code> first, which validates <code>label</code>, <code>color</code> and
+   <code>alpha</code>), raise <code>InvalidSpecError</code>, and copy the arrays with <code>to_readonly_array</code>. Implement:</p>
 </li>
 <li>
-<p><strong>Add a renderer for each backend</strong> (<code>src/plotmux/backends/matplotlib/</code>,
-   <code>src/plotmux/backends/xy/</code>, <code>src/plotmux/backends/bokeh/</code>, <code>src/plotmux/backends/altair/</code>,
-   <code>src/plotmux/backends/plotly/</code>), and
-   register it in that backend's <code>_RENDERERS</code> dict.</p>
+<p><code>to_primitives(extent)</code>: the tuple of primitives to draw, with the numbers resolved (bins,
+     steps, bases, widths). <code>extent</code> is the resolved x extent of the panel; a mark with no data of
+     its own sets <code>requires_extent = True</code> and uses it.</p>
+</li>
+<li><code>x_extent()</code>: the <code>(min, max)</code> of its x data, or <code>None</code> (the default) if it has none.</li>
+<li>
+<p><code>is_categorical()</code>: <code>True</code> for string x data, <code>False</code> for numeric x data, <code>None</code> (the default)
+     if it has none, so that a panel can refuse to mix them.</p>
 </li>
 <li>
-<p><strong>Export the spec and the public function</strong> from <code>src/plotmux/specs/__init__.py</code>,
-   <code>src/plotmux/api.py</code>, and <code>src/plotmux/__init__.py</code>.</p>
+<p><strong>Export the mark and the public function</strong> from <code>src/plotmux/specs/__init__.py</code>,
+   <code>src/plotmux/api.py</code> (build the mark and call <code>_render_mark(mark, panel)</code>; add the function name
+   to <code>_check_options</code>) and <code>src/plotmux/__init__.py</code>.</p>
 </li>
 <li>
-<p><strong>Add tests</strong> in <code>tests/unit/</code> and <code>tests/integration/</code>, mirroring <code>src/plotmux/</code>.</p>
+<p><strong>Add tests</strong>: <code>tests/unit/specs/test_&lt;mark&gt;.py</code> (validation, and <code>to_primitives</code> against a
+   literal tuple of primitives), the API test, and one entry in the <code>MARKS</code> table of
+   <code>tests/integration/conformance/test_conformance.py</code>, which checks that the five backends draw
+   what the scene says, standalone, in a layer and in a grid.</p>
 </li>
 <li>
 <p><strong>Update documentation</strong> in <code>docs/docs/</code>.</p>
@@ -2027,13 +2098,29 @@ pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
 <li><strong>Commit and push:</strong></li>
 </ol>
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>.
-git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Add: brief description of the new chart type"</span>
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Add a box plot chart type"</span>
 git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>feature/my-chart-type
 </code></pre></div>
+<p>If the chart needs a new primitive, add it to <code>plotmux/primitives.py</code> and one <code>draw_&lt;primitive&gt;</code> to
+each backend: that is the exception, not the rule.</p>
 <h3 id="adding-a-new-backend">Adding a New Backend<a class="headerlink" href="#adding-a-new-backend" title="Permanent link">&para;</a></h3>
-<p>See <a href="../../uguide/backends/#adding-a-third-party-backend">Adding a Third-Party Backend</a> for the
-plugin mechanism used by out-of-tree backends, and <code>src/plotmux/backends/matplotlib/</code> or
-<code>src/plotmux/backends/xy/</code> as a reference implementation for a built-in one.</p>
+<p>A backend is two modules in <code>src/plotmux/backends/&lt;name&gt;/</code>:</p>
+<ul>
+<li><code>backend.py</code>: a <code>Backend</code> subclass with <code>capabilities()</code> (the export formats of a figure and of a
+  grid, the legend locations and the markers it honors), <code>draw(scene)</code> (draw each primitive of the
+  <code>AxesScene</code>, apply the axes style, compose a <code>GridScene</code>) and <code>save(native, path, fmt)</code>, and
+  <code>show</code>/<code>mimebundle</code> if the library needs them. <code>draw_bars</code>, <code>draw_line</code> and <code>draw_points</code> are the
+  three functions that translate a primitive.</li>
+<li><code>style.py</code>: <code>apply_style(native, scene)</code> (title, labels, scales, limits, background, legend) and
+  the translation tables (colors, line styles, markers, legend locations).</li>
+</ul>
+<p>Then register it in the built-in table of <code>src/plotmux/backends/registry.py</code> (and add its
+<code>is_&lt;name&gt;_available</code> helper and its extra), or ship it as an independent package with an entry
+point, see <a href="../../uguide/backends/#adding-a-third-party-backend">Adding a Third-Party Backend</a>. Add
+it to the <code>BACKENDS</code> list of <code>tests/integration/conformance/test_conformance.py</code> with an
+<code>extract_&lt;name&gt;</code> function that reads the primitives back from the native figure:
+the conformance test is the executable definition of "the same chart on every backend".
+<code>src/plotmux/backends/matplotlib/</code> and <code>src/plotmux/backends/xy/</code> are reference implementations.</p>
 <h3 id="fixing-a-bug">Fixing a Bug<a class="headerlink" href="#fixing-a-bug" title="Permanent link">&para;</a></h3>
 <ol>
 <li><strong>Create a branch:</strong></li>

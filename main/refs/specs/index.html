@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://durandtibo.github.io/plotmux/main/refs/specs/">
       
       
-        <link rel="prev" href="../figure/">
+        <link rel="prev" href="../scene/">
       
       
         <link rel="next" href="../testing/">
@@ -699,6 +699,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrating to the Primitives-Based Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1076,6 +1104,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../scene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -1147,13 +1203,52 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#plotmux.specs.base.BaseSpec" class="md-nav__link">
+  <a href="#plotmux.specs.base.MarkSpec" class="md-nav__link">
     <span class="md-ellipsis">
       
-        BaseSpec
+        MarkSpec
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="MarkSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.base.MarkSpec.is_categorical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_categorical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.base.MarkSpec.to_primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.base.MarkSpec.x_extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        x_extent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1168,25 +1263,48 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#plotmux.specs.base.XBoundSpec" class="md-nav__link">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plotmux.specs.panel" class="md-nav__link">
     <span class="md-ellipsis">
       
-        XBoundSpec
+        panel
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="panel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.panel.PanelSpec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PanelSpec
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PanelSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.panel.PanelSpec.x_extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        x_extent
       
     </span>
   </a>
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#plotmux.specs.base.check_equal_length" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_equal_length
-      
-    </span>
-  </a>
+      </ul>
+    </nav>
   
 </li>
         
@@ -1216,6 +1334,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="HistogramSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.histogram.HistogramSpec.is_categorical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_categorical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.histogram.HistogramSpec.to_primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.histogram.HistogramSpec.x_extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        x_extent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -1243,6 +1400,45 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="CdfSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.cdf.CdfSpec.is_categorical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_categorical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.cdf.CdfSpec.to_primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.cdf.CdfSpec.x_extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        x_extent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1272,6 +1468,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="LineSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.line.LineSpec.is_categorical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_categorical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.line.LineSpec.to_primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.line.LineSpec.x_extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        x_extent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -1300,6 +1535,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="ScatterSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.scatter.ScatterSpec.is_categorical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_categorical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.scatter.ScatterSpec.to_primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.scatter.ScatterSpec.x_extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        x_extent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -1327,6 +1601,45 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="BarSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.bar.BarSpec.is_categorical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_categorical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.bar.BarSpec.to_primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.bar.BarSpec.x_extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        x_extent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1367,6 +1680,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="StackedBarSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.stacked_bar.StackedBarSpec.is_categorical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_categorical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.stacked_bar.StackedBarSpec.to_primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.stacked_bar.StackedBarSpec.x_extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        x_extent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -1395,33 +1747,22 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="SlopeSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.slope.SlopeSpec.to_primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_primitives
+      
+    </span>
+  </a>
+  
 </li>
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#plotmux.specs.layer" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        layer
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="layer">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#plotmux.specs.layer.LayerSpec" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LayerSpec
-      
-    </span>
-  </a>
   
 </li>
         
@@ -1594,13 +1935,52 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#plotmux.specs.base.BaseSpec" class="md-nav__link">
+  <a href="#plotmux.specs.base.MarkSpec" class="md-nav__link">
     <span class="md-ellipsis">
       
-        BaseSpec
+        MarkSpec
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="MarkSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.base.MarkSpec.is_categorical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_categorical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.base.MarkSpec.to_primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.base.MarkSpec.x_extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        x_extent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1615,25 +1995,48 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#plotmux.specs.base.XBoundSpec" class="md-nav__link">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plotmux.specs.panel" class="md-nav__link">
     <span class="md-ellipsis">
       
-        XBoundSpec
+        panel
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="panel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.panel.PanelSpec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PanelSpec
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PanelSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.panel.PanelSpec.x_extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        x_extent
       
     </span>
   </a>
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#plotmux.specs.base.check_equal_length" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_equal_length
-      
-    </span>
-  </a>
+      </ul>
+    </nav>
   
 </li>
         
@@ -1663,6 +2066,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="HistogramSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.histogram.HistogramSpec.is_categorical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_categorical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.histogram.HistogramSpec.to_primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.histogram.HistogramSpec.x_extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        x_extent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -1690,6 +2132,45 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="CdfSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.cdf.CdfSpec.is_categorical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_categorical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.cdf.CdfSpec.to_primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.cdf.CdfSpec.x_extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        x_extent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1719,6 +2200,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="LineSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.line.LineSpec.is_categorical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_categorical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.line.LineSpec.to_primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.line.LineSpec.x_extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        x_extent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -1747,6 +2267,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="ScatterSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.scatter.ScatterSpec.is_categorical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_categorical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.scatter.ScatterSpec.to_primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.scatter.ScatterSpec.x_extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        x_extent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -1774,6 +2333,45 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="BarSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.bar.BarSpec.is_categorical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_categorical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.bar.BarSpec.to_primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.bar.BarSpec.x_extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        x_extent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1814,6 +2412,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="StackedBarSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.stacked_bar.StackedBarSpec.is_categorical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_categorical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.stacked_bar.StackedBarSpec.to_primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.stacked_bar.StackedBarSpec.x_extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        x_extent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -1842,33 +2479,22 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="SlopeSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.specs.slope.SlopeSpec.to_primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_primitives
+      
+    </span>
+  </a>
+  
 </li>
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#plotmux.specs.layer" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        layer
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="layer">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#plotmux.specs.layer.LayerSpec" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LayerSpec
-      
-    </span>
-  </a>
   
 </li>
         
@@ -1939,7 +2565,7 @@
 
     <div class="doc doc-contents first">
 
-        <p>Contain the base class for backend-agnostic chart specifications.</p>
+        <p>Contain the base classes of the backend-agnostic marks.</p>
 
 
 
@@ -1964,15 +2590,15 @@
 
 
 
-<h3 id="plotmux.specs.base.BaseSpec" class="doc doc-heading">
-            <span class="doc doc-object-name doc-class-name">plotmux.specs.base.BaseSpec</span>
+<h3 id="plotmux.specs.base.MarkSpec" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">plotmux.specs.base.MarkSpec</span>
 
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
   </span>
 
-<a href="#plotmux.specs.base.BaseSpec" class="headerlink" title="Permanent link">&para;</a></h3>
+<a href="#plotmux.specs.base.MarkSpec" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
@@ -1986,14 +2612,16 @@
 
 
 
-        <p>Define the base class for chart specifications.</p>
-<p>A spec is a plain, backend-agnostic description of <em>what</em> to
-plot (data + encoding + style). It must never import or hold a
-reference to a plotting library object. Turning a spec into a
-native figure is the responsibility of a backend (see
-<code>plotmux.backends</code>).</p>
-<p>Subclasses are expected to be frozen dataclasses and may use
-<code>__post_init__</code> to validate their fields.</p>
+        <p>Define the base class of the marks: what is drawn on an axes.</p>
+<p>A mark is plain, backend-agnostic data (the data and the style of
+one chart type). It never holds a plotting-library object. The
+axes (title, labels, scales, limits, legend) belong to a
+<code>PanelSpec</code>, not to the mark. A mark turns itself into drawing
+primitives (see <code>to_primitives</code>), so a new chart type is one
+subclass of <code>MarkSpec</code> and needs no change in a backend when it
+is a composition of <code>Bars</code>, <code>Line</code> and <code>Points</code>.</p>
+<p>A subclass that has its own <code>__post_init__</code> must call
+<code>super().__post_init__()</code>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2009,6 +2637,502 @@ native figure is the responsibility of a backend (see
       <tbody>
           <tr class="doc-section-item">
             <td>
+                <code>label</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional label used in the legend.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>color</code>
+            </td>
+            <td>
+                  <code><span title="plotmux.colors.Color">Color</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional color. It can be a hex string
+(<code>"#rrggbb"</code> or <code>"#rrggbbaa"</code>), a CSS/matplotlib named
+color (e.g. <code>"tab:blue"</code>), or an RGB(A) tuple of floats
+in <code>[0, 1]</code>. <code>None</code> takes the next color of
+<code>plotmux.colors.palette.DEFAULT_PALETTE</code> (see
+<code>plotmux.scene.build_scene</code>), the same on every backend.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>alpha</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional opacity, in <code>[0, 1]</code>. <code>None</code> uses the
+backend's default (fully opaque).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="plotmux.exceptions.InvalidSpecError" href="../exceptions/#plotmux.exceptions.InvalidSpecError">InvalidSpecError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>if <code>alpha</code> is not in <code>[0, 1]</code>. Also a
+<code>ValueError</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>InvalidColorError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>if <code>color</code> is not a valid color. Also a
+<code>ValueError</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.base.MarkSpec.is_categorical" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.base.MarkSpec.is_categorical</span>
+
+
+<a href="#plotmux.specs.base.MarkSpec.is_categorical" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">is_categorical</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="bool">bool</span></span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Tell whether the mark draws on a categorical x-axis.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="bool">bool</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>True</code> for a categorical (string) x, <code>False</code> for a
+numeric x, and <code>None</code> if the mark has no x data of
+its own (a slope).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.base.MarkSpec.to_primitives" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.base.MarkSpec.to_primitives</span>
+
+
+<a href="#plotmux.specs.base.MarkSpec.to_primitives" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_primitives</span><span class="p">(</span>
+    <span class="n">extent</span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="plotmux.primitives.Primitive">Primitive</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Lower the mark to drawing primitives.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>extent</code>
+            </td>
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The resolved x extent of the panel (see
+<code>PanelSpec.x_extent</code>), or <code>None</code> if the panel has
+none. Only a mark with <code>requires_extent</code> uses it.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="plotmux.primitives.Primitive">Primitive</span>, ...]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The primitives to draw, in drawing order. A primitive
+whose color is <code>None</code> gets a palette color from
+<code>plotmux.scene.build_scene</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="NotImplementedError">NotImplementedError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>always, a subclass must override it.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.base.MarkSpec.x_extent" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.base.MarkSpec.x_extent</span>
+
+
+<a href="#plotmux.specs.base.MarkSpec.x_extent" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">x_extent</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the x extent of the data of the mark.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The <code>(min, max)</code> of the x data, or <code>None</code> if the mark
+has no numeric x data of its own (a slope, a
+categorical x, no value).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="plotmux.specs.base.Spec" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">plotmux.specs.base.Spec</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#plotmux.specs.base.Spec" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.utils.equality.ValueObject
+
+
+  
+      dataclass
+  " href="../utils/#plotmux.utils.equality.ValueObject">ValueObject</a></code></p>
+
+
+
+        <p>Define the base class of the immutable value objects of the
+specs.</p>
+<p>A spec cannot change after its construction: the fields are
+frozen and the arrays are copied and read-only (see
+<code>plotmux.utils.to_readonly_array</code>). Two specs are equal if they
+have the same type and equal fields, where arrays are compared by
+value (a plain dataclass <code>==</code> raises on an array field). A spec
+holds arrays, so it is not hashable.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">LineSpec</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span> <span class="o">==</span> <span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span> <span class="o">==</span> <span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="go">False</span>
+</code></pre></div>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="plotmux.specs.panel" class="doc doc-heading">
+            <span class="doc doc-object-name doc-module-name">plotmux.specs.panel</span>
+
+
+<a href="#plotmux.specs.panel" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Contain the backend-agnostic specification of one axes.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="plotmux.specs.panel.PanelSpec" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">plotmux.specs.panel.PanelSpec</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#plotmux.specs.panel.PanelSpec" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.Spec
+
+
+  
+      dataclass
+  " href="#plotmux.specs.base.Spec">Spec</a></code></p>
+
+
+
+        <p>Define one axes: the marks drawn on it and its style.</p>
+<p>Several marks on one panel are drawn on shared axes (a layer).
+The marks and the axes style are the only fields: the axes style
+exists once, here, and not on each mark.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>marks</code>
+            </td>
+            <td>
+                  <code><span title="tuple">tuple</span>[<a class="autorefs autorefs-internal" title="plotmux.specs.base.MarkSpec
+
+
+  
+      dataclass
+  " href="#plotmux.specs.base.MarkSpec">MarkSpec</a>, ...]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The marks to draw, in drawing order. Must be non-empty.
+A panel holds marks only, so a panel cannot nest.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                 <code>title</code>
             </td>
             <td>
@@ -2016,7 +3140,7 @@ native figure is the responsibility of a backend (see
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional figure title.</p>
+                <p>An optional axes title.</p>
               </div>
             </td>
             <td>
@@ -2089,19 +3213,31 @@ native figure is the responsibility of a backend (see
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>background_color</code>
+                <code>xmin</code>
             </td>
             <td>
-                  <code><span title="plotmux.colors.Color">Color</span></code>
+                  <code><span title="float">float</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional figure background color. It
-can be a hex string (<code>"#rrggbb"</code> or <code>"#rrggbbaa"</code>), a
-CSS/matplotlib named color (e.g. <code>"tab:blue"</code>), or an
-RGB(A) tuple of floats in <code>[0, 1]</code>. <code>None</code> uses the
-backend's default (usually white/transparent). See
-<code>plotmux.colors.parse_color</code> for the exact semantics.</p>
+                <p>An optional lower limit of the x-axis. A number, not a
+quantile string. <code>None</code> leaves the axis autoscaled.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>xmax</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional upper limit of the x-axis.</p>
               </div>
             </td>
             <td>
@@ -2117,15 +3253,7 @@ backend's default (usually white/transparent). See
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional lower bound for the y-axis. Unlike
-<code>HistogramSpec.xmin</code>/<code>CdfSpec.xmin</code> (see
-<code>plotmux.utils.range.find_range</code>), this is an explicit
-value only, not a quantile string: it is figure-level
-(every chart type has a y-axis; not every chart type has
-a single data array to resolve a quantile against), so it
-is applied as a plain axis bound after the mark is drawn,
-rather than folded into any one renderer's own data
-processing. <code>None</code> leaves the axis autoscaled.</p>
+                <p>An optional lower limit of the y-axis.</p>
               </div>
             </td>
             <td>
@@ -2141,8 +3269,25 @@ processing. <code>None</code> leaves the axis autoscaled.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional upper bound for the y-axis. Same semantics
-as <code>ymin</code> but for the upper bound.</p>
+                <p>An optional upper limit of the y-axis.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>background_color</code>
+            </td>
+            <td>
+                  <code><span title="plotmux.colors.Color">Color</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional background color of the axes.
+Same format as <code>MarkSpec.color</code>. <code>None</code> uses the
+backend's default.</p>
               </div>
             </td>
             <td>
@@ -2158,13 +3303,8 @@ as <code>ymin</code> but for the upper bound.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional heading for the legend box itself,
-independent of <code>title</code> (the figure/axes title). <code>None</code>
-leaves the legend untitled (every backend's own default).
-Only meaningful when at least one mark carries a
-<code>label</code> -- a spec with <code>legend_title</code> set but no
-labeled mark simply draws no legend at all, same as
-today.</p>
+                <p>An optional heading of the legend box. The legend
+exists if and only if one mark has a label.</p>
               </div>
             </td>
             <td>
@@ -2176,17 +3316,13 @@ today.</p>
                 <code>legend_location</code>
             </td>
             <td>
-                  <code><span title="typing.Literal">Literal</span>[&#39;best&#39;, &#39;top_left&#39;, &#39;top_right&#39;, &#39;bottom_left&#39;, &#39;bottom_right&#39;, &#39;top&#39;, &#39;bottom&#39;, &#39;left&#39;, &#39;right&#39;] | None</code>
+                  <code><span title="plotmux.specs.panel.LegendLocation">LegendLocation</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional legend position, one of a small,
-backend-portable set of named corners/edges (mirroring how
-<code>ScatterSpec.marker</code> exposes a portable shape set rather
-than every backend's native vocabulary). <code>None</code> leaves
-the legend at the backend's own default position. Only
-meaningful when at least one mark carries a <code>label</code>,
-same caveat as <code>legend_title</code>.</p>
+                <p>An optional legend position, one of
+<code>LEGEND_LOCATIONS</code>. <code>None</code> leaves the backend's
+default.</p>
               </div>
             </td>
             <td>
@@ -2203,10 +3339,8 @@ same caveat as <code>legend_title</code>.</p>
             <td>
               <div class="doc-md-description">
                 <p>An optional legend layout, <code>"vertical"</code>
-or <code>"horizontal"</code> (entries side by side in one row).
-<code>None</code> leaves the backend's own default (usually
-<code>"vertical"</code>). Only meaningful when at least one mark
-carries a <code>label</code>, same caveat as <code>legend_title</code>.</p>
+or <code>"horizontal"</code>. <code>None</code> leaves the backend's
+default.</p>
               </div>
             </td>
             <td>
@@ -2215,15 +3349,6 @@ carries a <code>label</code>, same caveat as <code>legend_title</code>.</p>
           </tr>
       </tbody>
     </table>
-        <p>These are figure-level concerns shared by every chart type, so
-they live here rather than being redeclared per chart type. Every
-backend applies them the same way, in one shared
-<code>apply_common_style</code> helper, right after drawing the
-chart-specific mark (see e.g.
-<code>plotmux.backends.matplotlib.style.apply_common_style</code>).
-Unlike <code>title</code>/<code>xlabel</code>/<code>ylabel</code>, <code>xscale</code>/<code>yscale</code>
-default to <code>"linear"</code> rather than <code>None</code>: an axis always has
-<em>some</em> scale, so there is no meaningful "unset" state to skip.</p>
 
 
 <p><span class="doc-section-title">Raises:</span></p>
@@ -2237,12 +3362,27 @@ default to <code>"linear"</code> rather than <code>None</code>: an axis always h
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="ValueError">ValueError</span></code>
+                  <code><a class="autorefs autorefs-internal" title="plotmux.exceptions.InvalidSpecError" href="../exceptions/#plotmux.exceptions.InvalidSpecError">InvalidSpecError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>if <code>background_color</code> is not a valid color, or
-<code>ymin</code>/<code>ymax</code> are both set with <code>ymin &gt; ymax</code>.</p>
+                <p>if <code>marks</code> is empty or holds an object
+that is not a <code>MarkSpec</code>, a scale, a legend location or
+a legend orientation is not supported, <code>xmin &gt; xmax</code> or
+<code>ymin &gt; ymax</code>, the marks mix a categorical x with a numeric x, or
+a mark needs the x extent (a slope) and the panel has none.
+Also a <code>ValueError</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>InvalidColorError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>if <code>background_color</code> is not a valid
+color. Also a <code>ValueError</code>.</p>
               </div>
             </td>
           </tr>
@@ -2250,71 +3390,19 @@ default to <code>"linear"</code> rather than <code>None</code>: an axis always h
     </table>
 
 
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h3 id="plotmux.specs.base.Spec" class="doc doc-heading">
-            <span class="doc doc-object-name doc-class-name">plotmux.specs.base.Spec</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
-  </span>
-
-<a href="#plotmux.specs.base.Spec" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-    <div class="doc doc-contents ">
-
-
-
-        <p>Define the base class of the immutable value objects of the
-specs.</p>
-<p>A spec cannot change after its construction: the fields are
-frozen and the arrays are copied and read-only (see
-<code>plotmux.utils.to_readonly_array</code>). Two specs are equal if they
-have the same type and equal fields, where arrays are compared by
-value (a plain dataclass <code>==</code> raises on an array field). A spec
-holds arrays, so it is not hashable.</p>
-
-
 <details class="example" open>
   <summary>Example</summary>
   <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">LineSpec</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span> <span class="o">==</span> <span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
-<span class="go">True</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span> <span class="o">==</span> <span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
-<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">HistogramSpec</span><span class="p">,</span> <span class="n">LineSpec</span><span class="p">,</span> <span class="n">PanelSpec</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">spec</span> <span class="o">=</span> <span class="n">PanelSpec</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">marks</span><span class="o">=</span><span class="p">(</span>
+<span class="gp">... </span>        <span class="n">HistogramSpec</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">101</span><span class="p">),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span>
+<span class="gp">... </span>        <span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">)),</span>
+<span class="gp">... </span>    <span class="p">),</span>
+<span class="gp">... </span>    <span class="n">title</span><span class="o">=</span><span class="s2">"two marks"</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">marks</span><span class="p">)</span>
+<span class="go">2</span>
 </code></pre></div>
 </details>
 
@@ -2338,243 +3426,23 @@ holds arrays, so it is not hashable.</p>
 
 
 
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h3 id="plotmux.specs.base.XBoundSpec" class="doc doc-heading">
-            <span class="doc doc-object-name doc-class-name">plotmux.specs.base.XBoundSpec</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
-  </span>
-
-<a href="#plotmux.specs.base.XBoundSpec" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-    <div class="doc doc-contents ">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.BaseSpec
-
-
-  
-      dataclass
-  " href="#plotmux.specs.base.BaseSpec">BaseSpec</a></code></p>
-
-
-
-        <p>Add a plain, explicit-value-only <code>xmin</code>/<code>xmax</code> x-axis bound
-to <code>BaseSpec</code>, for every chart type that does not need the data-
-scoped, quantile-capable form.</p>
-<p><code>HistogramSpec</code>/<code>CdfSpec</code> are the only two chart types that
-need <code>xmin</code>/<code>xmax</code> to also accept a quantile string (e.g.
-<code>"q0.1"</code>, see <code>plotmux.utils.range.find_range</code>) resolved
-against their own data; every other chart type only ever needs a
-plain bound applied to the axis after the mark is drawn (see
-<code>plotmux.backends.matplotlib.style.apply_common_style</code> and its
-per-backend equivalents). Splitting that pair out of <code>BaseSpec</code>
-into this subclass -- rather than declaring a <code>float | None</code>
-pair on <code>BaseSpec</code> and having <code>HistogramSpec</code>/<code>CdfSpec</code>
-redeclare it with a wider <code>float | str | None</code> type -- keeps
-every chart type's <code>xmin</code>/<code>xmax</code> an honest, single type: a
-subclass redeclaring an inherited field with an incompatible type
-is a real Liskov substitution violation (a caller holding a
-<code>BaseSpec</code>/<code>XBoundSpec</code> reference could dereference <code>xmin</code>
-expecting a <code>float</code> and get a <code>str</code>), not merely a type
-checker nitpick to silence -- see e.g. the bug this exact
-shadowing produced, fixed alongside this split: every backend's
-<code>apply_common_style</code> used to reapply <code>spec.xmin</code>/<code>spec.xmax</code>
-to the axis unconditionally, which raised at render time for a
-<code>HistogramSpec</code>/<code>CdfSpec</code> constructed with a quantile-string
-bound.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>xmin</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional lower bound for the x-axis. Like
-<code>ymin</code>/<code>ymax</code>, this is a plain, explicit-value-only
-figure-level override, applied as a plain axis bound
-after the mark is drawn. <code>None</code> leaves the axis
-autoscaled.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>xmax</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional upper bound for the x-axis. Same semantics
-as <code>xmin</code> but for the upper bound.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="ValueError">ValueError</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>if <code>xmin</code>/<code>xmax</code> are both set with
-<code>xmin &gt; xmax</code>, on top of every <code>ValueError</code> <code>BaseSpec</code>
-itself may raise.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-
 <div class="doc doc-object doc-function">
 
 
-<h3 id="plotmux.specs.base.check_equal_length" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">plotmux.specs.base.check_equal_length</span>
+<h4 id="plotmux.specs.panel.PanelSpec.x_extent" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.panel.PanelSpec.x_extent</span>
 
 
-<a href="#plotmux.specs.base.check_equal_length" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">check_equal_length</span><span class="p">(</span>
-    <span class="n">x</span><span class="p">:</span> <span class="n"><span title="numpy.typing.ArrayLike">ArrayLike</span></span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n"><span title="numpy.typing.ArrayLike">ArrayLike</span></span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">]</span>
+<a href="#plotmux.specs.panel.PanelSpec.x_extent" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">x_extent</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Coerce <code>x</code> and <code>y</code> to <code>np.ndarray</code> and check that they have
-the same length.</p>
-<p>Shared by every spec that pairs an <code>x</code> array with a <code>y</code> array
-(<code>LineSpec</code>, <code>ScatterSpec</code>, ...), so the check and its error
-message are written once. <code>x</code>/<code>y</code> are coerced with
-<code>np.asarray</code> first so a spec can be constructed directly (e.g.
-<code>LineSpec(x=[1, 2, 3], y=[1, 2, 3])</code>) and not only through
-<code>plotmux.line</code>/<code>plotmux.scatter</code>, which already convert their
-inputs before construction.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>x</code>
-            </td>
-            <td>
-                  <code><span title="numpy.typing.ArrayLike">ArrayLike</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The array of x values.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>y</code>
-            </td>
-            <td>
-                  <code><span title="numpy.typing.ArrayLike">ArrayLike</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The array of y values.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
+        <p>Resolve the x extent of the panel.</p>
+<p>Each bound is the explicit <code>xmin</code>/<code>xmax</code> where it is set,
+else the min/max of the <code>x_extent()</code> of the marks that have
+data on the x-axis.</p>
 
 
     <p><span class="doc-section-title">Returns:</span></p>
@@ -2588,12 +3456,12 @@ inputs before construction.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="tuple">tuple</span>[<span title="numpy.ndarray">ndarray</span>, <span title="numpy.ndarray">ndarray</span>]</code>
+                  <code><span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>] | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The <code>(x, y)</code> pair, each converted to a read-only copy (see
-<code>plotmux.utils.to_readonly_array</code>).</p>
+                <p>The <code>(lo, hi)</code> extent, or <code>None</code> if a bound can be
+resolved neither from the limits nor from the marks.</p>
               </div>
             </td>
           </tr>
@@ -2601,34 +3469,29 @@ inputs before construction.</p>
     </table>
 
 
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><a class="autorefs autorefs-internal" title="plotmux.exceptions.InvalidSpecError" href="../exceptions/#plotmux.exceptions.InvalidSpecError">InvalidSpecError</a></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>if <code>x</code> and <code>y</code> do not have the same
-length. Also a <code>ValueError</code>, so existing <code>except
-ValueError</code> code keeps working unchanged.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">LineSpec</span><span class="p">,</span> <span class="n">PanelSpec</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">PanelSpec</span><span class="p">(</span><span class="n">marks</span><span class="o">=</span><span class="p">(</span><span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">)),))</span><span class="o">.</span><span class="n">x_extent</span><span class="p">()</span>
+<span class="go">(0.0, 4.0)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">PanelSpec</span><span class="p">(</span><span class="n">marks</span><span class="o">=</span><span class="p">(</span><span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">)),),</span> <span class="n">xmax</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">x_extent</span><span class="p">()</span>
+<span class="go">(0.0, 10)</span>
+</code></pre></div>
+</details>
 
     </div>
 
 </div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
 
 
 
@@ -2688,16 +3551,16 @@ ValueError</code> code keeps working unchanged.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.BaseSpec
+              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.MarkSpec
 
 
   
       dataclass
-  " href="#plotmux.specs.base.BaseSpec">BaseSpec</a></code></p>
+  " href="#plotmux.specs.base.MarkSpec">MarkSpec</a></code></p>
 
 
 
-        <p>Define a backend-agnostic histogram specification.</p>
+        <p>Define a backend-agnostic histogram mark.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2753,11 +3616,12 @@ integer.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Specifies the lower bound of the x-axis range. It can
-be an explicit value, a quantile string such as
-<code>"q0.1"</code>, or <code>None</code> to use the minimum of <code>values</code>.
-See <code>plotmux.utils.range.find_range</code> for the exact
-semantics.</p>
+                <p>Specifies the lower bound of the range of the values
+that are binned. It can be an explicit value, a quantile
+string such as <code>"q0.1"</code>, or <code>None</code> to use the minimum
+of <code>values</code>. See <code>plotmux.utils.range.find_range</code> for
+the exact semantics. It is not an axis limit (see
+<code>PanelSpec.xmin</code>): the axes autoscale on the bars.</p>
               </div>
             </td>
             <td>
@@ -2773,24 +3637,9 @@ semantics.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Specifies the upper bound of the x-axis range. Same
-semantics as <code>xmin</code> but for the upper bound.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>label</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional label used e.g. in the legend.</p>
+                <p>Specifies the upper bound of the range of the values
+that are binned. Same semantics as <code>xmin</code> but for the
+upper bound.</p>
               </div>
             </td>
             <td>
@@ -2806,145 +3655,21 @@ semantics as <code>xmin</code> but for the upper bound.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If <code>True</code>, draw and return a probability
-density: each bin will display the bin's raw count
-divided by the total number of counts and the bin
-width, so that the area under the histogram integrates
-to 1. Defaults to <code>False</code>.</p>
+                <p>If <code>True</code>, each bin displays the bin's raw count
+divided by the total number of counts and the bin width,
+so that the area under the histogram integrates to 1.</p>
               </div>
             </td>
             <td>
                   <code>False</code>
             </td>
           </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>color</code>
-            </td>
-            <td>
-                  <code><span title="plotmux.colors.Color">Color</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional color for the bars. It can be a hex
-string (<code>"#rrggbb"</code> or <code>"#rrggbbaa"</code>), a
-CSS/matplotlib named color (e.g. <code>"tab:blue"</code>), or an
-RGB(A) tuple of floats in <code>[0, 1]</code>. <code>None</code> uses the
-backend's default color. See
-<code>plotmux.colors.parse_color</code> for the exact
-semantics.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>alpha</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional bar opacity, in <code>[0, 1]</code>. <code>None</code> uses
-the backend's default (usually fully opaque).</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>title</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional figure title. Inherited from <code>BaseSpec</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>xlabel</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional x-axis label. Inherited from
-<code>BaseSpec</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>ylabel</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional y-axis label. Inherited from
-<code>BaseSpec</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>xscale</code>
-            </td>
-            <td>
-                  <code><span title="typing.Literal">Literal</span>[&#39;linear&#39;, &#39;log&#39;]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The x-axis scale, <code>"linear"</code> or <code>"log"</code>.
-Inherited from <code>BaseSpec</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>&#39;linear&#39;</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>yscale</code>
-            </td>
-            <td>
-                  <code><span title="typing.Literal">Literal</span>[&#39;linear&#39;, &#39;log&#39;]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The y-axis scale, <code>"linear"</code> or <code>"log"</code>.
-Inherited from <code>BaseSpec</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>&#39;linear&#39;</code>
-            </td>
-          </tr>
       </tbody>
     </table>
-        <p><code>NaN</code> and <code>inf</code> values of <code>values</code> are dropped, and a
-<code>UserWarning</code> with their count is emitted once, when the spec is
-built. The quantile bounds (<code>xmin</code>/<code>xmax</code>) are computed on the
+        <p><code>label</code>, <code>color</code> and <code>alpha</code> are inherited from
+<code>MarkSpec</code>. <code>NaN</code> and <code>inf</code> values of <code>values</code> are
+dropped, and a <code>UserWarning</code> with their count is emitted once,
+when the spec is built. The quantile bounds are computed on the
 finite values.</p>
 
 
@@ -2959,14 +3684,26 @@ finite values.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="ValueError">ValueError</span></code>
+                  <code><a class="autorefs autorefs-internal" title="plotmux.exceptions.InvalidSpecError" href="../exceptions/#plotmux.exceptions.InvalidSpecError">InvalidSpecError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>if <code>bins</code> is not a positive integer, <code>values</code>
-is not 1-dimensional, is empty, is not numeric or has no
-finite value, <code>color</code> is not a valid color, or <code>xmin</code> and <code>xmax</code> are both explicit
-numeric values with <code>xmin &gt;= xmax</code>.</p>
+                <p>if <code>bins</code> is not a positive integer,
+<code>values</code> is not 1-dimensional, is empty, is not numeric
+or has no finite value, or <code>xmin</code> and <code>xmax</code> are both
+explicit numeric values with <code>xmin &gt;= xmax</code>. Also a
+<code>ValueError</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>InvalidColorError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>if <code>color</code> is not a valid color. Also a
+<code>ValueError</code>.</p>
               </div>
             </td>
           </tr>
@@ -3003,6 +3740,199 @@ numeric values with <code>xmin &gt;= xmax</code>.</p>
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.histogram.HistogramSpec.is_categorical" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.histogram.HistogramSpec.is_categorical</span>
+
+
+<a href="#plotmux.specs.histogram.HistogramSpec.is_categorical" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">is_categorical</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="bool">bool</span></span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Tell whether the mark draws on a categorical x-axis.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="bool">bool</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>True</code> for a categorical (string) x, <code>False</code> for a
+numeric x, and <code>None</code> if the mark has no x data of
+its own (a slope).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.histogram.HistogramSpec.to_primitives" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.histogram.HistogramSpec.to_primitives</span>
+
+
+<a href="#plotmux.specs.histogram.HistogramSpec.to_primitives" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_primitives</span><span class="p">(</span>
+    <span class="n">extent</span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="plotmux.primitives.Primitive">Primitive</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Lower the mark to drawing primitives.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>extent</code>
+            </td>
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The resolved x extent of the panel (see
+<code>PanelSpec.x_extent</code>), or <code>None</code> if the panel has
+none. Only a mark with <code>requires_extent</code> uses it.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="plotmux.primitives.Primitive">Primitive</span>, ...]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The primitives to draw, in drawing order. A primitive
+whose color is <code>None</code> gets a palette color from
+<code>plotmux.scene.build_scene</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="NotImplementedError">NotImplementedError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>always, a subclass must override it.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.histogram.HistogramSpec.x_extent" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.histogram.HistogramSpec.x_extent</span>
+
+
+<a href="#plotmux.specs.histogram.HistogramSpec.x_extent" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">x_extent</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the x extent of the data of the mark.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The <code>(min, max)</code> of the x data, or <code>None</code> if the mark
+has no numeric x data of its own (a slope, a
+categorical x, no value).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
 
 
 
@@ -3071,17 +4001,20 @@ numeric values with <code>xmin &gt;= xmax</code>.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.BaseSpec
+              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.MarkSpec
 
 
   
       dataclass
-  " href="#plotmux.specs.base.BaseSpec">BaseSpec</a></code></p>
+  " href="#plotmux.specs.base.MarkSpec">MarkSpec</a></code></p>
 
 
 
         <p>Define a backend-agnostic empirical cumulative distribution
-function (CDF) specification.</p>
+function (CDF) mark.</p>
+<p>The curve is the exact empirical <code>P(X &lt;= x)</code> over all the
+values: a step of <code>1 / n</code> at each value. <code>xmin</code> and <code>xmax</code>
+restrict what is drawn, they do not renormalize the curve.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -3120,9 +4053,9 @@ function (CDF) specification.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The number of bins to use to approximate the
-cumulative distribution. Must be a positive integer, or
-<code>None</code> to use the backend's default binning.</p>
+                <p><code>None</code> for the exact CDF (<code>2 n</code> vertices), or a
+positive integer to bin the values first and bound the
+number of vertices (<code>2 * nbins + 1</code>) for a large input.</p>
               </div>
             </td>
             <td>
@@ -3138,11 +4071,12 @@ cumulative distribution. Must be a positive integer, or
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Specifies the lower bound of the x-axis range. It can
-be an explicit value, a quantile string such as
-<code>"q0.1"</code>, or <code>None</code> to use the minimum of <code>values</code>.
-See <code>plotmux.utils.range.find_range</code> for the exact
-semantics.</p>
+                <p>Specifies the lower bound of the part of the curve that
+is drawn. It can be an explicit value, a quantile string
+such as <code>"q0.1"</code>, or <code>None</code> to use the minimum of
+<code>values</code>. See <code>plotmux.utils.range.find_range</code> for the
+exact semantics. It is not an axis limit (see
+<code>PanelSpec.xmin</code>).</p>
               </div>
             </td>
             <td>
@@ -3158,160 +4092,21 @@ semantics.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Specifies the upper bound of the x-axis range. Same
-semantics as <code>xmin</code> but for the upper bound.</p>
+                <p>Specifies the upper bound of the part of the curve that
+is drawn. Same semantics as <code>xmin</code> but for the upper
+bound.</p>
               </div>
             </td>
             <td>
                   <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>label</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional label used e.g. in the legend.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>color</code>
-            </td>
-            <td>
-                  <code><span title="plotmux.colors.Color">Color</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional color for the curve. It can be a hex
-string (<code>"#rrggbb"</code> or <code>"#rrggbbaa"</code>), a
-CSS/matplotlib named color (e.g. <code>"tab:blue"</code>), or an
-RGB(A) tuple of floats in <code>[0, 1]</code>. <code>None</code> uses the
-backend's default color. See
-<code>plotmux.colors.parse_color</code> for the exact
-semantics.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>alpha</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional curve opacity, in <code>[0, 1]</code>. <code>None</code>
-uses the backend's default (usually fully opaque).</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>title</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional figure title. Inherited from <code>BaseSpec</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>xlabel</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional x-axis label. Inherited from
-<code>BaseSpec</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>ylabel</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional y-axis label. Defaults to
-<code>"cumulative probability"</code> rather than <code>BaseSpec</code>'s
-usual <code>None</code>, since a CDF's y-axis always represents
-that same quantity unless the caller overrides it.</p>
-              </div>
-            </td>
-            <td>
-                  <code>&#39;cumulative probability&#39;</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>xscale</code>
-            </td>
-            <td>
-                  <code><span title="typing.Literal">Literal</span>[&#39;linear&#39;, &#39;log&#39;]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The x-axis scale, <code>"linear"</code> or <code>"log"</code>.
-Inherited from <code>BaseSpec</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>&#39;linear&#39;</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>yscale</code>
-            </td>
-            <td>
-                  <code><span title="typing.Literal">Literal</span>[&#39;linear&#39;, &#39;log&#39;]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The y-axis scale, <code>"linear"</code> or <code>"log"</code>.
-Inherited from <code>BaseSpec</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>&#39;linear&#39;</code>
             </td>
           </tr>
       </tbody>
     </table>
-        <p><code>NaN</code> and <code>inf</code> values of <code>values</code> are dropped, and a
-<code>UserWarning</code> with their count is emitted once, when the spec is
-built. The quantile bounds (<code>xmin</code>/<code>xmax</code>) are computed on the
+        <p><code>label</code>, <code>color</code> and <code>alpha</code> are inherited from
+<code>MarkSpec</code>. <code>NaN</code> and <code>inf</code> values of <code>values</code> are
+dropped, and a <code>UserWarning</code> with their count is emitted once,
+when the spec is built. The quantile bounds are computed on the
 finite values.</p>
 
 
@@ -3326,14 +4121,26 @@ finite values.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="ValueError">ValueError</span></code>
+                  <code><a class="autorefs autorefs-internal" title="plotmux.exceptions.InvalidSpecError" href="../exceptions/#plotmux.exceptions.InvalidSpecError">InvalidSpecError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
                 <p>if <code>nbins</code> is set and is not a positive
 integer, <code>values</code> is not 1-dimensional, is empty, is not
-numeric or has no finite value, <code>color</code> is not a valid color, or <code>xmin</code> and <code>xmax</code>
-are both explicit numeric values with <code>xmin &gt;= xmax</code>.</p>
+numeric or has no finite value, or <code>xmin</code> and <code>xmax</code> are
+both explicit numeric values with <code>xmin &gt;= xmax</code>. Also a
+<code>ValueError</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>InvalidColorError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>if <code>color</code> is not a valid color. Also a
+<code>ValueError</code>.</p>
               </div>
             </td>
           </tr>
@@ -3370,6 +4177,199 @@ are both explicit numeric values with <code>xmin &gt;= xmax</code>.</p>
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.cdf.CdfSpec.is_categorical" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.cdf.CdfSpec.is_categorical</span>
+
+
+<a href="#plotmux.specs.cdf.CdfSpec.is_categorical" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">is_categorical</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="bool">bool</span></span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Tell whether the mark draws on a categorical x-axis.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="bool">bool</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>True</code> for a categorical (string) x, <code>False</code> for a
+numeric x, and <code>None</code> if the mark has no x data of
+its own (a slope).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.cdf.CdfSpec.to_primitives" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.cdf.CdfSpec.to_primitives</span>
+
+
+<a href="#plotmux.specs.cdf.CdfSpec.to_primitives" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_primitives</span><span class="p">(</span>
+    <span class="n">extent</span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="plotmux.primitives.Primitive">Primitive</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Lower the mark to drawing primitives.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>extent</code>
+            </td>
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The resolved x extent of the panel (see
+<code>PanelSpec.x_extent</code>), or <code>None</code> if the panel has
+none. Only a mark with <code>requires_extent</code> uses it.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="plotmux.primitives.Primitive">Primitive</span>, ...]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The primitives to draw, in drawing order. A primitive
+whose color is <code>None</code> gets a palette color from
+<code>plotmux.scene.build_scene</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="NotImplementedError">NotImplementedError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>always, a subclass must override it.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.cdf.CdfSpec.x_extent" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.cdf.CdfSpec.x_extent</span>
+
+
+<a href="#plotmux.specs.cdf.CdfSpec.x_extent" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">x_extent</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the x extent of the data of the mark.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The <code>(min, max)</code> of the x data, or <code>None</code> if the mark
+has no numeric x data of its own (a slope, a
+categorical x, no value).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
 
 
 
@@ -3438,16 +4438,16 @@ are both explicit numeric values with <code>xmin &gt;= xmax</code>.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.XBoundSpec
+              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.MarkSpec
 
 
   
       dataclass
-  " href="#plotmux.specs.base.XBoundSpec">XBoundSpec</a></code></p>
+  " href="#plotmux.specs.base.MarkSpec">MarkSpec</a></code></p>
 
 
 
-        <p>Define a backend-agnostic line-chart specification.</p>
+        <p>Define a backend-agnostic line mark.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -3496,60 +4496,6 @@ are both explicit numeric values with <code>xmin &gt;= xmax</code>.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>label</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional label used e.g. in the legend.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>color</code>
-            </td>
-            <td>
-                  <code><span title="plotmux.colors.Color">Color</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional color for the line. It can be a hex
-string (<code>"#rrggbb"</code> or <code>"#rrggbbaa"</code>), a
-CSS/matplotlib named color (e.g. <code>"tab:blue"</code>), or an
-RGB(A) tuple of floats in <code>[0, 1]</code>. <code>None</code> uses the
-backend's default color. See
-<code>plotmux.colors.parse_color</code> for the exact semantics.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>alpha</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional line opacity, in <code>[0, 1]</code>. <code>None</code> uses
-the backend's default (usually fully opaque).</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
                 <code>linewidth</code>
             </td>
             <td>
@@ -3558,8 +4504,7 @@ the backend's default (usually fully opaque).</p>
             <td>
               <div class="doc-md-description">
                 <p>An optional line width. <code>None</code> uses the
-backend's default width. Same field name/semantics as
-<code>SlopeSpec.linewidth</code>.</p>
+backend's default width.</p>
               </div>
             </td>
             <td>
@@ -3575,8 +4520,7 @@ backend's default width. Same field name/semantics as
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The line's dash style. Same field name/semantics
-as <code>SlopeSpec.linestyle</code>.</p>
+                <p>The line's dash style.</p>
               </div>
             </td>
             <td>
@@ -3585,8 +4529,9 @@ as <code>SlopeSpec.linestyle</code>.</p>
           </tr>
       </tbody>
     </table>
-        <p><code>NaN</code> values are kept (a gap in the line, no point for a
-scatter plot). <code>inf</code> and <code>-inf</code> values are rejected.</p>
+        <p><code>label</code>, <code>color</code> and <code>alpha</code> are inherited from
+<code>MarkSpec</code>. <code>NaN</code> values are kept (a gap in the line).
+<code>inf</code> and <code>-inf</code> values are rejected.</p>
 
 
 <p><span class="doc-section-title">Raises:</span></p>
@@ -3600,13 +4545,24 @@ scatter plot). <code>inf</code> and <code>-inf</code> values are rejected.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="ValueError">ValueError</span></code>
+                  <code>InvalidSpecError</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>if <code>x</code> and <code>y</code> do not have the same length,
-<code>x</code> or <code>y</code> has an infinite value, <code>alpha</code> is not in
-<code>[0, 1]</code>, or <code>color</code> is not a valid color.</p>
+                <p>if <code>x</code> and <code>y</code> do not have the same
+length, <code>x</code> or <code>y</code> has an infinite value, or <code>alpha</code> is
+not in <code>[0, 1]</code>. Also a <code>ValueError</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>InvalidColorError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>if <code>color</code> is not a valid color. Also a
+<code>ValueError</code>.</p>
               </div>
             </td>
           </tr>
@@ -3643,6 +4599,199 @@ scatter plot). <code>inf</code> and <code>-inf</code> values are rejected.</p>
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.line.LineSpec.is_categorical" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.line.LineSpec.is_categorical</span>
+
+
+<a href="#plotmux.specs.line.LineSpec.is_categorical" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">is_categorical</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="bool">bool</span></span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Tell whether the mark draws on a categorical x-axis.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="bool">bool</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>True</code> for a categorical (string) x, <code>False</code> for a
+numeric x, and <code>None</code> if the mark has no x data of
+its own (a slope).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.line.LineSpec.to_primitives" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.line.LineSpec.to_primitives</span>
+
+
+<a href="#plotmux.specs.line.LineSpec.to_primitives" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_primitives</span><span class="p">(</span>
+    <span class="n">extent</span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="plotmux.primitives.Primitive">Primitive</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Lower the mark to drawing primitives.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>extent</code>
+            </td>
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The resolved x extent of the panel (see
+<code>PanelSpec.x_extent</code>), or <code>None</code> if the panel has
+none. Only a mark with <code>requires_extent</code> uses it.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="plotmux.primitives.Primitive">Primitive</span>, ...]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The primitives to draw, in drawing order. A primitive
+whose color is <code>None</code> gets a palette color from
+<code>plotmux.scene.build_scene</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="NotImplementedError">NotImplementedError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>always, a subclass must override it.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.line.LineSpec.x_extent" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.line.LineSpec.x_extent</span>
+
+
+<a href="#plotmux.specs.line.LineSpec.x_extent" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">x_extent</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the x extent of the data of the mark.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The <code>(min, max)</code> of the x data, or <code>None</code> if the mark
+has no numeric x data of its own (a slope, a
+categorical x, no value).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
 
 
 
@@ -3711,16 +4860,16 @@ scatter plot). <code>inf</code> and <code>-inf</code> values are rejected.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.XBoundSpec
+              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.MarkSpec
 
 
   
       dataclass
-  " href="#plotmux.specs.base.XBoundSpec">XBoundSpec</a></code></p>
+  " href="#plotmux.specs.base.MarkSpec">MarkSpec</a></code></p>
 
 
 
-        <p>Define a backend-agnostic scatter-chart specification.</p>
+        <p>Define a backend-agnostic scatter mark.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -3769,43 +4918,6 @@ scatter plot). <code>inf</code> and <code>-inf</code> values are rejected.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>label</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional label used e.g. in the legend.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>color</code>
-            </td>
-            <td>
-                  <code><span title="plotmux.colors.Color">Color</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional color for the markers. It can be a hex
-string (<code>"#rrggbb"</code> or <code>"#rrggbbaa"</code>), a
-CSS/matplotlib named color (e.g. <code>"tab:blue"</code>), or an
-RGB(A) tuple of floats in <code>[0, 1]</code>. <code>None</code> uses the
-backend's default color. See
-<code>plotmux.colors.parse_color</code> for the exact semantics.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
                 <code>size</code>
             </td>
             <td>
@@ -3833,27 +4945,7 @@ default size.</p>
                 <p>An optional, separate color for the marker edge
 (as opposed to <code>color</code>, which fills the marker). Same
 format as <code>color</code>. <code>None</code> uses <code>color</code> for the edge
-too (every backend's renderer already does this when
-<code>edgecolor</code> is unset -- see e.g.
-<code>plotmux.backends.bokeh.scatter.render_scatter</code>), so a
-plain, single-color marker still needs only <code>color</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>alpha</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional marker opacity, in <code>[0, 1]</code>. <code>None</code>
-uses the backend's default (usually fully opaque).</p>
+too.</p>
               </div>
             </td>
             <td>
@@ -3870,14 +4962,8 @@ uses the backend's default (usually fully opaque).</p>
             <td>
               <div class="doc-md-description">
                 <p>An optional marker shape, one of a small,
-backend-portable set (mirroring how <code>LineSpec.linestyle</code>
-exposes four portable names rather than every backend's
-native dash vocabulary). <code>None</code> uses the backend's
-default shape (a circle on every current backend). altair
-has no native <code>"x"</code> shape (see
-<code>plotmux.backends.altair.style.MARKER_STYLE</code>), a small,
-permanent per-backend asymmetry, the same pattern as
-<code>BarSpec.width</code>'s altair gap.</p>
+backend-portable set. <code>None</code> uses the backend's default
+shape (a circle on every backend).</p>
               </div>
             </td>
             <td>
@@ -3894,14 +4980,9 @@ permanent per-backend asymmetry, the same pattern as
             <td>
               <div class="doc-md-description">
                 <p>An optional tri-state fill toggle. <code>None</code>/<code>True</code>
-draw a filled marker using <code>color</code>, today's behavior.
-<code>False</code> draws a hollow marker: only the outline (
-<code>edgecolor</code> if set, else <code>color</code>) is drawn, with no
-fill -- distinct from leaving <code>color</code> unset, which asks
-for the backend's own default (opaque) fill color rather
-than an explicitly transparent one. Every current
-backend's own default fill is opaque, so <code>fill=False</code>
-is the only portable way to get a hollow marker.</p>
+draw a filled marker using <code>color</code>. <code>False</code> draws a
+hollow marker: only the outline (<code>edgecolor</code> if set,
+else <code>color</code>) is drawn.</p>
               </div>
             </td>
             <td>
@@ -3910,8 +4991,9 @@ is the only portable way to get a hollow marker.</p>
           </tr>
       </tbody>
     </table>
-        <p><code>NaN</code> values are kept (a gap in the line, no point for a
-scatter plot). <code>inf</code> and <code>-inf</code> values are rejected.</p>
+        <p><code>label</code>, <code>color</code> and <code>alpha</code> are inherited from
+<code>MarkSpec</code>. <code>NaN</code> values are kept (no point). <code>inf</code> and
+<code>-inf</code> values are rejected.</p>
 
 
 <p><span class="doc-section-title">Raises:</span></p>
@@ -3925,14 +5007,25 @@ scatter plot). <code>inf</code> and <code>-inf</code> values are rejected.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="ValueError">ValueError</span></code>
+                  <code><a class="autorefs autorefs-internal" title="plotmux.exceptions.InvalidSpecError" href="../exceptions/#plotmux.exceptions.InvalidSpecError">InvalidSpecError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>if <code>x</code> and <code>y</code> do not have the same length,
-<code>x</code> or <code>y</code> has an infinite value, <code>size</code> is not a
-positive number, <code>alpha</code> is not in <code>[0, 1]</code>, or <code>color</code>/<code>edgecolor</code> is not a valid
-color.</p>
+                <p>if <code>x</code> and <code>y</code> do not have the same
+length, <code>x</code> or <code>y</code> has an infinite value, <code>size</code> is
+not a positive number, or <code>alpha</code> is not in <code>[0, 1]</code>. Also
+a <code>ValueError</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>InvalidColorError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>if <code>color</code>/<code>edgecolor</code> is not a valid
+color. Also a <code>ValueError</code>.</p>
               </div>
             </td>
           </tr>
@@ -3969,6 +5062,199 @@ color.</p>
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.scatter.ScatterSpec.is_categorical" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.scatter.ScatterSpec.is_categorical</span>
+
+
+<a href="#plotmux.specs.scatter.ScatterSpec.is_categorical" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">is_categorical</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="bool">bool</span></span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Tell whether the mark draws on a categorical x-axis.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="bool">bool</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>True</code> for a categorical (string) x, <code>False</code> for a
+numeric x, and <code>None</code> if the mark has no x data of
+its own (a slope).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.scatter.ScatterSpec.to_primitives" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.scatter.ScatterSpec.to_primitives</span>
+
+
+<a href="#plotmux.specs.scatter.ScatterSpec.to_primitives" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_primitives</span><span class="p">(</span>
+    <span class="n">extent</span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="plotmux.primitives.Primitive">Primitive</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Lower the mark to drawing primitives.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>extent</code>
+            </td>
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The resolved x extent of the panel (see
+<code>PanelSpec.x_extent</code>), or <code>None</code> if the panel has
+none. Only a mark with <code>requires_extent</code> uses it.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="plotmux.primitives.Primitive">Primitive</span>, ...]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The primitives to draw, in drawing order. A primitive
+whose color is <code>None</code> gets a palette color from
+<code>plotmux.scene.build_scene</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="NotImplementedError">NotImplementedError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>always, a subclass must override it.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.scatter.ScatterSpec.x_extent" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.scatter.ScatterSpec.x_extent</span>
+
+
+<a href="#plotmux.specs.scatter.ScatterSpec.x_extent" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">x_extent</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the x extent of the data of the mark.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The <code>(min, max)</code> of the x data, or <code>None</code> if the mark
+has no numeric x data of its own (a slope, a
+categorical x, no value).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
 
 
 
@@ -4037,16 +5323,16 @@ color.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.XBoundSpec
+              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.MarkSpec
 
 
   
       dataclass
-  " href="#plotmux.specs.base.XBoundSpec">XBoundSpec</a></code></p>
+  " href="#plotmux.specs.base.MarkSpec">MarkSpec</a></code></p>
 
 
 
-        <p>Define a backend-agnostic bar-chart specification.</p>
+        <p>Define a backend-agnostic bar-chart mark.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -4072,10 +5358,7 @@ color.</p>
                 <p>The array of bar positions. Either numeric (evenly or
 unevenly spaced positions) or an array of strings, drawn
 as a categorical x-axis (e.g. <code>x=["Apples", "Pears",
-"Nectarines"]</code>). See <code>plotmux.utils.categorical.
-is_categorical</code>, used by the bokeh/altair renderers to
-special-case this -- matplotlib/plotly accept a string
-<code>x</code> natively and need no such check.</p>
+"Nectarines"]</code>).</p>
               </div>
             </td>
             <td>
@@ -4101,43 +5384,6 @@ special-case this -- matplotlib/plotly accept a string
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>label</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional label used e.g. in the legend.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>color</code>
-            </td>
-            <td>
-                  <code><span title="plotmux.colors.Color">Color</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional color for the bars. It can be a hex
-string (<code>"#rrggbb"</code> or <code>"#rrggbbaa"</code>), a
-CSS/matplotlib named color (e.g. <code>"tab:blue"</code>), or an
-RGB(A) tuple of floats in <code>[0, 1]</code>. <code>None</code> uses the
-backend's default color. See
-<code>plotmux.colors.parse_color</code> for the exact semantics.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
                 <code>width</code>
             </td>
             <td>
@@ -4145,33 +5391,19 @@ backend's default color. See
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The width of each bar, in <code>x</code> data units. Must be a
-positive number.</p>
+                <p>The width of each bar, in <code>x</code> data units (a fraction
+of the band for a categorical <code>x</code>). Must be a positive
+number.</p>
               </div>
             </td>
             <td>
                   <code>0.8</code>
             </td>
           </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>alpha</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional bar opacity, in <code>[0, 1]</code>. <code>None</code> uses
-the backend's default (usually fully opaque).</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
       </tbody>
     </table>
+        <p><code>label</code>, <code>color</code> and <code>alpha</code> are inherited from
+<code>MarkSpec</code>.</p>
 
 
 <p><span class="doc-section-title">Raises:</span></p>
@@ -4185,13 +5417,24 @@ the backend's default (usually fully opaque).</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="ValueError">ValueError</span></code>
+                  <code><a class="autorefs autorefs-internal" title="plotmux.exceptions.InvalidSpecError" href="../exceptions/#plotmux.exceptions.InvalidSpecError">InvalidSpecError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>if <code>x</code> and <code>y</code> do not have the same length,
-<code>width</code> is not a positive number, <code>alpha</code> is not in
-<code>[0, 1]</code>, or <code>color</code> is not a valid color.</p>
+                <p>if <code>x</code> and <code>y</code> do not have the same
+length, <code>width</code> is not a positive number, or <code>alpha</code> is
+not in <code>[0, 1]</code>. Also a <code>ValueError</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>InvalidColorError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>if <code>color</code> is not a valid color. Also a
+<code>ValueError</code>.</p>
               </div>
             </td>
           </tr>
@@ -4228,6 +5471,199 @@ the backend's default (usually fully opaque).</p>
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.bar.BarSpec.is_categorical" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.bar.BarSpec.is_categorical</span>
+
+
+<a href="#plotmux.specs.bar.BarSpec.is_categorical" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">is_categorical</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="bool">bool</span></span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Tell whether the mark draws on a categorical x-axis.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="bool">bool</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>True</code> for a categorical (string) x, <code>False</code> for a
+numeric x, and <code>None</code> if the mark has no x data of
+its own (a slope).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.bar.BarSpec.to_primitives" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.bar.BarSpec.to_primitives</span>
+
+
+<a href="#plotmux.specs.bar.BarSpec.to_primitives" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_primitives</span><span class="p">(</span>
+    <span class="n">extent</span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="plotmux.primitives.Primitive">Primitive</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Lower the mark to drawing primitives.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>extent</code>
+            </td>
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The resolved x extent of the panel (see
+<code>PanelSpec.x_extent</code>), or <code>None</code> if the panel has
+none. Only a mark with <code>requires_extent</code> uses it.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="plotmux.primitives.Primitive">Primitive</span>, ...]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The primitives to draw, in drawing order. A primitive
+whose color is <code>None</code> gets a palette color from
+<code>plotmux.scene.build_scene</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="NotImplementedError">NotImplementedError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>always, a subclass must override it.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.bar.BarSpec.x_extent" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.bar.BarSpec.x_extent</span>
+
+
+<a href="#plotmux.specs.bar.BarSpec.x_extent" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">x_extent</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the x extent of the data of the mark.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The <code>(min, max)</code> of the x data, or <code>None</code> if the mark
+has no numeric x data of its own (a slope, a
+categorical x, no value).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
 
 
 
@@ -4306,9 +5742,6 @@ the backend's default (usually fully opaque).</p>
 
 
         <p>Define one series of a <code>StackedBarSpec</code>.</p>
-<p>A small <code>(y, label, color)</code> tuple, mirroring how
-<code>LayerSpec.layers</code> holds a tuple of child specs -- see
-<code>StackedBarSpec.series</code>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -4348,7 +5781,7 @@ same length as the parent <code>StackedBarSpec.x</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional label used e.g. in the legend.</p>
+                <p>An optional label used in the legend.</p>
               </div>
             </td>
             <td>
@@ -4367,11 +5800,9 @@ same length as the parent <code>StackedBarSpec.x</code>.</p>
                 <p>An optional color for this series' bars. It can be a
 hex string (<code>"#rrggbb"</code> or <code>"#rrggbbaa"</code>), a
 CSS/matplotlib named color (e.g. <code>"tab:blue"</code>), or an
-RGB(A) tuple of floats in <code>[0, 1]</code>. <code>None</code> gets a
-distinct color from <code>plotmux.colors.palette.
-DEFAULT_PALETTE</code>, cycling in series order, the same way
-<code>LayerSpec</code> assigns default colors to its children (see
-<code>plotmux.specs.layer._assign_default_colors</code>).</p>
+RGB(A) tuple of floats in <code>[0, 1]</code>. <code>None</code> takes the
+next color of <code>plotmux.colors.palette.DEFAULT_PALETTE</code>
+(see <code>plotmux.scene.build_scene</code>).</p>
               </div>
             </td>
             <td>
@@ -4393,17 +5824,27 @@ DEFAULT_PALETTE</code>, cycling in series order, the same way
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="ValueError">ValueError</span></code>
+                  <code>InvalidColorError</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>if <code>color</code> is not a valid color.</p>
+                <p>if <code>color</code> is not a valid color. Also a
+<code>ValueError</code>.</p>
               </div>
             </td>
           </tr>
       </tbody>
     </table>
 
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">BarSeries</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">BarSeries</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="s2">"a"</span><span class="p">)</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">(3,)</span>
+</code></pre></div>
+</details>
 
 
 
@@ -4450,26 +5891,19 @@ DEFAULT_PALETTE</code>, cycling in series order, the same way
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.XBoundSpec
+              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.MarkSpec
 
 
   
       dataclass
-  " href="#plotmux.specs.base.XBoundSpec">XBoundSpec</a></code></p>
+  " href="#plotmux.specs.base.MarkSpec">MarkSpec</a></code></p>
 
 
 
-        <p>Define a backend-agnostic stacked-bar-chart specification.</p>
-<p>Unlike <code>layer()</code>'s <code>BarSpec</code> support (see
-<code>plotmux.backends.matplotlib.layer</code> and friends), which draws
-each child's bars independently onto shared axes with no
-coordination between them (several <code>BarSpec</code>s at the same <code>x</code>
-positions simply overlap), <code>StackedBarSpec</code> composes its
-<code>series</code> cumulatively: each series is drawn as a segment stacked
-on top of the running total of the series before it, at each
-<code>x</code> position, matching bokeh's <code>vbar_stack</code>/matplotlib's own
-<code>bottom=running_total</code> idiom for a stacked bar (see DESIGN.md,
-section 8.4).</p>
+        <p>Define a backend-agnostic stacked-bar-chart mark.</p>
+<p>Each series is a segment stacked on top of the running total of the
+series before it, at each <code>x</code> position. The running total is a
+plain cumulative sum (negative values are not handled specially).</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -4494,8 +5928,7 @@ section 8.4).</p>
               <div class="doc-md-description">
                 <p>The array of bar positions, shared by every series. Either
 numeric or an array of strings, drawn as a categorical
-x-axis -- same semantics as <code>BarSpec.x</code> (see
-<code>plotmux.utils.categorical.is_categorical</code>).</p>
+x-axis, same semantics as <code>BarSpec.x</code>.</p>
               </div>
             </td>
             <td>
@@ -4534,34 +5967,20 @@ the same length as <code>x</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The width of each bar, in <code>x</code> data units (categorical
-or numeric). Must be a positive number.</p>
+                <p>The width of each bar, in <code>x</code> data units (a fraction
+of the band for a categorical <code>x</code>). Must be a positive
+number.</p>
               </div>
             </td>
             <td>
                   <code>0.8</code>
             </td>
           </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>alpha</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional bar opacity, in <code>[0, 1]</code>, applied to
-every series. <code>None</code> uses the backend's default (usually
-fully opaque).</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
       </tbody>
     </table>
+        <p><code>alpha</code> is inherited from <code>MarkSpec</code> and applies to every
+series. The label and the color are set on each <code>BarSeries</code>,
+not on the spec.</p>
 
 
 <p><span class="doc-section-title">Raises:</span></p>
@@ -4575,14 +5994,15 @@ fully opaque).</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="ValueError">ValueError</span></code>
+                  <code><a class="autorefs autorefs-internal" title="plotmux.exceptions.InvalidSpecError" href="../exceptions/#plotmux.exceptions.InvalidSpecError">InvalidSpecError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>if <code>series</code> is empty, any series' <code>y</code> does not
-have the same length as <code>x</code>, <code>width</code> is not a positive
-number, <code>alpha</code> is not in <code>[0, 1]</code>, or any series'
-<code>color</code> is not a valid color.</p>
+                <p>if <code>series</code> is empty, any series' <code>y</code>
+does not have the same length as <code>x</code>, <code>width</code> is not a
+positive number, <code>alpha</code> is not in <code>[0, 1]</code>, or
+<code>label</code> or <code>color</code> is set on the spec. Also a
+<code>ValueError</code>.</p>
               </div>
             </td>
           </tr>
@@ -4626,6 +6046,199 @@ number, <code>alpha</code> is not in <code>[0, 1]</code>, or any series'
 
 
 
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.stacked_bar.StackedBarSpec.is_categorical" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.stacked_bar.StackedBarSpec.is_categorical</span>
+
+
+<a href="#plotmux.specs.stacked_bar.StackedBarSpec.is_categorical" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">is_categorical</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="bool">bool</span></span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Tell whether the mark draws on a categorical x-axis.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="bool">bool</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>True</code> for a categorical (string) x, <code>False</code> for a
+numeric x, and <code>None</code> if the mark has no x data of
+its own (a slope).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.stacked_bar.StackedBarSpec.to_primitives" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.stacked_bar.StackedBarSpec.to_primitives</span>
+
+
+<a href="#plotmux.specs.stacked_bar.StackedBarSpec.to_primitives" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_primitives</span><span class="p">(</span>
+    <span class="n">extent</span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="plotmux.primitives.Primitive">Primitive</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Lower the mark to drawing primitives.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>extent</code>
+            </td>
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The resolved x extent of the panel (see
+<code>PanelSpec.x_extent</code>), or <code>None</code> if the panel has
+none. Only a mark with <code>requires_extent</code> uses it.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="plotmux.primitives.Primitive">Primitive</span>, ...]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The primitives to draw, in drawing order. A primitive
+whose color is <code>None</code> gets a palette color from
+<code>plotmux.scene.build_scene</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="NotImplementedError">NotImplementedError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>always, a subclass must override it.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="plotmux.specs.stacked_bar.StackedBarSpec.x_extent" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.stacked_bar.StackedBarSpec.x_extent</span>
+
+
+<a href="#plotmux.specs.stacked_bar.StackedBarSpec.x_extent" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">x_extent</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the x extent of the data of the mark.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The <code>(min, max)</code> of the x data, or <code>None</code> if the mark
+has no numeric x data of its own (a slope, a
+categorical x, no value).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
 
 
   </div>
@@ -4655,8 +6268,7 @@ number, <code>alpha</code> is not in <code>[0, 1]</code>, or any series'
 
     <div class="doc doc-contents first">
 
-        <p>Contain the backend-agnostic slope/abline annotation
-specification.</p>
+        <p>Contain the backend-agnostic slope (abline) specification.</p>
 
 
 
@@ -4694,27 +6306,23 @@ specification.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.XBoundSpec
+              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.MarkSpec
 
 
   
       dataclass
-  " href="#plotmux.specs.base.XBoundSpec">XBoundSpec</a></code></p>
+  " href="#plotmux.specs.base.MarkSpec">MarkSpec</a></code></p>
 
 
 
-        <p>Define a backend-agnostic slope (a.k.a. abline) annotation
-specification.</p>
+        <p>Define a backend-agnostic slope (a.k.a. abline) mark.</p>
 <p>Unlike <code>LineSpec</code>, which is data-bound (an explicit <code>x</code>/<code>y</code>
 pair), a <code>SlopeSpec</code> describes a line by its closed form,
-<code>y = gradient * x + intercept</code>, spanning the current axes. It is
-the abstraction behind e.g. bokeh's <code>bokeh.models.Slope</code> and
-matplotlib's <code>Axes.axline(slope=..., xy1=(0, intercept))</code>: a
-reference/trend line drawn without owning any data of its own. It
-typically appears as a <code>plotmux.layer()</code> child alongside a
-data-bound spec, e.g. a scatter plot with its fitted trend line
-overlaid: <code>plotmux.layer(plotmux.scatter(x, y), SlopeSpec(gradient=2,
-intercept=10))</code>.</p>
+<code>y = gradient * x + intercept</code>, with no data of its own. It is
+drawn as the segment over the x extent of its panel: the
+<code>xmin</code>/<code>xmax</code> of the <code>PanelSpec</code> where they are set, else the
+extent of the data of the other marks of the panel. A panel with a
+slope and no x extent raises an <code>InvalidSpecError</code>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -4763,43 +6371,6 @@ intercept=10))</code>.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>label</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional label used e.g. in the legend.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>color</code>
-            </td>
-            <td>
-                  <code><span title="plotmux.colors.Color">Color</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional color for the line. It can be a hex
-string (<code>"#rrggbb"</code> or <code>"#rrggbbaa"</code>), a
-CSS/matplotlib named color (e.g. <code>"tab:blue"</code>), or an
-RGB(A) tuple of floats in <code>[0, 1]</code>. <code>None</code> uses the
-backend's default color. See
-<code>plotmux.colors.parse_color</code> for the exact semantics.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
                 <code>linewidth</code>
             </td>
             <td>
@@ -4831,25 +6402,10 @@ backend's default width.</p>
                   <code>&#39;solid&#39;</code>
             </td>
           </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>alpha</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional line opacity, in <code>[0, 1]</code>. <code>None</code> uses
-the backend's default (usually fully opaque).</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
       </tbody>
     </table>
+        <p><code>label</code>, <code>color</code> and <code>alpha</code> are inherited from
+<code>MarkSpec</code>.</p>
 
 
 <p><span class="doc-section-title">Raises:</span></p>
@@ -4863,12 +6419,23 @@ the backend's default (usually fully opaque).</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="ValueError">ValueError</span></code>
+                  <code><a class="autorefs autorefs-internal" title="plotmux.exceptions.InvalidSpecError" href="../exceptions/#plotmux.exceptions.InvalidSpecError">InvalidSpecError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>if <code>alpha</code> is not in <code>[0, 1]</code>, or <code>color</code>
-is not a valid color.</p>
+                <p>if <code>alpha</code> is not in <code>[0, 1]</code>. Also a
+<code>ValueError</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>InvalidColorError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>if <code>color</code> is not a valid color. Also a
+<code>ValueError</code>.</p>
               </div>
             </td>
           </tr>
@@ -4905,84 +6472,22 @@ is not a valid color.</p>
 
 
 
+<div class="doc doc-object doc-function">
 
 
-  </div>
-
-    </div>
-
-</div>
+<h4 id="plotmux.specs.slope.SlopeSpec.to_primitives" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">plotmux.specs.slope.SlopeSpec.to_primitives</span>
 
 
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-module">
-
-
-
-<h2 id="plotmux.specs.layer" class="doc doc-heading">
-            <span class="doc doc-object-name doc-module-name">plotmux.specs.layer</span>
-
-
-<a href="#plotmux.specs.layer" class="headerlink" title="Permanent link">&para;</a></h2>
-
-    <div class="doc doc-contents first">
-
-        <p>Contain the backend-agnostic layering specification.</p>
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-<div class="doc doc-object doc-class">
-
-
-
-<h3 id="plotmux.specs.layer.LayerSpec" class="doc doc-heading">
-            <span class="doc doc-object-name doc-class-name">plotmux.specs.layer.LayerSpec</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
-  </span>
-
-<a href="#plotmux.specs.layer.LayerSpec" class="headerlink" title="Permanent link">&para;</a></h3>
-
+<a href="#plotmux.specs.slope.SlopeSpec.to_primitives" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_primitives</span><span class="p">(</span>
+    <span class="n">extent</span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="plotmux.primitives.Primitive">Primitive</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</code></pre></div>
 
     <div class="doc doc-contents ">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.XBoundSpec
 
-
-  
-      dataclass
-  " href="#plotmux.specs.base.XBoundSpec">XBoundSpec</a></code></p>
-
-
-
-        <p>Define a spec that draws multiple child specs on one shared
-axes.</p>
+        <p>Lower the slope to the segment over the x extent.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -4998,30 +6503,42 @@ axes.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>layers</code>
+                <code>extent</code>
             </td>
             <td>
-                  <code><span title="tuple">tuple</span>[<a class="autorefs autorefs-internal" title="plotmux.specs.base.BaseSpec
-
-
-  
-      dataclass
-  " href="#plotmux.specs.base.BaseSpec">BaseSpec</a>, ...]</code>
+                  <code><span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>] | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The child specs to draw together, in draw order.
-Must be non-empty. A <code>LayerSpec</code> nested inside
-<code>layers</code> is rejected: layering is designed as one flat
-pass over <code>layers</code> (see
-<code>plotmux.backends.matplotlib.layer.render_layer</code> and
-<code>plotmux.backends.xy.layer.render_layer</code>), so callers
-must flatten nested layers themselves rather than relying
-on recursive dispatch.</p>
+                <p>The x extent of the panel.</p>
               </div>
             </td>
             <td>
                 <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="plotmux.primitives.Primitive">Primitive</span>, ...]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>One <code>Line</code> with the two endpoints of the extent. Its
+<code>infinite</code> field is <code>(gradient, intercept)</code>.</p>
+              </div>
             </td>
           </tr>
       </tbody>
@@ -5039,14 +6556,12 @@ on recursive dispatch.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="ValueError">ValueError</span></code>
+                  <code><a class="autorefs autorefs-internal" title="plotmux.exceptions.InvalidSpecError" href="../exceptions/#plotmux.exceptions.InvalidSpecError">InvalidSpecError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>if <code>layers</code> is empty, contains a
-<code>LayerSpec</code>, or mixes a categorical x (strings, e.g.
-<code>BarSpec</code>) with a numeric x (e.g. <code>LineSpec</code>,
-<code>HistogramSpec</code>) on the same axes.</p>
+                <p>if <code>extent</code> is <code>None</code>. Also a
+<code>ValueError</code>.</p>
               </div>
             </td>
           </tr>
@@ -5054,40 +6569,9 @@ on recursive dispatch.</p>
     </table>
 
 
-<details class="example" open>
-  <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">HistogramSpec</span><span class="p">,</span> <span class="n">LayerSpec</span><span class="p">,</span> <span class="n">LineSpec</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">spec</span> <span class="o">=</span> <span class="n">LayerSpec</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layers</span><span class="o">=</span><span class="p">(</span>
-<span class="gp">... </span>        <span class="n">HistogramSpec</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">101</span><span class="p">),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span>
-<span class="gp">... </span>        <span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">)),</span>
-<span class="gp">... </span>    <span class="p">)</span>
-<span class="gp">... </span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">layers</span><span class="p">)</span>
-<span class="go">2</span>
-</code></pre></div>
-</details>
+    </div>
 
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
+</div>
 
 
 
@@ -5156,25 +6640,20 @@ on recursive dispatch.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.XBoundSpec
+              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.Spec
 
 
   
       dataclass
-  " href="#plotmux.specs.base.XBoundSpec">XBoundSpec</a></code></p>
+  " href="#plotmux.specs.base.Spec">Spec</a></code></p>
 
 
 
-        <p>Define a spec that lays out multiple child specs as independent
-panels in a grid.</p>
-<p>Unlike <code>LayerSpec</code> (multiple specs drawn onto <em>one</em> shared axes,
-see <code>plotmux.specs.LayerSpec</code>), each child here gets its own,
-independent panel -- the backend-agnostic equivalent of
-matplotlib's <code>pyplot.subplots</code>. A child may itself be a
-<code>LayerSpec</code> (several series sharing one panel's axes); a nested
-<code>GridSpec</code> is rejected for the same reason <code>LayerSpec</code> rejects
-nesting: layout is one flat pass over <code>cells</code>, so callers must
-flatten nested grids themselves.</p>
+        <p>Define a grid of independent panels.</p>
+<p>Each panel is its own axes with its own marks and style, the
+backend-agnostic equivalent of matplotlib's <code>pyplot.subplots</code>.
+A grid holds panels, and a panel holds marks, so neither a grid in
+a grid nor a panel in a panel can be built.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -5190,21 +6669,20 @@ flatten nested grids themselves.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>cells</code>
+                <code>panels</code>
             </td>
             <td>
-                  <code><span title="tuple">tuple</span>[<a class="autorefs autorefs-internal" title="plotmux.specs.base.BaseSpec
+                  <code><span title="tuple">tuple</span>[<a class="autorefs autorefs-internal" title="plotmux.specs.panel.PanelSpec
 
 
   
       dataclass
-  " href="#plotmux.specs.base.BaseSpec">BaseSpec</a>, ...]</code>
+  " href="#plotmux.specs.panel.PanelSpec">PanelSpec</a>, ...]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The child specs to draw, one independent panel per
-spec, in row-major order (left to right, top to bottom).
-Must be non-empty.</p>
+                <p>The panels to draw, in row-major order (left to right,
+top to bottom). Must be non-empty.</p>
               </div>
             </td>
             <td>
@@ -5220,10 +6698,9 @@ Must be non-empty.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The number of columns in the grid. Rows are filled
-left to right; the last row is left short (its remaining
-panels left empty) when <code>len(cells)</code> is not a multiple
-of <code>ncols</code>. Must be a positive integer.</p>
+                <p>The number of columns in the grid. The last row is left
+short when <code>len(panels)</code> is not a multiple of <code>ncols</code>.
+Must be a positive integer.</p>
               </div>
             </td>
             <td>
@@ -5239,9 +6716,7 @@ of <code>ncols</code>. Must be a positive integer.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional figure-level title, shown once above the
-whole grid (not any individual cell). Inherited from
-<code>BaseSpec</code>.</p>
+                <p>An optional title shown once above the whole grid.</p>
               </div>
             </td>
             <td>
@@ -5250,9 +6725,6 @@ whole grid (not any individual cell). Inherited from
           </tr>
       </tbody>
     </table>
-        <p><code>xlabel</code>/<code>ylabel</code>/<code>xscale</code>/<code>yscale</code>, also inherited from
-<code>BaseSpec</code>, have no meaning at the grid level -- each cell keeps
-its own -- so every backend's grid renderer ignores them.</p>
 
 
 <p><span class="doc-section-title">Raises:</span></p>
@@ -5266,12 +6738,13 @@ its own -- so every backend's grid renderer ignores them.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="ValueError">ValueError</span></code>
+                  <code><a class="autorefs autorefs-internal" title="plotmux.exceptions.InvalidSpecError" href="../exceptions/#plotmux.exceptions.InvalidSpecError">InvalidSpecError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>if <code>cells</code> is empty, contains a <code>GridSpec</code>,
-or <code>ncols</code> is not a positive integer.</p>
+                <p>if <code>panels</code> is empty or holds an object
+that is not a <code>PanelSpec</code>, or <code>ncols</code> is not a
+positive integer. Also a <code>ValueError</code>.</p>
               </div>
             </td>
           </tr>
@@ -5282,15 +6755,15 @@ or <code>ncols</code> is not a positive integer.</p>
 <details class="example" open>
   <summary>Example</summary>
   <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">GridSpec</span><span class="p">,</span> <span class="n">HistogramSpec</span><span class="p">,</span> <span class="n">LineSpec</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">GridSpec</span><span class="p">,</span> <span class="n">HistogramSpec</span><span class="p">,</span> <span class="n">LineSpec</span><span class="p">,</span> <span class="n">PanelSpec</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">spec</span> <span class="o">=</span> <span class="n">GridSpec</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">cells</span><span class="o">=</span><span class="p">(</span>
-<span class="gp">... </span>        <span class="n">HistogramSpec</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">101</span><span class="p">),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span>
-<span class="gp">... </span>        <span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">)),</span>
+<span class="gp">... </span>    <span class="n">panels</span><span class="o">=</span><span class="p">(</span>
+<span class="gp">... </span>        <span class="n">PanelSpec</span><span class="p">(</span><span class="n">marks</span><span class="o">=</span><span class="p">(</span><span class="n">HistogramSpec</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">101</span><span class="p">),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">),)),</span>
+<span class="gp">... </span>        <span class="n">PanelSpec</span><span class="p">(</span><span class="n">marks</span><span class="o">=</span><span class="p">(</span><span class="n">LineSpec</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">)),)),</span>
 <span class="gp">... </span>    <span class="p">),</span>
 <span class="gp">... </span>    <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">cells</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">panels</span><span class="p">)</span>
 <span class="go">2</span>
 </code></pre></div>
 </details>

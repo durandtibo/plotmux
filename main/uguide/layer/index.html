@@ -724,10 +724,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#style-arguments" class="md-nav__link">
+  <a href="#axes-options" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Style Arguments
+        Axes Options
       
     </span>
   </a>
@@ -802,6 +802,34 @@
     
   
     Grid Layouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrating to the Primitives-Based Design
   
 
     
@@ -1192,6 +1220,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/scene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/specs/" class="md-nav__link">
         
   
@@ -1341,10 +1397,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#style-arguments" class="md-nav__link">
+  <a href="#axes-options" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Style Arguments
+        Axes Options
       
     </span>
   </a>
@@ -1419,8 +1475,9 @@
 <p><img alt="📖" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/1f4d6.svg" title=":book:" /> This page describes <code>plotmux.layer()</code>, which combines several charts onto one shared set of
 axes.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p><code>plotmux.layer()</code> accepts any number of child specs, or already-rendered <code>Figure</code>s, and draws them
-together on one shared set of axes, e.g. overlaying a line on top of a histogram:</p>
+<p><code>plotmux.layer()</code> accepts any number of marks, or single-panel <code>Figure</code>s, and draws them together on
+one shared set of axes, e.g. overlaying a line on top of a histogram. A layer is a panel with several
+marks:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">HistogramSpec</span>
@@ -1431,43 +1488,65 @@ together on one shared set of axes, e.g. overlaying a line on top of a histogram
 <span class="gp">... </span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"layered.png"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
 </code></pre></div>
-<p>A <code>Figure</code> passed as an item, such as <code>plotmux.line(...)</code> above, is shorthand for its <code>.spec</code>: only
-the spec is reused. The earlier native figure is discarded and everything is re-rendered together,
-since two independent native figures can't be merged after the fact in either backend.</p>
-<h2 id="style-arguments">Style Arguments<a class="headerlink" href="#style-arguments" title="Permanent link">&para;</a></h2>
-<p>Like <code>hist</code>, <code>line</code>, and <code>scatter</code>, <code>layer</code> accepts <code>title</code>, <code>xlabel</code>, <code>ylabel</code>, <code>xscale</code>, <code>yscale</code>,
-<code>background_color</code>, <code>ymin</code>, <code>ymax</code>, and <code>backend</code> (see <a href="../api/">The Plotting API</a>).
-These describe the combined axes, not any individual child: a child's own <code>title</code> (if it has one) is
-ignored when it is drawn as part of a layer.</p>
-<h2 id="layering-a-slope-with-a-data-bound-chart">Layering a Slope with a Data-Bound Chart<a class="headerlink" href="#layering-a-slope-with-a-data-bound-chart" title="Permanent link">&para;</a></h2>
-<p><code>plotmux.slope()</code> (a reference/trend line with no data of its own, see <a href="../api/">The Plotting
-API</a>) is the one spec type that is standalone-supported on only
-two of the five backends (matplotlib, bokeh). Layering it alongside a data-bound sibling makes it
-work on the other three (altair, <code>xy</code>, plotly) too: the sibling's x-range supplies the concrete
-endpoints <code>SlopeSpec</code> itself has none of.</p>
+<p>A <code>Figure</code> passed as an item, such as <code>plotmux.line(...)</code> above, contributes its marks and its axes
+options. The earlier native figure is discarded and everything is re-rendered together, since two
+independent native figures can't be merged after the fact.</p>
+<h2 id="axes-options">Axes Options<a class="headerlink" href="#axes-options" title="Permanent link">&para;</a></h2>
+<p>Like <code>hist</code>, <code>line</code>, and <code>scatter</code>, <code>layer</code> accepts the axes options (<code>title</code>, <code>xlabel</code>, <code>ylabel</code>,
+<code>xscale</code>, <code>yscale</code>, <code>xmin</code>, <code>xmax</code>, <code>ymin</code>, <code>ymax</code>, <code>background_color</code>, the legend options and
+<code>backend</code>, see <a href="../api/">The Plotting API</a>). They describe the combined axes.</p>
+<p>The axes options of the figures given as items are merged, in this order:</p>
+<ol>
+<li>an option set in the call to <code>layer</code> wins;</li>
+<li>else the unique value of the figures that is not the default;</li>
+<li>else, if two figures have different values, an <code>InvalidSpecError</code> asks you to set the option in
+   the call.</li>
+</ol>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">layer</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">plotmux</span><span class="o">.</span><span class="n">line</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">"a trend"</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="n">plotmux</span><span class="o">.</span><span class="n">scatter</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">1.9</span><span class="p">,</span> <span class="mf">3.2</span><span class="p">]),</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">title</span>
+<span class="go">'a trend'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plotmux</span><span class="o">.</span><span class="n">layer</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">plotmux</span><span class="o">.</span><span class="n">line</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">"a"</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="n">plotmux</span><span class="o">.</span><span class="n">line</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">"b"</span><span class="p">),</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">plotmux.exceptions.InvalidSpecError</span>: <span class="n">the figures have different values of title: ['a', 'b']. Set title in the call to layer.</span>
+</code></pre></div>
+<h2 id="layering-a-slope-with-a-data-bound-chart">Layering a Slope with a Data-Bound Chart<a class="headerlink" href="#layering-a-slope-with-a-data-bound-chart" title="Permanent link">&para;</a></h2>
+<p><code>SlopeSpec</code> (a reference/trend line with no data of its own, see <a href="../api/">The Plotting API</a>) is
+drawn over the x extent of the panel, so it works in any layer, on every backend, as long as the
+panel has an extent: the data of another mark, or <code>xmin</code>/<code>xmax</code>. Give it as a mark, not as the
+figure of <code>plotmux.slope()</code> (which needs its own <code>xmin</code>/<code>xmax</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SlopeSpec</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">layer</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="n">plotmux</span><span class="o">.</span><span class="n">scatter</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.9</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">]),</span>
-<span class="gp">... </span>    <span class="n">plotmux</span><span class="o">.</span><span class="n">slope</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="n">SlopeSpec</span><span class="p">(</span><span class="n">gradient</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">intercept</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
 <span class="gp">... </span>    <span class="n">backend</span><span class="o">=</span><span class="s2">"altair"</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"scatter_with_trend.html"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
 </code></pre></div>
-<p>A <code>layer()</code> with only <code>SlopeSpec</code> children (no data-bound sibling to derive a range from) still
-raises <code>NotImplementedError</code> on altair/<code>xy</code>/plotly, since there is nothing to compute a range from.</p>
+<p>A layer with a slope and nothing else raises an <code>InvalidSpecError</code> when the panel is built, whatever
+the backend, because there is nothing to compute an extent from.</p>
 <h2 id="colors-in-a-layer">Colors in a Layer<a class="headerlink" href="#colors-in-a-layer" title="Permanent link">&para;</a></h2>
-<p>A child spec that sets no explicit <code>color</code> is assigned one from <code>DEFAULT_PALETTE</code> (see
-<a href="../colors/">Colors</a>), in draw order, so each child remains visually distinguishable without you
-having to pick colors by hand.</p>
+<p>A mark that sets no explicit <code>color</code> is assigned one from <code>DEFAULT_PALETTE</code> (see
+<a href="../colors/">Colors</a>), in draw order, so each mark remains visually distinguishable without you
+having to pick colors by hand. A mark with an explicit color does not use a color of the palette.</p>
 <h2 id="restrictions">Restrictions<a class="headerlink" href="#restrictions" title="Permanent link">&para;</a></h2>
-<p><code>layer</code> does not support nesting: passing a <code>LayerSpec</code> as one of its items raises a <code>ValueError</code>.
-Layering is one flat pass over its children, so flatten nested layers yourself before calling
-<code>layer</code> rather than relying on recursive dispatch. <code>layer</code> also requires at least one item.</p>
+<p>A layer holds marks, and a mark is not a panel, so layers do not nest in the type: passing a layer
+as an item of another layer simply contributes its marks. Passing a grid raises an
+<code>InvalidSpecError</code>. A categorical <code>x</code> (strings) cannot be mixed with a numeric <code>x</code> on the same axes,
+and <code>layer</code> requires at least one item.</p>
 <h2 id="whats-next">What's Next<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../api/">The Plotting API</a>: the unified plotting functions combined by <code>layer</code></li>
 <li><a href="../grid/">Grid Layouts</a>: lay out several charts (or layers) as independent panels in a grid</li>
-<li><a href="../colors/">Colors</a>: how colors are assigned to layer children</li>
+<li><a href="../colors/">Colors</a>: how colors are assigned to the marks of a layer</li>
 </ul>
 
 

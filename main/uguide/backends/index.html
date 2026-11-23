@@ -826,6 +826,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrating to the Primitives-Based Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1203,6 +1231,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/scene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/specs/" class="md-nav__link">
         
   
@@ -1514,6 +1570,13 @@ Passing such a name directly to a plotting function's <code>backend</code> argum
 <span class="gr">RuntimeError</span>: <span class="n">No backend registered under the name 'not_a_backend'. ...</span>
 </code></pre></div>
 <h2 id="adding-a-third-party-backend">Adding a Third-Party Backend<a class="headerlink" href="#adding-a-third-party-backend" title="Permanent link">&para;</a></h2>
+<p>A backend is a class with three required methods: <code>capabilities()</code>, <code>draw(scene)</code> and
+<code>save(native, path, fmt)</code>. It draws the three primitives of a <strong>scene</strong> and applies the axes style;
+it does not decide any number on the screen. <code>plotmux.scene.build_scene(spec)</code> turns the spec of a
+figure into an <code>AxesScene</code> (one axes) or a <code>GridScene</code> (a grid of axes): its <code>primitives</code> are <code>Bars</code>,
+<code>Line</code> and <code>Points</code> (see <code>plotmux.primitives</code>), each with its resolved color and label, and the
+<code>AxesScene</code> holds the title, the labels, the scales, the limits, the background color, the legend
+style and the categories of the x-axis.</p>
 <p>A separate package can add a new backend without modifying <code>plotmux</code>'s source, via the
 <code>plotmux.backends</code> entry-point group. The entry point is named after the backend, and its value is
 <code>package.module:BackendClass</code>:</p>
@@ -1521,13 +1584,27 @@ Passing such a name directly to a plotting function's <code>backend</code> argum
 <span class="n">my_backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"my_package.plotmux_backend:MyBackend"</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="c1"># my_package/plotmux_backend.py</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.backends.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Backend</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.backends.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Backend</span><span class="p">,</span> <span class="n">BackendCapabilities</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.primitives</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bars</span><span class="p">,</span> <span class="n">Line</span><span class="p">,</span> <span class="n">Points</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.scene</span><span class="w"> </span><span class="kn">import</span> <span class="n">AxesScene</span><span class="p">,</span> <span class="n">GridScene</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">MyBackend</span><span class="p">(</span><span class="n">Backend</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s2">"my_backend"</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">capabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BackendCapabilities</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">BackendCapabilities</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">formats</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">"png"</span><span class="p">}),</span>  <span class="c1"># the export formats of a figure</span>
+            <span class="n">grid_formats</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">"png"</span><span class="p">}),</span>  <span class="c1"># the export formats of a grid</span>
+            <span class="n">legend_locations</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">"top_left"</span><span class="p">,</span> <span class="s2">"top_right"</span><span class="p">}),</span>
+            <span class="n">markers</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">"circle"</span><span class="p">,</span> <span class="s2">"square"</span><span class="p">}),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scene</span><span class="p">:</span> <span class="n">AxesScene</span> <span class="o">|</span> <span class="n">GridScene</span><span class="p">):</span>
+        <span class="c1"># Draw each primitive of scene.primitives (Bars, Line or Points), then apply the</span>
+        <span class="c1"># style of the axes. A GridScene holds one AxesScene per panel in scene.panels.</span>
+        <span class="o">...</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">native</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">fmt</span><span class="p">):</span> <span class="o">...</span>
 
@@ -1538,6 +1615,12 @@ Passing such a name directly to a plotting function's <code>backend</code> argum
 
     <span class="k">def</span><span class="w"> </span><span class="nf">mimebundle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">native</span><span class="p">):</span> <span class="o">...</span>
 </code></pre></div>
+<p><code>Backend.render(spec)</code> is not overridden: it builds the scene, checks it against <code>capabilities()</code>
+(a legend location or a marker that the backend does not declare raises an
+<code>UnsupportedSpecError</code> before anything is drawn, and <code>plotmux.export.save</code> raises an
+<code>UnsupportedFormatError</code> for a format that is not declared before any file or directory is created),
+then calls <code>draw</code>. A new chart type needs no change in a backend when it is a composition of <code>Bars</code>,
+<code>Line</code> and <code>Points</code>, see <a href="../../dev/development/">the developer guide</a>.</p>
 <p>The module is imported, and the class instantiated once, the first time the name is used (e.g.
 <code>plotmux.hist(..., backend="my_backend")</code>). <code>import plotmux</code> reads no entry point and imports no
 backend: none of the five built-in backends (<code>matplotlib</code>, <code>xy</code>, <code>bokeh</code>, <code>altair</code>, <code>plotly</code>) is
@@ -1546,7 +1629,8 @@ as the package is installed, because the names of the entry points are read from
 metadata without importing the plugin.</p>
 <p>A backend can also be registered from code, with <code>register_backend</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_backend</span><span class="p">,</span> <span class="n">register_backend</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span><span class="w"> </span><span class="nc">OtherBackend</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.backends.matplotlib.backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatplotlibBackend</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span><span class="w"> </span><span class="nc">OtherBackend</span><span class="p">(</span><span class="n">MatplotlibBackend</span><span class="p">):</span>
 <span class="gp">... </span>    <span class="n">name</span> <span class="o">=</span> <span class="s2">"other_backend"</span>
 <span class="gp">...</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">register_backend</span><span class="p">(</span><span class="n">OtherBackend</span><span class="p">())</span>

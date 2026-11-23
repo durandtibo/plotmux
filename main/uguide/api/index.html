@@ -672,10 +672,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#common-style-arguments" class="md-nav__link">
+  <a href="#axes-options" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common Style Arguments
+        Axes Options
       
     </span>
   </a>
@@ -683,10 +683,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#backend-specific-arguments" class="md-nav__link">
+  <a href="#unknown-keyword-arguments" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Backend-Specific Arguments
+        Unknown Keyword Arguments
       
     </span>
   </a>
@@ -868,6 +868,34 @@
     
   
     Grid Layouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrating to the Primitives-Based Design
   
 
     
@@ -1258,6 +1286,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/scene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/specs/" class="md-nav__link">
         
   
@@ -1495,10 +1551,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#common-style-arguments" class="md-nav__link">
+  <a href="#axes-options" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common Style Arguments
+        Axes Options
       
     </span>
   </a>
@@ -1506,10 +1562,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#backend-specific-arguments" class="md-nav__link">
+  <a href="#unknown-keyword-arguments" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Backend-Specific Arguments
+        Unknown Keyword Arguments
       
     </span>
   </a>
@@ -1550,8 +1606,8 @@
 <h1 id="plotting-api">Plotting API<a class="headerlink" href="#plotting-api" title="Permanent link">&para;</a></h1>
 <p><img alt="📖" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/1f4d6.svg" title=":book:" /> This page describes <code>plotmux</code>'s public plotting functions: <code>plotmux.hist</code>, <code>plotmux.bar</code>,
 <code>plotmux.stacked_bar</code>, <code>plotmux.cdf</code>, <code>plotmux.line</code>, <code>plotmux.scatter</code>, <code>plotmux.slope</code>,
-<code>plotmux.layer</code>, and <code>plotmux.grid</code>. It explains the concepts shared by all of them: specs,
-backends, common style arguments, and the <code>Figure</code> object they all return.</p>
+<code>plotmux.layer</code>, and <code>plotmux.grid</code>. It explains the concepts shared by all of them: marks and
+panels, backends, the axes options, and the <code>Figure</code> object they all return.</p>
 <p><strong>Prerequisites:</strong> You'll need to know a bit of Python.
 For a refresher, see the <a href="https://docs.python.org/tutorial/">Python tutorial</a>.
 It is helpful to know a bit of <a href="https://numpy.org/doc/stable/user/quickstart.html">NumPy</a>.</p>
@@ -1570,19 +1626,25 @@ It is helpful to know a bit of <a href="https://numpy.org/doc/stable/user/quicks
 </ul>
 <p>Each of these functions:</p>
 <ol>
-<li>builds a backend-agnostic <strong>spec</strong> describing what to plot (data + encoding + style),</li>
-<li>renders that spec through a <strong>backend</strong> (Matplotlib, <code>xy</code>, ...), resolved from the <code>backend</code>
+<li>builds a backend-agnostic <strong>mark</strong> (what is drawn: the data and its style, for example a
+   <code>HistogramSpec</code>) and wraps it in a <strong>panel</strong> (one set of axes: a <code>PanelSpec</code>),</li>
+<li>renders that panel through a <strong>backend</strong> (Matplotlib, <code>xy</code>, ...), resolved from the <code>backend</code>
    argument or the current default backend (see <a href="../backends/">Choosing a backend</a>),</li>
 <li>returns the result wrapped in a <code>Figure</code>.</li>
 </ol>
+<p>A backend only draws three primitives (bars, lines and points) and applies the axes style. The
+numbers on the screen (the bins of a histogram, the steps of a CDF, the stacking of a bar chart,
+the default colors) are decided once, before the backend is called, so the same call draws the
+same chart on every backend. Swapping the backend is a one-line change.</p>
 <h2 id="plotting-a-histogram">Plotting a Histogram<a class="headerlink" href="#plotting-a-histogram" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">hist</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"My histogram"</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"histogram.png"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
 </code></pre></div>
-<p><code>bins</code> controls the number of histogram bins. <code>xmin</code>/<code>xmax</code> control the x-axis range: each can be
-an explicit numeric value, a quantile string such as <code>"q0.1"</code> (the 10% quantile), or <code>None</code> to fall
-back to the min/max of <code>values</code>:</p>
+<p><code>bins</code> controls the number of histogram bins. <code>xmin</code>/<code>xmax</code> are the <strong>range of the values that are
+binned</strong>: each can be an explicit numeric value, a quantile string such as <code>"q0.1"</code> (the 10%
+quantile), or <code>None</code> to fall back to the min/max of <code>values</code>. They are not axis limits: the axes
+autoscale on the bars that are drawn.</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">hist</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">xmin</span><span class="o">=</span><span class="s2">"q0.0"</span><span class="p">,</span> <span class="n">xmax</span><span class="o">=</span><span class="s2">"q0.95"</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"histogram.png"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
@@ -1593,8 +1655,9 @@ back to the min/max of <code>values</code>:</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">bar</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">"counts"</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"bar.png"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
 </code></pre></div>
-<p><code>width</code> controls the width of each bar, in <code>x</code> data units (defaults to <code>0.8</code>). <code>x</code> can also be an
-array of strings (e.g. <code>["a", "b", "c"]</code>), drawn as a categorical axis.</p>
+<p><code>width</code> controls the width of each bar, in <code>x</code> data units (defaults to <code>0.8</code>), on every backend.
+<code>x</code> can also be an array of strings (e.g. <code>["a", "b", "c"]</code>), drawn as a categorical axis, in which
+case <code>width</code> is a fraction of the band of a category.</p>
 <h2 id="plotting-a-stacked-bar-chart">Plotting a Stacked Bar Chart<a class="headerlink" href="#plotting-a-stacked-bar-chart" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">BarSeries</span>
@@ -1604,25 +1667,21 @@ array of strings (e.g. <code>["a", "b", "c"]</code>), drawn as a categorical axi
 <span class="gp">... </span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"stacked_bar.png"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
 </code></pre></div>
-<p>Unlike <code>plotmux.layer()</code>ing several <code>plotmux.bar()</code> calls together, which draws each bar
-independently onto shared axes (they simply overlap at shared <code>x</code> positions), <code>stacked_bar()</code> draws
-its <code>series</code> cumulatively: each <code>BarSeries</code> is stacked on top of the running total of the series
-before it, at each <code>x</code> position — matching the "stacked bar" you'd expect from any plotting
-library. <code>series</code> is a list of <code>plotmux.specs.BarSeries(y=..., label=None, color=None)</code>, one per
-stacked segment, in bottom-to-top order. A series with no explicit <code>color</code> gets a distinct color
-from <code>plotmux.colors.DEFAULT_PALETTE</code>, cycling in series order, so unrelated series never end up
-indistinguishable by default (see <a href="../colors/">Colors</a>).</p>
+<p><code>stacked_bar()</code> draws its <code>series</code> cumulatively: each <code>BarSeries</code> is stacked on top of the running
+total of the series before it (a plain cumulative sum, so negative values are not handled
+specially), at each <code>x</code> position. <code>series</code> is a list of
+<code>plotmux.specs.BarSeries(y=..., label=None, color=None)</code>, one per stacked segment, in bottom-to-top
+order. A series with no explicit <code>color</code> gets the next color of <code>plotmux.colors.DEFAULT_PALETTE</code>
+(see <a href="../colors/">Colors</a>). A stacked bar chart works standalone, in a layer and in a grid on every
+backend.</p>
 <h2 id="plotting-an-empirical-cdf">Plotting an Empirical CDF<a class="headerlink" href="#plotting-an-empirical-cdf" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">cdf</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">"My CDF"</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"cdf.png"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
 </code></pre></div>
-<p><code>plotmux.cdf()</code> plots the empirical cumulative distribution function of <code>values</code>. <code>nbins</code> controls
-how many bins are used to approximate the curve (<code>None</code> uses the backend's default binning), and
-<code>xmin</code>/<code>xmax</code> accept the same explicit-value/quantile-string/<code>None</code> semantics as <code>hist</code>. Unlike the
-other chart functions, <code>ylabel</code> defaults to <code>"cumulative probability"</code> instead of <code>None</code>, since a
-CDF's y-axis always represents that same quantity unless you override it. See <a href="../cdf/">Plotting a CDF</a>
-for a dedicated walkthrough.</p>
+<p><code>plotmux.cdf()</code> plots the exact empirical cumulative distribution function <code>P(X &lt;= x)</code> of <code>values</code>.
+See <a href="../cdf/">Plotting a CDF</a> for the binning option <code>nbins</code> and the range <code>xmin</code>/<code>xmax</code>. The <code>ylabel</code>
+defaults to <code>"cumulative probability"</code> instead of <code>None</code>.</p>
 <h2 id="plotting-a-line-chart">Plotting a Line Chart<a class="headerlink" href="#plotting-a-line-chart" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">line</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">"y = x^2"</span><span class="p">)</span>
@@ -1635,31 +1694,36 @@ appearance.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">scatter</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"scatter.png"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
 </code></pre></div>
-<p><code>size</code> controls the marker size, and <code>edgecolor</code> sets a separate color for the marker edge (<code>None</code>
-reuses <code>color</code> for the edge too).</p>
+<p><code>size</code> controls the marker size, <code>edgecolor</code> sets a separate color for the marker edge (<code>None</code> reuses
+<code>color</code> for the edge too), <code>marker</code> is one of <code>"circle"</code>, <code>"square"</code>, <code>"triangle"</code>, <code>"diamond"</code>,
+<code>"cross"</code> and <code>"x"</code>, and <code>fill=False</code> draws hollow markers.</p>
 <h2 id="plotting-a-slope-abline">Plotting a Slope / Abline<a class="headerlink" href="#plotting-a-slope-abline" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">slope</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s2">"matplotlib"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">slope</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">xmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">xmax</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"slope.png"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
 </code></pre></div>
 <p><code>plotmux.slope(gradient, intercept=0.0, ...)</code> draws a reference line, <code>y = gradient * x +
-intercept</code>, spanning the current axes — unlike <code>line()</code>, it draws no data of its own. It typically
-appears as a <code>layer()</code> child alongside a data-bound spec, e.g. a scatter plot with a fitted trend
-line overlaid:</p>
+intercept</code>. It has no data of its own, so it is drawn over the <strong>x extent of its panel</strong>: the
+<code>xmin</code>/<code>xmax</code> of the panel where they are set, else the extent of the data of the other marks of the
+panel. A panel with a slope and no extent raises an <code>InvalidSpecError</code> when it is built:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plotmux</span><span class="o">.</span><span class="n">slope</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">plotmux.exceptions.InvalidSpecError</span>: <span class="n">a mark needs the x extent of the panel (a slope has no data of its own): set xmin and xmax, or add a mark with numeric x data to the panel</span>
+</code></pre></div>
+<p>The rule is the same on every backend, standalone, in a layer and in a grid. In a layer, the data of
+the siblings gives the extent, so a trend line over a scatter plot needs no <code>xmin</code>/<code>xmax</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SlopeSpec</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">layer</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="n">plotmux</span><span class="o">.</span><span class="n">scatter</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.9</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">]),</span>
-<span class="gp">... </span>    <span class="n">plotmux</span><span class="o">.</span><span class="n">slope</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="n">SlopeSpec</span><span class="p">(</span><span class="n">gradient</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">intercept</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"scatter_with_trend.png"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
 </code></pre></div>
-<p>Not every backend supports a <em>standalone</em> <code>plotmux.slope(...)</code> call: matplotlib and bokeh have a
-native "line by slope, independent of data range" primitive, but altair, <code>xy</code>, and plotly need
-concrete endpoints to draw from. On those three backends, <code>slope()</code> only works as a <code>layer()</code> child
-next to a data-bound sibling (as in the example above) — the sibling's x-range supplies the
-endpoints. A standalone <code>plotmux.slope(..., backend="altair")</code> (no data-bound sibling) raises
-<code>NotImplementedError</code>. See <a href="../backends/">Choosing a Backend</a> and <code>plotmux.backends.capabilities()</code>
-(in <a href="../figure/">The Figure Object</a>) to check this ahead of time.</p>
+<p><code>matplotlib</code> and <code>bokeh</code> draw a slope as a native infinite line, which keeps extending when you zoom
+past the extent; the other backends draw the segment of the extent. See <a href="../layer/">Layering Charts</a>.</p>
 <h2 id="non-finite-values-nan-and-inf">Non-finite Values (<code>NaN</code> and <code>inf</code>)<a class="headerlink" href="#non-finite-values-nan-and-inf" title="Permanent link">&para;</a></h2>
 <p>The same input gives the same figure on every backend, so <code>plotmux</code> checks <code>NaN</code> and <code>inf</code> when the
 spec is built, not in the plotting library:</p>
@@ -1696,7 +1760,7 @@ spec is built, not in the plotting library:</p>
 <td><code>InvalidSpecError</code></td>
 </tr>
 <tr>
-<td><code>layer</code>: a categorical <code>x</code> mixed with a numeric <code>x</code></td>
+<td>a panel: a categorical <code>x</code> mixed with a numeric</td>
 <td><code>InvalidSpecError</code></td>
 </tr>
 </tbody>
@@ -1709,31 +1773,41 @@ spec is built, not in the plotting library:</p>
 <span class="gp">...</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">caught</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
 <span class="go">'HistogramSpec: 1 non-finite value(s) (NaN or inf) detected in values and filtered out'</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">values</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">marks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
 <span class="go">array([1., 2., 3.])</span>
 </code></pre></div>
 <p><code>InvalidSpecError</code> is also a <code>ValueError</code>.</p>
-<h2 id="common-style-arguments">Common Style Arguments<a class="headerlink" href="#common-style-arguments" title="Permanent link">&para;</a></h2>
+<h2 id="axes-options">Axes Options<a class="headerlink" href="#axes-options" title="Permanent link">&para;</a></h2>
 <p><code>hist</code>, <code>bar</code>, <code>stacked_bar</code>, <code>cdf</code>, <code>line</code>, <code>scatter</code>, <code>slope</code>, and <code>layer</code> all accept the same
-figure-level style arguments:</p>
+axes options. They are declared once, as the typed dictionary <code>plotmux.api.PanelOptions</code> (and
+<code>BoundedPanelOptions</code> for the functions with <code>xmin</code>/<code>xmax</code>), and map to the fields of
+<code>plotmux.specs.PanelSpec</code>:</p>
 <ul>
-<li><code>title</code>: an optional figure title</li>
+<li><code>title</code>: an optional axes title</li>
 <li><code>xlabel</code> / <code>ylabel</code>: optional axis labels</li>
 <li><code>xscale</code> / <code>yscale</code>: <code>"linear"</code> (default) or <code>"log"</code></li>
-<li><code>background_color</code>: an optional figure background color, same format as <code>color</code> below. <code>None</code>
-  uses the backend's default (usually white/transparent).</li>
-<li><code>ymin</code> / <code>ymax</code>: an optional explicit lower/upper bound for the y-axis. <code>None</code> leaves the axis
-  autoscaled. Unlike <code>hist</code>/<code>cdf</code>'s <code>xmin</code>/<code>xmax</code>, these never accept a quantile string — there is
-  no single data array to resolve a quantile against at the figure level.</li>
+<li><code>ymin</code> / <code>ymax</code>: an optional explicit lower/upper limit of the y-axis. <code>None</code> leaves the axis
+  autoscaled. They never accept a quantile string.</li>
+<li><code>background_color</code>: an optional axes background color, same format as <code>color</code> below. <code>None</code> uses
+  the backend's default.</li>
+<li><code>legend_title</code>, <code>legend_location</code>, <code>legend_orientation</code>: the style of the legend, which exists if
+  and only if at least one mark has a <code>label</code>. <code>legend_location</code> is one of <code>"top_left"</code>,
+  <code>"top_right"</code>, <code>"bottom_left"</code>, <code>"bottom_right"</code>, <code>"top"</code>, <code>"bottom"</code>, <code>"left"</code> and <code>"right"</code>
+  (there is no <code>"best"</code>: three backends have no automatic placement, and <code>None</code> uses the default
+  of the library). <code>legend_orientation</code> is <code>"vertical"</code> or <code>"horizontal"</code>.</li>
 <li><code>backend</code>: the name of the backend to render with, or <code>None</code> for the current default (see
   <a href="../backends/">Choosing a Backend</a>)</li>
 </ul>
-<p>Every chart type that draws a mark (all but <code>layer</code>/<code>grid</code>) also accepts:</p>
+<p><code>bar</code>, <code>stacked_bar</code>, <code>line</code>, <code>scatter</code>, <code>slope</code> and <code>layer</code> also accept <code>xmin</code>/<code>xmax</code>, the explicit
+limits of the x-axis. <code>hist</code> and <code>cdf</code> do not: their <code>xmin</code>/<code>xmax</code> are the range of the data they
+bin or plot.</p>
+<p>Every chart type that draws a mark also accepts:</p>
 <ul>
 <li><code>color</code>: a hex string (<code>"#rrggbb"</code> or <code>"#rrggbbaa"</code>), a CSS/Matplotlib named color
-  (e.g. <code>"tab:blue"</code>), or an RGB(A) tuple of floats in <code>[0, 1]</code>. See
+  (e.g. <code>"tab:blue"</code>), or an RGB(A) tuple of floats in <code>[0, 1]</code>. <code>None</code> takes the next color of the
+  default palette, so the color of a chart is the same on every backend. See
   <a href="../colors/">Colors</a> for details.</li>
-<li><code>label</code>: a label used e.g. in the legend</li>
+<li><code>label</code>: a label used in the legend</li>
 <li><code>alpha</code>: an optional opacity in <code>[0, 1]</code>. <code>None</code> uses the backend's default (usually fully
   opaque).</li>
 </ul>
@@ -1743,33 +1817,34 @@ figure-level style arguments:</p>
 <span class="gp">... </span>    <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span>
 <span class="gp">... </span>    <span class="n">color</span><span class="o">=</span><span class="s2">"tab:orange"</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">label</span><span class="o">=</span><span class="s2">"y"</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">title</span><span class="o">=</span><span class="s2">"Quadratic"</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">xlabel</span><span class="o">=</span><span class="s2">"x"</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">ylabel</span><span class="o">=</span><span class="s2">"y"</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">yscale</span><span class="o">=</span><span class="s2">"log"</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">background_color</span><span class="o">=</span><span class="s2">"white"</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">ymin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">legend_location</span><span class="o">=</span><span class="s2">"top_left"</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">ymin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"line.png"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
 </code></pre></div>
-<p><code>plotmux.grid()</code> is the one exception: since each panel keeps its own independent axes, <code>grid()</code>
-does not accept <code>xlabel</code>/<code>ylabel</code>/<code>xscale</code>/<code>yscale</code>/<code>background_color</code>/<code>ymin</code>/<code>ymax</code>/<code>color</code> at
-all — only <code>title</code> (shown once above the whole grid), <code>ncols</code>, and <code>backend</code>. See
-<a href="../grid/">Grid Layouts</a>.</p>
 <p>A few fields only make sense for one chart type and live only on that function: <code>bins</code>/<code>density</code>
 (<code>hist</code>), <code>width</code> (<code>bar</code>/<code>stacked_bar</code>), <code>nbins</code> (<code>cdf</code>), <code>linewidth</code>/<code>linestyle</code> (<code>line</code>/<code>slope</code>),
-<code>size</code>/<code>edgecolor</code> (<code>scatter</code>), <code>gradient</code>/<code>intercept</code> (<code>slope</code>), <code>series</code> (<code>stacked_bar</code>).</p>
-<p><code>legend_title</code>, <code>legend_location</code>, and <code>legend_orientation</code> are also figure-level fields shared by
-every spec, but they are not (yet) exposed as named arguments on these convenience functions; set
-them by constructing the spec directly instead, e.g. <code>plotmux.specs.LineSpec(x=..., y=...,
-legend_title="Series")</code> rendered via <code>plotmux.backends.get_backend(...).render(spec)</code>.</p>
-<h2 id="backend-specific-arguments">Backend-Specific Arguments<a class="headerlink" href="#backend-specific-arguments" title="Permanent link">&para;</a></h2>
-<p>Any extra keyword argument not recognized by the unified API is forwarded as-is to the backend's
-renderer, letting you reach backend-specific options without leaving the unified API:</p>
+<code>size</code>/<code>edgecolor</code>/<code>marker</code>/<code>fill</code> (<code>scatter</code>), <code>gradient</code>/<code>intercept</code> (<code>slope</code>), <code>series</code>
+(<code>stacked_bar</code>).</p>
+<p><code>plotmux.grid()</code> accepts no axes option: each panel keeps its own. It takes only <code>title</code> (shown once
+above the whole grid), <code>ncols</code>, and <code>backend</code>. See <a href="../grid/">Grid Layouts</a>.</p>
+<h2 id="unknown-keyword-arguments">Unknown Keyword Arguments<a class="headerlink" href="#unknown-keyword-arguments" title="Permanent link">&para;</a></h2>
+<p>There is no keyword pass-through to the plotting library: a call means the same on every backend. A
+misspelled or library-specific keyword is a <code>TypeError</code> of <code>plotmux</code> at the call site:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">hist</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s2">"step"</span><span class="p">)</span>  <span class="c1"># "histtype" is forwarded to Matplotlib</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"histogram.png"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plotmux</span><span class="o">.</span><span class="n">hist</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">histtype</span><span class="o">=</span><span class="s2">"step"</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">TypeError</span>: <span class="n">hist() got an unexpected keyword argument 'histtype'. The axes options are: ...</span>
 </code></pre></div>
+<p>To set an option of the library, modify the native figure after the render with
+<code>Figure.to_native()</code> (see <a href="../figure/">The Figure Object</a>).</p>
 <h2 id="whats-next">What's Next<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../backends/">Choosing a Backend</a>: pick a rendering backend, or switch between them</li>

@@ -693,6 +693,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrating to the Primitives-Based Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1070,6 +1098,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/scene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/specs/" class="md-nav__link">
         
   
@@ -1206,6 +1262,17 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#core-model-redesign-2026-11-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core-model redesign (2026-11-22)
+      
+    </span>
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#cumulative-status-log" class="md-nav__link">
@@ -1364,6 +1431,54 @@ cumulative status log each one produced. Nothing here describes
 open work; every gap below is closed unless the entry says otherwise.
 For what's still open, see <code>DESIGN.md</code>'s own "Open questions" and
 "Candidate future work" sections.</p>
+<blockquote>
+<p><strong>Note on the links to <code>DESIGN.md</code>.</strong> The sections of <code>DESIGN.md</code> that this file refers to (for
+example <code>8.1 Partial or asymmetric backend support</code> or <code>4.8 Layering</code>) are those of the document
+before the core-model redesign of 2026-11-22 (see below). <code>DESIGN.md</code> was rewritten as the
+current-state reference of the new design; the old text is in the git history (<code>git log --
+DESIGN.md</code>).</p>
+</blockquote>
+<h2 id="core-model-redesign-2026-11-22">Core-model redesign (2026-11-22)<a class="headerlink" href="#core-model-redesign-2026-11-22" title="Permanent link">&para;</a></h2>
+<p>The case studies below and the external design review closed gaps one at a time, and each new field,
+spec or backend was paid for in every backend. The redesign of <code>review/target_state.md</code> removed the
+cause: <strong>specs are plain data, the core turns them into three drawing primitives (<code>Bars</code>, <code>Line</code>,
+<code>Points</code>), a backend only draws those primitives.</strong> It was done in ten steps, one pull request each:</p>
+<ol>
+<li>the documentation fixed (five backends everywhere, <code>DESIGN.md</code> split) (#167);</li>
+<li>immutable specs with value equality (#168);</li>
+<li><code>Figure.show</code> and the display owned by the backend (#169);</li>
+<li>the lazy registry and the plugin contract (#170);</li>
+<li>the input policy of <code>NaN</code> and <code>inf</code> (#171);</li>
+<li>the core model: <code>MarkSpec</code>, <code>PanelSpec</code>, <code>GridSpec</code>, <code>plotmux.primitives</code>, <code>plotmux.scene</code>, the
+   exact CDF and the rewritten <code>api.py</code> (#173);</li>
+<li><code>matplotlib</code> and <code>xy</code> ported, <code>Backend</code> and <code>BackendCapabilities</code> rewritten, the conformance test
+   (#174);</li>
+<li><code>bokeh</code>, <code>altair</code> and <code>plotly</code> ported (#175);</li>
+<li>the leftovers removed and the gates run (#176);</li>
+<li>the documentation, the notebooks and the migration page.</li>
+</ol>
+<p>What it closed:</p>
+<ul>
+<li><strong>F1</strong>: a spec mixed the mark and the axes. The axes are on <code>PanelSpec</code> once; <code>LayerSpec</code>,
+  <code>XBoundSpec</code> and the ignored fields of <code>GridSpec</code> are gone.</li>
+<li><strong>F2</strong>: the support matrix was irregular. A slope and a stacked bar work standalone, in a layer and
+  in a grid on every backend (the slope is a segment over the x extent of the panel).</li>
+<li><strong>F3</strong>: the same spec drew different things (the default number of CDF bins, a CDF renormalized by
+  its range, <code>BarSpec.width</code> ignored on altair, <code>marker="x"</code>, a library default first color). The
+  CDF is exact, every uncolored primitive gets a palette color, and the width and the marker work on
+  every backend.</li>
+<li><strong>F4</strong>: the same statistic was computed by up to five code paths. Bins, steps, ranges and stacking
+  are computed once, in the core.</li>
+<li><strong>F7</strong>: the <code>**kwargs</code> pass-through is removed; a typo is a <code>TypeError</code> of <code>plotmux</code>.</li>
+<li><strong>F9</strong>: the capabilities are data (<code>BackendCapabilities</code>), queryable and checked before drawing.</li>
+<li><strong>F11</strong>: the boilerplate of <code>api.py</code> and of the backends. The package is 2,505 lines smaller
+  (26%), and the five backends went from 60 modules to 16.</li>
+<li><strong>F12</strong>: <code>altair</code> took 3.4 s to render a line of 100,000 points (the schema validation of the
+  records); its data is now one CSV string and the render takes 55 ms.</li>
+</ul>
+<p>The old asymmetries recorded in the cumulative status log below (a standalone slope on two
+backends, <code>BarSpec.width</code> on altair, <code>legend_location="best"</code>, <code>marker="x"</code> on altair) no longer
+exist, and the old open questions about <code>LayerSpec</code> are void.</p>
 <h2 id="cumulative-status-log">Cumulative status log<a class="headerlink" href="#cumulative-status-log" title="Permanent link">&para;</a></h2>
 <p>Core abstraction, eight chart specs (histogram, cdf, line, scatter,
 bar, slope, layer, grid), five backends (matplotlib, xy, bokeh,

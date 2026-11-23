@@ -612,10 +612,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#binning-and-axis-range" class="md-nav__link">
+  <a href="#binning-large-inputs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Binning and Axis Range
+        Binning Large Inputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#range" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Range
       
     </span>
   </a>
@@ -780,6 +791,34 @@
     
   
     Grid Layouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrating to the Primitives-Based Design
   
 
     
@@ -1170,6 +1209,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/scene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/specs/" class="md-nav__link">
         
   
@@ -1319,10 +1386,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#binning-and-axis-range" class="md-nav__link">
+  <a href="#binning-large-inputs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Binning and Axis Range
+        Binning Large Inputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#range" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Range
       
     </span>
   </a>
@@ -1375,34 +1453,40 @@
 <p><img alt="📖" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/1f4d6.svg" title=":book:" /> This page describes <code>plotmux.cdf()</code>, which plots the empirical cumulative distribution
 function (CDF) of an array of values.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p><code>plotmux.cdf()</code> plots the fraction of <code>values</code> that fall at or below each point on the x-axis,
-approximated with a binned step curve:</p>
+<p><code>plotmux.cdf()</code> plots <code>P(X &lt;= x)</code>: the fraction of <code>values</code> that fall at or below each point on the
+x-axis. The curve is exact, a step of <code>1 / n</code> at each of the <code>n</code> values, and it is the same on every
+backend:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">cdf</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">"My CDF"</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"cdf.png"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
 </code></pre></div>
-<h2 id="binning-and-axis-range">Binning and Axis Range<a class="headerlink" href="#binning-and-axis-range" title="Permanent link">&para;</a></h2>
-<p><code>nbins</code> controls how many bins are used to approximate the cumulative curve. <code>None</code> (the default)
-uses the backend's own default binning:</p>
+<p>The curve has <code>2 n</code> vertices, so a very large input draws a large polyline.</p>
+<h2 id="binning-large-inputs">Binning Large Inputs<a class="headerlink" href="#binning-large-inputs" title="Permanent link">&para;</a></h2>
+<p><code>nbins</code> is an opt-in binning that bounds the number of vertices to <code>2 * nbins + 1</code>: the values are
+binned first, over their own range, and the curve is the cumulative sum of the bins. <code>None</code> (the
+default) is the exact CDF:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">cdf</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">nbins</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"cdf.png"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
 </code></pre></div>
-<p><code>xmin</code>/<code>xmax</code> control the x-axis range, with the same semantics as <code>plotmux.hist()</code>: each can be an
-explicit numeric value, a quantile string such as <code>"q0.1"</code> (the 10% quantile), or <code>None</code> to fall
-back to the min/max of <code>values</code>:</p>
+<h2 id="range">Range<a class="headerlink" href="#range" title="Permanent link">&para;</a></h2>
+<p><code>xmin</code>/<code>xmax</code> restrict the part of the curve that is drawn, with the same semantics as
+<code>plotmux.hist()</code>: each can be an explicit numeric value, a quantile string such as <code>"q0.1"</code> (the 10%
+quantile, computed on the finite values), or <code>None</code> to fall back to the min/max of <code>values</code>. They do
+<strong>not</strong> renormalize the curve: the height of the curve at <code>x</code> is still the fraction of <strong>all</strong> the
+values at or below <code>x</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">cdf</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span> <span class="n">xmin</span><span class="o">=</span><span class="s2">"q0.0"</span><span class="p">,</span> <span class="n">xmax</span><span class="o">=</span><span class="s2">"q0.95"</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"cdf.png"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
 </code></pre></div>
+<p>They are not axis limits either: the axes autoscale on the drawn curve. Set <code>ymin</code>/<code>ymax</code> to limit
+the y-axis.</p>
 <h2 id="style-arguments">Style Arguments<a class="headerlink" href="#style-arguments" title="Permanent link">&para;</a></h2>
-<p><code>cdf</code> accepts the same style arguments as <code>hist</code>, <code>line</code>, and <code>scatter</code>: <code>title</code>, <code>xlabel</code>,
-<code>ylabel</code>, <code>xscale</code>, <code>yscale</code>, <code>color</code>, <code>alpha</code>, <code>label</code>, <code>background_color</code>, <code>ymin</code>, <code>ymax</code>, and
-<code>backend</code> (see <a href="../api/">Common Style Arguments</a>). The one difference is <code>ylabel</code>, which defaults to
+<p><code>cdf</code> accepts the same options as <code>hist</code>, <code>line</code>, and <code>scatter</code>: <code>title</code>, <code>xlabel</code>, <code>ylabel</code>,
+<code>xscale</code>, <code>yscale</code>, <code>color</code>, <code>alpha</code>, <code>label</code>, <code>background_color</code>, <code>ymin</code>, <code>ymax</code>, the legend options
+and <code>backend</code> (see <a href="../api/">Axes Options</a>). The one difference is <code>ylabel</code>, which defaults to
 <code>"cumulative probability"</code> instead of <code>None</code>, since a CDF's y-axis always represents that same
-quantity unless you override it. <code>ymin</code>/<code>ymax</code> are also worth calling out here specifically: bokeh's
-CDF renderer otherwise hardcodes its own <code>0</code>/<code>1</code> y-axis bounds, and an explicit <code>ymin</code>/<code>ymax</code>
-overrides that:</p>
+quantity unless you override it:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">cdf</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"fraction of samples"</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"cdf.png"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>

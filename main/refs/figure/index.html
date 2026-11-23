@@ -14,7 +14,7 @@
         <link rel="prev" href="../export/">
       
       
-        <link rel="next" href="../specs/">
+        <link rel="next" href="../scene/">
       
       
         
@@ -699,6 +699,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrating to the Primitives-Based Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1200,6 +1228,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../scene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../specs/" class="md-nav__link">
         
   
@@ -1510,12 +1566,7 @@ rendered it, and the backend's native figure object.</p>
                 <code>spec</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.BaseSpec
-
-
-  
-      dataclass
-   (plotmux.specs.BaseSpec)" href="../specs/#plotmux.specs.base.BaseSpec">BaseSpec</a></code>
+                  <code><span title="plotmux.specs.FigureSpec">FigureSpec</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1599,13 +1650,14 @@ matplotlib <code>Figure</code>).</p>
 
     <div class="doc doc-contents ">
 
-        <p>The export formats accepted by <code>save</code> for this figure's
-backend.</p>
+        <p>The export formats accepted by <code>save</code> for this figure.</p>
 <p>Different backends support different export formats (e.g. the
 <code>bokeh</code> backend only supports <code>"html"</code>, since static image
-export requires an extra, environment-specific dependency).
-This lets callers check what is supported ahead of time
-instead of discovering it via a <code>ValueError</code> from <code>save</code>.</p>
+export requires an extra, environment-specific dependency), and
+a grid may support fewer formats than a single panel (<code>xy</code>
+exports a grid to HTML only). This lets callers check what is
+supported ahead of time instead of discovering it via an
+<code>UnsupportedFormatError</code> from <code>save</code>.</p>
 
 
     <p><span class="doc-section-title">Returns:</span></p>

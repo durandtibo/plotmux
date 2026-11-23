@@ -699,6 +699,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrating to the Primitives-Based Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -949,6 +977,28 @@
   
     <nav class="md-nav" aria-label="api">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.api.BoundedPanelOptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BoundedPanelOptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.api.PanelOptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PanelOptions
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#plotmux.api.bar" class="md-nav__link">
@@ -1238,6 +1288,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../scene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../specs/" class="md-nav__link">
         
   
@@ -1386,6 +1464,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#plotmux.api.BoundedPanelOptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BoundedPanelOptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plotmux.api.PanelOptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PanelOptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#plotmux.api.bar" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1524,6 +1624,97 @@
     <div class="doc doc-contents first">
 
         <p>Contain the public plotting API.</p>
+<p>Every function builds the spec of a mark, wraps it in a <code>PanelSpec</code>
+and renders it. The axes options are the same for every chart, they are
+declared once in <code>PanelOptions</code> and <code>BoundedPanelOptions</code>.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="plotmux.api.BoundedPanelOptions" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">plotmux.api.BoundedPanelOptions</span>
+
+
+<a href="#plotmux.api.BoundedPanelOptions" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="plotmux.api.PanelOptions" href="#plotmux.api.PanelOptions">PanelOptions</a></code></p>
+
+
+
+        <p>Define the axes options of the charts that have an x-axis limit.</p>
+<p>It adds the limits of the x-axis to <code>PanelOptions</code>. <code>hist</code> and
+<code>cdf</code> do not take them: their <code>xmin</code>/<code>xmax</code> are the range of
+the data they bin or plot.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>xmin</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional explicit lower limit of the x-axis.
+<code>None</code> leaves the axis autoscaled.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>xmax</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional explicit upper limit of the x-axis.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
 
 
 
@@ -1545,6 +1736,271 @@
 
 
 
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="plotmux.api.PanelOptions" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">plotmux.api.PanelOptions</span>
+
+
+<a href="#plotmux.api.PanelOptions" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="typing.TypedDict">TypedDict</span></code></p>
+
+
+
+        <p>Define the axes options of every plotting function.</p>
+<p>These keyword arguments are accepted by every plotting function
+(<code>hist</code>, <code>line</code>, ...), and have the meaning of the fields of
+<code>plotmux.specs.PanelSpec</code>. A misspelled keyword is a
+<code>TypeError</code> at the call site, whatever the backend.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>title</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional axes title.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>xlabel</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional x-axis label.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ylabel</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional y-axis label.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>xscale</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The x-axis scale, <code>"linear"</code> or <code>"log"</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>yscale</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The y-axis scale, <code>"linear"</code> or <code>"log"</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ymin</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional explicit lower limit of the y-axis.
+<code>None</code> leaves the axis autoscaled.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ymax</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional explicit upper limit of the y-axis.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>background_color</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional axes background color. Same
+format as the <code>color</code> of a mark. <code>None</code> uses the
+backend's default.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>legend_title</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional heading of the legend box.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>legend_location</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional legend position, one of
+<code>"top_left"</code>, <code>"top_right"</code>, <code>"bottom_left"</code>,
+<code>"bottom_right"</code>, <code>"top"</code>, <code>"bottom"</code>, <code>"left"</code>
+or <code>"right"</code>. <code>None</code> uses the backend's default.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>legend_orientation</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional legend layout,
+<code>"vertical"</code> or <code>"horizontal"</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the backend to use to render the
+figure, or <code>None</code> to use the current default backend
+(see <code>plotmux.set_backend</code>).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
 <div class="doc doc-object doc-function">
 
 
@@ -1554,23 +2010,14 @@
 
 <a href="#plotmux.api.bar" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">bar</span><span class="p">(</span>
-    <span class="n">x</span><span class="p">:</span> <span class="n"><span title="collections.abc.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n"><span title="collections.abc.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="n"><span title="collections.abc.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">|</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span>
     <span class="n">y</span><span class="p">:</span> <span class="n"><span title="collections.abc.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">|</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
+    <span class="n">width</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">,</span>
     <span class="n">label</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">color</span><span class="p">:</span> <span class="n"><span title="plotmux.colors.Color">Color</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">width</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">,</span>
     <span class="n">alpha</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">title</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">xlabel</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ylabel</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">xscale</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
-    <span class="n">yscale</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
-    <span class="n">background_color</span><span class="p">:</span> <span class="n"><span title="plotmux.colors.Color">Color</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ymin</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ymax</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">backend</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">,</span>
+    <span class="o">**</span><span class="n">panel</span><span class="p">:</span> <span class="n"><span title="typing.Unpack">Unpack</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="plotmux.api.BoundedPanelOptions" href="#plotmux.api.BoundedPanelOptions">BoundedPanelOptions</a></span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.figure.Figure
 
 
@@ -1600,11 +2047,12 @@
                 <code>x</code>
             </td>
             <td>
-                  <code><span title="collections.abc.Sequence">Sequence</span>[<span title="float">float</span>] | <span title="numpy.ndarray">ndarray</span></code>
+                  <code><span title="collections.abc.Sequence">Sequence</span>[<span title="float">float</span>] | <span title="collections.abc.Sequence">Sequence</span>[<span title="str">str</span>] | <span title="numpy.ndarray">ndarray</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The array of bar positions.</p>
+                <p>The array of bar positions: numbers, or strings for a
+categorical x-axis.</p>
               </div>
             </td>
             <td>
@@ -1630,6 +2078,23 @@
           </tr>
           <tr class="doc-section-item">
             <td>
+                <code>width</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The width of each bar, in <code>x</code> data units (a fraction
+of the band for a categorical <code>x</code>). Must be positive.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.8</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                 <code>label</code>
             </td>
             <td>
@@ -1637,7 +2102,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional label used e.g. in the legend.</p>
+                <p>An optional label used in the legend.</p>
               </div>
             </td>
             <td>
@@ -1653,32 +2118,11 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional color for the bars. It can be a hex
-string (<code>"#rrggbb"</code> or <code>"#rrggbbaa"</code>), a
-CSS/matplotlib named color (e.g. <code>"tab:blue"</code>), or an
-RGB(A) tuple of floats in <code>[0, 1]</code>. <code>None</code> uses the
-backend's default color.</p>
+                <p>An optional color for the bars (see <code>hist</code>).</p>
               </div>
             </td>
             <td>
                   <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>width</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The width of each bar, in <code>x</code> data units. Must be a
-positive number.</p>
-              </div>
-            </td>
-            <td>
-                  <code>0.8</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -1690,8 +2134,7 @@ positive number.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional bar opacity, in <code>[0, 1]</code>. <code>None</code> uses
-the backend's default (usually fully opaque).</p>
+                <p>An optional bar opacity, in <code>[0, 1]</code>.</p>
               </div>
             </td>
             <td>
@@ -1700,15 +2143,14 @@ the backend's default (usually fully opaque).</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>**kwargs</code>
+                <code>**panel</code>
             </td>
             <td>
-                  <code><span title="typing.Any">Any</span></code>
+                  <code><span title="typing.Unpack">Unpack</span>[<a class="autorefs autorefs-internal" title="plotmux.api.BoundedPanelOptions" href="#plotmux.api.BoundedPanelOptions">BoundedPanelOptions</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Additional backend-specific keyword arguments,
-forwarded to the backend's renderer.</p>
+                <p>The axes options, see <code>BoundedPanelOptions</code>.</p>
               </div>
             </td>
             <td>
@@ -1747,37 +2189,10 @@ forwarded to the backend's renderer.</p>
     </table>
 
 
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="ValueError">ValueError</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>if <code>x</code> and <code>y</code> do not have the same length,
-<code>width</code> is not a positive number, <code>alpha</code> is not in
-<code>[0, 1]</code>, <code>color</code>/<code>background_color</code> is not a
-valid color, or <code>ymin</code>/<code>ymax</code> are both set with
-<code>ymin &gt; ymax</code>.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
 <details class="example" open>
   <summary>Example</summary>
   <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">bar</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">])</span>  <span class="c1"># doctest: +SKIP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">bar</span><span class="p">([</span><span class="s2">"a"</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">backend</span><span class="o">=</span><span class="s2">"matplotlib"</span><span class="p">)</span>
 </code></pre></div>
 </details>
 
@@ -1802,16 +2217,7 @@ valid color, or <code>ymin</code>/<code>ymax</code> are both set with
     <span class="n">label</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">color</span><span class="p">:</span> <span class="n"><span title="plotmux.colors.Color">Color</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">alpha</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">title</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">xlabel</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ylabel</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">"cumulative probability"</span><span class="p">,</span>
-    <span class="n">xscale</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
-    <span class="n">yscale</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
-    <span class="n">background_color</span><span class="p">:</span> <span class="n"><span title="plotmux.colors.Color">Color</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ymin</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ymax</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">backend</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">,</span>
+    <span class="o">**</span><span class="n">panel</span><span class="p">:</span> <span class="n"><span title="typing.Unpack">Unpack</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="plotmux.api.PanelOptions" href="#plotmux.api.PanelOptions">PanelOptions</a></span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.figure.Figure
 
 
@@ -1822,8 +2228,8 @@ valid color, or <code>ymin</code>/<code>ymax</code> are both set with
 
     <div class="doc doc-contents ">
 
-        <p>Plot the empirical cumulative distribution function (CDF) of
-an array of values.</p>
+        <p>Plot an empirical cumulative distribution function.</p>
+<p>The curve is the exact <code>P(X &lt;= x)</code> over all the values.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1862,9 +2268,9 @@ an array of values.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The number of bins to use to approximate the
-cumulative distribution. Must be a positive integer, or
-<code>None</code> to use the backend's default binning.</p>
+                <p><code>None</code> for the exact CDF, or a positive integer to
+bin the values first and bound the number of vertices for
+a large input.</p>
               </div>
             </td>
             <td>
@@ -1880,9 +2286,11 @@ cumulative distribution. Must be a positive integer, or
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Specifies the lower bound of the x-axis range. It can
-be an explicit value, a quantile string such as
-<code>"q0.1"</code>, or <code>None</code> to use the minimum of <code>values</code>.</p>
+                <p>Specifies the lower bound of the part of the curve that
+is drawn. It can be an explicit value, a quantile string
+such as <code>"q0.1"</code>, or <code>None</code> to use the minimum of
+<code>values</code>. It does not renormalize the curve and is not
+an axis limit.</p>
               </div>
             </td>
             <td>
@@ -1898,8 +2306,8 @@ be an explicit value, a quantile string such as
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Specifies the upper bound of the x-axis range. Same
-semantics as <code>xmin</code> but for the upper bound.</p>
+                <p>Specifies the upper bound of the part of the curve that
+is drawn. Same semantics as <code>xmin</code>.</p>
               </div>
             </td>
             <td>
@@ -1915,7 +2323,7 @@ semantics as <code>xmin</code> but for the upper bound.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional label used e.g. in the legend.</p>
+                <p>An optional label used in the legend.</p>
               </div>
             </td>
             <td>
@@ -1931,11 +2339,7 @@ semantics as <code>xmin</code> but for the upper bound.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional color for the curve. It can be a hex
-string (<code>"#rrggbb"</code> or <code>"#rrggbbaa"</code>), a
-CSS/matplotlib named color (e.g. <code>"tab:blue"</code>), or an
-RGB(A) tuple of floats in <code>[0, 1]</code>. <code>None</code> uses the
-backend's default color.</p>
+                <p>An optional color for the curve (see <code>hist</code>).</p>
               </div>
             </td>
             <td>
@@ -1951,8 +2355,7 @@ backend's default color.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional curve opacity, in <code>[0, 1]</code>. <code>None</code>
-uses the backend's default (usually fully opaque).</p>
+                <p>An optional curve opacity, in <code>[0, 1]</code>.</p>
               </div>
             </td>
             <td>
@@ -1961,168 +2364,15 @@ uses the backend's default (usually fully opaque).</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>title</code>
+                <code>**panel</code>
             </td>
             <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional figure title.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>xlabel</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
+                  <code><span title="typing.Unpack">Unpack</span>[<a class="autorefs autorefs-internal" title="plotmux.api.PanelOptions" href="#plotmux.api.PanelOptions">PanelOptions</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional x-axis label.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>ylabel</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional y-axis label. Defaults to
-<code>"cumulative probability"</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>&#39;cumulative probability&#39;</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>xscale</code>
-            </td>
-            <td>
-                  <code><span title="typing.Literal">Literal</span>[&#39;linear&#39;, &#39;log&#39;]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The x-axis scale, <code>"linear"</code> or <code>"log"</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>&#39;linear&#39;</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>yscale</code>
-            </td>
-            <td>
-                  <code><span title="typing.Literal">Literal</span>[&#39;linear&#39;, &#39;log&#39;]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The y-axis scale, <code>"linear"</code> or <code>"log"</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>&#39;linear&#39;</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>background_color</code>
-            </td>
-            <td>
-                  <code><span title="plotmux.colors.Color">Color</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional figure background color. Same
-format as <code>color</code>. <code>None</code> uses the backend's default.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>ymin</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional explicit lower bound for the y-axis.
-<code>None</code> leaves the axis autoscaled (bokeh's <code>CdfSpec</code>
-renderer hardcodes its own <code>0</code>/<code>1</code> bounds regardless;
-an explicit <code>ymin</code>/<code>ymax</code> here overrides that, see
-<code>plotmux.backends.bokeh.cdf.render_cdf</code>).</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>ymax</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional explicit upper bound for the y-axis.
-<code>None</code> leaves the axis autoscaled.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>backend</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The name of the backend to use to render the
-figure, or <code>None</code> to use the current default backend
-(see <code>plotmux.set_backend</code>).</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>**kwargs</code>
-            </td>
-            <td>
-                  <code><span title="typing.Any">Any</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Additional backend-specific keyword arguments,
-forwarded to the backend's renderer.</p>
+                <p>The axes options, see <code>PanelOptions</code>. <code>ylabel</code>
+defaults to <code>"cumulative probability"</code>.</p>
               </div>
             </td>
             <td>
@@ -2161,38 +2411,10 @@ forwarded to the backend's renderer.</p>
     </table>
 
 
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="ValueError">ValueError</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>if <code>nbins</code> is set and is not a positive
-integer, <code>alpha</code> is not in <code>[0, 1]</code>,
-<code>color</code>/<code>background_color</code> is not a valid color,
-<code>xmin</code> and <code>xmax</code> are both explicit numeric values
-with <code>xmin &gt;= xmax</code>, or <code>ymin</code>/<code>ymax</code> are both set
-with <code>ymin &gt; ymax</code>.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
 <details class="example" open>
   <summary>Example</summary>
   <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">cdf</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>  <span class="c1"># doctest: +SKIP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">cdf</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">backend</span><span class="o">=</span><span class="s2">"matplotlib"</span><span class="p">)</span>
 </code></pre></div>
 </details>
 
@@ -2209,12 +2431,17 @@ with <code>ymin &gt; ymax</code>.</p>
 
 <a href="#plotmux.api.grid" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">grid</span><span class="p">(</span>
-    <span class="o">*</span><span class="n">items</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.specs.base.BaseSpec
+    <span class="o">*</span><span class="n">items</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.specs.panel.PanelSpec
 
 
   
       dataclass
-   (plotmux.specs.BaseSpec)" href="../specs/#plotmux.specs.base.BaseSpec">BaseSpec</a></span> <span class="o">|</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.figure.Figure
+   (plotmux.specs.PanelSpec)" href="../specs/#plotmux.specs.panel.PanelSpec">PanelSpec</a></span> <span class="o">|</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.specs.base.MarkSpec
+
+
+  
+      dataclass
+   (plotmux.specs.MarkSpec)" href="../specs/#plotmux.specs.base.MarkSpec">MarkSpec</a></span> <span class="o">|</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.figure.Figure
 
 
   
@@ -2223,7 +2450,6 @@ with <code>ymin &gt; ymax</code>.</p>
     <span class="n">ncols</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">title</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">backend</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.figure.Figure
 
 
@@ -2234,14 +2460,7 @@ with <code>ymin &gt; ymax</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Lay out specs (or already-rendered <code>Figure</code>s) as independent
-panels in a grid.</p>
-<p>Unlike <code>layer</code> (which draws every child onto one shared axes),
-each item here gets its own, independent panel -- the
-backend-agnostic equivalent of matplotlib's <code>pyplot.subplots</code>.
-An item may itself be built with <code>layer(...)</code> (several series
-sharing one panel), since layering and gridding are independent,
-composable concerns.</p>
+        <p>Draw several panels as independent axes in a grid.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2260,12 +2479,17 @@ composable concerns.</p>
                 <code>*items</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.BaseSpec
+                  <code><a class="autorefs autorefs-internal" title="plotmux.specs.panel.PanelSpec
 
 
   
       dataclass
-   (plotmux.specs.BaseSpec)" href="../specs/#plotmux.specs.base.BaseSpec">BaseSpec</a> | <a class="autorefs autorefs-internal" title="plotmux.figure.Figure
+   (plotmux.specs.PanelSpec)" href="../specs/#plotmux.specs.panel.PanelSpec">PanelSpec</a> | <a class="autorefs autorefs-internal" title="plotmux.specs.base.MarkSpec
+
+
+  
+      dataclass
+   (plotmux.specs.MarkSpec)" href="../specs/#plotmux.specs.base.MarkSpec">MarkSpec</a> | <a class="autorefs autorefs-internal" title="plotmux.figure.Figure
 
 
   
@@ -2274,13 +2498,8 @@ composable concerns.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The child specs to draw, one independent panel per
-item, in row-major order (left to right, top to bottom).
-A <code>Figure</code> (e.g. one returned by <code>plotmux.line(...)</code>)
-is accepted as shorthand for its <code>.spec</code>, same as
-<code>layer</code>: only the spec is reused, the earlier native
-figure is discarded and everything is re-rendered
-together.</p>
+                <p>The panels, the marks (each wrapped in a default
+panel) and the single-panel figures, in row-major order.</p>
               </div>
             </td>
             <td>
@@ -2296,10 +2515,7 @@ together.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The number of columns in the grid. Rows are filled
-left to right; the last row is left short when
-<code>len(items)</code> is not a multiple of <code>ncols</code>. Must be a
-positive integer.</p>
+                <p>The number of columns. Must be a positive integer.</p>
               </div>
             </td>
             <td>
@@ -2315,8 +2531,7 @@ positive integer.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional figure-level title, shown once above the
-whole grid (not any individual panel).</p>
+                <p>An optional title of the whole grid.</p>
               </div>
             </td>
             <td>
@@ -2332,30 +2547,12 @@ whole grid (not any individual panel).</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The name of the backend to use to render the
-figure, or <code>None</code> to use the current default backend
-(see <code>plotmux.set_backend</code>).</p>
+                <p>The name of the backend to use, or <code>None</code> to use
+the current default backend.</p>
               </div>
             </td>
             <td>
                   <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>**kwargs</code>
-            </td>
-            <td>
-                  <code><span title="typing.Any">Any</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Additional backend-specific keyword arguments,
-forwarded to every panel's renderer call.</p>
-              </div>
-            </td>
-            <td>
-                  <code>{}</code>
             </td>
           </tr>
       </tbody>
@@ -2401,13 +2598,11 @@ forwarded to every panel's renderer call.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="ValueError">ValueError</span></code>
+                  <code><a class="autorefs autorefs-internal" title="plotmux.exceptions.InvalidSpecError" href="../exceptions/#plotmux.exceptions.InvalidSpecError">InvalidSpecError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>if no <code>items</code> are given, one of the given specs
-is itself a <code>GridSpec</code> (nesting is not supported), or
-<code>ncols</code> is not a positive integer.</p>
+                <p>if a figure is a grid.</p>
               </div>
             </td>
           </tr>
@@ -2417,14 +2612,10 @@ is itself a <code>GridSpec</code> (nesting is not supported), or
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">HistogramSpec</span>
+  <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">HistogramSpec</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">101</span><span class="p">),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span>
-<span class="gp">... </span>    <span class="n">plotmux</span><span class="o">.</span><span class="n">line</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">]),</span>
-<span class="gp">... </span>    <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-<span class="gp">... </span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
+<span class="gp">... </span>    <span class="n">plotmux</span><span class="o">.</span><span class="n">hist</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]),</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">line</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]),</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s2">"matplotlib"</span>
+<span class="gp">... </span><span class="p">)</span>
 </code></pre></div>
 </details>
 
@@ -2446,20 +2637,11 @@ is itself a <code>GridSpec</code> (nesting is not supported), or
     <span class="n">bins</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
     <span class="n">xmin</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">xmax</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">label</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">density</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">label</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">color</span><span class="p">:</span> <span class="n"><span title="plotmux.colors.Color">Color</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">alpha</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">title</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">xlabel</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ylabel</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">xscale</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
-    <span class="n">yscale</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
-    <span class="n">background_color</span><span class="p">:</span> <span class="n"><span title="plotmux.colors.Color">Color</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ymin</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ymax</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">backend</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">,</span>
+    <span class="o">**</span><span class="n">panel</span><span class="p">:</span> <span class="n"><span title="typing.Unpack">Unpack</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="plotmux.api.PanelOptions" href="#plotmux.api.PanelOptions">PanelOptions</a></span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.figure.Figure
 
 
@@ -2526,9 +2708,10 @@ integer.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Specifies the lower bound of the x-axis range. It can
-be an explicit value, a quantile string such as
-<code>"q0.1"</code>, or <code>None</code> to use the minimum of <code>values</code>.</p>
+                <p>Specifies the lower bound of the range of the values
+that are binned. It can be an explicit value, a quantile
+string such as <code>"q0.1"</code>, or <code>None</code> to use the minimum
+of <code>values</code>. It is not an axis limit.</p>
               </div>
             </td>
             <td>
@@ -2544,24 +2727,8 @@ be an explicit value, a quantile string such as
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Specifies the upper bound of the x-axis range. Same
-semantics as <code>xmin</code> but for the upper bound.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>label</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional label used e.g. in the legend.</p>
+                <p>Specifies the upper bound of the range of the values
+that are binned. Same semantics as <code>xmin</code>.</p>
               </div>
             </td>
             <td>
@@ -2577,15 +2744,30 @@ semantics as <code>xmin</code> but for the upper bound.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If <code>True</code>, draw and return a probability
-density: each bin will display the bin's raw count
-divided by the total number of counts and the bin
-width, so that the area under the histogram integrates
-to 1. Defaults to <code>False</code>.</p>
+                <p>If <code>True</code>, draw a probability density: each bin
+displays the bin's raw count divided by the total number
+of counts and the bin width, so that the area under the
+histogram integrates to 1.</p>
               </div>
             </td>
             <td>
                   <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>label</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional label used in the legend.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -2597,11 +2779,11 @@ to 1. Defaults to <code>False</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional color for the bars. It can be a hex
-string (<code>"#rrggbb"</code> or <code>"#rrggbbaa"</code>), a
-CSS/matplotlib named color (e.g. <code>"tab:blue"</code>), or an
-RGB(A) tuple of floats in <code>[0, 1]</code>. <code>None</code> uses the
-backend's default color.</p>
+                <p>An optional color for the bars. It can be a hex string
+(<code>"#rrggbb"</code> or <code>"#rrggbbaa"</code>), a CSS/matplotlib named
+color (e.g. <code>"tab:blue"</code>), or an RGB(A) tuple of floats
+in <code>[0, 1]</code>. <code>None</code> takes the next color of the
+default palette.</p>
               </div>
             </td>
             <td>
@@ -2617,8 +2799,7 @@ backend's default color.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional bar opacity, in <code>[0, 1]</code>. <code>None</code> uses
-the backend's default (usually fully opaque).</p>
+                <p>An optional bar opacity, in <code>[0, 1]</code>.</p>
               </div>
             </td>
             <td>
@@ -2627,15 +2808,14 @@ the backend's default (usually fully opaque).</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>**kwargs</code>
+                <code>**panel</code>
             </td>
             <td>
-                  <code><span title="typing.Any">Any</span></code>
+                  <code><span title="typing.Unpack">Unpack</span>[<a class="autorefs autorefs-internal" title="plotmux.api.PanelOptions" href="#plotmux.api.PanelOptions">PanelOptions</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Additional backend-specific keyword arguments,
-forwarded to the backend's renderer.</p>
+                <p>The axes options, see <code>PanelOptions</code>.</p>
               </div>
             </td>
             <td>
@@ -2674,37 +2854,10 @@ forwarded to the backend's renderer.</p>
     </table>
 
 
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="ValueError">ValueError</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>if <code>bins</code> is not a positive integer, <code>alpha</code>
-is not in <code>[0, 1]</code>, <code>color</code>/<code>background_color</code> is
-not a valid color, <code>xmin</code> and <code>xmax</code> are both
-explicit numeric values with <code>xmin &gt;= xmax</code>, or
-<code>ymin</code>/<code>ymax</code> are both set with <code>ymin &gt; ymax</code>.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
 <details class="example" open>
   <summary>Example</summary>
   <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">hist</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">hist</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s2">"matplotlib"</span><span class="p">)</span>
 </code></pre></div>
 </details>
 
@@ -2721,27 +2874,18 @@ explicit numeric values with <code>xmin &gt;= xmax</code>, or
 
 <a href="#plotmux.api.layer" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">layer</span><span class="p">(</span>
-    <span class="o">*</span><span class="n">items</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.specs.base.BaseSpec
+    <span class="o">*</span><span class="n">items</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.specs.base.MarkSpec
 
 
   
       dataclass
-   (plotmux.specs.BaseSpec)" href="../specs/#plotmux.specs.base.BaseSpec">BaseSpec</a></span> <span class="o">|</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.figure.Figure
+   (plotmux.specs.MarkSpec)" href="../specs/#plotmux.specs.base.MarkSpec">MarkSpec</a></span> <span class="o">|</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.figure.Figure
 
 
   
       dataclass
   " href="../figure/#plotmux.figure.Figure">Figure</a></span><span class="p">,</span>
-    <span class="n">title</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">xlabel</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ylabel</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">xscale</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
-    <span class="n">yscale</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
-    <span class="n">background_color</span><span class="p">:</span> <span class="n"><span title="plotmux.colors.Color">Color</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ymin</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ymax</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">backend</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">,</span>
+    <span class="o">**</span><span class="n">panel</span><span class="p">:</span> <span class="n"><span title="typing.Unpack">Unpack</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="plotmux.api.BoundedPanelOptions" href="#plotmux.api.BoundedPanelOptions">BoundedPanelOptions</a></span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.figure.Figure
 
 
@@ -2752,8 +2896,12 @@ explicit numeric values with <code>xmin &gt;= xmax</code>, or
 
     <div class="doc doc-contents ">
 
-        <p>Combine specs (or already-rendered <code>Figure</code>s) onto one
-shared axes.</p>
+        <p>Draw several marks on one shared axes.</p>
+<p>A <code>Figure</code> of a single panel contributes its marks and its axes
+options. A mark with no data of its own (a <code>SlopeSpec</code>) is given
+as the mark, not as a figure: <code>plotmux.slope</code> alone needs
+<code>xmin</code> and <code>xmax</code>. For each axes option the call does not set, the unique
+non-default value of the figures is used.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2772,12 +2920,12 @@ shared axes.</p>
                 <code>*items</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.BaseSpec
+                  <code><a class="autorefs autorefs-internal" title="plotmux.specs.base.MarkSpec
 
 
   
       dataclass
-   (plotmux.specs.BaseSpec)" href="../specs/#plotmux.specs.base.BaseSpec">BaseSpec</a> | <a class="autorefs autorefs-internal" title="plotmux.figure.Figure
+   (plotmux.specs.MarkSpec)" href="../specs/#plotmux.specs.base.MarkSpec">MarkSpec</a> | <a class="autorefs autorefs-internal" title="plotmux.figure.Figure
 
 
   
@@ -2786,13 +2934,8 @@ shared axes.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The child specs to draw together, in draw order. A
-<code>Figure</code> (e.g. one returned by <code>plotmux.line(...)</code>)
-is accepted as shorthand for its <code>.spec</code>: only the spec
-is reused, the earlier native figure is discarded and
-everything is re-rendered together, since two independent
-native figures can't be merged after the fact in either
-backend.</p>
+                <p>The marks and the single-panel figures, in drawing
+order.</p>
               </div>
             </td>
             <td>
@@ -2801,167 +2944,15 @@ backend.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>title</code>
+                <code>**panel</code>
             </td>
             <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional figure title, describing the combined
-axes (not any individual child).</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>xlabel</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
+                  <code><span title="typing.Unpack">Unpack</span>[<a class="autorefs autorefs-internal" title="plotmux.api.BoundedPanelOptions" href="#plotmux.api.BoundedPanelOptions">BoundedPanelOptions</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional x-axis label.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>ylabel</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional y-axis label.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>xscale</code>
-            </td>
-            <td>
-                  <code><span title="typing.Literal">Literal</span>[&#39;linear&#39;, &#39;log&#39;]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The x-axis scale, <code>"linear"</code> or <code>"log"</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>&#39;linear&#39;</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>yscale</code>
-            </td>
-            <td>
-                  <code><span title="typing.Literal">Literal</span>[&#39;linear&#39;, &#39;log&#39;]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The y-axis scale, <code>"linear"</code> or <code>"log"</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>&#39;linear&#39;</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>background_color</code>
-            </td>
-            <td>
-                  <code><span title="plotmux.colors.Color">Color</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional figure background color. It
-can be a hex string, a CSS/matplotlib named color, or an
-RGB(A) tuple of floats in <code>[0, 1]</code>. <code>None</code> uses the
-backend's default.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>ymin</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional explicit lower bound for the y-axis.
-<code>None</code> leaves the axis autoscaled.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>ymax</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional explicit upper bound for the y-axis.
-<code>None</code> leaves the axis autoscaled.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>backend</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The name of the backend to use to render the
-figure, or <code>None</code> to use the current default backend
-(see <code>plotmux.set_backend</code>).</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>**kwargs</code>
-            </td>
-            <td>
-                  <code><span title="typing.Any">Any</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Additional backend-specific keyword arguments,
-forwarded to every child's renderer call.</p>
+                <p>The axes options, see <code>BoundedPanelOptions</code>. They
+win over the options of the figures.</p>
               </div>
             </td>
             <td>
@@ -3011,14 +3002,13 @@ forwarded to every child's renderer call.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="ValueError">ValueError</span></code>
+                  <code><a class="autorefs autorefs-internal" title="plotmux.exceptions.InvalidSpecError" href="../exceptions/#plotmux.exceptions.InvalidSpecError">InvalidSpecError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>if no <code>items</code> are given, one of the given
-specs is itself a <code>LayerSpec</code> (nesting is not
-supported), <code>background_color</code> is not a valid color,
-or <code>ymin</code>/<code>ymax</code> are both set with <code>ymin &gt; ymax</code>.</p>
+                <p>if a figure is a grid, or two figures have
+different non-default values of an axes option that the
+call does not set.</p>
               </div>
             </td>
           </tr>
@@ -3028,13 +3018,11 @@ or <code>ymin</code>/<code>ymax</code> are both set with <code>ymin &gt; ymax</c
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">HistogramSpec</span>
+  <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SlopeSpec</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">layer</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">HistogramSpec</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">101</span><span class="p">),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span>
-<span class="gp">... </span>    <span class="n">plotmux</span><span class="o">.</span><span class="n">line</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">]),</span>
-<span class="gp">... </span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
+<span class="gp">... </span>    <span class="n">plotmux</span><span class="o">.</span><span class="n">line</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]),</span> <span class="n">SlopeSpec</span><span class="p">(</span><span class="n">gradient</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">backend</span><span class="o">=</span><span class="s2">"matplotlib"</span>
+<span class="gp">... </span><span class="p">)</span>
 </code></pre></div>
 </details>
 
@@ -3061,16 +3049,7 @@ or <code>ymin</code>/<code>ymax</code> are both set with <code>ymin &gt; ymax</c
     <span class="n">linestyle</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span>
         <span class="s2">"solid"</span><span class="p">,</span> <span class="s2">"dashed"</span><span class="p">,</span> <span class="s2">"dotted"</span><span class="p">,</span> <span class="s2">"dashdot"</span>
     <span class="p">]</span> <span class="o">=</span> <span class="s2">"solid"</span><span class="p">,</span>
-    <span class="n">title</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">xlabel</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ylabel</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">xscale</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
-    <span class="n">yscale</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
-    <span class="n">background_color</span><span class="p">:</span> <span class="n"><span title="plotmux.colors.Color">Color</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ymin</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ymax</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">backend</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">,</span>
+    <span class="o">**</span><span class="n">panel</span><span class="p">:</span> <span class="n"><span title="typing.Unpack">Unpack</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="plotmux.api.BoundedPanelOptions" href="#plotmux.api.BoundedPanelOptions">BoundedPanelOptions</a></span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.figure.Figure
 
 
@@ -3120,8 +3099,7 @@ or <code>ymin</code>/<code>ymax</code> are both set with <code>ymin &gt; ymax</c
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The array of y values. Must have the same length as
-<code>x</code>.</p>
+                <p>The array of y values. Must have the same length as <code>x</code>.</p>
               </div>
             </td>
             <td>
@@ -3137,7 +3115,7 @@ or <code>ymin</code>/<code>ymax</code> are both set with <code>ymin &gt; ymax</c
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional label used e.g. in the legend.</p>
+                <p>An optional label used in the legend.</p>
               </div>
             </td>
             <td>
@@ -3153,11 +3131,7 @@ or <code>ymin</code>/<code>ymax</code> are both set with <code>ymin &gt; ymax</c
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional color for the line. It can be a hex
-string (<code>"#rrggbb"</code> or <code>"#rrggbbaa"</code>), a
-CSS/matplotlib named color (e.g. <code>"tab:blue"</code>), or an
-RGB(A) tuple of floats in <code>[0, 1]</code>. <code>None</code> uses the
-backend's default color.</p>
+                <p>An optional color for the line (see <code>hist</code>).</p>
               </div>
             </td>
             <td>
@@ -3173,8 +3147,7 @@ backend's default color.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional line opacity, in <code>[0, 1]</code>. <code>None</code> uses
-the backend's default (usually fully opaque).</p>
+                <p>An optional line opacity, in <code>[0, 1]</code>.</p>
               </div>
             </td>
             <td>
@@ -3190,8 +3163,7 @@ the backend's default (usually fully opaque).</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional line width. <code>None</code> uses the
-backend's default width.</p>
+                <p>An optional line width.</p>
               </div>
             </td>
             <td>
@@ -3216,15 +3188,14 @@ backend's default width.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>**kwargs</code>
+                <code>**panel</code>
             </td>
             <td>
-                  <code><span title="typing.Any">Any</span></code>
+                  <code><span title="typing.Unpack">Unpack</span>[<a class="autorefs autorefs-internal" title="plotmux.api.BoundedPanelOptions" href="#plotmux.api.BoundedPanelOptions">BoundedPanelOptions</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Additional backend-specific keyword arguments,
-forwarded to the backend's renderer.</p>
+                <p>The axes options, see <code>BoundedPanelOptions</code>.</p>
               </div>
             </td>
             <td>
@@ -3263,36 +3234,10 @@ forwarded to the backend's renderer.</p>
     </table>
 
 
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="ValueError">ValueError</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>if <code>x</code> and <code>y</code> do not have the same length,
-<code>alpha</code> is not in <code>[0, 1]</code>,
-<code>color</code>/<code>background_color</code> is not a valid color, or
-<code>ymin</code>/<code>ymax</code> are both set with <code>ymin &gt; ymax</code>.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
 <details class="example" open>
   <summary>Example</summary>
   <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">line</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">])</span>  <span class="c1"># doctest: +SKIP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">line</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span> <span class="n">backend</span><span class="o">=</span><span class="s2">"matplotlib"</span><span class="p">)</span>
 </code></pre></div>
 </details>
 
@@ -3317,16 +3262,17 @@ forwarded to the backend's renderer.</p>
     <span class="n">size</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">edgecolor</span><span class="p">:</span> <span class="n"><span title="plotmux.colors.Color">Color</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">alpha</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">title</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">xlabel</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ylabel</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">xscale</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
-    <span class="n">yscale</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
-    <span class="n">background_color</span><span class="p">:</span> <span class="n"><span title="plotmux.colors.Color">Color</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ymin</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ymax</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">backend</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">,</span>
+    <span class="n">marker</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span>
+        <span class="s2">"circle"</span><span class="p">,</span>
+        <span class="s2">"square"</span><span class="p">,</span>
+        <span class="s2">"triangle"</span><span class="p">,</span>
+        <span class="s2">"diamond"</span><span class="p">,</span>
+        <span class="s2">"cross"</span><span class="p">,</span>
+        <span class="s2">"x"</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fill</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">panel</span><span class="p">:</span> <span class="n"><span title="typing.Unpack">Unpack</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="plotmux.api.BoundedPanelOptions" href="#plotmux.api.BoundedPanelOptions">BoundedPanelOptions</a></span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.figure.Figure
 
 
@@ -3376,8 +3322,7 @@ forwarded to the backend's renderer.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The array of y values. Must have the same length as
-<code>x</code>.</p>
+                <p>The array of y values. Must have the same length as <code>x</code>.</p>
               </div>
             </td>
             <td>
@@ -3393,7 +3338,7 @@ forwarded to the backend's renderer.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional label used e.g. in the legend.</p>
+                <p>An optional label used in the legend.</p>
               </div>
             </td>
             <td>
@@ -3409,11 +3354,7 @@ forwarded to the backend's renderer.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional color for the markers. It can be a hex
-string (<code>"#rrggbb"</code> or <code>"#rrggbbaa"</code>), a
-CSS/matplotlib named color (e.g. <code>"tab:blue"</code>), or an
-RGB(A) tuple of floats in <code>[0, 1]</code>. <code>None</code> uses the
-backend's default color.</p>
+                <p>An optional color for the markers (see <code>hist</code>).</p>
               </div>
             </td>
             <td>
@@ -3429,8 +3370,7 @@ backend's default color.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional marker size. <code>None</code> uses the backend's
-default size.</p>
+                <p>An optional marker size.</p>
               </div>
             </td>
             <td>
@@ -3446,9 +3386,7 @@ default size.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional, separate color for the marker edge.
-Same format as <code>color</code>. <code>None</code> uses <code>color</code> for the
-edge too.</p>
+                <p>An optional color for the marker edge.</p>
               </div>
             </td>
             <td>
@@ -3464,8 +3402,7 @@ edge too.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional marker opacity, in <code>[0, 1]</code>. <code>None</code>
-uses the backend's default (usually fully opaque).</p>
+                <p>An optional marker opacity, in <code>[0, 1]</code>.</p>
               </div>
             </td>
             <td>
@@ -3474,15 +3411,46 @@ uses the backend's default (usually fully opaque).</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>**kwargs</code>
+                <code>marker</code>
             </td>
             <td>
-                  <code><span title="typing.Any">Any</span></code>
+                  <code><span title="typing.Literal">Literal</span>[&#39;circle&#39;, &#39;square&#39;, &#39;triangle&#39;, &#39;diamond&#39;, &#39;cross&#39;, &#39;x&#39;] | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Additional backend-specific keyword arguments,
-forwarded to the backend's renderer.</p>
+                <p>An optional marker shape.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fill</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>False</code> draws hollow markers.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**panel</code>
+            </td>
+            <td>
+                  <code><span title="typing.Unpack">Unpack</span>[<a class="autorefs autorefs-internal" title="plotmux.api.BoundedPanelOptions" href="#plotmux.api.BoundedPanelOptions">BoundedPanelOptions</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The axes options, see <code>BoundedPanelOptions</code>.</p>
               </div>
             </td>
             <td>
@@ -3521,38 +3489,10 @@ forwarded to the backend's renderer.</p>
     </table>
 
 
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="ValueError">ValueError</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>if <code>x</code> and <code>y</code> do not have the same length,
-<code>size</code> is not a positive number, <code>alpha</code> is not in
-<code>[0, 1]</code>,
-<code>color</code>/<code>edgecolor</code>/<code>background_color</code> is not a
-valid color, or <code>ymin</code>/<code>ymax</code> are both set with
-<code>ymin &gt; ymax</code>.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
 <details class="example" open>
   <summary>Example</summary>
   <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">scatter</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">])</span>  <span class="c1"># doctest: +SKIP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">scatter</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span> <span class="n">backend</span><span class="o">=</span><span class="s2">"matplotlib"</span><span class="p">)</span>
 </code></pre></div>
 </details>
 
@@ -3579,16 +3519,7 @@ valid color, or <code>ymin</code>/<code>ymax</code> are both set with
         <span class="s2">"solid"</span><span class="p">,</span> <span class="s2">"dashed"</span><span class="p">,</span> <span class="s2">"dotted"</span><span class="p">,</span> <span class="s2">"dashdot"</span>
     <span class="p">]</span> <span class="o">=</span> <span class="s2">"solid"</span><span class="p">,</span>
     <span class="n">alpha</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">title</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">xlabel</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ylabel</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">xscale</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
-    <span class="n">yscale</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
-    <span class="n">background_color</span><span class="p">:</span> <span class="n"><span title="plotmux.colors.Color">Color</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ymin</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ymax</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">backend</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">,</span>
+    <span class="o">**</span><span class="n">panel</span><span class="p">:</span> <span class="n"><span title="typing.Unpack">Unpack</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="plotmux.api.BoundedPanelOptions" href="#plotmux.api.BoundedPanelOptions">BoundedPanelOptions</a></span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.figure.Figure
 
 
@@ -3599,17 +3530,11 @@ valid color, or <code>ymin</code>/<code>ymax</code> are both set with
 
     <div class="doc doc-contents ">
 
-        <p>Plot a slope (a.k.a. abline) annotation: a line defined by
-<code>y = gradient * x + intercept</code>, spanning the current axes.</p>
-<p>Unlike <code>line</code>, this draws no data of its own -- it is a
-reference/trend line. Not supported by every backend: matplotlib
-(via <code>Axes.axline</code>) and bokeh (via <code>bokeh.models.Slope</code>) both
-have a native "line by slope, independent of data range"
-primitive; altair and xy do not (see <code>DESIGN.md</code>, section 8.1),
-so <code>backend="altair"</code>/<code>backend="xy"</code> raises
-<code>UnsupportedSpecError</code>. It typically appears as a <code>layer()</code>
-child alongside a data-bound spec, e.g. a scatter plot with a
-fitted trend line overlaid.</p>
+        <p>Plot a line given by its slope and intercept.</p>
+<p>The line is drawn over the x extent of the panel: <code>xmin</code> and
+<code>xmax</code> of <code>panel</code>, which are required here as the slope has no
+data of its own (in a <code>layer</code>, the data of the other marks gives
+the extent).</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -3632,7 +3557,7 @@ fitted trend line overlaid.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The line's slope.</p>
+                <p>The slope of the line.</p>
               </div>
             </td>
             <td>
@@ -3648,8 +3573,7 @@ fitted trend line overlaid.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The line's y-intercept (the <code>y</code> value at
-<code>x = 0</code>). Defaults to <code>0.0</code>.</p>
+                <p>The y-intercept of the line.</p>
               </div>
             </td>
             <td>
@@ -3665,7 +3589,7 @@ fitted trend line overlaid.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional label used e.g. in the legend.</p>
+                <p>An optional label used in the legend.</p>
               </div>
             </td>
             <td>
@@ -3681,11 +3605,7 @@ fitted trend line overlaid.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional color for the line. It can be a hex
-string (<code>"#rrggbb"</code> or <code>"#rrggbbaa"</code>), a
-CSS/matplotlib named color (e.g. <code>"tab:blue"</code>), or an
-RGB(A) tuple of floats in <code>[0, 1]</code>. <code>None</code> uses the
-backend's default color.</p>
+                <p>An optional color for the line (see <code>hist</code>).</p>
               </div>
             </td>
             <td>
@@ -3701,8 +3621,7 @@ backend's default color.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional line width. <code>None</code> uses the
-backend's default width.</p>
+                <p>An optional line width.</p>
               </div>
             </td>
             <td>
@@ -3734,8 +3653,7 @@ backend's default width.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional line opacity, in <code>[0, 1]</code>. <code>None</code> uses
-the backend's default (usually fully opaque).</p>
+                <p>An optional line opacity, in <code>[0, 1]</code>.</p>
               </div>
             </td>
             <td>
@@ -3744,15 +3662,14 @@ the backend's default (usually fully opaque).</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>**kwargs</code>
+                <code>**panel</code>
             </td>
             <td>
-                  <code><span title="typing.Any">Any</span></code>
+                  <code><span title="typing.Unpack">Unpack</span>[<a class="autorefs autorefs-internal" title="plotmux.api.BoundedPanelOptions" href="#plotmux.api.BoundedPanelOptions">BoundedPanelOptions</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Additional backend-specific keyword arguments,
-forwarded to the backend's renderer.</p>
+                <p>The axes options, see <code>BoundedPanelOptions</code>.</p>
               </div>
             </td>
             <td>
@@ -3802,27 +3719,11 @@ forwarded to the backend's renderer.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="ValueError">ValueError</span></code>
+                  <code><a class="autorefs autorefs-internal" title="plotmux.exceptions.InvalidSpecError" href="../exceptions/#plotmux.exceptions.InvalidSpecError">InvalidSpecError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>if <code>alpha</code> is not in <code>[0, 1]</code>,
-<code>color</code>/<code>background_color</code> is not a valid color, or
-<code>ymin</code>/<code>ymax</code> are both set with <code>ymin &gt; ymax</code>.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="NotImplementedError">NotImplementedError</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>if the resolved backend is <code>altair</code> or
-<code>xy</code> and this <code>slope(...)</code> call is not layered with a
-data-bound spec (see <code>layer</code>): standalone <code>SlopeSpec</code>
-support remains matplotlib/bokeh only (see DESIGN.md,
-section 8.1).</p>
+                <p>if <code>panel</code> has no <code>xmin</code> and <code>xmax</code>.</p>
               </div>
             </td>
           </tr>
@@ -3833,7 +3734,7 @@ section 8.1).</p>
 <details class="example" open>
   <summary>Example</summary>
   <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">slope</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s2">"matplotlib"</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">slope</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">xmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">xmax</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s2">"matplotlib"</span><span class="p">)</span>
 </code></pre></div>
 </details>
 
@@ -3860,16 +3761,7 @@ section 8.1).</p>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">width</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">,</span>
     <span class="n">alpha</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">title</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">xlabel</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ylabel</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">xscale</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
-    <span class="n">yscale</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
-    <span class="n">background_color</span><span class="p">:</span> <span class="n"><span title="plotmux.colors.Color">Color</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ymin</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ymax</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">backend</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">,</span>
+    <span class="o">**</span><span class="n">panel</span><span class="p">:</span> <span class="n"><span title="typing.Unpack">Unpack</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="plotmux.api.BoundedPanelOptions" href="#plotmux.api.BoundedPanelOptions">BoundedPanelOptions</a></span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="plotmux.figure.Figure
 
 
@@ -3881,12 +3773,6 @@ section 8.1).</p>
     <div class="doc doc-contents ">
 
         <p>Plot a stacked bar chart.</p>
-<p>Unlike <code>layer()</code>'s <code>BarSpec</code> support, which draws several
-<code>BarSpec</code>s independently onto shared axes (they simply overlap
-at shared <code>x</code> positions), this draws <code>series</code> cumulatively:
-each series is stacked on top of the running total of the series
-before it, at each <code>x</code> position. See <code>plotmux.specs.
-StackedBarSpec</code>/<code>plotmux.specs.BarSeries</code>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -3909,9 +3795,8 @@ StackedBarSpec</code>/<code>plotmux.specs.BarSeries</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The array of bar positions, shared by every series. Either
-numeric or an array of strings, drawn as a categorical
-x-axis (e.g. <code>x=["Apples", "Pears", "Nectarines"]</code>).</p>
+                <p>The array of bar positions, shared by every series:
+numbers, or strings for a categorical x-axis.</p>
               </div>
             </td>
             <td>
@@ -3932,9 +3817,8 @@ x-axis (e.g. <code>x=["Apples", "Pears", "Nectarines"]</code>).</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The series to stack, in stacking order (bottom to
-top). Must be non-empty, and every series' <code>y</code> must have
-the same length as <code>x</code>.</p>
+                <p>The series to stack, bottom to top. Each series has
+its own label and color.</p>
               </div>
             </td>
             <td>
@@ -3950,8 +3834,8 @@ the same length as <code>x</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The width of each bar, in <code>x</code> data units. Must be a
-positive number.</p>
+                <p>The width of each bar, in <code>x</code> data units (a fraction
+of the band for a categorical <code>x</code>). Must be positive.</p>
               </div>
             </td>
             <td>
@@ -3967,9 +3851,8 @@ positive number.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional bar opacity, in <code>[0, 1]</code>, applied to
-every series. <code>None</code> uses the backend's default (usually
-fully opaque).</p>
+                <p>An optional bar opacity, in <code>[0, 1]</code>, for every
+series.</p>
               </div>
             </td>
             <td>
@@ -3978,165 +3861,14 @@ fully opaque).</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>title</code>
+                <code>**panel</code>
             </td>
             <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional figure title.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>xlabel</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
+                  <code><span title="typing.Unpack">Unpack</span>[<a class="autorefs autorefs-internal" title="plotmux.api.BoundedPanelOptions" href="#plotmux.api.BoundedPanelOptions">BoundedPanelOptions</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>An optional x-axis label.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>ylabel</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional y-axis label.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>xscale</code>
-            </td>
-            <td>
-                  <code><span title="typing.Literal">Literal</span>[&#39;linear&#39;, &#39;log&#39;]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The x-axis scale, <code>"linear"</code> or <code>"log"</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>&#39;linear&#39;</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>yscale</code>
-            </td>
-            <td>
-                  <code><span title="typing.Literal">Literal</span>[&#39;linear&#39;, &#39;log&#39;]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The y-axis scale, <code>"linear"</code> or <code>"log"</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>&#39;linear&#39;</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>background_color</code>
-            </td>
-            <td>
-                  <code><span title="plotmux.colors.Color">Color</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional figure background color. Same
-format as a series' <code>color</code>. <code>None</code> uses the
-backend's default.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>ymin</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional explicit lower bound for the y-axis.
-<code>None</code> leaves the axis autoscaled.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>ymax</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>An optional explicit upper bound for the y-axis.
-<code>None</code> leaves the axis autoscaled.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>backend</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The name of the backend to use to render the
-figure, or <code>None</code> to use the current default backend
-(see <code>plotmux.set_backend</code>).</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>**kwargs</code>
-            </td>
-            <td>
-                  <code><span title="typing.Any">Any</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Additional backend-specific keyword arguments,
-forwarded to the backend's renderer.</p>
+                <p>The axes options, see <code>BoundedPanelOptions</code>.</p>
               </div>
             </td>
             <td>
@@ -4175,41 +3907,13 @@ forwarded to the backend's renderer.</p>
     </table>
 
 
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="ValueError">ValueError</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>if <code>series</code> is empty, any series' <code>y</code> does
-not have the same length as <code>x</code>, <code>width</code> is not a
-positive number, <code>alpha</code> is not in <code>[0, 1]</code>, any
-series' <code>color</code> is not a valid color, or
-<code>ymin</code>/<code>ymax</code> are both set with <code>ymin &gt; ymax</code>.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
 <details class="example" open>
   <summary>Example</summary>
   <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">plotmux</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plotmux.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">BarSeries</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plotmux</span><span class="o">.</span><span class="n">stacked_bar</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="p">[</span><span class="s2">"Apples"</span><span class="p">,</span> <span class="s2">"Pears"</span><span class="p">,</span> <span class="s2">"Nectarines"</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="p">[</span><span class="n">BarSeries</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">"2015"</span><span class="p">),</span> <span class="n">BarSeries</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">"2016"</span><span class="p">)],</span>
-<span class="gp">... </span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
+<span class="gp">... </span>    <span class="p">[</span><span class="s2">"a"</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">],</span> <span class="p">[</span><span class="n">BarSeries</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])],</span> <span class="n">backend</span><span class="o">=</span><span class="s2">"matplotlib"</span>
+<span class="gp">... </span><span class="p">)</span>
 </code></pre></div>
 </details>
 
